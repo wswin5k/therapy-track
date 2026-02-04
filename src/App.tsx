@@ -6,11 +6,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
 import { useColorScheme } from "react-native";
 import { Navigation } from "./navigation";
-import {
-  SQLiteProvider,
-  useSQLiteContext,
-  type SQLiteDatabase,
-} from "expo-sqlite";
+import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 
 Asset.loadAsync([
   ...NavigationAssets,
@@ -46,9 +42,16 @@ export function App() {
 async function migrateDbIfNeeded(db: SQLiteDatabase) {
   const DATABASE_VERSION = 1;
 
-  let { user_version: currentDbVersion } = await db.getFirstAsync<{
+  const pragma_user_version = await db.getFirstAsync<{
     user_version: number;
   }>("PRAGMA user_version");
+
+  if (!pragma_user_version) {
+    throw Error("Invalid database file.");
+  }
+
+  let currentDbVersion = pragma_user_version.user_version;
+
   if (currentDbVersion >= DATABASE_VERSION) {
     return;
   }

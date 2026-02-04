@@ -7,15 +7,10 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
-import { StaticScreenProps } from "@react-navigation/native";
-import {
-  SafeAreaView,
-} from 'react-native-safe-area-context';
-
+import { SafeAreaView } from "react-native-safe-area-context";
 
 class Amount {
   value: number = 0;
@@ -165,14 +160,8 @@ function ActiveIngredientRow({
   );
 }
 
-type SelectMedicineScreenProps = StaticScreenProps<{
-  nextScreen?: string;
-}>;
-
-export function SelectMedicineScreen({ route }: SelectMedicineScreenProps) {
+export function SelectMedicineScreen() {
   const { t, i18n } = useTranslation();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const nextScreen = route.params?.nextScreen;
 
   const [name, setName] = React.useState("");
   const [baseUnit, setBaseUnit] = React.useState<string>("");

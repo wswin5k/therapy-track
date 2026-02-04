@@ -1,21 +1,12 @@
-import { Button, Text } from "@react-navigation/elements";
-import { StyleSheet, View } from "react-native";
-import {
-  SafeAreaView,
-} from 'react-native-safe-area-context';
+import { Button } from "@react-navigation/elements";
+import { StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function Home() {
   return (
     <SafeAreaView style={styles.container}>
-      <Button screen="SelectMedicineScreen" params={{ nextScreen: "" }}>
-        Add one-time entry
-      </Button>
-      <Button
-        screen="SelectMedicineScreen"
-        params={{ nextScreen: "AddScheduleScreen" }}
-      >
-        Add Schedule
-      </Button>
+      <Button screen="SelectMedicineScreen">Add one-time entry</Button>
+      <Button screen="SelectMedicineScreen">Add Schedule</Button>
     </SafeAreaView>
   );
 }
