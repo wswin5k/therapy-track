@@ -13,6 +13,9 @@ import RNDateTimePicker, {
   DateTimePickerAndroid,
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import {
+  SafeAreaView,
+} from 'react-native-safe-area-context';
 
 class Amount {
   value: number = 0;
@@ -232,7 +235,7 @@ export function AddScheduleScreen() {
   };
 
   return (
-    <View style={styles.mainFlow}>
+    <SafeAreaView style={styles.mainFlow}>
       <View style={styles.row}>
         {/* <Text>{t($ => $["Brand name"])}</Text> */}
         <TextInput
@@ -318,7 +321,7 @@ export function AddScheduleScreen() {
       <Text>That's 2 weeks</Text>
 
       <Button onPress={handleSave}>Next</Button>
-    </View>
+    </SafeAreaView>
   );
 }
 

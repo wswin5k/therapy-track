@@ -1,9 +1,12 @@
 import { Button, Text } from "@react-navigation/elements";
 import { StyleSheet, View } from "react-native";
+import {
+  SafeAreaView,
+} from 'react-native-safe-area-context';
 
 export function Home() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Button screen="SelectMedicineScreen" params={{ nextScreen: "" }}>
         Add one-time entry
       </Button>
@@ -13,7 +16,7 @@ export function Home() {
       >
         Add Schedule
       </Button>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -5,7 +5,6 @@ import {
   Text,
   TextInput,
   View,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Platform,
@@ -13,6 +12,10 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
 import { StaticScreenProps } from "@react-navigation/native";
+import {
+  SafeAreaView,
+} from 'react-native-safe-area-context';
+
 
 class Amount {
   value: number = 0;
