@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
+import { StaticScreenProps } from "@react-navigation/native";
 
 class Amount {
   value: number = 0;
@@ -153,7 +154,11 @@ function ActiveIngredientRow({
   );
 }
 
-export function MedicineSelect() {
+type SelectMedicineScreenProps = StaticScreenProps<{
+  nextScreen: string;
+}>;
+
+export function SelectMedicineScreen( { nextScreen} : SelectMedicineScreenProps ) {
   const { t, i18n } = useTranslation();
 
   const [name, setName] = React.useState("");

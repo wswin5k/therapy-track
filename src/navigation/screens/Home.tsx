@@ -4,14 +4,10 @@ import { StyleSheet, View } from "react-native";
 export function Home() {
   return (
     <View style={styles.container}>
-      <Text>Home Screen</Text>
-      <Button screen="Profile" params={{ user: "jane" }}>
-        Go to Profile
-      </Button>
-      <Button screen="Profile" params={{ user: "jane" }}>
+      <Button screen="SelectMedicineScreen" params={{ nextScreen: "" }}>
         Add one-time entry
       </Button>
-      <Button screen="MedicineSelect">Add Schedule</Button>
+      <Button screen="SelectMedicineScreen" params={{ nextScreen: "AddScheduleScreen" }}>Add Schedule</Button>
     </View>
   );
 }
@@ -24,3 +20,4 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 });
+

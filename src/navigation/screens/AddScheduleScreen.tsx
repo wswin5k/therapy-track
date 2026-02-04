@@ -169,7 +169,7 @@ function AddMedicineForm() {}
 
 function AddScheduleForm() {}
 
-export function MedicineSelect() {
+export function AddScheduleScreen() {
   const { t, i18n } = useTranslation();
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
     React.useState<boolean>(false);
