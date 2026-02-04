@@ -22,7 +22,8 @@ export function Home() {
     {
       label: "Add Schedule",
       onPress: () =>
-        navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),    },
+        navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
+    },
   ];
 
   return (

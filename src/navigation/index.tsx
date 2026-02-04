@@ -1,8 +1,6 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { HeaderButton, Text } from "@react-navigation/elements";
 import {
   createStaticNavigation,
-  StaticParamList,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Home } from "./screens/Home";

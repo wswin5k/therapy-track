@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: "row",
     alignItems: "flex-end",
-    justifyContent: "flex-start"
+    justifyContent: "flex-start",
   },
   actionButton: {
     width: 44,
