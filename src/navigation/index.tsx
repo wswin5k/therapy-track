@@ -40,13 +40,8 @@ const RootStack = createNativeStackNavigator({
     },
     SelectMedicineScreen: {
       screen: SelectMedicineScreen,
-      options: ({ navigation }) => ({
+      options: () => ({
         presentation: "modal",
-        headerRight: () => (
-          <HeaderButton onPress={navigation.goBack}>
-            <Text>Close</Text>
-          </HeaderButton>
-        ),
       }),
     },
     AddScheduleScreen: {
