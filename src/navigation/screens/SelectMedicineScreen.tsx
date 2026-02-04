@@ -11,50 +11,14 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-class Amount {
-  value: number = 0;
-  unit: string = "";
-  // weight: mg, g, ...?
-  // piece: pill, pen, syringe
-}
-
-class MedicineEntry {
-  brandName: string;
-  genericName: string;
-  doseWeight: Amount;
-  dosePiece: Amount;
-
-  constructor(
-    brandName: string,
-    genericName: string,
-    doseWeight: Amount,
-    dosePiece: Amount,
-  ) {
-    this.brandName = brandName;
-    this.genericName = genericName;
-    this.doseWeight = doseWeight;
-    this.dosePiece = dosePiece;
-  }
-}
-
-enum BaseUnit {
-  Pill = "pill",
-  Ml = "ml",
-  Teaspoonfull = "teaspoonfull (5ml)",
-  Drop = "drop",
-  InjectioPen = "injection pen",
-  Sachet = "sachet",
-  PressOfTheDosingPump = "press of the dosing pump",
-  Vial = "vial",
-  PreFilledSyringe = "pre-filled syringe",
-}
-
-enum IngredientWeight {
-  Miligram = "mg",
-  Gram = "g",
-  Microgram = "µg",
-}
+import { useRoute, useNavigation } from "@react-navigation/native";
+import type { RootStackParamList } from "../index";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {
+  MedicineData,
+  BaseUnit,
+  IngredientWeight,
+} from "../../models/MedicineData";
 
 class ActiveIngedientInfo {
   name: string | null;
@@ -160,8 +124,15 @@ function ActiveIngredientRow({
   );
 }
 
+type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "SelectMedicineScreen"
+>;
+
 export function SelectMedicineScreen() {
   const { t, i18n } = useTranslation();
+  const route = useRoute();
+  const navigation = useNavigation<SelectMedicineScreenNavigationProp>();
 
   const [name, setName] = React.useState("");
   const [baseUnit, setBaseUnit] = React.useState<string>("");
@@ -174,6 +145,9 @@ export function SelectMedicineScreen() {
   >({});
 
   const db = useSQLiteContext();
+
+  // Get mode from route params
+  const mode = (route.params as { mode?: "schedule" | "one-time" })?.mode;
 
   React.useEffect(() => {
     async function setup() {
@@ -244,13 +218,39 @@ export function SelectMedicineScreen() {
       return;
     }
 
-    console.log(activeIngredientsRefs.current);
+    // Convert active ingredients to the proper format
+    const activeIngredients = activeIngredientsRefs.current
+      .filter((ing) => ing.name && ing.weight !== null && ing.unit)
+      .map((ing) => ({
+        name: ing.name!,
+        weight: ing.weight!,
+        unit: ing.unit!,
+      }));
+
+    // Create MedicineData object
+    const medicineData = new MedicineData(
+      name,
+      baseUnit as BaseUnit,
+      activeIngredients,
+    );
+
+    console.log("Created MedicineData:", medicineData);
+
     const activeIngredientsStr = JSON.stringify(activeIngredientsRefs.current);
     const result = await db.runAsync(
       "INSERT INTO medicines (name, active_ingredients) VALUES (?, ?)",
       name,
       activeIngredientsStr,
     );
+
+    // Add the inserted ID to the medicine data
+    medicineData.medicineId = result.lastInsertRowId;
+
+    // Navigate to AddScheduleScreen only if mode is "schedule"
+    if (mode === "schedule") {
+      navigation.navigate("AddScheduleScreen", { medicineData });
+    }
+    // If mode is "one-time", we'll handle it later (do nothing for now)
   };
 
   const handleAddActiveIngredient = () => {

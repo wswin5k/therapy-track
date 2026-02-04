@@ -7,7 +7,16 @@ import {
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Home } from "./screens/Home";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
+import { AddScheduleScreen } from "./screens/AddScheduleScreen";
 import { NotFound } from "./screens/NotFound";
+import type { MedicineData } from "../models/MedicineData";
+
+export type RootStackParamList = {
+  HomeTabs: undefined;
+  SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
+  AddScheduleScreen: { medicineData: MedicineData } | undefined;
+  NotFound: undefined;
+};
 
 const HomeTabs = createDrawerNavigator({
   screens: {
@@ -40,6 +49,12 @@ const RootStack = createNativeStackNavigator({
         ),
       }),
     },
+    AddScheduleScreen: {
+      screen: AddScheduleScreen,
+      options: {
+        presentation: "modal",
+      },
+    },
     NotFound: {
       screen: NotFound,
       options: {
@@ -53,8 +68,6 @@ const RootStack = createNativeStackNavigator({
 });
 
 export const Navigation = createStaticNavigation(RootStack);
-
-type RootStackParamList = StaticParamList<typeof RootStack>;
 
 declare global {
   namespace ReactNavigation {
