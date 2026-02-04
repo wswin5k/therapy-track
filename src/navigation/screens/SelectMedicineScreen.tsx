@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   StyleSheet,
@@ -81,12 +81,14 @@ type ActiveIngedientRowProps = {
   activeIngredientInfo: ActiveIngedientInfo;
   removeCallback: () => void;
   removeButton: boolean;
+  errors?: { name?: boolean; weight?: boolean };
 };
 
 function ActiveIngredientRow({
   activeIngredientInfo,
   removeCallback,
   removeButton,
+  errors,
 }: ActiveIngedientRowProps) {
   const [name, setName] = React.useState<string>(
     activeIngredientInfo.name ? activeIngredientInfo.name : "",
@@ -104,7 +106,10 @@ function ActiveIngredientRow({
             activeIngredientInfo.name = text;
             setName(text);
           }}
-          style={styles.input}
+          style={[
+            styles.input,
+            errors?.name ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
           placeholder="Name"
           placeholderTextColor="#999"
           value={name}
@@ -115,7 +120,10 @@ function ActiveIngredientRow({
           onChangeText={(weightStr: string) => {
             activeIngredientInfo.weight = parseFloat(weightStr);
           }}
-          style={styles.input}
+          style={[
+            styles.input,
+            errors?.weight ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
           placeholder="Weight"
           placeholderTextColor="#999"
           keyboardType="numeric"
@@ -155,13 +163,23 @@ function ActiveIngredientRow({
 }
 
 type SelectMedicineScreenProps = StaticScreenProps<{
-  nextScreen: string;
+  nextScreen?: string;
 }>;
 
-export function SelectMedicineScreen( { nextScreen} : SelectMedicineScreenProps ) {
+export function SelectMedicineScreen({ route }: SelectMedicineScreenProps) {
   const { t, i18n } = useTranslation();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const nextScreen = route.params?.nextScreen;
 
   const [name, setName] = React.useState("");
+  const [baseUnit, setBaseUnit] = React.useState<string>("");
+
+  // Validation State
+  const [nameError, setNameError] = React.useState(false);
+  const [baseUnitError, setBaseUnitError] = React.useState(false);
+  const [ingredientErrors, setIngredientErrors] = React.useState<
+    Record<number, { name?: boolean; weight?: boolean }>
+  >({});
 
   const db = useSQLiteContext();
 
@@ -187,7 +205,53 @@ export function SelectMedicineScreen( { nextScreen} : SelectMedicineScreenProps 
     ),
   );
 
+  const validate = () => {
+    let isValid = true;
+    const newIngredientErrors: Record<
+      number,
+      { name?: boolean; weight?: boolean }
+    > = {};
+
+    if (!name.trim() && name.trim().length < 50) {
+      setNameError(true);
+      isValid = false;
+    } else {
+      setNameError(false);
+    }
+
+    if (!baseUnit) {
+      setBaseUnitError(true);
+      isValid = false;
+    } else {
+      setBaseUnitError(false);
+    }
+
+    // Validate Ingredients
+    activeIngredientsRefs.current.forEach((ingredient) => {
+      const errors: { name?: boolean; weight?: boolean } = {};
+      if (!ingredient.name || !ingredient.name.trim()) {
+        errors.name = true;
+        isValid = false;
+      }
+      if (ingredient.weight === null || isNaN(ingredient.weight)) {
+        errors.weight = true;
+        isValid = false;
+      }
+
+      if (Object.keys(errors).length > 0) {
+        newIngredientErrors[ingredient.elementKey] = errors;
+      }
+    });
+
+    setIngredientErrors(newIngredientErrors);
+    return isValid;
+  };
+
   const handleSave = async () => {
+    if (!validate()) {
+      return;
+    }
+
     console.log(activeIngredientsRefs.current);
     const activeIngredientsStr = JSON.stringify(activeIngredientsRefs.current);
     const result = await db.runAsync(
@@ -220,15 +284,34 @@ export function SelectMedicineScreen( { nextScreen} : SelectMedicineScreenProps 
         <TextInput
           placeholder="e.g. Ibuprofen"
           placeholderTextColor="#999"
-          style={styles.input}
+          style={[
+            styles.input,
+            nameError ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
           onChangeText={(text: string) => {
             setName(text);
+            if (nameError) setNameError(false);
           }}
         />
+        {nameError && (
+          <Text style={styles.errorText}>{t("Medicine name is required")}</Text>
+        )}
 
         <Text style={styles.headerLabel}>{t("Base Unit")}</Text>
-        <View style={styles.fullWidthPickerContainer}>
-          <Picker style={styles.picker}>
+        <View
+          style={[
+            styles.fullWidthPickerContainer,
+            baseUnitError ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
+        >
+          <Picker
+            selectedValue={baseUnit}
+            onValueChange={(itemValue) => {
+              setBaseUnit(itemValue);
+              if (baseUnitError) setBaseUnitError(false);
+            }}
+            style={styles.picker}
+          >
             <Picker.Item label="Select an option" value="" color="#999" />
             {Object.values(BaseUnit).map((unit) => (
               <Picker.Item
@@ -240,6 +323,9 @@ export function SelectMedicineScreen( { nextScreen} : SelectMedicineScreenProps 
             ))}
           </Picker>
         </View>
+        {baseUnitError && (
+          <Text style={styles.errorText}>{t("Base unit is required")}</Text>
+        )}
 
         <Text style={[styles.headerLabel, { marginTop: 20 }]}>
           {t("Active ingredients per base unit")}
@@ -252,6 +338,9 @@ export function SelectMedicineScreen( { nextScreen} : SelectMedicineScreenProps 
               activeIngredientInfo={activeIngredientsRefs.current[idx]}
               removeCallback={removeActiveIngredient(idx)}
               removeButton={nActiveIngredients === 1 ? false : true}
+              errors={
+                ingredientErrors[activeIngredientsRefs.current[idx].elementKey]
+              }
             />
           ))}
         </View>
@@ -323,7 +412,7 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
     borderRadius: 8,
     justifyContent: "center",
-    marginBottom: 15,
+    marginBottom: 5,
   },
   picker: {
     width: "100%",
@@ -380,5 +469,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 2,
+    marginBottom: 10,
   },
 });

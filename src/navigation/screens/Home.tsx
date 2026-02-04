@@ -7,7 +7,12 @@ export function Home() {
       <Button screen="SelectMedicineScreen" params={{ nextScreen: "" }}>
         Add one-time entry
       </Button>
-      <Button screen="SelectMedicineScreen" params={{ nextScreen: "AddScheduleScreen" }}>Add Schedule</Button>
+      <Button
+        screen="SelectMedicineScreen"
+        params={{ nextScreen: "AddScheduleScreen" }}
+      >
+        Add Schedule
+      </Button>
     </View>
   );
 }
@@ -20,4 +25,3 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 });
-
