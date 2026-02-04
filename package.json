@@ -6,7 +6,9 @@
     "start": "expo start --dev-client",
     "web": "expo start --web",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "lint": "eslint .",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -36,6 +38,11 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~19.1.10",
+    "eslint": "^8.57.1",
+    "eslint-config-expo": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1",
     "typescript": "~5.9.2"
   },
   "private": true

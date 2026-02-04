@@ -6,7 +6,11 @@ import * as SplashScreen from "expo-splash-screen";
 import * as React from "react";
 import { useColorScheme } from "react-native";
 import { Navigation } from "./navigation";
-import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
+import {
+  SQLiteProvider,
+  useSQLiteContext,
+  type SQLiteDatabase,
+} from "expo-sqlite";
 
 Asset.loadAsync([
   ...NavigationAssets,
@@ -39,13 +43,12 @@ export function App() {
   );
 }
 
-
 async function migrateDbIfNeeded(db: SQLiteDatabase) {
   const DATABASE_VERSION = 1;
 
-  let { user_version: currentDbVersion } = await db.getFirstAsync<{ user_version: number }>(
-    'PRAGMA user_version'
-  );
+  let { user_version: currentDbVersion } = await db.getFirstAsync<{
+    user_version: number;
+  }>("PRAGMA user_version");
   if (currentDbVersion >= DATABASE_VERSION) {
     return;
   }
@@ -61,4 +64,3 @@ CREATE TABLE medicines (id INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL, act
   // }
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
-

@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { useSQLiteContext } from 'expo-sqlite';
+import { useSQLiteContext } from "expo-sqlite";
 
 class Amount {
   value: number = 0;
@@ -39,7 +39,6 @@ class MedicineEntry {
   }
 }
 
-
 enum BaseUnit {
   Pill = "pill",
   Ml = "ml",
@@ -50,7 +49,7 @@ enum BaseUnit {
   PressOfTheDosingPump = "press of the dosing pump",
   Vial = "vial",
   PreFilledSyringe = "pre-filled syringe",
-};
+}
 
 enum IngredientWeight {
   Miligram = "mg",
@@ -81,15 +80,20 @@ type ActiveIngedientRowProps = {
   activeIngredientInfo: ActiveIngedientInfo;
   removeCallback: () => void;
   removeButton: boolean;
-}
+};
 
-function ActiveIngredientRow({ activeIngredientInfo, removeCallback, removeButton}: ActiveIngedientRowProps) {
-
-  const [name, setName] = React.useState<string>(activeIngredientInfo.name ? activeIngredientInfo.name : "");
+function ActiveIngredientRow({
+  activeIngredientInfo,
+  removeCallback,
+  removeButton,
+}: ActiveIngedientRowProps) {
+  const [name, setName] = React.useState<string>(
+    activeIngredientInfo.name ? activeIngredientInfo.name : "",
+  );
 
   const handleRemove = () => {
     removeCallback();
-  }
+  };
 
   return (
     <View style={styles.ingredientRow}>
@@ -114,7 +118,11 @@ function ActiveIngredientRow({ activeIngredientInfo, removeCallback, removeButto
           placeholder="Weight"
           placeholderTextColor="#999"
           keyboardType="numeric"
-          defaultValue={activeIngredientInfo.weight ? activeIngredientInfo.weight.toString() : ""}
+          defaultValue={
+            activeIngredientInfo.weight
+              ? activeIngredientInfo.weight.toString()
+              : ""
+          }
         />
       </View>
       <View style={styles.pickerContainer}>
@@ -125,23 +133,25 @@ function ActiveIngredientRow({ activeIngredientInfo, removeCallback, removeButto
           style={styles.picker}
         >
           {Object.values(IngredientWeight).map((unit) => (
-            <Picker.Item key={unit} label={unit} value={unit} style={styles.pickerItem} />
+            <Picker.Item
+              key={unit}
+              label={unit}
+              value={unit}
+              style={styles.pickerItem}
+            />
           ))}
         </Picker>
       </View>
-      {
-        removeButton ? (
-          <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
-             <Text style={styles.removeButtonText}>✕</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.removeButtonPlaceholder} />
-        )
-      }
+      {removeButton ? (
+        <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
+          <Text style={styles.removeButtonText}>✕</Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.removeButtonPlaceholder} />
+      )}
     </View>
   );
 }
-
 
 export function MedicineSelect() {
   const { t, i18n } = useTranslation();
@@ -149,13 +159,14 @@ export function MedicineSelect() {
   const [name, setName] = React.useState("");
 
   const db = useSQLiteContext();
+
   React.useEffect(() => {
     async function setup() {
-      const result = await db.getFirstAsync<{ name: string, active_ingredients: string }>(
-        'SELECT * FROM medicines;'
-      );
+      const result = await db.getFirstAsync<{
+        name: string;
+        active_ingredients: string;
+      }>("SELECT * FROM medicines;");
       if (result) {
-        
       }
       console.log("fetched medicines: ", result?.name);
     }
@@ -174,7 +185,11 @@ export function MedicineSelect() {
   const handleSave = async () => {
     console.log(activeIngredientsRefs.current);
     const activeIngredientsStr = JSON.stringify(activeIngredientsRefs.current);
-    const result = await db.runAsync('INSERT INTO medicines (name, active_ingredients) VALUES (?, ?)', name, activeIngredientsStr);
+    const result = await db.runAsync(
+      "INSERT INTO medicines (name, active_ingredients) VALUES (?, ?)",
+      name,
+      activeIngredientsStr,
+    );
   };
 
   const handleAddActiveIngredient = () => {
@@ -190,13 +205,12 @@ export function MedicineSelect() {
       console.log("removing", idx, ": ", activeIngredientsRefs.current[idx]);
       activeIngredientsRefs.current.splice(idx, 1);
       setNActiveIngredients(nActiveIngredients - 1);
-    }
+    };
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        
         <Text style={styles.headerLabel}>{t("Medicine Name")}</Text>
         <TextInput
           placeholder="e.g. Ibuprofen"
@@ -209,9 +223,7 @@ export function MedicineSelect() {
 
         <Text style={styles.headerLabel}>{t("Base Unit")}</Text>
         <View style={styles.fullWidthPickerContainer}>
-          <Picker
-            style={styles.picker}
-          >
+          <Picker style={styles.picker}>
             <Picker.Item label="Select an option" value="" color="#999" />
             {Object.values(BaseUnit).map((unit) => (
               <Picker.Item
@@ -227,7 +239,7 @@ export function MedicineSelect() {
         <Text style={[styles.headerLabel, { marginTop: 20 }]}>
           {t("Active ingredients per base unit")}
         </Text>
-        
+
         <View style={styles.ingredientsList}>
           {Array.from({ length: nActiveIngredients }, (_, idx) => (
             <ActiveIngredientRow
@@ -239,10 +251,12 @@ export function MedicineSelect() {
           ))}
         </View>
 
-        <TouchableOpacity onPress={handleAddActiveIngredient} style={styles.addButton}>
+        <TouchableOpacity
+          onPress={handleAddActiveIngredient}
+          style={styles.addButton}
+        >
           <Text style={styles.addButtonText}>+ Add Ingredient</Text>
         </TouchableOpacity>
-
       </ScrollView>
 
       <View style={styles.footer}>
@@ -295,7 +309,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e0e0e0",
     borderRadius: 8,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   fullWidthPickerContainer: {
     height: 50,
@@ -303,7 +317,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e0e0e0",
     borderRadius: 8,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginBottom: 15,
   },
   picker: {
@@ -332,7 +346,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#007AFF",
     borderRadius: 8,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     alignItems: "center",
     marginTop: 5,
   },

@@ -10,15 +10,16 @@ const resources = {
       "Brand name": "Brand name",
       "Active ingredients": "Active ingredients",
       "Active ingredients per base unit": "Active ingredients per base unit",
-      "Frequency": "Frequency",
+      Frequency: "Frequency",
     },
   },
   pl: {
     translation: {
       "Brand name": "Nazwa leku",
       "Active ingredients": "Substancje czynne",
-      "Active ingredients per base unit": "Substancje czynne na jednostkę podstawową",
-      "Frequency": "Częstotliwość",
+      "Active ingredients per base unit":
+        "Substancje czynne na jednostkę podstawową",
+      Frequency: "Częstotliwość",
     },
   },
 };

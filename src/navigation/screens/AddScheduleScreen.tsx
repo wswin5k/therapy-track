@@ -111,15 +111,20 @@ type ActiveIngedientRowProps = {
   activeIngredientInfo: ActiveIngedientInfo;
   removeCallback: () => void;
   removeButton: boolean;
-}
+};
 
-function ActiveIngredientRow({ activeIngredientInfo, removeCallback, removeButton}: ActiveIngedientRowProps) {
-
-  const [name, setName] = React.useState<string>(activeIngredientInfo.name ? activeIngredientInfo.name : "");
+function ActiveIngredientRow({
+  activeIngredientInfo,
+  removeCallback,
+  removeButton,
+}: ActiveIngedientRowProps) {
+  const [name, setName] = React.useState<string>(
+    activeIngredientInfo.name ? activeIngredientInfo.name : "",
+  );
 
   const handleRemove = () => {
     removeCallback();
-  }
+  };
 
   return (
     <View style={styles.row}>
@@ -138,7 +143,11 @@ function ActiveIngredientRow({ activeIngredientInfo, removeCallback, removeButto
         }}
         style={[styles.input, { width: "25%" }]}
         placeholder="Weight"
-        defaultValue={activeIngredientInfo.weight ? activeIngredientInfo.weight.toString() : ""}
+        defaultValue={
+          activeIngredientInfo.weight
+            ? activeIngredientInfo.weight.toString()
+            : ""
+        }
       />
       <Picker
         onValueChange={(unit: string) => {
@@ -151,23 +160,14 @@ function ActiveIngredientRow({ activeIngredientInfo, removeCallback, removeButto
           <Picker.Item label={unit} value={unit} />
         ))}
       </Picker>
-      {
-        removeButton ? <Button onPress={handleRemove}>x</Button>:""
-      }
+      {removeButton ? <Button onPress={handleRemove}>x</Button> : ""}
     </View>
   );
 }
 
+function AddMedicineForm() {}
 
-function AddMedicineForm() {
-
-}
-
-
-function AddScheduleForm() {
-
-}
-
+function AddScheduleForm() {}
 
 export function MedicineSelect() {
   const { t, i18n } = useTranslation();
@@ -228,7 +228,7 @@ export function MedicineSelect() {
       console.log("removing", idx, ": ", activeIngredientsRefs.current[idx]);
       activeIngredientsRefs.current.splice(idx, 1);
       setNActiveIngredients(nActiveIngredients - 1);
-    }
+    };
   };
 
   return (
