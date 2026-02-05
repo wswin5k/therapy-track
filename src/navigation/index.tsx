@@ -3,14 +3,14 @@ import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Home } from "./screens/Home";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
-import { AddScheduleScreen } from "./screens/AddScheduleScreen";
 import { NotFound } from "./screens/NotFound";
 import type { MedicineData } from "../models/MedicineData";
+import EditScheduleScreen from "./screens/EditScheduleScreen";
 
 export type RootStackParamList = {
   HomeTabs: undefined;
   SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
-  AddScheduleScreen: { medicineData: MedicineData } | undefined;
+  EditScheduleScreen: { medicine: MedicineData };
   NotFound: undefined;
 };
 
@@ -40,8 +40,8 @@ const RootStack = createNativeStackNavigator({
         presentation: "modal",
       }),
     },
-    AddScheduleScreen: {
-      screen: AddScheduleScreen,
+    EditScheduleScreen: {
+      screen: EditScheduleScreen,
       options: {
         presentation: "modal",
       },

@@ -236,19 +236,9 @@ export function SelectMedicineScreen() {
 
     console.log("Created MedicineData:", medicineData);
 
-    const activeIngredientsStr = JSON.stringify(activeIngredientsRefs.current);
-    const result = await db.runAsync(
-      "INSERT INTO medicines (name, active_ingredients) VALUES (?, ?)",
-      name,
-      activeIngredientsStr,
-    );
-
-    // Add the inserted ID to the medicine data
-    medicineData.medicineId = result.lastInsertRowId;
-
-    // Navigate to AddScheduleScreen only if mode is "schedule"
+    // Navigate to EditScheduleScreen only if mode is "schedule"
     if (mode === "schedule") {
-      navigation.navigate("AddScheduleScreen", { medicineData });
+      navigation.navigate("EditScheduleScreen", { medicine: medicineData });
     }
     // If mode is "one-time", we'll handle it later (do nothing for now)
   };

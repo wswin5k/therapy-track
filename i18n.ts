@@ -11,6 +11,12 @@ const resources = {
       "Active ingredients": "Active ingredients",
       "Active ingredients per base unit": "Active ingredients per base unit",
       Frequency: "Frequency",
+      "Once daily": "Once daily",
+      "Twice daily": "Twice daily",
+      "Three times daily": "Three times daily",
+      Weekly: "Weekly",
+      "Every two weeks": "Every two weeks",
+      pill: "pill",
     },
   },
   pl: {

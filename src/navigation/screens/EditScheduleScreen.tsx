@@ -12,15 +12,48 @@ import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
+import SmallNumberStepper from "../../components/SmallNumberStepper";
+import { Frequency, IntervalUnit } from "../../models/Schedule";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "..";
+import { MedicineData } from "../../models/MedicineData";
+import { useSQLiteContext } from "expo-sqlite";
 
-enum Frequency {
-  OnceDaily = "once daily",
-  TwiceDaily = "two times a day",
-  OnceWeekly = "one time a week",
+enum FrequencySelection {
+  OnceDaily = "Once daily",
+  TwiceDaily = "Twice daily",
+  ThriceDaily = "Three times daily",
+  OnceWeekly = "Weekly",
+  OnceBiweekly = "Every two weeks",
 }
 
-export function AddScheduleScreen() {
+const frequencySelectionMap: { [key: string]: Frequency } = {
+  OnceDaily: new Frequency(IntervalUnit.day, 1, 1, null),
+  TwiceDaily: new Frequency(IntervalUnit.day, 1, 2, null),
+  ThriceDaily: new Frequency(IntervalUnit.day, 1, 3, null),
+  OnceWeekly: new Frequency(IntervalUnit.week, 1, 1, null),
+  OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1, null),
+};
+
+type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "EditScheduleScreen"
+>;
+
+export default function EditScheduleScreen() {
   const { t, i18n } = useTranslation();
+
+  const navigation = useNavigation<EditScheduleScreenNavigationProp>();
+  const route = useRoute();
+
+  const db = useSQLiteContext();
+
+  const freqRef = React.useRef<Frequency | null>(null);
+
+  const [nDoses, setNDoses] = React.useState<number>(1);
+  const dosesRefs = React.useRef(Array.from({ length: nDoses }, () => 1));
+
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
     React.useState<boolean>(false);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
@@ -52,27 +85,68 @@ export function AddScheduleScreen() {
     setIsEndDatePickerOpened(false);
   };
 
-  const handleSave = () => {};
+  const handleSave = async () => {
+    const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
+    const db_insert1 = await db.runAsync(
+      "INSERT INTO medicines (name, active_ingredients) VALUES (?, ?)",
+      medicine.name,
+      activeIngredientsStr,
+    );
+
+  };
+
+  const handleFrequencyPicker = (item: string) => {
+    console.log(item, typeof item);
+    const freq = frequencySelectionMap[item];
+    freqRef.current = freq;
+    if (freq.numberOfDoses !== nDoses) {
+      setNDoses(freq.numberOfDoses);
+    }
+  };
+
+  const handleDoseInput = (idx: number) => {
+    return (value: number) => {
+      dosesRefs.current[idx] = value;
+    };
+  };
+
+  const dosesLabels = [
+    "First Dose",
+    "Second Dose",
+    "Third Dose",
+    "Fourth Dose",
+  ];
+
+  const medicine = (route.params as { medicine: MedicineData }).medicine;
+
+  const doseHeader = `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.headerLabel}>{t("Schedule")}</Text>
-
         <Text style={styles.headerLabel}>{t("Frequency")}</Text>
         <View style={styles.fullWidthPickerContainer}>
-          <Picker style={styles.picker}>
-            {Object.values(Frequency).map((unit) => (
-              <Picker.Item
-                label={unit}
-                value={unit}
-                style={styles.pickerItem}
-              />
+          <Picker style={styles.picker} onValueChange={handleFrequencyPicker}>
+            {Object.entries(FrequencySelection).map(([k, v]) => (
+              <Picker.Item label={t(v)} value={k} style={styles.pickerItem} />
             ))}
           </Picker>
         </View>
 
-        <Text style={styles.headerLabel}>{t("Dose")}</Text>
+        <Text style={styles.headerLabel}>{t(doseHeader)}</Text>
+
+        <View>
+          {nDoses === 1 ? (
+            <SmallNumberStepper onChange={handleDoseInput(0)} />
+          ) : (
+            Array.from({ length: nDoses }, (_, idx) => (
+              <View style={styles.ingredientRow}>
+                <Text key={idx}>{t(dosesLabels[idx])}</Text>
+                <SmallNumberStepper key={idx+100} onChange={handleDoseInput(idx)} />
+              </View>
+            ))
+          )}
+        </View>
 
         <Text style={styles.headerLabel}>{t("Start date")}</Text>
         <TouchableOpacity onPress={handleSelectStartDate} style={styles.input}>
@@ -100,6 +174,7 @@ export function AddScheduleScreen() {
           <RNDateTimePicker
             mode="date"
             value={new Date()}
+            minimumDate={startDate ? startDate : undefined}
             onChange={handleEndDateChange}
           />
         ) : (
@@ -183,5 +258,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  ingredientRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
   },
 });

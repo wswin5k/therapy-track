@@ -24,7 +24,7 @@ export function App() {
   const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   return (
-    <SQLiteProvider databaseName="main.db" onInit={migrateDbIfNeeded}>
+    <SQLiteProvider databaseName="main5.db" onInit={migrateDbIfNeeded}>
       <Navigation
         theme={theme}
         linking={{
@@ -56,10 +56,24 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
     return;
   }
   if (currentDbVersion === 0) {
-    await db.execAsync(`
-PRAGMA journal_mode = 'wal';
-CREATE TABLE medicines (id INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL, active_ingredients TEXT NOT NULL );
-`);
+    db.withTransactionAsync(async () => {
+      await db.execAsync(`
+      PRAGMA journal_mode = 'wal';
+      CREATE TABLE medicines (id INTEGER PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      active_ingredients TEXT NOT NULL );
+
+      CREATE TABLE schedules (
+      id INTEGER PRIMARY KEY NOT NULL,
+      medicine INTEGER,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      doses TEXT NOT NULL,
+      freq TEXT NOT NULL,
+      FOREIGN KEY(medicine) REFERENCES medicines(id)
+    );
+    `);
+    });
     currentDbVersion = 1;
   }
   // if (currentDbVersion === 1) {
