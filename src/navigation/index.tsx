@@ -1,7 +1,5 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import {
-  createStaticNavigation,
-} from "@react-navigation/native";
+import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Home } from "./screens/Home";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
