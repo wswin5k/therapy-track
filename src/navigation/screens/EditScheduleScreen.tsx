@@ -49,7 +49,7 @@ export default function EditScheduleScreen() {
 
   const db = useSQLiteContext();
 
-  const freqRef = React.useRef<Frequency | null>(null);
+  const freqRef = React.useRef<Frequency>(frequencySelectionMap["OnceDaily"]);
 
   const [nDoses, setNDoses] = React.useState<number>(1);
   const dosesRefs = React.useRef(Array.from({ length: nDoses }, () => 1));
@@ -57,6 +57,7 @@ export default function EditScheduleScreen() {
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
     React.useState<boolean>(false);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
+  const [startDateError, setStartDateError] = React.useState<boolean>(false);
   const [isEndDatePickerOpened, setIsEndDatePickerOpened] =
     React.useState<boolean>(false);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
@@ -69,6 +70,7 @@ export default function EditScheduleScreen() {
     console.log(event.type);
     if (date) {
       setStartDate(date);
+      setStartDateError(false);
     }
     setIsStartDatePickerOpened(false);
   };
@@ -86,6 +88,21 @@ export default function EditScheduleScreen() {
   };
 
   const handleSave = async () => {
+    // Clear previous error state
+    setStartDateError(false);
+    // Validate required fields
+    if (!startDate) {
+      setStartDateError(true);
+      return;
+    }
+    if (endDate && startDate > endDate) {
+      setStartDateError(true);
+      return;
+    }
+    if (!freqRef.current) {
+      throw Error("Frequency has not been set");
+    }
+
     const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
     const db_insert1 = await db.runAsync(
       "INSERT INTO medicines (name, active_ingredients) VALUES (?, ?)",
@@ -93,10 +110,25 @@ export default function EditScheduleScreen() {
       activeIngredientsStr,
     );
 
+    const dosesJson = JSON.stringify(dosesRefs.current);
+    const freqJson = JSON.stringify(freqRef.current);
+    const startDateStr = startDate.toISOString();
+    const endDateStr = endDate ? endDate.toISOString() : null;
+
+    await db.runAsync(
+      "INSERT INTO schedules (medicine, start_date, end_date, doses, freq) VALUES (?, ?, ?, ?, ?)",
+      db_insert1.lastInsertRowId,
+      startDateStr,
+      endDateStr,
+      dosesJson,
+      freqJson,
+    );
+    console.log("save successfull");
+
+    navigation.navigate("HomeTabs");
   };
 
   const handleFrequencyPicker = (item: string) => {
-    console.log(item, typeof item);
     const freq = frequencySelectionMap[item];
     freqRef.current = freq;
     if (freq.numberOfDoses !== nDoses) {
@@ -142,14 +174,20 @@ export default function EditScheduleScreen() {
             Array.from({ length: nDoses }, (_, idx) => (
               <View style={styles.ingredientRow}>
                 <Text key={idx}>{t(dosesLabels[idx])}</Text>
-                <SmallNumberStepper key={idx+100} onChange={handleDoseInput(idx)} />
+                <SmallNumberStepper
+                  key={idx + 100}
+                  onChange={handleDoseInput(idx)}
+                />
               </View>
             ))
           )}
         </View>
 
         <Text style={styles.headerLabel}>{t("Start date")}</Text>
-        <TouchableOpacity onPress={handleSelectStartDate} style={styles.input}>
+        <TouchableOpacity
+          onPress={handleSelectStartDate}
+          style={[styles.input, startDateError && styles.inputError]}
+        >
           <Text style={styles.inputText}>
             {startDate ? startDate.toDateString() : "Select date"}
           </Text>
@@ -217,6 +255,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: "center",
     marginBottom: 10,
+  },
+  inputError: {
+    borderColor: "#ff3b30",
+    borderWidth: 2,
   },
   inputText: {
     fontSize: 16,

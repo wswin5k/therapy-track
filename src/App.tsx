@@ -24,7 +24,7 @@ export function App() {
   const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
 
   return (
-    <SQLiteProvider databaseName="main5.db" onInit={migrateDbIfNeeded}>
+    <SQLiteProvider databaseName="main8.db" onInit={migrateDbIfNeeded}>
       <Navigation
         theme={theme}
         linking={{
@@ -67,7 +67,7 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
       id INTEGER PRIMARY KEY NOT NULL,
       medicine INTEGER,
       start_date TEXT NOT NULL,
-      end_date TEXT NOT NULL,
+      end_date TEXT,
       doses TEXT NOT NULL,
       freq TEXT NOT NULL,
       FOREIGN KEY(medicine) REFERENCES medicines(id)
