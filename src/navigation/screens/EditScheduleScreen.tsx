@@ -172,12 +172,9 @@ export default function EditScheduleScreen() {
             <SmallNumberStepper onChange={handleDoseInput(0)} />
           ) : (
             Array.from({ length: nDoses }, (_, idx) => (
-              <View style={styles.ingredientRow}>
-                <Text key={idx}>{t(dosesLabels[idx])}</Text>
-                <SmallNumberStepper
-                  key={idx + 100}
-                  onChange={handleDoseInput(idx)}
-                />
+              <View key={idx} style={styles.ingredientRow}>
+                <Text>{t(dosesLabels[idx])}</Text>
+                <SmallNumberStepper onChange={handleDoseInput(idx)} />
               </View>
             ))
           )}

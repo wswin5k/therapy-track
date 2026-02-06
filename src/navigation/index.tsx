@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Home } from "./screens/Home";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { NotFound } from "./screens/NotFound";
+import { SchedulesListScreen } from "./screens/SchedulesListScreen";
 import type { MedicineData } from "../models/MedicineData";
 import EditScheduleScreen from "./screens/EditScheduleScreen";
 
@@ -20,6 +21,12 @@ const HomeTabs = createDrawerNavigator({
       screen: Home,
       options: {
         title: "Home",
+      },
+    },
+    SchedulesList: {
+      screen: SchedulesListScreen,
+      options: {
+        title: "My Schedules",
       },
     },
   },
