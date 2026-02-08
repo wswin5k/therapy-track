@@ -2,15 +2,17 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Home } from "./screens/Home";
-import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
+import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
 import { SchedulesListScreen } from "./screens/SchedulesListScreen";
 import type { Medicine } from "../models/Medicine";
 import EditScheduleScreen from "./screens/EditScheduleScreen";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 
 export type RootStackParamList = {
   HomeTabs: undefined;
+  EditMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
   SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
   EditScheduleScreen: { medicine: Medicine };
   NotFound: undefined;
@@ -54,6 +56,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Select medicine",
+      },
+    },
+    EditMedicineScreen: {
+      screen: EditMedicineScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit medicine",
       },
     },
     EditScheduleScreen: {

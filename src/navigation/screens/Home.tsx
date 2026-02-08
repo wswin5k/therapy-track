@@ -12,9 +12,8 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../index";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import React from "react";
-import { dbGetSchedules, ScheduleRow } from "../../dbAccess";
+import { dbGetSchedules } from "../../dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { Schedule } from "../../models/Schedule";
 import { useTranslation } from "react-i18next";
 import { BaseUnit } from "../../models/Medicine";
 
@@ -44,7 +43,7 @@ class DefaultDict<T> {
     return new Proxy(this, {
       get: (target: any, prop: string) => {
         if (!(prop in target)) {
-          target[prop] = [];
+          target[prop] = new Array();
         }
         return target[prop];
       },
@@ -106,7 +105,7 @@ export function Home() {
     {
       label: "Add one-time entry",
       onPress: () =>
-        navigation.navigate("SelectMedicineScreen", { mode: "one-time" }),
+        navigation.navigate("EditMedicineScreen", { mode: "one-time" }),
     },
     {
       label: "Add Schedule",
@@ -115,12 +114,9 @@ export function Home() {
     },
   ];
 
-  const renderScheduleItem = (intake: IntakeInfo) => {
+  const renderScheduleItem = (intake: IntakeInfo, key: number) => {
     return (
-      <View
-        key={intake.medicineName + intake.intakeIdx}
-        style={styles.scheduleItem}
-      >
+      <View key={key} style={styles.scheduleItem}>
         <View style={styles.scheduleContent}>
           <Text style={styles.medicineName}>
             {intake.medicineName} {intake.dose}{" "}
@@ -148,13 +144,20 @@ export function Home() {
     </View>
   );
 
+  let key = 0;
+  let intakesAll = new Array<[number, IntakeInfo]>();
+  for (const intakes of Object.values(schedules)) {
+    for (const intake of intakes) {
+      intakesAll.push([key, intake]);
+      key += 1;
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        {Object.keys(schedules).length > 1
-          ? Object.values(schedules).map((s) =>
-              s.map((intake) => renderScheduleItem(intake)),
-            )
+        {intakesAll
+          ? intakesAll.map(([key, intake]) => renderScheduleItem(intake, key))
           : renderEmptyState()}
       </ScrollView>
 

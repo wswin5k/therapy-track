@@ -14,16 +14,23 @@ export function strKeyOfBaseUnit(x: BaseUnit) {
   return Object.keys(BaseUnit)[Object.values(BaseUnit).indexOf(x)];
 }
 
-export enum IngredientWeight {
+export enum IngredientAmountUnit {
   Miligram = "mg",
   Gram = "g",
   Microgram = "µg",
+  InternationalUnit = "IU",
 }
 
-export interface ActiveIngredient {
+export class ActiveIngredient {
   name: string;
-  weight: number;
-  unit: IngredientWeight;
+  amount: number;
+  unit: IngredientAmountUnit;
+
+  constructor(name: string, amount: number, unit: IngredientAmountUnit) {
+    this.name = name;
+    this.amount = amount;
+    this.unit = unit;
+  }
 }
 
 export class Medicine {
@@ -42,6 +49,10 @@ export class Medicine {
     this.baseUnit = baseUnit;
     this.activeIngredients = activeIngredients;
     this.medicineId = medicineId;
+  }
+
+  toString(): string {
+    return `${this.name} ${this.baseUnit}`;
   }
 
   toJSON(): string {

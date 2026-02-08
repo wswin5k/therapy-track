@@ -1,0 +1,454 @@
+import React from "react";
+import { useTranslation } from "react-i18next";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { useSQLiteContext } from "expo-sqlite";
+import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  useRoute,
+  useNavigation,
+  useTheme,
+  Theme,
+} from "@react-navigation/native";
+import type { RootStackParamList } from "../index";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {
+  Medicine,
+  BaseUnit,
+  IngredientAmountUnit,
+  ActiveIngredient,
+} from "../../models/Medicine";
+import { dbGetMedicines } from "../../dbAccess";
+
+class ActiveIngedientInfo {
+  name: string | null;
+  weight: number | null;
+  unit: IngredientAmountUnit | null;
+  elementKey: number;
+
+  constructor(
+    elementKey: number,
+    name: string | null = null,
+    weight: number | null = null,
+    unit: IngredientAmountUnit | null = null,
+  ) {
+    this.elementKey = elementKey;
+    this.name = name;
+    this.weight = weight;
+    this.unit = unit;
+  }
+}
+
+type ActiveIngedientRowProps = {
+  activeIngredientInfo: ActiveIngedientInfo;
+  removeCallback: () => void;
+  removeButton: boolean;
+  errors?: { name?: boolean; weight?: boolean };
+  theme: Theme;
+};
+
+function ActiveIngredientRow({
+  activeIngredientInfo,
+  removeCallback,
+  removeButton,
+  errors,
+  theme,
+}: ActiveIngedientRowProps) {
+  const [name, setName] = React.useState<string>(
+    activeIngredientInfo.name ? activeIngredientInfo.name : "",
+  );
+
+  const handleRemove = () => {
+    removeCallback();
+  };
+
+  React.useEffect(() => {
+    activeIngredientInfo.unit = IngredientAmountUnit.Miligram;
+  }, []);
+
+  return (
+    <View style={styles.ingredientRow}>
+      <View style={{ flex: 2 }}>
+        <TextInput
+          onChangeText={(text: string) => {
+            activeIngredientInfo.name = text;
+            setName(text);
+          }}
+          style={[
+            styles.input,
+            { borderColor: theme.colors.border },
+            errors?.name ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
+          placeholder="Name"
+          placeholderTextColor="#999"
+          value={name}
+        />
+      </View>
+      <View style={{ flex: 1.2 }}>
+        <TextInput
+          onChangeText={(weightStr: string) => {
+            activeIngredientInfo.weight = parseFloat(weightStr);
+          }}
+          style={[
+            styles.input,
+            { borderColor: theme.colors.border },
+            errors?.weight ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
+          placeholder="Amount"
+          placeholderTextColor="#999"
+          keyboardType="numeric"
+          defaultValue={
+            activeIngredientInfo.weight
+              ? activeIngredientInfo.weight.toString()
+              : ""
+          }
+        />
+      </View>
+      <View
+        style={[
+          styles.pickerContainer,
+          { flex: 1.2 },
+          { borderColor: theme.colors.border },
+        ]}
+      >
+        <Picker
+          onValueChange={(unit: IngredientAmountUnit) => {
+            activeIngredientInfo.unit = unit;
+          }}
+          style={styles.picker}
+        >
+          {Object.values(IngredientAmountUnit).map((unit) => (
+            <Picker.Item
+              key={unit}
+              label={unit}
+              value={unit}
+              style={styles.pickerItem}
+            />
+          ))}
+        </Picker>
+      </View>
+      {removeButton ? (
+        <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
+          <Text style={styles.removeButtonText}>✕</Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.removeButtonPlaceholder} />
+      )}
+    </View>
+  );
+}
+
+type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "EditMedicineScreen"
+>;
+
+export function EditMedicineScreen() {
+  const { t, i18n } = useTranslation();
+  const route = useRoute();
+  const navigation = useNavigation<EditMedicineScreenNavigationProp>();
+
+  const theme = useTheme();
+
+  const [name, setName] = React.useState("");
+  const [baseUnit, setBaseUnit] = React.useState<string>("");
+
+  // Validation State
+  const [nameError, setNameError] = React.useState(false);
+  const [baseUnitError, setBaseUnitError] = React.useState(false);
+  const [ingredientErrors, setIngredientErrors] = React.useState<
+    Record<number, { name?: boolean; weight?: boolean }>
+  >({});
+  const mode = (route.params as { mode?: "schedule" | "one-time" })?.mode;
+
+  const [nActiveIngredients, setNActiveIngredients] = React.useState<number>(1);
+  const elementKeyCounter = React.useRef<number>(nActiveIngredients);
+  const activeIngredientsRefs = React.useRef(
+    Array.from(
+      { length: nActiveIngredients },
+      (_, idx) => new ActiveIngedientInfo(idx),
+    ),
+  );
+
+  const validate = () => {
+    let isValid = true;
+    const newIngredientErrors: Record<
+      number,
+      { name?: boolean; weight?: boolean }
+    > = {};
+
+    if (!name.trim() && name.trim().length < 50) {
+      setNameError(true);
+      isValid = false;
+    } else {
+      setNameError(false);
+    }
+
+    if (!baseUnit) {
+      setBaseUnitError(true);
+      isValid = false;
+    } else {
+      setBaseUnitError(false);
+    }
+
+    // Validate Ingredients
+    activeIngredientsRefs.current.forEach((ingredient) => {
+      const errors: { name?: boolean; weight?: boolean } = {};
+      if (!ingredient.name || !ingredient.name.trim()) {
+        errors.name = true;
+        isValid = false;
+      }
+      if (ingredient.weight === null || isNaN(ingredient.weight)) {
+        errors.weight = true;
+        isValid = false;
+      }
+
+      if (Object.keys(errors).length > 0) {
+        newIngredientErrors[ingredient.elementKey] = errors;
+      }
+    });
+
+    setIngredientErrors(newIngredientErrors);
+    return isValid;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) {
+      return;
+    }
+
+    console.log(activeIngredientsRefs.current);
+
+    const activeIngredients = activeIngredientsRefs.current
+      .filter((ing) => ing.name && ing.weight && ing.unit)
+      .map((ing) => new ActiveIngredient(ing.name!, ing.weight!, ing.unit!));
+
+    console.log(activeIngredients);
+
+    const medicineData = new Medicine(
+      name,
+      baseUnit as BaseUnit,
+      activeIngredients,
+    );
+
+    if (mode === "schedule") {
+      navigation.navigate("EditScheduleScreen", { medicine: medicineData });
+    }
+    // If mode is "one-time", we'll handle it later (do nothing for now)
+  };
+
+  const handleAddActiveIngredient = () => {
+    activeIngredientsRefs.current.push(
+      new ActiveIngedientInfo(elementKeyCounter.current),
+    );
+    elementKeyCounter.current += 1;
+    setNActiveIngredients(nActiveIngredients + 1);
+  };
+
+  const removeActiveIngredient = (idx: number) => {
+    return () => {
+      activeIngredientsRefs.current.splice(idx, 1);
+      setNActiveIngredients(nActiveIngredients - 1);
+    };
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <Text style={styles.headerLabel}>{t("Medicine Name")}</Text>
+        <TextInput
+          placeholder="e.g. Ibuprofen"
+          placeholderTextColor="#999"
+          style={[
+            styles.input,
+            { borderColor: theme.colors.border },
+            nameError ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
+          onChangeText={(text: string) => {
+            setName(text);
+            if (nameError) setNameError(false);
+          }}
+        />
+        {nameError && (
+          <Text style={styles.errorText}>{t("Medicine name is required")}</Text>
+        )}
+
+        <Text style={styles.headerLabel}>{t("Base Unit")}</Text>
+        <View
+          style={[
+            styles.fullWidthPickerContainer,
+            { borderColor: theme.colors.border },
+            baseUnitError ? { borderColor: "red", borderWidth: 1 } : {},
+          ]}
+        >
+          <Picker
+            selectedValue={baseUnit}
+            onValueChange={(itemValue) => {
+              setBaseUnit(itemValue);
+              if (baseUnitError) setBaseUnitError(false);
+            }}
+            style={styles.picker}
+          >
+            <Picker.Item label="Select an option" value="" color="#999" />
+            {Object.values(BaseUnit).map((unit) => (
+              <Picker.Item
+                key={unit}
+                label={unit}
+                value={unit}
+                style={styles.pickerItem}
+              />
+            ))}
+          </Picker>
+        </View>
+        {baseUnitError && (
+          <Text style={styles.errorText}>{t("Base unit is required")}</Text>
+        )}
+
+        <Text style={[styles.headerLabel, { marginTop: 20 }]}>
+          {t("Active ingredients per base unit")}
+        </Text>
+
+        <View style={styles.ingredientsList}>
+          {Array.from({ length: nActiveIngredients }, (_, idx) => (
+            <ActiveIngredientRow
+              key={activeIngredientsRefs.current[idx].elementKey}
+              activeIngredientInfo={activeIngredientsRefs.current[idx]}
+              removeCallback={removeActiveIngredient(idx)}
+              removeButton={nActiveIngredients === 1 ? false : true}
+              errors={
+                ingredientErrors[activeIngredientsRefs.current[idx].elementKey]
+              }
+              theme={theme}
+            />
+          ))}
+        </View>
+
+        <TouchableOpacity
+          onPress={handleAddActiveIngredient}
+          style={[styles.addButton, { borderColor: theme.colors.primary }]}
+        >
+          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
+            + Add Ingredient
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+        >
+          <Text style={styles.nextButtonText}>Next</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 100, // Space for footer
+  },
+  headerLabel: {
+    fontSize: 17,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  input: {
+    height: 60,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+  },
+  ingredientRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+  ingredientsList: {
+    marginBottom: 15,
+  },
+  pickerContainer: {
+    height: 60,
+    borderWidth: 1,
+    borderRadius: 8,
+    justifyContent: "center",
+  },
+  fullWidthPickerContainer: {
+    height: 60,
+    borderWidth: 1,
+    borderRadius: 8,
+    justifyContent: "center",
+    marginBottom: 5,
+  },
+  picker: {
+    width: "100%",
+    height: 60,
+  },
+  pickerItem: {
+    fontSize: 16,
+  },
+  removeButton: {
+    width: 20,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  removeButtonPlaceholder: {
+    width: 20,
+  },
+  removeButtonText: {
+    fontSize: 20,
+    color: "#ff3b30",
+    fontWeight: "bold",
+  },
+  addButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderStyle: "dashed",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    borderTopWidth: 1,
+  },
+  nextButton: {
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  nextButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 2,
+    marginBottom: 10,
+  },
+});

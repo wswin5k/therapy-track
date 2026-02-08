@@ -1,20 +1,29 @@
-import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React from "react";
+import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 
 export default function SmallNumberStepper({ min = 1, max = 100, onChange }) {
-  const [count, setCount] = useState(min);
+  const [count, setCount] = React.useState<number>(min);
 
   const handlePress = (type) => {
     let newValue = count;
     if (type === "increment" && count < max) {
-      newValue = count + 1;
+      newValue = count + 1.0;
     } else if (type === "decrement" && count > min) {
-      newValue = count - 1;
+      newValue = count - 1.0;
     }
 
     if (newValue !== count) {
       setCount(newValue);
       if (onChange) onChange(newValue);
+    }
+  };
+
+  const handleChangeText = (v: string) => {
+    const parsed = parseFloat(v);
+    if (isFinite(parsed) && !isNaN(parsed) && min < parsed && parsed < max) {
+      setCount(parsed);
+    } else {
+      setCount(1.0);
     }
   };
 
@@ -32,7 +41,12 @@ export default function SmallNumberStepper({ min = 1, max = 100, onChange }) {
       </Pressable>
 
       <View style={styles.valueContainer}>
-        <Text style={styles.valueText}>{count}</Text>
+        <TextInput
+          keyboardType="numeric"
+          defaultValue={count.toString()}
+          onChangeText={handleChangeText}
+          style={styles.valueText}
+        />
       </View>
 
       <Pressable

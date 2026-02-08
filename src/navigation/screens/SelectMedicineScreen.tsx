@@ -19,117 +19,12 @@ import {
 } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Medicine, BaseUnit, IngredientWeight } from "../../models/Medicine";
-
-class ActiveIngedientInfo {
-  name: string | null;
-  weight: number | null;
-  unit: IngredientWeight | null;
-  elementKey: number;
-
-  constructor(
-    elementKey: number,
-    name: string | null = null,
-    weight: number | null = null,
-    unit: IngredientWeight | null = null,
-  ) {
-    this.elementKey = elementKey;
-    this.name = name;
-    this.weight = weight;
-    this.unit = unit;
-  }
-}
-
-type ActiveIngedientRowProps = {
-  activeIngredientInfo: ActiveIngedientInfo;
-  removeCallback: () => void;
-  removeButton: boolean;
-  errors?: { name?: boolean; weight?: boolean };
-  theme: Theme;
-};
-
-function ActiveIngredientRow({
-  activeIngredientInfo,
-  removeCallback,
-  removeButton,
-  errors,
-  theme,
-}: ActiveIngedientRowProps) {
-  const [name, setName] = React.useState<string>(
-    activeIngredientInfo.name ? activeIngredientInfo.name : "",
-  );
-
-  const handleRemove = () => {
-    removeCallback();
-  };
-
-  return (
-    <View style={styles.ingredientRow}>
-      <View style={{ flex: 2 }}>
-        <TextInput
-          onChangeText={(text: string) => {
-            activeIngredientInfo.name = text;
-            setName(text);
-          }}
-          style={[
-            styles.input,
-            { borderColor: theme.colors.border },
-            errors?.name ? { borderColor: "red", borderWidth: 1 } : {},
-          ]}
-          placeholder="Name"
-          placeholderTextColor="#999"
-          value={name}
-        />
-      </View>
-      <View style={{ flex: 1 }}>
-        <TextInput
-          onChangeText={(weightStr: string) => {
-            activeIngredientInfo.weight = parseFloat(weightStr);
-          }}
-          style={[
-            styles.input,
-            { borderColor: theme.colors.border },
-            errors?.weight ? { borderColor: "red", borderWidth: 1 } : {},
-          ]}
-          placeholder="Weight"
-          placeholderTextColor="#999"
-          keyboardType="numeric"
-          defaultValue={
-            activeIngredientInfo.weight
-              ? activeIngredientInfo.weight.toString()
-              : ""
-          }
-        />
-      </View>
-      <View
-        style={[styles.pickerContainer, { borderColor: theme.colors.border }]}
-      >
-        <Picker
-          onValueChange={(unit: string) => {
-            activeIngredientInfo.unit = IngredientWeight.Gram;
-          }}
-          style={styles.picker}
-        >
-          {Object.values(IngredientWeight).map((unit) => (
-            <Picker.Item
-              key={unit}
-              label={unit}
-              value={unit}
-              style={styles.pickerItem}
-            />
-          ))}
-        </Picker>
-      </View>
-      {removeButton ? (
-        <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
-          <Text style={styles.removeButtonText}>✕</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.removeButtonPlaceholder} />
-      )}
-    </View>
-  );
-}
+import {
+  Medicine,
+  BaseUnit,
+  IngredientAmountUnit,
+} from "../../models/Medicine";
+import { dbGetMedicines } from "../../dbAccess";
 
 type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -149,214 +44,73 @@ export function SelectMedicineScreen() {
   // Validation State
   const [nameError, setNameError] = React.useState(false);
   const [baseUnitError, setBaseUnitError] = React.useState(false);
-  const [ingredientErrors, setIngredientErrors] = React.useState<
-    Record<number, { name?: boolean; weight?: boolean }>
-  >({});
+  const [medicines, setMedicines] = React.useState<Medicine[]>([]);
 
   const db = useSQLiteContext();
 
-  // Get mode from route params
   const mode = (route.params as { mode?: "schedule" | "one-time" })?.mode;
 
   React.useEffect(() => {
     async function setup() {
-      const result = await db.getFirstAsync<{
-        name: string;
-        active_ingredients: string;
-      }>("SELECT * FROM medicines;");
-      if (result) {
-      }
-      console.log("fetched medicines: ", result?.name);
+      const result = await dbGetMedicines(db);
+      setMedicines(result);
     }
     setup();
   }, []);
 
-  const [nActiveIngredients, setNActiveIngredients] = React.useState<number>(1);
-  const elementKeyCounter = React.useRef<number>(nActiveIngredients);
-  const activeIngredientsRefs = React.useRef(
-    Array.from(
-      { length: nActiveIngredients },
-      (_, idx) => new ActiveIngedientInfo(idx),
-    ),
-  );
-
-  const validate = () => {
-    let isValid = true;
-    const newIngredientErrors: Record<
-      number,
-      { name?: boolean; weight?: boolean }
-    > = {};
-
-    if (!name.trim() && name.trim().length < 50) {
-      setNameError(true);
-      isValid = false;
-    } else {
-      setNameError(false);
-    }
-
-    if (!baseUnit) {
-      setBaseUnitError(true);
-      isValid = false;
-    } else {
-      setBaseUnitError(false);
-    }
-
-    // Validate Ingredients
-    activeIngredientsRefs.current.forEach((ingredient) => {
-      const errors: { name?: boolean; weight?: boolean } = {};
-      if (!ingredient.name || !ingredient.name.trim()) {
-        errors.name = true;
-        isValid = false;
-      }
-      if (ingredient.weight === null || isNaN(ingredient.weight)) {
-        errors.weight = true;
-        isValid = false;
-      }
-
-      if (Object.keys(errors).length > 0) {
-        newIngredientErrors[ingredient.elementKey] = errors;
-      }
-    });
-
-    setIngredientErrors(newIngredientErrors);
-    return isValid;
-  };
-
-  const handleSave = async () => {
-    if (!validate()) {
-      return;
-    }
-
-    // Convert active ingredients to the proper format
-    const activeIngredients = activeIngredientsRefs.current
-      .filter((ing) => ing.name && ing.weight !== null && ing.unit)
-      .map((ing) => ({
-        name: ing.name!,
-        weight: ing.weight!,
-        unit: ing.unit!,
-      }));
-
-    // Create MedicineData object
-    const medicineData = new Medicine(
-      name,
-      baseUnit as BaseUnit,
-      activeIngredients,
-    );
-
-    console.log("Created MedicineData:", medicineData);
-
-    // Navigate to EditScheduleScreen only if mode is "schedule"
+  const handleAddNewMedicine = () => {
     if (mode === "schedule") {
-      navigation.navigate("EditScheduleScreen", { medicine: medicineData });
+      navigation.navigate("EditMedicineScreen", { mode: mode });
     }
-    // If mode is "one-time", we'll handle it later (do nothing for now)
   };
 
-  const handleAddActiveIngredient = () => {
-    activeIngredientsRefs.current.push(
-      new ActiveIngedientInfo(elementKeyCounter.current),
-    );
-    elementKeyCounter.current += 1;
-    setNActiveIngredients(nActiveIngredients + 1);
+  const handleSelectMedicine = (medicineIdx: number) => {
+    if (mode === "schedule") {
+      navigation.navigate("EditScheduleScreen", {
+        medicine: medicines[medicineIdx],
+      });
+    }
   };
 
-  const removeActiveIngredient = (idx: number) => {
-    return () => {
-      console.log("removing", idx, ": ", activeIngredientsRefs.current[idx]);
-      activeIngredientsRefs.current.splice(idx, 1);
-      setNActiveIngredients(nActiveIngredients - 1);
-    };
+  const createMedicineLabel = (m: Medicine): string => {
+    let ingredientsStr = m.activeIngredients
+      .map((ai) => `${ai.name} ${ai.amount}${ai.unit}`)
+      .join(", ");
+
+    ingredientsStr = ingredientsStr ? "(" + ingredientsStr + ")" : "";
+
+    return `${m.name} ${t(m.baseUnit, { count: 2 })} ${ingredientsStr}`;
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.headerLabel}>{t("Medicine Name")}</Text>
-        <TextInput
-          placeholder="e.g. Ibuprofen"
-          placeholderTextColor="#999"
-          style={[
-            styles.input,
-            { borderColor: theme.colors.border },
-            nameError ? { borderColor: "red", borderWidth: 1 } : {},
-          ]}
-          onChangeText={(text: string) => {
-            setName(text);
-            if (nameError) setNameError(false);
-          }}
-        />
-        {nameError && (
-          <Text style={styles.errorText}>{t("Medicine name is required")}</Text>
-        )}
-
-        <Text style={styles.headerLabel}>{t("Base Unit")}</Text>
-        <View
-          style={[
-            styles.fullWidthPickerContainer,
-            { borderColor: theme.colors.border },
-            baseUnitError ? { borderColor: "red", borderWidth: 1 } : {},
-          ]}
-        >
-          <Picker
-            selectedValue={baseUnit}
-            onValueChange={(itemValue) => {
-              setBaseUnit(itemValue);
-              if (baseUnitError) setBaseUnitError(false);
-            }}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select an option" value="" color="#999" />
-            {Object.values(BaseUnit).map((unit) => (
-              <Picker.Item
-                key={unit}
-                label={unit}
-                value={unit}
-                style={styles.pickerItem}
-              />
-            ))}
-          </Picker>
-        </View>
-        {baseUnitError && (
-          <Text style={styles.errorText}>{t("Base unit is required")}</Text>
-        )}
-
-        <Text style={[styles.headerLabel, { marginTop: 20 }]}>
-          {t("Active ingredients per base unit")}
-        </Text>
-
-        <View style={styles.ingredientsList}>
-          {Array.from({ length: nActiveIngredients }, (_, idx) => (
-            <ActiveIngredientRow
-              key={activeIngredientsRefs.current[idx].elementKey}
-              activeIngredientInfo={activeIngredientsRefs.current[idx]}
-              removeCallback={removeActiveIngredient(idx)}
-              removeButton={nActiveIngredients === 1 ? false : true}
-              errors={
-                ingredientErrors[activeIngredientsRefs.current[idx].elementKey]
-              }
-              theme={theme}
+      <View
+        style={[
+          styles.fullWidthPickerContainer,
+          { borderColor: theme.colors.border },
+          baseUnitError ? { borderColor: "red", borderWidth: 1 } : {},
+        ]}
+      >
+        <Picker onValueChange={handleSelectMedicine} style={styles.picker}>
+          <Picker.Item label="Select existing medicine" value="" color="#999" />
+          {medicines.map((m, idx) => (
+            <Picker.Item
+              key={m.medicineId}
+              label={createMedicineLabel(m)}
+              value={idx}
+              style={styles.pickerItem}
             />
           ))}
-        </View>
-
-        <TouchableOpacity
-          onPress={handleAddActiveIngredient}
-          style={[styles.addButton, { borderColor: theme.colors.primary }]}
-        >
-          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
-            + Add Ingredient
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <TouchableOpacity
-          onPress={handleSave}
-          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
-        >
-          <Text style={styles.nextButtonText}>Next</Text>
-        </TouchableOpacity>
+        </Picker>
       </View>
+
+      <Text style={styles.headerLabel}>{t("or")}</Text>
+      <TouchableOpacity
+        onPress={handleAddNewMedicine}
+        style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+      >
+        <Text style={styles.nextButtonText}>{t("Add new medicine")}</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -370,12 +124,12 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Space for footer
   },
   headerLabel: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
     marginBottom: 8,
   },
   input: {
-    height: 50,
+    height: 60,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -384,21 +138,20 @@ const styles = StyleSheet.create({
   ingredientRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     marginBottom: 10,
   },
   ingredientsList: {
     marginBottom: 15,
   },
   pickerContainer: {
-    flex: 1.2,
-    height: 50,
+    height: 60,
     borderWidth: 1,
     borderRadius: 8,
     justifyContent: "center",
   },
   fullWidthPickerContainer: {
-    height: 50,
+    height: 60,
     borderWidth: 1,
     borderRadius: 8,
     justifyContent: "center",
@@ -406,19 +159,19 @@ const styles = StyleSheet.create({
   },
   picker: {
     width: "100%",
-    height: 50,
+    height: 60,
   },
   pickerItem: {
     fontSize: 16,
   },
   removeButton: {
-    width: 30,
+    width: 20,
     height: 50,
     justifyContent: "center",
     alignItems: "center",
   },
   removeButtonPlaceholder: {
-    width: 30,
+    width: 20,
   },
   removeButtonText: {
     fontSize: 20,

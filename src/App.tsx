@@ -22,7 +22,7 @@ const CustomLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: 'rgba(76, 45, 255, 1)',
+    primary: "rgba(76, 45, 255, 1)",
   },
 };
 
@@ -30,10 +30,9 @@ const CustomDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: 'rgba(76, 45, 255, 1)',
+    primary: "rgba(76, 45, 255, 1)",
   },
 };
-
 
 export function App() {
   const colorScheme = useColorScheme();
@@ -41,7 +40,7 @@ export function App() {
   const theme = colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme;
 
   return (
-    <SQLiteProvider databaseName="main10.db" onInit={migrateDbIfNeeded}>
+    <SQLiteProvider databaseName="main11.db" onInit={migrateDbIfNeeded}>
       <Navigation
         theme={theme}
         linking={{
