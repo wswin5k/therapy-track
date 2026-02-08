@@ -5,13 +5,14 @@ import { Home } from "./screens/Home";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { NotFound } from "./screens/NotFound";
 import { SchedulesListScreen } from "./screens/SchedulesListScreen";
-import type { MedicineData } from "../models/MedicineData";
+import type { Medicine } from "../models/Medicine";
 import EditScheduleScreen from "./screens/EditScheduleScreen";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 
 export type RootStackParamList = {
   HomeTabs: undefined;
   SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
-  EditScheduleScreen: { medicine: MedicineData };
+  EditScheduleScreen: { medicine: Medicine };
   NotFound: undefined;
 };
 
@@ -20,7 +21,7 @@ const HomeTabs = createDrawerNavigator({
     Home: {
       screen: Home,
       options: {
-        title: "Home",
+        title: "Today",
       },
     },
     SchedulesList: {
@@ -30,6 +31,13 @@ const HomeTabs = createDrawerNavigator({
       },
     },
   },
+  drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
+    <Ionicons
+      name="home"
+      size={size}
+      color={focused ? "rgba(62, 185, 185, 1)" : "#ba3f3fff"}
+    />
+  ),
 });
 
 const RootStack = createNativeStackNavigator({
@@ -37,15 +45,16 @@ const RootStack = createNativeStackNavigator({
     HomeTabs: {
       screen: HomeTabs,
       options: {
-        title: "Home",
+        title: "Today",
         headerShown: false,
       },
     },
     SelectMedicineScreen: {
       screen: SelectMedicineScreen,
-      options: () => ({
+      options: {
         presentation: "modal",
-      }),
+        title: "Select medicine",
+      },
     },
     EditScheduleScreen: {
       screen: EditScheduleScreen,

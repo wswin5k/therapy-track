@@ -17,7 +17,7 @@ import { Frequency, IntervalUnit } from "../../models/Schedule";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "..";
-import { MedicineData } from "../../models/MedicineData";
+import { BaseUnit, Medicine, strKeyOfBaseUnit } from "../../models/Medicine";
 import { useSQLiteContext } from "expo-sqlite";
 
 enum FrequencySelection {
@@ -105,8 +105,9 @@ export default function EditScheduleScreen() {
 
     const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
     const db_insert1 = await db.runAsync(
-      "INSERT INTO medicines (name, active_ingredients) VALUES (?, ?)",
+      "INSERT INTO medicines (name, base_unit, active_ingredients) VALUES (?, ?, ?)",
       medicine.name,
+      strKeyOfBaseUnit(medicine.baseUnit),
       activeIngredientsStr,
     );
 
@@ -123,7 +124,6 @@ export default function EditScheduleScreen() {
       dosesJson,
       freqJson,
     );
-    console.log("save successfull");
 
     navigation.navigate("HomeTabs");
   };
@@ -142,14 +142,7 @@ export default function EditScheduleScreen() {
     };
   };
 
-  const dosesLabels = [
-    "First Dose",
-    "Second Dose",
-    "Third Dose",
-    "Fourth Dose",
-  ];
-
-  const medicine = (route.params as { medicine: MedicineData }).medicine;
+  const medicine = (route.params as { medicine: Medicine }).medicine;
 
   const doseHeader = `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`;
 
@@ -173,7 +166,7 @@ export default function EditScheduleScreen() {
           ) : (
             Array.from({ length: nDoses }, (_, idx) => (
               <View key={idx} style={styles.ingredientRow}>
-                <Text>{t(dosesLabels[idx])}</Text>
+                <Text>{t("Dose", { count: idx, oridnal: true })}</Text>
                 <SmallNumberStepper onChange={handleDoseInput(idx)} />
               </View>
             ))

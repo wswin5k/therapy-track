@@ -1,8 +1,8 @@
-import { MedicineData } from "./MedicineData";
+import { Medicine } from "./Medicine";
 
 export enum IntervalUnit {
   day = "day",
-  week = "weel",
+  week = "week",
   month = "month",
 }
 
@@ -26,23 +26,26 @@ export class Frequency {
 }
 
 export class Schedule {
-  medicine: MedicineData;
+  medicine: Medicine;
   startDate: Date;
   endDate: Date;
   doses: number[];
   freq: Frequency;
+  dbId: number;
 
   constructor(
-    medicine: MedicineData,
+    medicine: Medicine,
     startDate: Date,
     endDate: Date,
     doses: number[],
     freq: Frequency,
+    dbId: number,
   ) {
     this.medicine = medicine;
     this.startDate = startDate;
     this.endDate = endDate;
     this.doses = doses;
     this.freq = freq;
+    this.dbId = dbId;
   }
 }

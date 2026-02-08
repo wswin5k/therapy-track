@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React from "react";
 import {
   StyleSheet,
   Text,
@@ -11,16 +11,8 @@ import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
-
-interface ScheduleRow {
-  id: number;
-  medicine: number;
-  medicine_name: string;
-  start_date: string;
-  end_date: string | null;
-  doses: string;
-  freq: string;
-}
+import { dbGetSchedules } from "../../dbAccess";
+import { Schedule } from "../../models/Schedule";
 
 interface ParsedFrequency {
   intervalUnit: string;
@@ -32,24 +24,15 @@ export function SchedulesListScreen() {
   const { t, i18n } = useTranslation();
   const db = useSQLiteContext();
 
-  const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [schedules, setSchedules] = React.useState<Schedule[]>([]);
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  const formatDate = (dateStr: string): string => {
-    const date = new Date(dateStr);
+  const formatDate = (date: Date): string => {
     return date.toLocaleDateString(i18n.language, {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-  };
-
-  const parseFrequency = (freqStr: string): ParsedFrequency => {
-    try {
-      return JSON.parse(freqStr);
-    } catch {
-      return { intervalUnit: "day", intervalLength: 1, numberOfDoses: 1 };
-    }
   };
 
   const getFrequencyLabel = (freq: ParsedFrequency): string => {
@@ -72,9 +55,8 @@ export function SchedulesListScreen() {
     return t("Custom frequency");
   };
 
-  const getDosesSummary = (dosesStr: string): string => {
+  const getDosesSummary = (doses: number[]): string => {
     try {
-      const doses: number[] = JSON.parse(dosesStr);
       if (doses.length === 1) {
         return t("{{count}} dose", { count: doses[0] });
       }
@@ -84,60 +66,46 @@ export function SchedulesListScreen() {
     }
   };
 
-  const loadSchedules = useCallback(async () => {
-    try {
-      const result = await db.getAllAsync<ScheduleRow>(`
-        SELECT s.id, s.medicine, m.name as medicine_name, s.start_date, s.end_date, s.doses, s.freq
-        FROM schedules s
-        JOIN medicines m ON s.medicine = m.id
-        ORDER BY s.start_date DESC
-      `);
-      setSchedules(result);
-    } catch (error) {
-      console.error("Error loading schedules:", error);
-    }
-  }, [db]);
+  const loadSchedules = React.useCallback(async () => {
+    const result = await dbGetSchedules(db);
+    setSchedules(result);
+  }, []);
 
   const handleDelete = async (id: number) => {
-    try {
-      await db.runAsync("DELETE FROM schedules WHERE id = ?", id);
-      await loadSchedules();
-    } catch (error) {
-      console.error("Error deleting schedule:", error);
-    }
+    await db.runAsync("DELETE FROM schedules WHERE id = ?", id);
+    await loadSchedules();
   };
 
-  const onRefresh = useCallback(async () => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     await loadSchedules();
     setRefreshing(false);
   }, [loadSchedules]);
 
   useFocusEffect(
-    useCallback(() => {
+    React.useCallback(() => {
       loadSchedules();
     }, [loadSchedules]),
   );
 
-  const renderScheduleItem = ({ item }: { item: ScheduleRow }) => {
-    const freq = parseFrequency(item.freq);
-    const frequencyLabel = getFrequencyLabel(freq);
+  const renderScheduleItem = ({ item }: { item: Schedule }) => {
+    const frequencyLabel = getFrequencyLabel(item.freq);
     const dosesSummary = getDosesSummary(item.doses);
-    const dateRange = item.end_date
-      ? `${formatDate(item.start_date)} - ${formatDate(item.end_date)}`
-      : `${formatDate(item.start_date)} - ${t("No end date")}`;
+    const dateRange = item.endDate
+      ? `${formatDate(item.startDate)} - ${formatDate(item.endDate)}`
+      : `${formatDate(item.startDate)} - ${t("No end date")}`;
 
     return (
       <View style={styles.scheduleItem}>
         <View style={styles.scheduleContent}>
-          <Text style={styles.medicineName}>{item.medicine_name}</Text>
+          <Text style={styles.medicineName}>{item.medicine.name}</Text>
           <Text style={styles.frequency}>{frequencyLabel}</Text>
           <Text style={styles.doses}>{dosesSummary}</Text>
           <Text style={styles.dateRange}>{dateRange}</Text>
         </View>
         <TouchableOpacity
           style={styles.deleteButton}
-          onPress={() => handleDelete(item.id)}
+          onPress={() => handleDelete(item.dbId)}
         >
           <Text style={styles.deleteButtonText}>{t("Delete")}</Text>
         </TouchableOpacity>
@@ -159,7 +127,7 @@ export function SchedulesListScreen() {
       <FlatList
         data={schedules}
         renderItem={renderScheduleItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.dbId.toString()}
         contentContainerStyle={
           schedules.length === 0 ? styles.emptyList : styles.list
         }

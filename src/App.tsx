@@ -18,13 +18,30 @@ SplashScreen.preventAutoHideAsync();
 
 const prefix = createURL("/");
 
+const CustomLightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: 'rgba(76, 45, 255, 1)',
+  },
+};
+
+const CustomDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: 'rgba(76, 45, 255, 1)',
+  },
+};
+
+
 export function App() {
   const colorScheme = useColorScheme();
 
-  const theme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
+  const theme = colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme;
 
   return (
-    <SQLiteProvider databaseName="main8.db" onInit={migrateDbIfNeeded}>
+    <SQLiteProvider databaseName="main10.db" onInit={migrateDbIfNeeded}>
       <Navigation
         theme={theme}
         linking={{
@@ -61,6 +78,7 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
       PRAGMA journal_mode = 'wal';
       CREATE TABLE medicines (id INTEGER PRIMARY KEY NOT NULL,
       name TEXT NOT NULL,
+      base_unit TEXT NOT NULL,
       active_ingredients TEXT NOT NULL );
 
       CREATE TABLE schedules (

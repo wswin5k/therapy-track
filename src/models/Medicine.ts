@@ -5,9 +5,13 @@ export enum BaseUnit {
   Drop = "drop",
   InjectioPen = "injection pen",
   Sachet = "sachet",
-  PressOfTheDosingPump = "press of the dosing pump",
+  PressOfTheDosingPump = "press of a dosing pump",
   Vial = "vial",
   PreFilledSyringe = "pre-filled syringe",
+}
+
+export function strKeyOfBaseUnit(x: BaseUnit) {
+  return Object.keys(BaseUnit)[Object.values(BaseUnit).indexOf(x)];
 }
 
 export enum IngredientWeight {
@@ -22,7 +26,7 @@ export interface ActiveIngredient {
   unit: IngredientWeight;
 }
 
-export class MedicineData {
+export class Medicine {
   name: string;
   baseUnit: BaseUnit;
   activeIngredients: ActiveIngredient[];
@@ -49,9 +53,9 @@ export class MedicineData {
     });
   }
 
-  static fromJSON(json: string): MedicineData {
+  static fromJSON(json: string): Medicine {
     const data = JSON.parse(json);
-    return new MedicineData(
+    return new Medicine(
       data.name,
       data.baseUnit,
       data.activeIngredients,

@@ -11,14 +11,15 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import {
+  useRoute,
+  useNavigation,
+  useTheme,
+  Theme,
+} from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import {
-  MedicineData,
-  BaseUnit,
-  IngredientWeight,
-} from "../../models/MedicineData";
+import { Medicine, BaseUnit, IngredientWeight } from "../../models/Medicine";
 
 class ActiveIngedientInfo {
   name: string | null;
@@ -44,6 +45,7 @@ type ActiveIngedientRowProps = {
   removeCallback: () => void;
   removeButton: boolean;
   errors?: { name?: boolean; weight?: boolean };
+  theme: Theme;
 };
 
 function ActiveIngredientRow({
@@ -51,6 +53,7 @@ function ActiveIngredientRow({
   removeCallback,
   removeButton,
   errors,
+  theme,
 }: ActiveIngedientRowProps) {
   const [name, setName] = React.useState<string>(
     activeIngredientInfo.name ? activeIngredientInfo.name : "",
@@ -70,6 +73,7 @@ function ActiveIngredientRow({
           }}
           style={[
             styles.input,
+            { borderColor: theme.colors.border },
             errors?.name ? { borderColor: "red", borderWidth: 1 } : {},
           ]}
           placeholder="Name"
@@ -84,6 +88,7 @@ function ActiveIngredientRow({
           }}
           style={[
             styles.input,
+            { borderColor: theme.colors.border },
             errors?.weight ? { borderColor: "red", borderWidth: 1 } : {},
           ]}
           placeholder="Weight"
@@ -96,7 +101,9 @@ function ActiveIngredientRow({
           }
         />
       </View>
-      <View style={styles.pickerContainer}>
+      <View
+        style={[styles.pickerContainer, { borderColor: theme.colors.border }]}
+      >
         <Picker
           onValueChange={(unit: string) => {
             activeIngredientInfo.unit = IngredientWeight.Gram;
@@ -133,6 +140,8 @@ export function SelectMedicineScreen() {
   const { t, i18n } = useTranslation();
   const route = useRoute();
   const navigation = useNavigation<SelectMedicineScreenNavigationProp>();
+
+  const theme = useTheme();
 
   const [name, setName] = React.useState("");
   const [baseUnit, setBaseUnit] = React.useState<string>("");
@@ -228,7 +237,7 @@ export function SelectMedicineScreen() {
       }));
 
     // Create MedicineData object
-    const medicineData = new MedicineData(
+    const medicineData = new Medicine(
       name,
       baseUnit as BaseUnit,
       activeIngredients,
@@ -268,6 +277,7 @@ export function SelectMedicineScreen() {
           placeholderTextColor="#999"
           style={[
             styles.input,
+            { borderColor: theme.colors.border },
             nameError ? { borderColor: "red", borderWidth: 1 } : {},
           ]}
           onChangeText={(text: string) => {
@@ -283,6 +293,7 @@ export function SelectMedicineScreen() {
         <View
           style={[
             styles.fullWidthPickerContainer,
+            { borderColor: theme.colors.border },
             baseUnitError ? { borderColor: "red", borderWidth: 1 } : {},
           ]}
         >
@@ -323,20 +334,26 @@ export function SelectMedicineScreen() {
               errors={
                 ingredientErrors[activeIngredientsRefs.current[idx].elementKey]
               }
+              theme={theme}
             />
           ))}
         </View>
 
         <TouchableOpacity
           onPress={handleAddActiveIngredient}
-          style={styles.addButton}
+          style={[styles.addButton, { borderColor: theme.colors.primary }]}
         >
-          <Text style={styles.addButtonText}>+ Add Ingredient</Text>
+          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
+            + Add Ingredient
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity onPress={handleSave} style={styles.nextButton}>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+        >
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
@@ -347,7 +364,6 @@ export function SelectMedicineScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   scrollContainer: {
     padding: 20,
@@ -357,17 +373,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
-    color: "#333",
   },
   input: {
     height: 50,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 16,
-    color: "#333",
   },
   ingredientRow: {
     flexDirection: "row",
@@ -381,17 +393,13 @@ const styles = StyleSheet.create({
   pickerContainer: {
     flex: 1.2,
     height: 50,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     borderRadius: 8,
     justifyContent: "center",
   },
   fullWidthPickerContainer: {
     height: 50,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     borderRadius: 8,
     justifyContent: "center",
     marginBottom: 5,
@@ -420,14 +428,12 @@ const styles = StyleSheet.create({
   addButton: {
     padding: 12,
     borderWidth: 1,
-    borderColor: "#007AFF",
     borderRadius: 8,
     borderStyle: "dashed",
     alignItems: "center",
     marginTop: 5,
   },
   addButtonText: {
-    color: "#007AFF",
     fontSize: 16,
     fontWeight: "500",
   },
@@ -437,12 +443,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
   },
   nextButton: {
-    backgroundColor: "#007AFF",
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",

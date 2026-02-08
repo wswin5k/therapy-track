@@ -17,6 +17,11 @@ const resources = {
       Weekly: "Weekly",
       "Every two weeks": "Every two weeks",
       pill: "pill",
+      Dose_ordinal_one: "First dose",
+      Dose_ordinal_two: "Second dose",
+      Dose_ordinal_three: "Thrid dose",
+      Dose_oridinal_four: "Fourth dose",
+      Dose_ordinal_other: "{{count}}th place", // 4th, 5th, 24th, 11th
     },
   },
   pl: {
