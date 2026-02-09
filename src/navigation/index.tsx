@@ -20,6 +20,7 @@ export type RootStackParamList = {
       name: string;
       baseUnit: BaseUnit;
       activeIngredients: ActiveIngredient[];
+      medicineId?: number;
     };
   };
   NotFound: undefined;

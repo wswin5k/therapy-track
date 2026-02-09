@@ -41,7 +41,7 @@ export function App() {
   const theme = colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme;
 
   return (
-    <SQLiteProvider databaseName="main12.db" onInit={migrateDbIfNeeded}>
+    <SQLiteProvider databaseName="main13.db" onInit={migrateDbIfNeeded}>
       <Navigation
         theme={theme}
         linking={{

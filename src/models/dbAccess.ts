@@ -116,6 +116,31 @@ export async function dbGetSchedulesWithMedicines(
   });
 }
 
+export async function dbInsertSchedule(
+  db: SQLiteDatabase,
+  medicineId: number,
+  schedule: {
+    startDate: Date;
+    endDate: Date | null;
+    doses: Dose[];
+    freq: Frequency;
+  },
+) {
+  const dosesJson = JSON.stringify(schedule.doses);
+  const freqJson = JSON.stringify(schedule.freq);
+  const startDateStr = schedule.startDate.toISOString();
+  const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
+
+  await db.runAsync(
+    "INSERT INTO schedules (medicine, start_date, end_date, doses, freq) VALUES (?, ?, ?, ?, ?)",
+    medicineId,
+    startDateStr,
+    endDateStr,
+    dosesJson,
+    freqJson,
+  );
+}
+
 export async function dbInsertScheduleWithMedicine(
   db: SQLiteDatabase,
   medicine: {

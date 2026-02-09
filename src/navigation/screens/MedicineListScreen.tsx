@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
 import {
+  dbDeleteMedicine,
   dbGetMedicines,
   dbGetSchedulesWithMedicines,
 } from "../../models/dbAccess";

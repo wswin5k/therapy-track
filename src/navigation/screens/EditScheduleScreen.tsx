@@ -17,9 +17,17 @@ import { Dose, Frequency, IntervalUnit } from "../../models/Schedule";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "..";
-import { BaseUnit, Medicine, strKeyOfBaseUnit } from "../../models/Medicine";
+import {
+  ActiveIngredient,
+  BaseUnit,
+  Medicine,
+  strKeyOfBaseUnit,
+} from "../../models/Medicine";
 import { useSQLiteContext } from "expo-sqlite";
-import { dbInsertScheduleWithMedicine } from "../../models/dbAccess";
+import {
+  dbInsertSchedule,
+  dbInsertScheduleWithMedicine,
+} from "../../models/dbAccess";
 
 enum FrequencySelection {
   OnceDaily = "Once daily",
@@ -111,12 +119,21 @@ export default function EditScheduleScreen() {
       ([index, amount]) => new Dose(amount, index, null),
     );
 
-    await dbInsertScheduleWithMedicine(db, medicine, {
-      startDate,
-      endDate,
-      freq: freqRef.current,
-      doses,
-    });
+    if (medicine.dbId) {
+      await dbInsertSchedule(db, medicine.dbId, {
+        startDate,
+        endDate,
+        freq: freqRef.current,
+        doses,
+      });
+    } else {
+      await dbInsertScheduleWithMedicine(db, medicine, {
+        startDate,
+        endDate,
+        freq: freqRef.current,
+        doses,
+      });
+    }
 
     navigation.navigate("HomeTabs");
   };
@@ -135,7 +152,16 @@ export default function EditScheduleScreen() {
     };
   };
 
-  const medicine = (route.params as { medicine: Medicine }).medicine;
+  const medicine = (
+    route.params as {
+      medicine: {
+        name: string;
+        baseUnit: BaseUnit;
+        activeIngredients: ActiveIngredient[];
+        dbId?: number;
+      };
+    }
+  ).medicine;
 
   const doseHeader = `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`;
 

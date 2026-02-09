@@ -33,7 +33,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       end_date TEXT,
       doses TEXT NOT NULL,
       freq TEXT NOT NULL,
-      FOREIGN KEY(medicine) REFERENCES medicines(id));
+      FOREIGN KEY(medicine) REFERENCES medicines(id) ON DELETE CASCADE);
 
       CREATE TABLE dosage_records (
       id INTEGER PRIMARY KEY NOT NULL,
