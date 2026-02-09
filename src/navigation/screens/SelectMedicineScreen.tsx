@@ -11,20 +11,11 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  useRoute,
-  useNavigation,
-  useTheme,
-  Theme,
-} from "@react-navigation/native";
+import { useRoute, useNavigation, useTheme } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import {
-  Medicine,
-  BaseUnit,
-  IngredientAmountUnit,
-} from "../../models/Medicine";
-import { dbGetMedicines } from "../../dbAccess";
+import { Medicine } from "../../models/Medicine";
+import { dbGetMedicines } from "../../models/dbAccess";
 
 type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -37,13 +28,6 @@ export function SelectMedicineScreen() {
   const navigation = useNavigation<SelectMedicineScreenNavigationProp>();
 
   const theme = useTheme();
-
-  const [name, setName] = React.useState("");
-  const [baseUnit, setBaseUnit] = React.useState<string>("");
-
-  // Validation State
-  const [nameError, setNameError] = React.useState(false);
-  const [baseUnitError, setBaseUnitError] = React.useState(false);
   const [medicines, setMedicines] = React.useState<Medicine[]>([]);
 
   const db = useSQLiteContext();
@@ -88,14 +72,13 @@ export function SelectMedicineScreen() {
         style={[
           styles.fullWidthPickerContainer,
           { borderColor: theme.colors.border },
-          baseUnitError ? { borderColor: "red", borderWidth: 1 } : {},
         ]}
       >
         <Picker onValueChange={handleSelectMedicine} style={styles.picker}>
           <Picker.Item label="Select existing medicine" value="" color="#999" />
           {medicines.map((m, idx) => (
             <Picker.Item
-              key={m.medicineId}
+              key={m.dbId}
               label={createMedicineLabel(m)}
               value={idx}
               style={styles.pickerItem}

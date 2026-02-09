@@ -13,12 +13,13 @@ import RNDateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
-import { Frequency, IntervalUnit } from "../../models/Schedule";
+import { Dose, Frequency, IntervalUnit } from "../../models/Schedule";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "..";
 import { BaseUnit, Medicine, strKeyOfBaseUnit } from "../../models/Medicine";
 import { useSQLiteContext } from "expo-sqlite";
+import { dbInsertScheduleWithMedicine } from "../../models/dbAccess";
 
 enum FrequencySelection {
   OnceDaily = "Once daily",
@@ -29,11 +30,11 @@ enum FrequencySelection {
 }
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
-  OnceDaily: new Frequency(IntervalUnit.day, 1, 1, null),
-  TwiceDaily: new Frequency(IntervalUnit.day, 1, 2, null),
-  ThriceDaily: new Frequency(IntervalUnit.day, 1, 3, null),
-  OnceWeekly: new Frequency(IntervalUnit.week, 1, 1, null),
-  OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1, null),
+  OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
+  TwiceDaily: new Frequency(IntervalUnit.day, 1, 2),
+  ThriceDaily: new Frequency(IntervalUnit.day, 1, 3),
+  OnceWeekly: new Frequency(IntervalUnit.week, 1, 1),
+  OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1),
 };
 
 type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
@@ -52,7 +53,9 @@ export default function EditScheduleScreen() {
   const freqRef = React.useRef<Frequency>(frequencySelectionMap["OnceDaily"]);
 
   const [nDoses, setNDoses] = React.useState<number>(1);
-  const dosesRefs = React.useRef(Array.from({ length: nDoses }, () => 1));
+  const dosesRefs = React.useRef<Array<number>>(
+    Array.from({ length: nDoses }, () => 1),
+  );
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
     React.useState<boolean>(false);
@@ -103,27 +106,17 @@ export default function EditScheduleScreen() {
       throw Error("Frequency has not been set");
     }
 
-    const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
-    const db_insert1 = await db.runAsync(
-      "INSERT INTO medicines (name, base_unit, active_ingredients) VALUES (?, ?, ?)",
-      medicine.name,
-      strKeyOfBaseUnit(medicine.baseUnit),
-      activeIngredientsStr,
+    const doses = Array.from(
+      dosesRefs.current.entries(),
+      ([index, amount]) => new Dose(amount, index, null),
     );
 
-    const dosesJson = JSON.stringify(dosesRefs.current);
-    const freqJson = JSON.stringify(freqRef.current);
-    const startDateStr = startDate.toISOString();
-    const endDateStr = endDate ? endDate.toISOString() : null;
-
-    await db.runAsync(
-      "INSERT INTO schedules (medicine, start_date, end_date, doses, freq) VALUES (?, ?, ?, ?, ?)",
-      db_insert1.lastInsertRowId,
-      startDateStr,
-      endDateStr,
-      dosesJson,
-      freqJson,
-    );
+    await dbInsertScheduleWithMedicine(db, medicine, {
+      startDate,
+      endDate,
+      freq: freqRef.current,
+      doses,
+    });
 
     navigation.navigate("HomeTabs");
   };

@@ -5,16 +5,23 @@ import { Home } from "./screens/Home";
 import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
 import { SchedulesListScreen } from "./screens/SchedulesListScreen";
-import type { Medicine } from "../models/Medicine";
+import type { ActiveIngredient, BaseUnit, Medicine } from "../models/Medicine";
 import EditScheduleScreen from "./screens/EditScheduleScreen";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
+import { MedicineListScreen } from "./screens/MedicineListScreen";
 
 export type RootStackParamList = {
   HomeTabs: undefined;
   EditMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
   SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
-  EditScheduleScreen: { medicine: Medicine };
+  EditScheduleScreen: {
+    medicine: {
+      name: string;
+      baseUnit: BaseUnit;
+      activeIngredients: ActiveIngredient[];
+    };
+  };
   NotFound: undefined;
 };
 
@@ -25,11 +32,38 @@ const HomeTabs = createDrawerNavigator({
       options: {
         title: "Today",
       },
+      drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
+        <Ionicons
+          name="calendar"
+          size={size}
+          color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
+        />
+      ),
+    },
+    MedicinesList: {
+      screen: MedicineListScreen,
+      options: {
+        title: "Medicines",
+        drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
+          <Ionicons
+            name="server"
+            size={size}
+            color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
+          />
+        ),
+      },
     },
     SchedulesList: {
       screen: SchedulesListScreen,
       options: {
-        title: "My Schedules",
+        title: "Schedules",
+        drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
+          <Ionicons
+            name="calendar"
+            size={size}
+            color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
+          />
+        ),
       },
     },
   },

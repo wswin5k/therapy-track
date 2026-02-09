@@ -11,8 +11,11 @@ import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect } from "@react-navigation/native";
-import { dbGetSchedules } from "../../dbAccess";
-import { Schedule } from "../../models/Schedule";
+import {
+  dbDeleteSchedule,
+  dbGetSchedulesWithMedicines,
+} from "../../models/dbAccess";
+import { Dose, Schedule } from "../../models/Schedule";
 
 interface ParsedFrequency {
   intervalUnit: string;
@@ -55,10 +58,10 @@ export function SchedulesListScreen() {
     return t("Custom frequency");
   };
 
-  const getDosesSummary = (doses: number[]): string => {
+  const getDosesSummary = (doses: Dose[]): string => {
     try {
       if (doses.length === 1) {
-        return t("{{count}} dose", { count: doses[0] });
+        return t("{{count}} dose", { count: doses[0].amount });
       }
       return t("{{count}} doses", { count: doses.length });
     } catch {
@@ -67,12 +70,12 @@ export function SchedulesListScreen() {
   };
 
   const loadSchedules = React.useCallback(async () => {
-    const result = await dbGetSchedules(db);
+    const result = await dbGetSchedulesWithMedicines(db);
     setSchedules(result);
   }, []);
 
   const handleDelete = async (id: number) => {
-    await db.runAsync("DELETE FROM schedules WHERE id = ?", id);
+    await dbDeleteSchedule(db, id);
     await loadSchedules();
   };
 

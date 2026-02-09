@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { useSQLiteContext } from "expo-sqlite";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   useRoute,
@@ -24,8 +23,8 @@ import {
   BaseUnit,
   IngredientAmountUnit,
   ActiveIngredient,
+  NAME_MAX_LENGHT,
 } from "../../models/Medicine";
-import { dbGetMedicines } from "../../dbAccess";
 
 class ActiveIngedientInfo {
   name: string | null;
@@ -145,6 +144,12 @@ function ActiveIngredientRow({
   );
 }
 
+interface MedicineValidated {
+  name: string;
+  baseUnit: BaseUnit;
+  activeIngredients: ActiveIngredient[];
+}
+
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "EditMedicineScreen"
@@ -158,7 +163,7 @@ export function EditMedicineScreen() {
   const theme = useTheme();
 
   const [name, setName] = React.useState("");
-  const [baseUnit, setBaseUnit] = React.useState<string>("");
+  const [baseUnit, setBaseUnit] = React.useState<BaseUnit | null>(null);
 
   // Validation State
   const [nameError, setNameError] = React.useState(false);
@@ -177,69 +182,71 @@ export function EditMedicineScreen() {
     ),
   );
 
-  const validate = () => {
-    let isValid = true;
-    const newIngredientErrors: Record<
-      number,
-      { name?: boolean; weight?: boolean }
-    > = {};
+  const validate = (): MedicineValidated | null => {
+    let medicineValidated = null;
 
-    if (!name.trim() && name.trim().length < 50) {
-      setNameError(true);
-      isValid = false;
-    } else {
+    if (name.trim() && name.length < NAME_MAX_LENGHT) {
       setNameError(false);
-    }
 
-    if (!baseUnit) {
-      setBaseUnitError(true);
-      isValid = false;
+      if (baseUnit) {
+        setBaseUnitError(false);
+
+        const newIngredientErrors: Record<
+          number,
+          { name?: boolean; weight?: boolean }
+        > = {};
+        activeIngredientsRefs.current.forEach((ingredient) => {
+          const errors: { name?: boolean; weight?: boolean } = {};
+          if (!ingredient.name || !ingredient.name.trim()) {
+            errors.name = true;
+            medicineValidated = null;
+          }
+          if (ingredient.weight === null || isNaN(ingredient.weight)) {
+            errors.weight = true;
+            medicineValidated = null;
+          }
+
+          if (Object.keys(errors).length > 0) {
+            newIngredientErrors[ingredient.elementKey] = errors;
+          }
+        });
+        setIngredientErrors(newIngredientErrors);
+        if (Object.keys(newIngredientErrors).length === 0) {
+          const activeIngredients = activeIngredientsRefs.current
+            .filter((ing) => ing.name && ing.weight && ing.unit)
+            .map(
+              (ing) => new ActiveIngredient(ing.name!, ing.weight!, ing.unit!),
+            );
+
+          return {
+            name,
+            baseUnit,
+            activeIngredients,
+          };
+        } else {
+          medicineValidated = null;
+        }
+      } else {
+        setBaseUnitError(true);
+        medicineValidated = null;
+      }
     } else {
-      setBaseUnitError(false);
+      setNameError(true);
+      medicineValidated = null;
     }
-
-    // Validate Ingredients
-    activeIngredientsRefs.current.forEach((ingredient) => {
-      const errors: { name?: boolean; weight?: boolean } = {};
-      if (!ingredient.name || !ingredient.name.trim()) {
-        errors.name = true;
-        isValid = false;
-      }
-      if (ingredient.weight === null || isNaN(ingredient.weight)) {
-        errors.weight = true;
-        isValid = false;
-      }
-
-      if (Object.keys(errors).length > 0) {
-        newIngredientErrors[ingredient.elementKey] = errors;
-      }
-    });
-
-    setIngredientErrors(newIngredientErrors);
-    return isValid;
+    return medicineValidated;
   };
 
   const handleSave = async () => {
-    if (!validate()) {
+    const medicineValidated = validate();
+    if (!medicineValidated) {
       return;
     }
 
-    console.log(activeIngredientsRefs.current);
-
-    const activeIngredients = activeIngredientsRefs.current
-      .filter((ing) => ing.name && ing.weight && ing.unit)
-      .map((ing) => new ActiveIngredient(ing.name!, ing.weight!, ing.unit!));
-
-    console.log(activeIngredients);
-
-    const medicineData = new Medicine(
-      name,
-      baseUnit as BaseUnit,
-      activeIngredients,
-    );
-
     if (mode === "schedule") {
-      navigation.navigate("EditScheduleScreen", { medicine: medicineData });
+      navigation.navigate("EditScheduleScreen", {
+        medicine: medicineValidated,
+      });
     }
     // If mode is "one-time", we'll handle it later (do nothing for now)
   };

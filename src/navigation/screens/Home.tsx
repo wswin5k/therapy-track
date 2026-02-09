@@ -12,27 +12,38 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../index";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import React from "react";
-import { dbGetSchedules } from "../../dbAccess";
+import {
+  dbDeleteDosageRecord,
+  dbGetDosageRecord,
+  dbGetSchedulesWithMedicines,
+  dbInsertDosageRecord,
+} from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
 import { BaseUnit } from "../../models/Medicine";
 
-class IntakeInfo {
+class DosageInfo {
   medicineName: string;
   medicineBaseUnit: BaseUnit;
-  dose: number;
-  intakeIdx: number;
+  amount: number;
+  index: number;
+  scheduleId: number;
+  dosageRecordId: number | null;
 
   constructor(
     medicinName: string,
     medicineBaseUnit: BaseUnit,
-    dose: number,
-    intakeIdx: number,
+    amount: number,
+    index: number,
+    scheduleId: number,
+    dosageRecordId: number | null = null,
   ) {
     this.medicineName = medicinName;
     this.medicineBaseUnit = medicineBaseUnit;
-    this.dose = dose;
-    this.intakeIdx = intakeIdx;
+    this.amount = amount;
+    this.index = index;
+    this.scheduleId = scheduleId;
+    this.dosageRecordId = dosageRecordId;
   }
 }
 
@@ -51,6 +62,10 @@ class DefaultDict<T> {
   }
 }
 
+const pair = (a: number, b: number): number => {
+  return 0.5 * (a + b) * (a + b + 1) + b;
+};
+
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "HomeTabs"
@@ -60,37 +75,50 @@ export function Home() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeNavigationProp>();
   const db = useSQLiteContext();
+  const [date, setDate] = React.useState(new Date());
 
-  const [schedules, setSchedules] = React.useState<DefaultDict<IntakeInfo>>(
-    new DefaultDict<IntakeInfo>(),
+  const [schedules, setSchedules] = React.useState<DefaultDict<DosageInfo>>(
+    new DefaultDict<DosageInfo>(),
+  );
+
+  const [isDosageDone, setIsDosageDone] = React.useState<Map<number, boolean>>(
+    new Map(),
   );
 
   const loadSchedules = React.useCallback(async () => {
-    const result = await dbGetSchedules(db);
-    const today = new Date().getTime();
+    const result = await dbGetSchedulesWithMedicines(db);
+    const selectedTime = date.getTime();
     console.log(result);
     const schedulesToday = result.filter((s) => {
-      console.log(s.startDate.getTime());
-      console.log(today, typeof today);
-      console.log(today <= s.endDate?.getTime());
       return (
-        s.startDate.getTime() <= today &&
-        (!s.endDate || (s.endDate && today <= s.endDate.getTime()))
+        s.startDate.getTime() <= selectedTime &&
+        (!s.endDate || (s.endDate && selectedTime <= s.endDate.getTime()))
       );
     });
-    console.log(schedulesToday);
 
-    let intakes = new DefaultDict<IntakeInfo>();
+    let intakes = new DefaultDict<DosageInfo>();
 
     for (const s of schedulesToday) {
       for (const [idx, dose] of s.doses.entries()) {
         intakes[idx.toString()].push(
-          new IntakeInfo(s.medicine.name, s.medicine.baseUnit, dose, idx),
+          new DosageInfo(
+            s.medicine.name,
+            s.medicine.baseUnit,
+            dose.amount,
+            dose.index,
+            s.dbId,
+          ),
         );
       }
     }
 
     setSchedules(intakes);
+
+    const dosageRecords = await dbGetDosageRecord(db, date, date);
+
+    dosageRecords.forEach((dr) => {
+      isDosageDone.set(pair(dr.scheduleId, dr.doseIndex), true);
+    });
   }, []);
 
   useFocusEffect(
@@ -99,13 +127,36 @@ export function Home() {
     }, [loadSchedules]),
   );
 
-  const handleCheck = (scheduleId: number) => {};
+  const handleCheck = async (dosage: DosageInfo) => {
+    if (dosage.dosageRecordId) {
+      await dbDeleteDosageRecord(db, dosage.dosageRecordId);
+
+      dosage.dosageRecordId = null;
+
+      const newIsDosageDone = new Map(isDosageDone);
+      newIsDosageDone.set(pair(dosage.scheduleId, dosage.index), false);
+      setIsDosageDone(newIsDosageDone);
+    } else {
+      const id = await dbInsertDosageRecord(db, {
+        scheduleId: dosage.scheduleId,
+        date,
+        doseIndex: dosage.index,
+      });
+
+      dosage.dosageRecordId = id;
+
+      const newIsDosageDone = new Map(isDosageDone);
+      newIsDosageDone.set(pair(dosage.scheduleId, dosage.index), true);
+      setIsDosageDone(newIsDosageDone);
+      console.log(newIsDosageDone);
+    }
+  };
 
   const fabActions = [
     {
       label: "Add one-time entry",
       onPress: () =>
-        navigation.navigate("EditMedicineScreen", { mode: "one-time" }),
+        navigation.navigate("SelectMedicineScreen", { mode: "one-time" }),
     },
     {
       label: "Add Schedule",
@@ -114,18 +165,27 @@ export function Home() {
     },
   ];
 
-  const renderScheduleItem = (intake: IntakeInfo, key: number) => {
+  const renderScheduleItem = (dosage: DosageInfo, key: number) => {
     return (
       <View key={key} style={styles.scheduleItem}>
         <View style={styles.scheduleContent}>
           <Text style={styles.medicineName}>
-            {intake.medicineName} {intake.dose}{" "}
-            {t(intake.medicineBaseUnit, { count: intake.dose })}
+            {dosage.medicineName} {dosage.amount}{" "}
+            {t(dosage.medicineBaseUnit, { count: dosage.amount })}
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleCheck(1)}
+          style={[
+            styles.checkButton,
+            {
+              backgroundColor: isDosageDone.get(
+                pair(dosage.scheduleId, dosage.index),
+              )
+                ? "#10ce20ff"
+                : "#7b7b7bff",
+            },
+          ]}
+          onPress={() => handleCheck(dosage)}
         >
           {/* <Text style={styles.deleteButtonText}>{t("o")}</Text> */}
         </TouchableOpacity>
@@ -145,7 +205,7 @@ export function Home() {
   );
 
   let key = 0;
-  let intakesAll = new Array<[number, IntakeInfo]>();
+  let intakesAll = new Array<[number, DosageInfo]>();
   for (const intakes of Object.values(schedules)) {
     for (const intake of intakes) {
       intakesAll.push([key, intake]);
@@ -208,8 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#999",
   },
-  deleteButton: {
-    backgroundColor: "#abeebdff",
+  checkButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,

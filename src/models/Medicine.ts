@@ -1,3 +1,5 @@
+export const NAME_MAX_LENGHT: number = 100;
+
 export enum BaseUnit {
   Pill = "pill",
   Ml = "ml",
@@ -37,40 +39,23 @@ export class Medicine {
   name: string;
   baseUnit: BaseUnit;
   activeIngredients: ActiveIngredient[];
-  medicineId?: number;
+  dbId: number;
 
   constructor(
     name: string,
     baseUnit: BaseUnit,
     activeIngredients: ActiveIngredient[],
-    medicineId?: number,
+    dbId: number,
   ) {
     this.name = name;
     this.baseUnit = baseUnit;
     this.activeIngredients = activeIngredients;
-    this.medicineId = medicineId;
+    this.dbId = dbId;
   }
 
-  toString(): string {
-    return `${this.name} ${this.baseUnit}`;
-  }
-
-  toJSON(): string {
-    return JSON.stringify({
-      name: this.name,
-      baseUnit: this.baseUnit,
-      activeIngredients: this.activeIngredients,
-      medicineId: this.medicineId,
-    });
-  }
-
-  static fromJSON(json: string): Medicine {
-    const data = JSON.parse(json);
-    return new Medicine(
-      data.name,
-      data.baseUnit,
-      data.activeIngredients,
-      data.medicineId,
+  activeIngredientsString(): string[] {
+    return this.activeIngredients.map(
+      (ai) => `${ai.name} ${ai.amount}${ai.unit}`,
     );
   }
 }
