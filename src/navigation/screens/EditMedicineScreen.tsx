@@ -396,9 +396,6 @@ export function EditMedicineScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   scrollContainer: {
     padding: 20,
     paddingBottom: 100, // Space for footer

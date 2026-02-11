@@ -298,9 +298,6 @@ export default function EditScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   scrollContainer: {
     padding: 20,
     paddingBottom: 100,

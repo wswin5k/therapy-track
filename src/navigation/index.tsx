@@ -1,6 +1,7 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { TouchableOpacity } from "react-native";
 import { Home } from "./screens/Home";
 import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
@@ -37,7 +38,7 @@ export type RootStackParamList = {
 };
 
 const HomeTabs = createDrawerNavigator({
-  screenOptions: ({ theme }) => ({
+  screenOptions: ({ theme, navigation }) => ({
     drawerActiveTintColor: theme.colors.primary,
     drawerInactiveTintColor: theme.colors.textSecondary,
     drawerStyle: {
@@ -47,6 +48,14 @@ const HomeTabs = createDrawerNavigator({
       backgroundColor: theme.colors.card,
     },
     headerTintColor: theme.colors.text,
+    headerLeft: () => (
+      <TouchableOpacity
+        onPress={() => navigation.openDrawer()}
+        style={{ marginLeft: 16, marginRight: 10 }}
+      >
+        <Ionicons name="menu" size={28} color={theme.colors.text} />
+      </TouchableOpacity>
+    ),
   }),
   screens: {
     Home: {
@@ -55,7 +64,7 @@ const HomeTabs = createDrawerNavigator({
         title: "Today",
       },
       drawerIcon: ({ color, size }: { color: string; size: number }) => (
-        <Ionicons name="calendar" size={size} color={color} />
+        <Ionicons name="home" size={size} color={color} />
       ),
     },
     MedicinesList: {
