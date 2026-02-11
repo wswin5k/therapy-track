@@ -23,6 +23,7 @@ import {
   dbInsertSchedule,
   dbInsertScheduleWithMedicine,
 } from "../../models/dbAccess";
+import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
 enum FrequencySelection {
   OnceDaily = "Once daily",
@@ -162,10 +163,7 @@ export default function EditScheduleScreen() {
   const doseHeader = `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`;
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: theme.colors.background }]}
-      edges={["top", "bottom"]}
-    >
+    <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
           {t("Frequency")}
@@ -295,7 +293,7 @@ export default function EditScheduleScreen() {
           <Text style={styles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </DefaultMainContainer>
   );
 }
 

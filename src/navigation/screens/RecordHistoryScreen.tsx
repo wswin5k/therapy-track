@@ -17,7 +17,7 @@ function TableCell({ children }: Readonly<{ children: React.ReactNode }>) {
 
 export function RecordHistoryScreen() {
   return (
-    <DefaultMainContainer justifyContent="flex-start">
+    <DefaultMainContainer>
       <TableRow>
         <TableCell>{"Date"}</TableCell>
         <TableCell>{"adalimumab [mg]"}</TableCell>

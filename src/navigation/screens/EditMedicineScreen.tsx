@@ -9,17 +9,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  useRoute,
-  useNavigation,
-  useTheme,
-  Theme,
-} from "@react-navigation/native";
+import { useRoute, useNavigation, useTheme } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
-  Medicine,
   BaseUnit,
   IngredientAmountUnit,
   ActiveIngredient,
@@ -51,7 +44,7 @@ type ActiveIngedientRowProps = {
   removeCallback: () => void;
   removeButton: boolean;
   errors?: { name?: boolean; weight?: boolean };
-  theme: Theme;
+  theme: ReactNavigation.Theme;
 };
 
 function ActiveIngredientRow({
@@ -284,7 +277,7 @@ export function EditMedicineScreen() {
   };
 
   return (
-    <DefaultMainContainer justifyContent="flex-start">
+    <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
           {t("Medicine Name")}

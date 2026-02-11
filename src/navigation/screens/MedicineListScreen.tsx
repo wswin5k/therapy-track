@@ -5,17 +5,12 @@ import {
   View,
   FlatList,
   TouchableOpacity,
-  RefreshControl,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
 import { useFocusEffect, useTheme } from "@react-navigation/native";
-import {
-  dbDeleteMedicine,
-  dbGetMedicines,
-  dbGetSchedulesWithMedicines,
-} from "../../models/dbAccess";
+import { dbDeleteMedicine, dbGetMedicines } from "../../models/dbAccess";
 import { Medicine } from "../../models/Medicine";
 
 export function MedicineListScreen() {

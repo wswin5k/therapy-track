@@ -16,6 +16,7 @@ import {
   dbGetSchedulesWithMedicines,
 } from "../../models/dbAccess";
 import { Dose, Schedule } from "../../models/Schedule";
+import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
 interface ParsedFrequency {
   intervalUnit: string;
@@ -149,9 +150,7 @@ export function SchedulesListScreen() {
   );
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
+    <DefaultMainContainer>
       <FlatList
         data={schedules}
         renderItem={renderScheduleItem}
@@ -164,7 +163,7 @@ export function SchedulesListScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
-    </SafeAreaView>
+    </DefaultMainContainer>
   );
 }
 

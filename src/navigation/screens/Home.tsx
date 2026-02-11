@@ -1,5 +1,4 @@
 import {
-  FlatList,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,6 +26,7 @@ import {
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
 import { BaseUnit, Medicine } from "../../models/Medicine";
+import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
 class DosageInfo {
   medicineName: string;
@@ -302,9 +302,7 @@ export function Home() {
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
+    <DefaultMainContainer>
       <ScrollView>
         {intakesAll.map(([key, intake]) => renderScheduledDosage(intake, key))}
         {unscheduledDosages.map((di) => renderUnscheduledDosage(di))}
@@ -312,7 +310,7 @@ export function Home() {
       </ScrollView>
 
       <FloatingActionButton actions={fabActions} position="right" />
-    </SafeAreaView>
+    </DefaultMainContainer>
   );
 }
 

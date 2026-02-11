@@ -3,12 +3,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@react-navigation/native";
 
 export function DefaultMainContainer({
-  justifyContent = "flex-start",
   children,
-}: Readonly<{
-  justifyContent?: "center" | "flex-start";
+  justifyContent = "flex-start",
+}: {
   children: React.ReactNode;
-}>) {
+  justifyContent?: "center" | "flex-start";
+}) {
   const theme = useTheme();
 
   return (

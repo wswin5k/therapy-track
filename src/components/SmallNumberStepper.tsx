@@ -2,11 +2,21 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "@react-navigation/native";
 
-export default function SmallNumberStepper({ min = 1, max = 100, onChange }) {
+type SmallNumberStepperProps = {
+  min?: number;
+  max?: number;
+  onChange: (value: number) => void;
+};
+
+export default function SmallNumberStepper({
+  min = 1,
+  max = 100,
+  onChange,
+}: SmallNumberStepperProps) {
   const [count, setCount] = React.useState<number>(min);
   const theme = useTheme();
 
-  const handlePress = (type) => {
+  const handlePress = (type: "increment" | "decrement") => {
     let newValue = count;
     if (type === "increment" && count < max) {
       newValue = count + 1.0;

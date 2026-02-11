@@ -6,10 +6,7 @@ import RNDateTimePicker, {
 import React from "react";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
-import {
-  dbInsertScheduledDosageRecord,
-  dbInsertUnscheduledDosageRecord,
-} from "../../models/dbAccess";
+import { dbInsertUnscheduledDosageRecord } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
 import { ActiveIngredient, BaseUnit } from "../../models/Medicine";
@@ -97,7 +94,7 @@ export function EditSingleDosageScreen() {
   };
 
   return (
-    <DefaultMainContainer justifyContent="flex-start">
+    <DefaultMainContainer>
       <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
         {t("Dose")}
       </Text>
