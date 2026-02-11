@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   useFocusEffect,
   useNavigation,
@@ -303,7 +302,7 @@ export function Home() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView>
+      <ScrollView style={styles.list}>
         {intakesAll.map(([key, intake]) => renderScheduledDosage(intake, key))}
         {unscheduledDosages.map((di) => renderUnscheduledDosage(di))}
         {!unscheduledDosages && !intakesAll && renderEmptyState()}
@@ -315,9 +314,6 @@ export function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   list: {
     padding: 16,
   },
@@ -326,8 +322,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    marginLeft: 20,
-    marginRight: 20,
     alignItems: "center",
     borderWidth: 1,
   },

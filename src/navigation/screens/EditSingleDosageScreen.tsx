@@ -141,12 +141,8 @@ export function EditSingleDosageScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   scrollContainer: {
     padding: 20,
-    paddingBottom: 100,
   },
   headerLabel: {
     fontSize: 16,
@@ -189,6 +185,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 20,
     borderTopWidth: 1,
+    zIndex: 1,
   },
   nextButton: {
     paddingVertical: 15,

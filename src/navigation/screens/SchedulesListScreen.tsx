@@ -168,9 +168,6 @@ export function SchedulesListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   list: {
     padding: 16,
   },
