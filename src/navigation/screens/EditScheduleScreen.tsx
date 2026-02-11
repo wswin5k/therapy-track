@@ -166,7 +166,7 @@ export default function EditScheduleScreen() {
   const doseHeader = `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.headerLabel}>{t("Frequency")}</Text>
         <View style={styles.fullWidthPickerContainer}>

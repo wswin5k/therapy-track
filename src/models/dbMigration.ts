@@ -35,12 +35,21 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       freq TEXT NOT NULL,
       FOREIGN KEY(medicine) REFERENCES medicines(id) ON DELETE CASCADE);
 
-      CREATE TABLE dosage_records (
+      CREATE TABLE scheduled_dosage_records (
       id INTEGER PRIMARY KEY NOT NULL,
+      record_date TEXT NOT NULL,
+      date TEXT NOT NULL,
       schedule INTEGER,
       dose_index INTEGER,
-      date TEXT,
       FOREIGN KEY(schedule) REFERENCES schedules(id));
+
+      CREATE TABLE unscheduled_dosage_records (
+      id INTEGER PRIMARY KEY NOT NULL,
+      record_date TEXT NOT NULL,
+      date TEXT NOT NULL,
+      medicine INTEGER NOT NULL,
+      dose_amount REAL NOT NULL,
+      FOREIGN KEY(medicine) REFERENCES medicines(id));
     `);
     });
     currentDbVersion = 1;
@@ -50,3 +59,5 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   // }
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
+
+export const DATABASE_NAME: string = "main16.db";

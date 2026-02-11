@@ -16,6 +16,7 @@ import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Medicine } from "../../models/Medicine";
 import { dbGetMedicines } from "../../models/dbAccess";
+import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
 type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -32,7 +33,7 @@ export function SelectMedicineScreen() {
 
   const db = useSQLiteContext();
 
-  const mode = (route.params as { mode?: "schedule" | "one-time" })?.mode;
+  const mode = (route.params as { mode: "schedule" | "one-time" }).mode;
 
   React.useEffect(() => {
     async function setup() {
@@ -43,14 +44,20 @@ export function SelectMedicineScreen() {
   }, []);
 
   const handleAddNewMedicine = () => {
-    if (mode === "schedule") {
-      navigation.navigate("EditMedicineScreen", { mode: mode });
-    }
+    navigation.navigate("EditMedicineScreen", { mode: mode });
   };
 
   const handleSelectMedicine = (medicineIdx: number) => {
+    if (medicineIdx < 0) {
+      return;
+    }
     if (mode === "schedule") {
       navigation.navigate("EditScheduleScreen", {
+        medicine: medicines[medicineIdx],
+      });
+    } else {
+      // mode === "one-time"
+      navigation.navigate("EditSingleDosageScreen", {
         medicine: medicines[medicineIdx],
       });
     }
@@ -67,7 +74,7 @@ export function SelectMedicineScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <DefaultMainContainer justifyContent="center">
       <View
         style={[
           styles.fullWidthPickerContainer,
@@ -75,7 +82,11 @@ export function SelectMedicineScreen() {
         ]}
       >
         <Picker onValueChange={handleSelectMedicine} style={styles.picker}>
-          <Picker.Item label="Select existing medicine" value="" color="#999" />
+          <Picker.Item
+            label="Select existing medicine"
+            value={-1}
+            color="#999"
+          />
           {medicines.map((m, idx) => (
             <Picker.Item
               key={m.dbId}
@@ -88,13 +99,14 @@ export function SelectMedicineScreen() {
       </View>
 
       <Text style={styles.headerLabel}>{t("or")}</Text>
+
       <TouchableOpacity
         onPress={handleAddNewMedicine}
         style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
       >
         <Text style={styles.nextButtonText}>{t("Add new medicine")}</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </DefaultMainContainer>
   );
 }
 
@@ -109,92 +121,32 @@ const styles = StyleSheet.create({
   headerLabel: {
     fontSize: 17,
     fontWeight: "600",
-    marginBottom: 8,
-  },
-  input: {
-    height: 60,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-  ingredientRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 10,
-  },
-  ingredientsList: {
-    marginBottom: 15,
-  },
-  pickerContainer: {
-    height: 60,
-    borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: "center",
+    textAlign: "center",
   },
   fullWidthPickerContainer: {
     height: 60,
     borderWidth: 1,
     borderRadius: 8,
     justifyContent: "center",
-    marginBottom: 5,
+    paddingBottom: 10,
+    paddingTop: 10,
   },
   picker: {
     width: "100%",
     height: 60,
+    borderRadius: 10,
   },
   pickerItem: {
     fontSize: 16,
   },
-  removeButton: {
-    width: 20,
-    height: 50,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  removeButtonPlaceholder: {
-    width: 20,
-  },
-  removeButtonText: {
-    fontSize: 20,
-    color: "#ff3b30",
-    fontWeight: "bold",
-  },
-  addButton: {
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-    borderStyle: "dashed",
-    alignItems: "center",
-    marginTop: 5,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    borderTopWidth: 1,
-  },
   nextButton: {
     paddingVertical: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
   },
   nextButtonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginTop: 2,
-    marginBottom: 10,
   },
 });

@@ -10,6 +10,8 @@ import EditScheduleScreen from "./screens/EditScheduleScreen";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { MedicineListScreen } from "./screens/MedicineListScreen";
+import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
+import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
 
 export type RootStackParamList = {
   HomeTabs: undefined;
@@ -20,7 +22,15 @@ export type RootStackParamList = {
       name: string;
       baseUnit: BaseUnit;
       activeIngredients: ActiveIngredient[];
-      medicineId?: number;
+      dbId?: number;
+    };
+  };
+  EditSingleDosageScreen: {
+    medicine: {
+      name: string;
+      baseUnit: BaseUnit;
+      activeIngredients: ActiveIngredient[];
+      dbId?: number;
     };
   };
   NotFound: undefined;
@@ -67,6 +77,19 @@ const HomeTabs = createDrawerNavigator({
         ),
       },
     },
+    RecordHistoryScreen: {
+      screen: RecordHistoryScreen,
+      options: {
+        title: "History",
+        drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
+          <Ionicons
+            name="receipt"
+            size={size}
+            color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
+          />
+        ),
+      },
+    },
   },
   drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
     <Ionicons
@@ -104,6 +127,14 @@ const RootStack = createNativeStackNavigator({
       screen: EditScheduleScreen,
       options: {
         presentation: "modal",
+        title: "Edit schedule",
+      },
+    },
+    EditSingleDosageScreen: {
+      screen: EditSingleDosageScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit single dosage",
       },
     },
     NotFound: {

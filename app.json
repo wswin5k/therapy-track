@@ -19,6 +19,11 @@
       },
       "package": "com.drugtrack"
     },
+    "androidNavigationBar": {
+      "visible": "always",
+      "barStyle": "dark-content",
+      "backgroundColor": "#00000000"
+    },
     "web": {
       "favicon": "./assets/favicon.png"
     },

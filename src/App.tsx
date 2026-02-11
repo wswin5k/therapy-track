@@ -7,7 +7,8 @@ import React from "react";
 import { useColorScheme } from "react-native";
 import { Navigation } from "./navigation";
 import { SQLiteProvider } from "expo-sqlite";
-import { migrateDbIfNeeded } from "./models/dbMigration";
+import { DATABASE_NAME, migrateDbIfNeeded } from "./models/dbMigration";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 Asset.loadAsync([
   ...NavigationAssets,
@@ -23,7 +24,7 @@ const CustomLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "rgba(76, 45, 255, 1)",
+    primary: "rgba(117, 222, 43, 1)",
   },
 };
 
@@ -31,7 +32,7 @@ const CustomDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: "rgba(76, 45, 255, 1)",
+    primary: "rgba(62, 255, 45, 1)",
   },
 };
 
@@ -41,17 +42,19 @@ export function App() {
   const theme = colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme;
 
   return (
-    <SQLiteProvider databaseName="main13.db" onInit={migrateDbIfNeeded}>
-      <Navigation
-        theme={theme}
-        linking={{
-          enabled: "auto",
-          prefixes: [prefix],
-        }}
-        onReady={() => {
-          SplashScreen.hideAsync();
-        }}
-      />
+    <SQLiteProvider databaseName={DATABASE_NAME} onInit={migrateDbIfNeeded}>
+      <SafeAreaProvider>
+        <Navigation
+          theme={theme}
+          linking={{
+            enabled: "auto",
+            prefixes: [prefix],
+          }}
+          onReady={() => {
+            SplashScreen.hideAsync();
+          }}
+        />
+      </SafeAreaProvider>
     </SQLiteProvider>
   );
 }

@@ -7,7 +7,11 @@ import {
   Medicine,
   strKeyOfBaseUnit,
 } from "./Medicine";
-import { DosageRecord } from "./DosageRecord";
+import { ScheduledDosageRecord, UnscheduledDosageRecord } from "./DosageRecord";
+
+function extarctDate(datetime: Date): string {
+  return datetime.toISOString().split("T")[0];
+}
 
 interface ScheduleWithMedicineRow {
   id: number;
@@ -28,11 +32,20 @@ interface MedicineRow {
   active_ingredients: string;
 }
 
-interface DosageRecordRow {
+interface ScheduledDosageRecordRow {
   id: number;
-  schedule: number;
+  record_date: string;
   date: string;
+  schedule: number;
   dose_index: number;
+}
+
+interface UncheduledDosageRecordRow {
+  id: number;
+  record_date: string;
+  date: string;
+  medicine: number;
+  dose_amount: number;
 }
 
 function parseActiveIngredients(json: string) {
@@ -182,55 +195,132 @@ export async function dbDeleteSchedule(db: SQLiteDatabase, id: number) {
   await db.runAsync("DELETE FROM schedules WHERE id = ?", id);
 }
 
-export async function dbInsertDosageRecord(
+export async function dbInsertScheduledDosageRecord(
   db: SQLiteDatabase,
-  intakeRecord: { scheduleId: number; date: Date; doseIndex: number },
+  record: { scheduleId: number; date: Date; doseIndex: number },
 ): Promise<number> {
   const result = await db.runAsync(
-    "INSERT INTO dosage_records (schedule, date, dose_index) VALUES (?, ?, ?)",
-    intakeRecord.scheduleId,
-    intakeRecord.date.toISOString(),
-    intakeRecord.doseIndex,
+    "INSERT INTO scheduled_dosage_records (record_date, date, schedule, dose_index) VALUES (?, ?, ?, ?)",
+    new Date().toISOString(),
+    record.date.toISOString(),
+    record.scheduleId,
+    record.doseIndex,
   );
   return result.lastInsertRowId;
 }
 
-export async function dbDeleteDosageRecord(
+export async function dbDeleteScheduledDosageRecord(
   db: SQLiteDatabase,
-  intakeRecordId: number,
+  id: number,
 ) {
-  await db.runAsync("DELETE FROM dosage_records WHERE id = ?", intakeRecordId);
+  await db.runAsync("DELETE FROM scheduled_dosage_records WHERE id = ?", id);
 }
 
-export async function dbGetDosageRecord(
+export async function dbGetScheduledDosageRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
-): Promise<DosageRecord[]> {
-  let queryStr = "SELECT * FROM dosage_records ";
+): Promise<ScheduledDosageRecord[]> {
+  let queryStr = "SELECT * FROM scheduled_dosage_records ";
   if (startDate && endDate) {
-    const startDateStr = startDate.toISOString();
-    const endDateStr = endDate.toISOString();
-    queryStr = `SELECT * FROM dosage_records
+    const startDateStr = extarctDate(startDate);
+    const endDateStr = extarctDate(endDate);
+    queryStr =
+      queryStr +
+      `
     WHERE date >= date('${startDateStr}')
     AND date <= date('${endDateStr}')`;
   } else if (startDate) {
-    const startDateStr = startDate.toISOString();
-    queryStr = `SELECT * FROM dosage_records
+    const startDateStr = extarctDate(startDate);
+    queryStr =
+      queryStr +
+      `
     WHERE date >= date('${startDateStr}')`;
   } else if (endDate) {
-    const endDateStr = endDate.toISOString();
-    queryStr = `SELECT * FROM dosage_records
+    const endDateStr = extarctDate(endDate);
+    queryStr =
+      queryStr +
+      `
     WHERE date <= date('${endDateStr}')`;
   }
-  const rows = await db.getAllAsync<DosageRecordRow>(queryStr);
+
+  const rows = await db.getAllAsync<ScheduledDosageRecordRow>(queryStr);
   return rows.map(
     (row) =>
-      new DosageRecord(
-        new Date(row.date),
-        row.dose_index,
+      new ScheduledDosageRecord(
         row.id,
+        new Date(row.record_date),
+        new Date(row.date),
         row.schedule,
+        row.dose_index,
+      ),
+  );
+}
+
+export async function dbInsertUnscheduledDosageRecord(
+  db: SQLiteDatabase,
+  record: { date: Date; medicineId: number; doseAmount: number },
+): Promise<number> {
+  console.log(record);
+  const result = await db.runAsync(
+    "INSERT INTO unscheduled_dosage_records (record_date, date, medicine, dose_amount) VALUES (?, ?, ?, ?)",
+    new Date().toISOString(),
+    extarctDate(record.date),
+    record.medicineId,
+    record.doseAmount,
+  );
+  console.log(result.lastInsertRowId);
+  return result.lastInsertRowId;
+}
+
+export async function dbDeleteUnscheduledDosageRecord(
+  db: SQLiteDatabase,
+  intakeRecordId: number,
+) {
+  await db.runAsync(
+    "DELETE FROM unscheduled_dosage_records WHERE id = ?",
+    intakeRecordId,
+  );
+}
+
+export async function dbGetUnscheduledDosageRecords(
+  db: SQLiteDatabase,
+  startDate?: Date,
+  endDate?: Date,
+): Promise<UnscheduledDosageRecord[]> {
+  let queryStr = "SELECT * FROM unscheduled_dosage_records ";
+  let whereClause = "";
+  if (startDate && endDate) {
+    const startDateStr = extarctDate(startDate);
+    const endDateStr = extarctDate(endDate);
+    whereClause = `
+    WHERE date >= date('${startDateStr}')
+    AND date <= date('${endDateStr}')`;
+  } else if (startDate) {
+    const startDateStr = extarctDate(startDate);
+    whereClause = `
+    WHERE date >= date('${startDateStr}')`;
+  } else if (endDate) {
+    const endDateStr = extarctDate(endDate);
+    whereClause = `
+    WHERE date <= date('${endDateStr}')`;
+  }
+  queryStr = `SELECT * FROM unscheduled_dosage_records
+      ${whereClause}
+      ORDER BY record_date ASC
+  `;
+  console.log(queryStr);
+
+  const rows = await db.getAllAsync<UncheduledDosageRecordRow>(queryStr);
+  console.log(rows);
+  return rows.map(
+    (row) =>
+      new UnscheduledDosageRecord(
+        row.id,
+        new Date(row.record_date),
+        new Date(row.date),
+        row.medicine,
+        row.dose_amount,
       ),
   );
 }
