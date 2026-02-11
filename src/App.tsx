@@ -20,7 +20,7 @@ SplashScreen.preventAutoHideAsync();
 
 const prefix = createURL("/");
 
-const CustomLightTheme = {
+const CustomLightTheme: ReactNavigation.Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
@@ -34,7 +34,7 @@ const CustomLightTheme = {
   },
 };
 
-const CustomDarkTheme = {
+const CustomDarkTheme: ReactNavigation.Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
