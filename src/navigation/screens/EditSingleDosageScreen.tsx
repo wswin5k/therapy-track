@@ -40,10 +40,11 @@ export function EditSingleDosageScreen() {
 
   const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
     setIsDatePickerOpened(false);
-    if (newDate) {
+    if (event.type === "dismissed") {
+      setDate(null);
+    } else if (newDate) {
       setDate(newDate);
       setDateError(false);
-      console.log(newDate);
     }
   };
 
@@ -142,7 +143,7 @@ export function EditSingleDosageScreen() {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    padding: 20,
+    padding: 16,
   },
   headerLabel: {
     fontSize: 16,

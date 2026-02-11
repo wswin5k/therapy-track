@@ -303,7 +303,13 @@ export function Home() {
   return (
     <DefaultMainContainer>
       <ScrollView style={styles.list}>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("Scheduled dosages")}
+        </Text>
         {intakesAll.map(([key, intake]) => renderScheduledDosage(intake, key))}
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("One time dosages")}
+        </Text>
         {unscheduledDosages.map((di) => renderUnscheduledDosage(di))}
         {!unscheduledDosages && !intakesAll && renderEmptyState()}
       </ScrollView>
@@ -324,6 +330,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     alignItems: "center",
     borderWidth: 1,
+  },
+  headerLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
   },
   scheduleContent: {
     flex: 1,

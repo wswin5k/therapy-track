@@ -397,7 +397,7 @@ export function EditMedicineScreen() {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    padding: 20,
+    padding: 16,
   },
   headerLabel: {
     fontSize: 17,

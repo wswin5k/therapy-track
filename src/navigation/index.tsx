@@ -62,10 +62,10 @@ const HomeTabs = createDrawerNavigator({
       screen: Home,
       options: {
         title: "Today",
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Ionicons name="home" size={size} color={color} />
+        ),
       },
-      drawerIcon: ({ color, size }: { color: string; size: number }) => (
-        <Ionicons name="home" size={size} color={color} />
-      ),
     },
     MedicinesList: {
       screen: MedicineListScreen,
