@@ -155,8 +155,6 @@ export function Home() {
       date,
     );
 
-    console.log(unscheduledDosageRecords);
-
     const medicinesMap = new Map<number, Medicine>();
     const medicines = await dbGetMedicines(db);
     medicines.forEach((m) => {
@@ -204,7 +202,6 @@ export function Home() {
       const newIsDosageDone = new Map(isDosageDone);
       newIsDosageDone.set(pair(dosage.scheduleId, dosage.index), true);
       setIsDosageDone(newIsDosageDone);
-      console.log(newIsDosageDone);
     }
   };
 
@@ -233,7 +230,7 @@ export function Home() {
           },
         ]}
       >
-        <View style={styles.scheduleContent}>
+        <View style={[styles.scheduleContent, { flex: 9 }]}>
           <Text style={[styles.medicineName, { color: theme.colors.text }]}>
             {dosage.medicineName} {dosage.amount}{" "}
             {t(dosage.medicineBaseUnit, { count: dosage.amount })}
@@ -241,17 +238,26 @@ export function Home() {
         </View>
         <TouchableOpacity
           style={[
-            styles.checkButton,
             {
-              backgroundColor: isDosageDone.get(
-                pair(dosage.scheduleId, dosage.index),
-              )
-                ? theme.colors.success
-                : theme.colors.textSecondary,
+              flex: 1,
             },
+            styles.checkButton,
           ]}
           onPress={() => handleCheck(dosage)}
-        ></TouchableOpacity>
+        >
+          <View
+            style={[
+              styles.checkIcon,
+              {
+                backgroundColor: isDosageDone.get(
+                  pair(dosage.scheduleId, dosage.index),
+                )
+                  ? theme.colors.success
+                  : theme.colors.textSecondary,
+              },
+            ]}
+          ></View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -324,9 +330,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   scheduleItem: {
+    flex: 1,
     flexDirection: "row",
     borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
     alignItems: "center",
     borderWidth: 1,
@@ -338,7 +344,9 @@ const styles = StyleSheet.create({
   },
   scheduleContent: {
     flex: 1,
+    padding: 16,
   },
+
   medicineName: {
     fontSize: 18,
     fontWeight: "bold",
@@ -355,13 +363,16 @@ const styles = StyleSheet.create({
   dateRange: {
     fontSize: 13,
   },
+  checkIcon: {
+    borderRadius: 10,
+    height: 25,
+    width: 25,
+  },
   checkButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginLeft: 12,
-    height: 20,
-    width: 20,
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 0,
   },
   deleteButtonText: {
     color: "#fff",
