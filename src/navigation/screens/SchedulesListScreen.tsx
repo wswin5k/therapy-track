@@ -10,7 +10,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useTheme } from "@react-navigation/native";
 import {
   dbDeleteSchedule,
   dbGetSchedulesWithMedicines,
@@ -26,6 +26,7 @@ interface ParsedFrequency {
 export function SchedulesListScreen() {
   const { t, i18n } = useTranslation();
   const db = useSQLiteContext();
+  const theme = useTheme();
 
   const [schedules, setSchedules] = React.useState<Schedule[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -99,15 +100,35 @@ export function SchedulesListScreen() {
       : `${formatDate(item.startDate)} - ${t("No end date")}`;
 
     return (
-      <View style={styles.scheduleItem}>
+      <View
+        style={[
+          styles.scheduleItem,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
         <View style={styles.scheduleContent}>
-          <Text style={styles.medicineName}>{item.medicine.name}</Text>
-          <Text style={styles.frequency}>{frequencyLabel}</Text>
-          <Text style={styles.doses}>{dosesSummary}</Text>
-          <Text style={styles.dateRange}>{dateRange}</Text>
+          <Text style={[styles.medicineName, { color: theme.colors.text }]}>
+            {item.medicine.name}
+          </Text>
+          <Text
+            style={[styles.frequency, { color: theme.colors.textSecondary }]}
+          >
+            {frequencyLabel}
+          </Text>
+          <Text style={[styles.doses, { color: theme.colors.textSecondary }]}>
+            {dosesSummary}
+          </Text>
+          <Text
+            style={[styles.dateRange, { color: theme.colors.textTertiary }]}
+          >
+            {dateRange}
+          </Text>
         </View>
         <TouchableOpacity
-          style={styles.deleteButton}
+          style={[styles.deleteButton, { backgroundColor: theme.colors.error }]}
           onPress={() => handleDelete(item.dbId)}
         >
           <Text style={styles.deleteButtonText}>{t("Delete")}</Text>
@@ -118,15 +139,19 @@ export function SchedulesListScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>{t("No schedules yet")}</Text>
-      <Text style={styles.emptySubtext}>
+      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("No schedules yet")}
+      </Text>
+      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
         {t("Add a schedule from the Home screen")}
       </Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <FlatList
         data={schedules}
         renderItem={renderScheduleItem}
@@ -146,7 +171,6 @@ export function SchedulesListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   list: {
     padding: 16,
@@ -158,13 +182,11 @@ const styles = StyleSheet.create({
   },
   scheduleItem: {
     flexDirection: "row",
-    backgroundColor: "#f9f9f9",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
   },
   scheduleContent: {
     flex: 1,
@@ -172,25 +194,20 @@ const styles = StyleSheet.create({
   medicineName: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 4,
   },
   frequency: {
     fontSize: 14,
-    color: "#666",
     marginBottom: 2,
   },
   doses: {
     fontSize: 14,
-    color: "#666",
     marginBottom: 2,
   },
   dateRange: {
     fontSize: 13,
-    color: "#999",
   },
   deleteButton: {
-    backgroundColor: "#ff3b30",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -208,12 +225,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#666",
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
     textAlign: "center",
   },
 });

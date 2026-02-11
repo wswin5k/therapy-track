@@ -14,15 +14,10 @@ import RNDateTimePicker, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import { Dose, Frequency, IntervalUnit } from "../../models/Schedule";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "..";
-import {
-  ActiveIngredient,
-  BaseUnit,
-  Medicine,
-  strKeyOfBaseUnit,
-} from "../../models/Medicine";
+import { ActiveIngredient, BaseUnit, Medicine } from "../../models/Medicine";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   dbInsertSchedule,
@@ -52,6 +47,7 @@ type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
 
 export default function EditScheduleScreen() {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
 
   const navigation = useNavigation<EditScheduleScreenNavigationProp>();
   const route = useRoute();
@@ -166,18 +162,43 @@ export default function EditScheduleScreen() {
   const doseHeader = `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: theme.colors.background }]}
+      edges={["top", "bottom"]}
+    >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.headerLabel}>{t("Frequency")}</Text>
-        <View style={styles.fullWidthPickerContainer}>
-          <Picker style={styles.picker} onValueChange={handleFrequencyPicker}>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("Frequency")}
+        </Text>
+        <View
+          style={[
+            styles.fullWidthPickerContainer,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Picker
+            style={[styles.picker, { color: theme.colors.text }]}
+            dropdownIconColor={theme.colors.text}
+            onValueChange={handleFrequencyPicker}
+          >
             {Object.entries(FrequencySelection).map(([k, v]) => (
-              <Picker.Item label={t(v)} value={k} style={styles.pickerItem} />
+              <Picker.Item
+                key={k}
+                label={t(v)}
+                value={k}
+                style={styles.pickerItem}
+                color={theme.colors.text}
+              />
             ))}
           </Picker>
         </View>
 
-        <Text style={styles.headerLabel}>{t(doseHeader)}</Text>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t(doseHeader)}
+        </Text>
 
         <View>
           {nDoses === 1 ? (
@@ -185,19 +206,33 @@ export default function EditScheduleScreen() {
           ) : (
             Array.from({ length: nDoses }, (_, idx) => (
               <View key={idx} style={styles.ingredientRow}>
-                <Text>{t("Dose", { count: idx, oridnal: true })}</Text>
+                <Text style={{ color: theme.colors.text }}>
+                  {t("Dose", { count: idx, oridnal: true })}
+                </Text>
                 <SmallNumberStepper onChange={handleDoseInput(idx)} />
               </View>
             ))
           )}
         </View>
 
-        <Text style={styles.headerLabel}>{t("Start date")}</Text>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("Start date")}
+        </Text>
         <TouchableOpacity
           onPress={handleSelectStartDate}
-          style={[styles.input, startDateError && styles.inputError]}
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+            startDateError && {
+              borderColor: theme.colors.error,
+              borderWidth: 2,
+            },
+          ]}
         >
-          <Text style={styles.inputText}>
+          <Text style={[styles.inputText, { color: theme.colors.text }]}>
             {startDate ? startDate.toDateString() : "Select date"}
           </Text>
         </TouchableOpacity>
@@ -211,9 +246,20 @@ export default function EditScheduleScreen() {
           ""
         )}
 
-        <Text style={styles.headerLabel}>{t("End date")}</Text>
-        <TouchableOpacity onPress={handleSelectEndDate} style={styles.input}>
-          <Text style={styles.inputText}>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("End date")}
+        </Text>
+        <TouchableOpacity
+          onPress={handleSelectEndDate}
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.inputText, { color: theme.colors.text }]}>
             {endDate ? endDate.toDateString() : "Select date"}
           </Text>
         </TouchableOpacity>
@@ -228,11 +274,24 @@ export default function EditScheduleScreen() {
           ""
         )}
 
-        <Text style={styles.headerLabel}>{t("That's 2 weeks")}</Text>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("That's 2 weeks")}
+        </Text>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity onPress={handleSave} style={styles.nextButton}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: theme.colors.background,
+            borderTopColor: theme.colors.border,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+        >
           <Text style={styles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
@@ -243,7 +302,6 @@ export default function EditScheduleScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   scrollContainer: {
     padding: 20,
@@ -253,31 +311,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
-    color: "#333",
   },
   input: {
     height: 50,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     borderRadius: 8,
     paddingHorizontal: 12,
     justifyContent: "center",
     marginBottom: 10,
   },
   inputError: {
-    borderColor: "#ff3b30",
     borderWidth: 2,
   },
   inputText: {
     fontSize: 16,
-    color: "#333",
   },
   fullWidthPickerContainer: {
     height: 50,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     borderRadius: 8,
     justifyContent: "center",
     marginBottom: 15,
@@ -295,12 +346,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
   },
   nextButton: {
-    backgroundColor: "#007AFF",
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",

@@ -81,11 +81,15 @@ export function SelectMedicineScreen() {
           { borderColor: theme.colors.border },
         ]}
       >
-        <Picker onValueChange={handleSelectMedicine} style={styles.picker}>
+        <Picker
+          onValueChange={handleSelectMedicine}
+          style={[styles.picker, { color: theme.colors.text }]}
+          dropdownIconColor={theme.colors.text}
+        >
           <Picker.Item
             label="Select existing medicine"
             value={-1}
-            color="#999"
+            color={theme.colors.textTertiary}
           />
           {medicines.map((m, idx) => (
             <Picker.Item
@@ -93,12 +97,15 @@ export function SelectMedicineScreen() {
               label={createMedicineLabel(m)}
               value={idx}
               style={styles.pickerItem}
+              color={theme.colors.text}
             />
           ))}
         </Picker>
       </View>
 
-      <Text style={styles.headerLabel}>{t("or")}</Text>
+      <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        {t("or")}
+      </Text>
 
       <TouchableOpacity
         onPress={handleAddNewMedicine}

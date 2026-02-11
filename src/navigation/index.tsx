@@ -37,30 +37,33 @@ export type RootStackParamList = {
 };
 
 const HomeTabs = createDrawerNavigator({
+  screenOptions: ({ theme }) => ({
+    drawerActiveTintColor: theme.colors.primary,
+    drawerInactiveTintColor: theme.colors.textSecondary,
+    drawerStyle: {
+      backgroundColor: theme.colors.card,
+    },
+    headerStyle: {
+      backgroundColor: theme.colors.card,
+    },
+    headerTintColor: theme.colors.text,
+  }),
   screens: {
     Home: {
       screen: Home,
       options: {
         title: "Today",
       },
-      drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
-        <Ionicons
-          name="calendar"
-          size={size}
-          color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
-        />
+      drawerIcon: ({ color, size }: { color: string; size: number }) => (
+        <Ionicons name="calendar" size={size} color={color} />
       ),
     },
     MedicinesList: {
       screen: MedicineListScreen,
       options: {
         title: "Medicines",
-        drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
-          <Ionicons
-            name="server"
-            size={size}
-            color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
-          />
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Ionicons name="server" size={size} color={color} />
         ),
       },
     },
@@ -68,12 +71,8 @@ const HomeTabs = createDrawerNavigator({
       screen: SchedulesListScreen,
       options: {
         title: "Schedules",
-        drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
-          <Ionicons
-            name="calendar"
-            size={size}
-            color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
-          />
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Ionicons name="calendar" size={size} color={color} />
         ),
       },
     },
@@ -81,26 +80,24 @@ const HomeTabs = createDrawerNavigator({
       screen: RecordHistoryScreen,
       options: {
         title: "History",
-        drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
-          <Ionicons
-            name="receipt"
-            size={size}
-            color={focused ? "rgba(62, 185, 185, 1)" : "#3fba6eff"}
-          />
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Ionicons name="receipt" size={size} color={color} />
         ),
       },
     },
   },
-  drawerIcon: ({ focused, size }: { focused: boolean; size: number }) => (
-    <Ionicons
-      name="home"
-      size={size}
-      color={focused ? "rgba(62, 185, 185, 1)" : "#ba3f3fff"}
-    />
-  ),
 });
 
 const RootStack = createNativeStackNavigator({
+  screenOptions: ({ theme }) => ({
+    headerStyle: {
+      backgroundColor: theme.colors.card,
+    },
+    headerTintColor: theme.colors.text,
+    contentStyle: {
+      backgroundColor: theme.colors.background,
+    },
+  }),
   screens: {
     HomeTabs: {
       screen: HomeTabs,

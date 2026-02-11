@@ -7,6 +7,7 @@ import {
   StyleSheet,
   type ViewStyle,
 } from "react-native";
+import { useTheme } from "@react-navigation/native";
 
 interface FloatingActionButtonProps {
   actions: {
@@ -23,13 +24,16 @@ interface FloatingActionButtonProps {
 export function FloatingActionButton({
   actions,
   position = "right",
-  mainButtonColor = "#007AFF",
+  mainButtonColor,
   mainIcon = "+",
   style,
 }: FloatingActionButtonProps) {
+  const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(false);
   const animationValue = React.useRef(new Animated.Value(0)).current;
   const rotateValue = React.useRef(new Animated.Value(0)).current;
+
+  const resolvedMainButtonColor = mainButtonColor || theme.colors.primary;
 
   const toggleMenu = () => {
     const toValue = isExpanded ? 0 : 1;
@@ -111,9 +115,12 @@ export function FloatingActionButton({
             style={[
               styles.labelContainer,
               position === "right" ? { marginRight: 10 } : { marginLeft: 10 },
+              { backgroundColor: theme.colors.card },
             ]}
           >
-            <Text style={styles.labelText}>{action.label}</Text>
+            <Text style={[styles.labelText, { color: theme.colors.text }]}>
+              {action.label}
+            </Text>
           </View>
           <TouchableOpacity
             onPress={() => {
@@ -122,7 +129,7 @@ export function FloatingActionButton({
             }}
             style={[
               styles.actionButton,
-              { backgroundColor: action.color || "#a6cfe0ff" },
+              { backgroundColor: action.color || theme.colors.primary },
             ]}
             activeOpacity={0.8}
           >
@@ -154,7 +161,10 @@ export function FloatingActionButton({
 
         <TouchableOpacity
           onPress={toggleMenu}
-          style={[styles.mainButton, { backgroundColor: mainButtonColor }]}
+          style={[
+            styles.mainButton,
+            { backgroundColor: resolvedMainButtonColor },
+          ]}
           activeOpacity={0.9}
         >
           <Animated.Text

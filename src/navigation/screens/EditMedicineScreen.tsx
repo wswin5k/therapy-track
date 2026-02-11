@@ -83,11 +83,16 @@ function ActiveIngredientRow({
           }}
           style={[
             styles.input,
-            { borderColor: theme.colors.border },
-            errors?.name ? { borderColor: "red", borderWidth: 1 } : {},
+            {
+              borderColor: theme.colors.border,
+              color: theme.colors.text,
+            },
+            errors?.name
+              ? { borderColor: theme.colors.error, borderWidth: 1 }
+              : {},
           ]}
           placeholder="Name"
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.colors.textTertiary}
           value={name}
         />
       </View>
@@ -98,11 +103,16 @@ function ActiveIngredientRow({
           }}
           style={[
             styles.input,
-            { borderColor: theme.colors.border },
-            errors?.weight ? { borderColor: "red", borderWidth: 1 } : {},
+            {
+              borderColor: theme.colors.border,
+              color: theme.colors.text,
+            },
+            errors?.weight
+              ? { borderColor: theme.colors.error, borderWidth: 1 }
+              : {},
           ]}
           placeholder="Amount"
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.colors.textTertiary}
           keyboardType="numeric"
           defaultValue={
             activeIngredientInfo.weight
@@ -122,7 +132,8 @@ function ActiveIngredientRow({
           onValueChange={(unit: IngredientAmountUnit) => {
             activeIngredientInfo.unit = unit;
           }}
-          style={styles.picker}
+          style={[styles.picker, { color: theme.colors.text }]}
+          dropdownIconColor={theme.colors.text}
         >
           {Object.values(IngredientAmountUnit).map((unit) => (
             <Picker.Item
@@ -130,13 +141,18 @@ function ActiveIngredientRow({
               label={unit}
               value={unit}
               style={styles.pickerItem}
+              color={theme.colors.text}
             />
           ))}
         </Picker>
       </View>
       {removeButton ? (
         <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
-          <Text style={styles.removeButtonText}>✕</Text>
+          <Text
+            style={[styles.removeButtonText, { color: theme.colors.error }]}
+          >
+            ✕
+          </Text>
         </TouchableOpacity>
       ) : (
         <View style={styles.removeButtonPlaceholder} />
@@ -270,14 +286,21 @@ export function EditMedicineScreen() {
   return (
     <DefaultMainContainer justifyContent="flex-start">
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.headerLabel}>{t("Medicine Name")}</Text>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("Medicine Name")}
+        </Text>
         <TextInput
           placeholder="e.g. Ibuprofen"
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.colors.textTertiary}
           style={[
             styles.input,
-            { borderColor: theme.colors.border },
-            nameError ? { borderColor: "red", borderWidth: 1 } : {},
+            {
+              borderColor: theme.colors.border,
+              color: theme.colors.text,
+            },
+            nameError
+              ? { borderColor: theme.colors.error, borderWidth: 1 }
+              : {},
           ]}
           onChangeText={(text: string) => {
             setName(text);
@@ -285,15 +308,21 @@ export function EditMedicineScreen() {
           }}
         />
         {nameError && (
-          <Text style={styles.errorText}>{t("Medicine name is required")}</Text>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>
+            {t("Medicine name is required")}
+          </Text>
         )}
 
-        <Text style={styles.headerLabel}>{t("Base Unit")}</Text>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("Base Unit")}
+        </Text>
         <View
           style={[
             styles.fullWidthPickerContainer,
             { borderColor: theme.colors.border },
-            baseUnitError ? { borderColor: "red", borderWidth: 1 } : {},
+            baseUnitError
+              ? { borderColor: theme.colors.error, borderWidth: 1 }
+              : {},
           ]}
         >
           <Picker
@@ -302,24 +331,37 @@ export function EditMedicineScreen() {
               setBaseUnit(itemValue);
               if (baseUnitError) setBaseUnitError(false);
             }}
-            style={styles.picker}
+            style={[styles.picker, { color: theme.colors.text }]}
+            dropdownIconColor={theme.colors.text}
           >
-            <Picker.Item label="Select an option" value="" color="#999" />
+            <Picker.Item
+              label="Select an option"
+              value=""
+              color={theme.colors.textTertiary}
+            />
             {Object.values(BaseUnit).map((unit) => (
               <Picker.Item
                 key={unit}
                 label={unit}
                 value={unit}
                 style={styles.pickerItem}
+                color={theme.colors.text}
               />
             ))}
           </Picker>
         </View>
         {baseUnitError && (
-          <Text style={styles.errorText}>{t("Base unit is required")}</Text>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>
+            {t("Base unit is required")}
+          </Text>
         )}
 
-        <Text style={[styles.headerLabel, { marginTop: 20 }]}>
+        <Text
+          style={[
+            styles.headerLabel,
+            { marginTop: 20, color: theme.colors.text },
+          ]}
+        >
           {t("Active ingredients per base unit")}
         </Text>
 
@@ -348,7 +390,7 @@ export function EditMedicineScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
           style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}

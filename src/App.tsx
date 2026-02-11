@@ -24,7 +24,13 @@ const CustomLightTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "rgba(117, 222, 43, 1)",
+    primary: "rgba(29, 134, 226, 1)",
+    surface: "#f9f9f9",
+    textSecondary: "#666666",
+    textTertiary: "#999999",
+    success: "#10ce20",
+    error: "#ff3b30",
+    border: "#e0e0e0",
   },
 };
 
@@ -32,7 +38,16 @@ const CustomDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: "rgba(62, 255, 45, 1)",
+    primary: "rgba(29, 134, 226, 1)",
+    background: "#000000",
+    card: "#1c1c1e",
+    text: "#ffffff",
+    border: "#38383a",
+    surface: "#1c1c1e",
+    textSecondary: "#8e8e93",
+    textTertiary: "#636366",
+    success: "#30d158",
+    error: "#ff453a",
   },
 };
 

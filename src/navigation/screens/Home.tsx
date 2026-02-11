@@ -7,7 +7,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useTheme,
+} from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../index";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
@@ -96,6 +100,7 @@ export function Home() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeNavigationProp>();
   const db = useSQLiteContext();
+  const theme = useTheme();
   const [date, setDate] = React.useState(new Date());
 
   const [schedules, setSchedules] = React.useState<DefaultDict<DosageInfo>>(
@@ -219,9 +224,18 @@ export function Home() {
 
   const renderScheduledDosage = (dosage: DosageInfo, key: number) => {
     return (
-      <View key={key} style={styles.scheduleItem}>
+      <View
+        key={key}
+        style={[
+          styles.scheduleItem,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
         <View style={styles.scheduleContent}>
-          <Text style={styles.medicineName}>
+          <Text style={[styles.medicineName, { color: theme.colors.text }]}>
             {dosage.medicineName} {dosage.amount}{" "}
             {t(dosage.medicineBaseUnit, { count: dosage.amount })}
           </Text>
@@ -233,8 +247,8 @@ export function Home() {
               backgroundColor: isDosageDone.get(
                 pair(dosage.scheduleId, dosage.index),
               )
-                ? "#10ce20ff"
-                : "#7b7b7bff",
+                ? theme.colors.success
+                : theme.colors.textSecondary,
             },
           ]}
           onPress={() => handleCheck(dosage)}
@@ -245,9 +259,18 @@ export function Home() {
 
   const renderUnscheduledDosage = (dosage: UnscheduledDosageInfo) => {
     return (
-      <View key={dosage.dosageRecordId} style={styles.scheduleItem}>
+      <View
+        key={dosage.dosageRecordId}
+        style={[
+          styles.scheduleItem,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+        ]}
+      >
         <View style={styles.scheduleContent}>
-          <Text style={styles.medicineName}>
+          <Text style={[styles.medicineName, { color: theme.colors.text }]}>
             {dosage.medicineName} {dosage.amount}{" "}
             {t(dosage.medicineBaseUnit, { count: dosage.amount })}
           </Text>
@@ -258,8 +281,10 @@ export function Home() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>{t("Nothing planned for today")}</Text>
-      <Text style={styles.emptySubtext}>
+      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("Nothing planned for today")}
+      </Text>
+      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
         {t(
           "Use the button with a plus sign to add a schedule or one time entry.",
         )}
@@ -277,7 +302,9 @@ export function Home() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <ScrollView>
         {intakesAll.map(([key, intake]) => renderScheduledDosage(intake, key))}
         {unscheduledDosages.map((di) => renderUnscheduledDosage(di))}
@@ -298,7 +325,6 @@ const styles = StyleSheet.create({
   },
   scheduleItem: {
     flexDirection: "row",
-    backgroundColor: "#f9f9f9",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -306,7 +332,6 @@ const styles = StyleSheet.create({
     marginRight: 20,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
   },
   scheduleContent: {
     flex: 1,
@@ -314,22 +339,18 @@ const styles = StyleSheet.create({
   medicineName: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 4,
   },
   frequency: {
     fontSize: 14,
-    color: "#666",
     marginBottom: 2,
   },
   doses: {
     fontSize: 14,
-    color: "#666",
     marginBottom: 2,
   },
   dateRange: {
     fontSize: 13,
-    color: "#999",
   },
   checkButton: {
     paddingHorizontal: 12,
@@ -351,12 +372,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#666",
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: "#999",
     textAlign: "center",
   },
 });

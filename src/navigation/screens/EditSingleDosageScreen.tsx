@@ -11,7 +11,7 @@ import {
   dbInsertUnscheduledDosageRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
 import { ActiveIngredient, BaseUnit } from "../../models/Medicine";
 import { RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -23,6 +23,7 @@ type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
 
 export function EditSingleDosageScreen() {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
 
   const db = useSQLiteContext();
 
@@ -97,16 +98,27 @@ export function EditSingleDosageScreen() {
 
   return (
     <DefaultMainContainer justifyContent="flex-start">
-      <Text style={styles.headerLabel}>{t("Dose")}</Text>
+      <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        {t("Dose")}
+      </Text>
       <View style={styles.doseContainer}>
         <SmallNumberStepper onChange={handleDoseChange} />
       </View>
-      <Text style={styles.headerLabel}>{t("Date")}</Text>
+      <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        {t("Date")}
+      </Text>
       <TouchableOpacity
         onPress={handleSelectDate}
-        style={[styles.input, dateError && styles.inputError]}
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+          },
+          dateError && { borderColor: theme.colors.error, borderWidth: 2 },
+        ]}
       >
-        <Text style={styles.inputText}>
+        <Text style={[styles.inputText, { color: theme.colors.text }]}>
           {date ? date.toDateString() : "Select date"}
         </Text>
       </TouchableOpacity>
@@ -119,8 +131,11 @@ export function EditSingleDosageScreen() {
       ) : (
         ""
       )}
-      <View style={styles.footer}>
-        <TouchableOpacity onPress={handleSave} style={styles.nextButton}>
+      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+        >
           <Text style={styles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
@@ -131,7 +146,6 @@ export function EditSingleDosageScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   scrollContainer: {
     padding: 20,
@@ -141,32 +155,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
-    color: "#333",
   },
   doseContainer: {},
   input: {
     height: 50,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     borderRadius: 8,
     paddingHorizontal: 12,
     justifyContent: "center",
     marginBottom: 10,
   },
   inputError: {
-    borderColor: "#ff3b30",
     borderWidth: 2,
   },
   inputText: {
     fontSize: 16,
-    color: "#333",
   },
   fullWidthPickerContainer: {
     height: 50,
-    backgroundColor: "#f9f9f9",
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     borderRadius: 8,
     justifyContent: "center",
     marginBottom: 15,
@@ -184,12 +191,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
   },
   nextButton: {
-    backgroundColor: "#007AFF",
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",

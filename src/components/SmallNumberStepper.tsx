@@ -1,8 +1,10 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
+import { useTheme } from "@react-navigation/native";
 
 export default function SmallNumberStepper({ min = 1, max = 100, onChange }) {
   const [count, setCount] = React.useState<number>(min);
+  const theme = useTheme();
 
   const handlePress = (type) => {
     let newValue = count;
@@ -28,16 +30,20 @@ export default function SmallNumberStepper({ min = 1, max = 100, onChange }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.border }]}>
       <Pressable
         onPress={() => handlePress("decrement")}
         style={({ pressed }) => [
           styles.button,
-          count === min && styles.disabled,
-          pressed && styles.pressed,
+          { backgroundColor: theme.colors.card },
+          count === min && {
+            opacity: 0.3,
+            backgroundColor: theme.colors.background,
+          },
+          pressed && { opacity: 0.7, backgroundColor: theme.colors.border },
         ]}
       >
-        <Text style={styles.buttonText}>−</Text>
+        <Text style={[styles.buttonText, { color: theme.colors.text }]}>−</Text>
       </Pressable>
 
       <View style={styles.valueContainer}>
@@ -45,7 +51,7 @@ export default function SmallNumberStepper({ min = 1, max = 100, onChange }) {
           keyboardType="numeric"
           defaultValue={count.toString()}
           onChangeText={handleChangeText}
-          style={styles.valueText}
+          style={[styles.valueText, { color: theme.colors.text }]}
         />
       </View>
 
@@ -53,11 +59,15 @@ export default function SmallNumberStepper({ min = 1, max = 100, onChange }) {
         onPress={() => handlePress("increment")}
         style={({ pressed }) => [
           styles.button,
-          count === max && styles.disabled,
-          pressed && styles.pressed,
+          { backgroundColor: theme.colors.card },
+          count === max && {
+            opacity: 0.3,
+            backgroundColor: theme.colors.background,
+          },
+          pressed && { opacity: 0.7, backgroundColor: theme.colors.border },
         ]}
       >
-        <Text style={styles.buttonText}>+</Text>
+        <Text style={[styles.buttonText, { color: theme.colors.text }]}>+</Text>
       </Pressable>
     </View>
   );
@@ -67,7 +77,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
     borderRadius: 12,
     padding: 4,
     width: 150,
@@ -77,7 +86,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
     elevation: 2,
@@ -85,18 +93,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
   },
-  pressed: {
-    opacity: 0.7,
-    backgroundColor: "#e0e0e0",
-  },
-  disabled: {
-    opacity: 0.3,
-    backgroundColor: "#f5f5f5",
-  },
   buttonText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
   },
   valueContainer: {
     minWidth: 30,
