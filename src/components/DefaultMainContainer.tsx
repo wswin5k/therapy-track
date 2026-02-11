@@ -9,7 +9,7 @@ export function DefaultMainContainer({
   children: React.ReactNode;
 }>) {
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.safeArea]} edges={["bottom"]}>
       <View
         style={[styles.scrollContainer, { justifyContent: justifyContent }]}
       >
@@ -27,7 +27,6 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
     justifyContent: "flex-start",
-    padding: 20,
-    paddingBottom: 100,
+    padding: 10,
   },
 });

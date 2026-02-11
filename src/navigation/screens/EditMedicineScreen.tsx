@@ -25,6 +25,7 @@ import {
   ActiveIngredient,
   NAME_MAX_LENGHT,
 } from "../../models/Medicine";
+import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
 class ActiveIngedientInfo {
   name: string | null;
@@ -267,7 +268,7 @@ export function EditMedicineScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <DefaultMainContainer justifyContent="flex-start">
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.headerLabel}>{t("Medicine Name")}</Text>
         <TextInput
@@ -355,7 +356,7 @@ export function EditMedicineScreen() {
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </DefaultMainContainer>
   );
 }
 
