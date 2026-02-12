@@ -5,15 +5,17 @@ import { useTheme } from "@react-navigation/native";
 type SmallNumberStepperProps = {
   min?: number;
   max?: number;
+  defaultValue?: number;
   onChange: (value: number) => void;
 };
 
 export default function SmallNumberStepper({
   min = 1,
   max = 100,
+  defaultValue = 1,
   onChange,
 }: SmallNumberStepperProps) {
-  const [count, setCount] = React.useState<number>(min);
+  const [count, setCount] = React.useState<number>(defaultValue);
   const theme = useTheme();
 
   const handlePress = (type: "increment" | "decrement") => {

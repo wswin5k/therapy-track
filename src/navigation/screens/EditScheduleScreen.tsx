@@ -13,25 +13,26 @@ import RNDateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
-import { Dose, Frequency, IntervalUnit } from "../../models/Schedule";
+import {
+  Dose,
+  Frequency,
+  FrequencySelection,
+  IntervalUnit,
+  Schedule,
+  strKeyOfFrequeencySelection,
+} from "../../models/Schedule";
 import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "..";
+import { MedicineParam, RootStackParamList } from "..";
 import { ActiveIngredient, BaseUnit, Medicine } from "../../models/Medicine";
 import { useSQLiteContext } from "expo-sqlite";
 import {
+  dbGetScheduleWithMedicine,
   dbInsertSchedule,
   dbInsertScheduleWithMedicine,
+  dbUpdateSchedule,
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-
-enum FrequencySelection {
-  OnceDaily = "Once daily",
-  TwiceDaily = "Twice daily",
-  ThriceDaily = "Three times daily",
-  OnceWeekly = "Weekly",
-  OnceBiweekly = "Every two weeks",
-}
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
@@ -52,12 +53,11 @@ export default function EditScheduleScreen() {
 
   const navigation = useNavigation<EditScheduleScreenNavigationProp>();
   const route = useRoute();
-
   const db = useSQLiteContext();
 
   const freqRef = React.useRef<Frequency>(frequencySelectionMap["OnceDaily"]);
 
-  const [nDoses, setNDoses] = React.useState<number>(1);
+  const [nDoses, setNDoses] = React.useState<number>(0);
   const dosesRefs = React.useRef<Array<number>>(
     Array.from({ length: nDoses }, () => 1),
   );
@@ -70,6 +70,33 @@ export default function EditScheduleScreen() {
     React.useState<boolean>(false);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
 
+  const [medicine, setMedicine] = React.useState<MedicineParam | null>(null);
+  const [schedule, setSchedule] = React.useState<Schedule | null>(null);
+
+  React.useEffect(() => {
+    const setData = async () => {
+      const params = route.params as {
+        medicine: MedicineParam;
+        scheduleId?: number;
+      };
+      setMedicine(params.medicine);
+
+      const schedule = params.scheduleId
+        ? await dbGetScheduleWithMedicine(db, params.scheduleId)
+        : null;
+
+      setSchedule(schedule);
+
+      if (schedule) {
+        dosesRefs.current = schedule.doses.map((d) => d.amount);
+        setNDoses(schedule.freq.numberOfDoses);
+        setStartDate(schedule.startDate);
+        setEndDate(schedule.endDate);
+      }
+    };
+    setData();
+  }, []);
+
   const handleSelectStartDate = () => {
     setIsStartDatePickerOpened(true);
   };
@@ -78,8 +105,7 @@ export default function EditScheduleScreen() {
     console.log(event.type);
     if (event.type === "dismissed") {
       setStartDate(null);
-    }
-    else if (date) {
+    } else if (date) {
       setStartDate(date);
       setStartDateError(false);
     }
@@ -93,8 +119,7 @@ export default function EditScheduleScreen() {
   const handleEndDateChange = (event: DateTimePickerEvent, date?: Date) => {
     if (event.type === "dismissed") {
       setEndDate(null);
-    }
-    else if (date) {
+    } else if (date) {
       setEndDate(date);
     }
     setIsEndDatePickerOpened(false);
@@ -121,27 +146,59 @@ export default function EditScheduleScreen() {
       ([index, amount]) => new Dose(amount, index, null),
     );
 
-    if (medicine.dbId) {
-      await dbInsertSchedule(db, medicine.dbId, {
-        startDate,
-        endDate,
-        freq: freqRef.current,
-        doses,
-      });
-    } else {
+    if (medicine && medicine.dbId) {
+      if (schedule) {
+        if (
+          startDate !== schedule.startDate ||
+          endDate !== schedule.endDate ||
+          freqRef.current !== schedule.freq ||
+          doses !== schedule.doses
+        ) {
+          await dbUpdateSchedule(db, {
+            dbId: schedule.dbId,
+            startDate,
+            endDate,
+            freq: freqRef.current,
+            doses,
+          });
+        }
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: "HomeTabs",
+              state: {
+                routes: [{ name: "SchedulesList" }],
+              },
+            },
+          ],
+        });
+      } else {
+        await dbInsertSchedule(db, medicine.dbId, {
+          startDate,
+          endDate,
+          freq: freqRef.current,
+          doses,
+        });
+
+        navigation.navigate("HomeTabs");
+      }
+    } else if (medicine) {
       await dbInsertScheduleWithMedicine(db, medicine, {
         startDate,
         endDate,
         freq: freqRef.current,
         doses,
       });
+      navigation.navigate("HomeTabs");
+    } else {
+      throw Error("Medicine has not been provided");
     }
-
-    navigation.navigate("HomeTabs");
   };
 
-  const handleFrequencyPicker = (item: string) => {
-    const freq = frequencySelectionMap[item];
+  const handleFrequencyPicker = (item: FrequencySelection) => {
+    const itemKey = strKeyOfFrequeencySelection(item);
+    const freq = frequencySelectionMap[itemKey];
     freqRef.current = freq;
     if (freq.numberOfDoses !== nDoses) {
       setNDoses(freq.numberOfDoses);
@@ -154,18 +211,9 @@ export default function EditScheduleScreen() {
     };
   };
 
-  const medicine = (
-    route.params as {
-      medicine: {
-        name: string;
-        baseUnit: BaseUnit;
-        activeIngredients: ActiveIngredient[];
-        dbId?: number;
-      };
-    }
-  ).medicine;
-
-  const doseHeader = `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`;
+  const doseHeader = medicine
+    ? `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`
+    : "Dose";
 
   return (
     <DefaultMainContainer>
@@ -184,18 +232,21 @@ export default function EditScheduleScreen() {
         >
           <Picker
             style={[styles.picker, { color: theme.colors.text }]}
+            selectedValue={schedule?.freq.getFrequencyLabel()}
             dropdownIconColor={theme.colors.text}
             onValueChange={handleFrequencyPicker}
           >
-            {Object.entries(FrequencySelection).map(([k, v]) => (
-              <Picker.Item
-                key={k}
-                label={t(v)}
-                value={k}
-                style={styles.pickerItem}
-                color={theme.colors.text}
-              />
-            ))}
+            {Object.entries(FrequencySelection).map(([k, v]) => {
+              return (
+                <Picker.Item
+                  key={k}
+                  label={t(v)}
+                  value={v}
+                  style={styles.pickerItem}
+                  color={theme.colors.text}
+                />
+              );
+            })}
           </Picker>
         </View>
 
@@ -205,14 +256,20 @@ export default function EditScheduleScreen() {
 
         <View>
           {nDoses === 1 ? (
-            <SmallNumberStepper onChange={handleDoseInput(0)} />
+            <SmallNumberStepper
+              onChange={handleDoseInput(0)}
+              defaultValue={dosesRefs.current[0]}
+            />
           ) : (
             Array.from({ length: nDoses }, (_, idx) => (
               <View key={idx} style={styles.ingredientRow}>
                 <Text style={{ color: theme.colors.text }}>
                   {t("Dose", { count: idx, oridnal: true })}
                 </Text>
-                <SmallNumberStepper onChange={handleDoseInput(idx)} />
+                <SmallNumberStepper
+                  onChange={handleDoseInput(idx)}
+                  defaultValue={dosesRefs.current[idx]}
+                />
               </View>
             ))
           )}
@@ -276,7 +333,7 @@ export default function EditScheduleScreen() {
         ) : (
           ""
         )}
-{/* 
+        {/* 
         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
           {t("That's 2 weeks")}
         </Text> */}

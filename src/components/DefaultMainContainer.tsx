@@ -14,7 +14,7 @@ export function DefaultMainContainer({
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: theme.colors.background }]}
-      edges={["bottom"]}
+      edges={["bottom", "left", "right"]}
     >
       <View
         style={[styles.scrollContainer, { justifyContent: justifyContent }]}

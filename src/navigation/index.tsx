@@ -14,17 +14,20 @@ import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
 import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
 
+export interface MedicineParam {
+  name: string;
+  baseUnit: BaseUnit;
+  activeIngredients: ActiveIngredient[];
+  dbId?: number;
+}
+
 export type RootStackParamList = {
   HomeTabs: undefined;
   EditMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
   SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
   EditScheduleScreen: {
-    medicine: {
-      name: string;
-      baseUnit: BaseUnit;
-      activeIngredients: ActiveIngredient[];
-      dbId?: number;
-    };
+    medicine: MedicineParam;
+    scheduleId?: number;
   };
   EditSingleDosageScreen: {
     medicine: {

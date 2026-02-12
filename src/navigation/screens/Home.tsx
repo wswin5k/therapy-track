@@ -346,7 +346,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-
   medicineName: {
     fontSize: 18,
     fontWeight: "bold",

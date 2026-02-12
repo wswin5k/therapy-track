@@ -77,6 +77,65 @@ export async function dbDeleteMedicine(db: SQLiteDatabase, id: number) {
   await db.runAsync("DELETE FROM medicines WHERE id = ?", id);
 }
 
+function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
+  const active_ingredients = parseActiveIngredients(
+    row.medicine_active_ingredients,
+  );
+  const medicineData = new Medicine(
+    row.medicine_name,
+    BaseUnit[row.medicine_base_unit],
+    active_ingredients,
+    row.medicine,
+  );
+  const dosesData = JSON.parse(row.doses);
+  const doses = dosesData.map(
+    (dd: { amount: number; index: number; offset: number }) =>
+      new Dose(dd.amount, dd.index, dd.offset),
+  );
+  const freqData = JSON.parse(row.freq);
+  const frequency = new Frequency(
+    freqData.intervalUnit as IntervalUnit,
+    freqData.intervalLength,
+    freqData.numberOfDoses,
+  );
+
+  return new Schedule(
+    medicineData,
+    new Date(row.start_date),
+    row.end_date ? new Date(row.end_date) : (null as any),
+    frequency,
+    doses,
+    row.id,
+  );
+}
+
+export async function dbGetScheduleWithMedicine(
+  db: SQLiteDatabase,
+  scheduleId: number,
+): Promise<Schedule> {
+  const row = await db.getFirstAsync<ScheduleWithMedicineRow>(`
+      SELECT
+        s.id,
+        s.medicine, 
+        m.name as medicine_name,
+        m.base_unit as medicine_base_unit,
+        m.active_ingredients as medicine_active_ingredients,
+        s.start_date,
+        s.end_date,
+        s.doses,
+        s.freq
+      FROM schedules s
+      JOIN medicines m ON s.medicine = m.id
+      WHERE s.id = ${scheduleId}
+      ORDER BY s.start_date DESC
+    `);
+
+  if (row === null) {
+    throw Error("No schedule with given id.");
+  }
+  return parseScheduleWithMedicineRow(row);
+}
+
 export async function dbGetSchedulesWithMedicines(
   db: SQLiteDatabase,
 ): Promise<Schedule[]> {
@@ -96,37 +155,7 @@ export async function dbGetSchedulesWithMedicines(
       ORDER BY s.start_date DESC
     `);
 
-  return rows.map((row) => {
-    const active_ingredients = parseActiveIngredients(
-      row.medicine_active_ingredients,
-    );
-    const medicineData = new Medicine(
-      row.medicine_name,
-      BaseUnit[row.medicine_base_unit],
-      active_ingredients,
-      row.medicine,
-    );
-    const dosesData = JSON.parse(row.doses);
-    const doses = dosesData.map(
-      (dd: { amount: number; index: number; offset: number }) =>
-        new Dose(dd.amount, dd.index, dd.offset),
-    );
-    const freqData = JSON.parse(row.freq);
-    const frequency = new Frequency(
-      freqData.intervalUnit as IntervalUnit,
-      freqData.intervalLength,
-      freqData.numberOfDoses,
-    );
-
-    return new Schedule(
-      medicineData,
-      new Date(row.start_date),
-      row.end_date ? new Date(row.end_date) : (null as any),
-      frequency,
-      doses,
-      row.id,
-    );
-  });
+  return rows.map(parseScheduleWithMedicineRow);
 }
 
 export async function dbInsertSchedule(
@@ -151,6 +180,33 @@ export async function dbInsertSchedule(
     endDateStr,
     dosesJson,
     freqJson,
+  );
+}
+
+export async function dbUpdateSchedule(
+  db: SQLiteDatabase,
+  schedule: {
+    dbId: number;
+    startDate: Date;
+    endDate: Date | null;
+    doses: Dose[];
+    freq: Frequency;
+  },
+) {
+  const dosesJson = JSON.stringify(schedule.doses);
+  const freqJson = JSON.stringify(schedule.freq);
+  const startDateStr = schedule.startDate.toISOString();
+  const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
+
+  await db.runAsync(
+    `UPDATE schedules
+    SET start_date = ?, end_date = ?, doses = ?, freq = ?
+    WHERE id = ?`,
+    startDateStr,
+    endDateStr,
+    dosesJson,
+    freqJson,
+    schedule.dbId,
   );
 }
 

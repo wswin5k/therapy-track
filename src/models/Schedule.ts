@@ -1,5 +1,19 @@
 import { Medicine } from "./Medicine";
 
+export enum FrequencySelection {
+  OnceDaily = "Once daily",
+  TwiceDaily = "Twice daily",
+  ThriceDaily = "Three times daily",
+  OnceWeekly = "Weekly",
+  OnceBiweekly = "Every two weeks",
+}
+
+export function strKeyOfFrequeencySelection(x: FrequencySelection) {
+  return Object.keys(FrequencySelection)[
+    Object.values(FrequencySelection).indexOf(x)
+  ];
+}
+
 export enum IntervalUnit {
   day = "day",
   week = "week",
@@ -20,8 +34,23 @@ export class Frequency {
     this.intervalLength = intervalLength;
     this.numberOfDoses = numberOfDoses;
   }
-}
 
+  getFrequencyLabel(): FrequencySelection {
+    const unit = this.intervalUnit;
+    const length = this.intervalLength;
+    const doses = this.numberOfDoses;
+
+    if (unit === "day" && length === 1) {
+      if (doses === 1) return FrequencySelection.OnceDaily;
+      if (doses === 2) return FrequencySelection.TwiceDaily;
+      if (doses === 3) return FrequencySelection.ThriceDaily;
+    } else if (unit === "week" && doses === 1) {
+      if (length === 1) return FrequencySelection.OnceWeekly;
+      if (length === 2) return FrequencySelection.OnceBiweekly;
+    }
+    throw Error("Wrong frequency data.");
+  }
+}
 
 export class Dose {
   amount: number;
