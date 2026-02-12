@@ -15,10 +15,12 @@ import {
 } from "@react-navigation/native";
 import {
   dbDeleteSchedule,
+  dbDeleteScheduledDosageRecordsForSchedule,
   dbGetSchedulesWithMedicines,
 } from "../../models/dbAccess";
 import { Schedule } from "../../models/Schedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -41,10 +43,22 @@ function ScheduleListItem({
   const db = useSQLiteContext();
   const navigation = useNavigation<EditMedicineScreenNavigationProp>();
   const theme = useTheme();
+  const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
 
-  const handleDelete = async (id: number) => {
-    await dbDeleteSchedule(db, id);
+  const handleDelete = () => {
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    await dbDeleteScheduledDosageRecordsForSchedule(db, schedule.dbId);
+    await dbDeleteSchedule(db, schedule.dbId);
+    setDeleteDialogVisible(false);
     await loadSchedules();
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogVisible(false);
+    handleOptionsToggle();
   };
 
   const handleEdit = () => {
@@ -86,7 +100,7 @@ function ScheduleListItem({
           styles.optionsButton,
           { backgroundColor: theme.colors.primary },
         ]}
-        onPress={() => handleDelete(schedule.dbId)}
+        onPress={handleDelete}
       >
         <Text style={styles.optionsButtonText}>{t("Delete")}</Text>
       </TouchableOpacity>
@@ -104,6 +118,16 @@ function ScheduleListItem({
 
   return (
     <View style={{}}>
+      <ConfirmationDialog
+        visible={deleteDialogVisible}
+        title={t("Delete confirmation")}
+        message={t("This action is going to parnamently delete the schedule and "+
+          "all of its associated dosage records. Do you want to proceed?")}
+        confirmText={t("Delete")}
+        cancelText={t("Cancel")}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
       {optionsOpened && renderOptions()}
 
       <TouchableOpacity

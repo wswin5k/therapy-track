@@ -272,6 +272,15 @@ export async function dbDeleteScheduledDosageRecord(
   await db.runAsync("DELETE FROM scheduled_dosage_records WHERE id = ?", id);
 }
 
+
+export async function dbDeleteScheduledDosageRecordsForSchedule(
+  db: SQLiteDatabase,
+  scheduleId: number,
+) {
+  await db.runAsync("DELETE FROM scheduled_dosage_records WHERE schedule = ?", scheduleId);
+}
+
+
 export async function dbGetScheduledDosageRecords(
   db: SQLiteDatabase,
   startDate?: Date,
