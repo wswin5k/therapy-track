@@ -22,6 +22,7 @@ export class Frequency {
   }
 }
 
+
 export class Dose {
   amount: number;
   index: number;

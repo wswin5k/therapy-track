@@ -230,7 +230,7 @@ export function Home() {
           },
         ]}
       >
-        <View style={[styles.scheduleContent, { flex: 9 }]}>
+        <View style={[styles.scheduleContent, { flex: 5 }]}>
           <Text style={[styles.medicineName, { color: theme.colors.text }]}>
             {dosage.medicineName} {dosage.amount}{" "}
             {t(dosage.medicineBaseUnit, { count: dosage.amount })}
@@ -369,9 +369,9 @@ const styles = StyleSheet.create({
     width: 25,
   },
   checkButton: {
-    height: "100%",
     justifyContent: "center",
     alignItems: "center",
+    alignSelf: "stretch",
     padding: 0,
   },
   deleteButtonText: {

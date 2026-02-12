@@ -78,7 +78,8 @@ export default function EditScheduleScreen() {
     console.log(event.type);
     if (event.type === "dismissed") {
       setStartDate(null);
-    } else if (date) {
+    }
+    else if (date) {
       setStartDate(date);
       setStartDateError(false);
     }
@@ -92,7 +93,8 @@ export default function EditScheduleScreen() {
   const handleEndDateChange = (event: DateTimePickerEvent, date?: Date) => {
     if (event.type === "dismissed") {
       setEndDate(null);
-    } else if (date) {
+    }
+    else if (date) {
       setEndDate(date);
     }
     setIsEndDatePickerOpened(false);
@@ -274,7 +276,7 @@ export default function EditScheduleScreen() {
         ) : (
           ""
         )}
-        {/* 
+{/* 
         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
           {t("That's 2 weeks")}
         </Text> */}
