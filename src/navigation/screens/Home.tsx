@@ -71,21 +71,6 @@ class UnscheduledDosageInfo {
   }
 }
 
-class DefaultDict<T> {
-  [key: string]: T[];
-
-  constructor() {
-    return new Proxy(this, {
-      get: (target: any, prop: string) => {
-        if (!(prop in target)) {
-          target[prop] = new Array();
-        }
-        return target[prop];
-      },
-    }) as DefaultDict<T>;
-  }
-}
-
 const pair = (a: number, b: number): number => {
   return 0.5 * (a + b) * (a + b + 1) + b;
 };
@@ -100,20 +85,20 @@ export function Home() {
   const navigation = useNavigation<HomeNavigationProp>();
   const db = useSQLiteContext();
   const theme = useTheme();
+
   const [date, setDate] = React.useState(new Date());
 
-  const [schedules, setSchedules] = React.useState<DefaultDict<DosageInfo>>(
-    new DefaultDict<DosageInfo>(),
+  const [scheduledDosages, setScheduledDosages] = React.useState<
+    Map<number, Map<number, DosageInfo>>
+  >(new Map());
+  const [isDosageDone, setIsDosageDone] = React.useState<Map<number, boolean>>(
+    new Map(),
   );
   const [unscheduledDosages, setUnscheduledDosages] = React.useState<
     Array<UnscheduledDosageInfo>
   >([]);
 
-  const [isDosageDone, setIsDosageDone] = React.useState<Map<number, boolean>>(
-    new Map(),
-  );
-
-  const loadSchedules = React.useCallback(async () => {
+  const loadScheduledDosages = React.useCallback(async () => {
     const result = await dbGetSchedulesWithMedicines(db);
     const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
@@ -123,11 +108,13 @@ export function Home() {
       );
     });
 
-    let intakes = new DefaultDict<DosageInfo>();
+    let newScheduledDosages = new Map<number, Map<number, DosageInfo>>();
 
     for (const s of schedulesToday) {
       for (const [idx, dose] of s.doses.entries()) {
-        intakes[idx.toString()].push(
+        const dosages = newScheduledDosages.get(idx) || new Map();
+        dosages.set(
+          pair(s.dbId, dose.index),
           new DosageInfo(
             s.medicine.name,
             s.medicine.baseUnit,
@@ -136,16 +123,24 @@ export function Home() {
             s.dbId,
           ),
         );
+        newScheduledDosages.set(idx, dosages);
       }
     }
 
-    setSchedules(intakes);
-
     const dosageRecords = await dbGetScheduledDosageRecords(db, date, date);
 
+    const newIsDosageDone = new Map<number, boolean>();
     dosageRecords.forEach((dr) => {
-      isDosageDone.set(pair(dr.scheduleId, dr.doseIndex), true);
+      const key = pair(dr.scheduleId, dr.doseIndex);
+      newIsDosageDone.set(key, true);
+      const dosage = newScheduledDosages.get(dr.doseIndex)?.get(key);
+      if (dosage) {
+        dosage.dosageRecordId = dr.dbId;
+      }
     });
+
+    setScheduledDosages(newScheduledDosages);
+    setIsDosageDone(newIsDosageDone);
   }, []);
 
   const loadUnscheduledRecords = async () => {
@@ -176,9 +171,9 @@ export function Home() {
 
   useFocusEffect(
     React.useCallback(() => {
-      loadSchedules();
+      loadScheduledDosages();
       loadUnscheduledRecords();
-    }, [loadSchedules]),
+    }, [loadScheduledDosages]),
   );
 
   const handleCheck = async (dosage: DosageInfo) => {
@@ -298,10 +293,10 @@ export function Home() {
   );
 
   let key = 0;
-  let intakesAll = new Array<[number, DosageInfo]>();
-  for (const intakes of Object.values(schedules)) {
-    for (const intake of intakes) {
-      intakesAll.push([key, intake]);
+  let scheduledDosagesFlat = new Array<[number, DosageInfo]>();
+  for (const intakes of scheduledDosages.values()) {
+    for (const [idx, dosage] of intakes.entries()) {
+      scheduledDosagesFlat.push([idx, dosage]);
       key += 1;
     }
   }
@@ -312,12 +307,18 @@ export function Home() {
         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
           {t("Scheduled dosages")}
         </Text>
-        {intakesAll.map(([key, intake]) => renderScheduledDosage(intake, key))}
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("One time dosages")}
-        </Text>
+        {scheduledDosagesFlat.map(([key, intake]) =>
+          renderScheduledDosage(intake, key),
+        )}
+        {unscheduledDosages.length > 0 ? (
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("One time dosages")}
+          </Text>
+        ) : (
+          ""
+        )}
         {unscheduledDosages.map((di) => renderUnscheduledDosage(di))}
-        {!unscheduledDosages && !intakesAll && renderEmptyState()}
+        {!unscheduledDosages && !scheduledDosagesFlat && renderEmptyState()}
       </ScrollView>
 
       <FloatingActionButton actions={fabActions} position="right" />

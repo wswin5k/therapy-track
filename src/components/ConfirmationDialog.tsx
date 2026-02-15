@@ -57,26 +57,15 @@ export function ConfirmationDialog({
                 ]}
                 onPress={onCancel}
               >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    { color: theme.colors.text },
-                  ]}
-                >
+                <Text style={[styles.buttonText, { color: theme.colors.text }]}>
                   {cancelText}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.button,
-                  { backgroundColor: theme.colors.error },
-                ]}
+                style={[styles.button, { backgroundColor: theme.colors.error }]}
                 onPress={onConfirm}
               >
-                <Text style={[
-                    styles.buttonText,
-                    { color: theme.colors.text },
-                ]}>
+                <Text style={[styles.buttonText, { color: theme.colors.text }]}>
                   {confirmText}
                 </Text>
               </TouchableOpacity>

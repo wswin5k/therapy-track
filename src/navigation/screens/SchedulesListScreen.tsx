@@ -121,8 +121,10 @@ function ScheduleListItem({
       <ConfirmationDialog
         visible={deleteDialogVisible}
         title={t("Delete confirmation")}
-        message={t("This action is going to parnamently delete the schedule and "+
-          "all of its associated dosage records. Do you want to proceed?")}
+        message={t(
+          "This action is going to parnamently delete the schedule and " +
+            "all of its associated dosage records. Do you want to proceed?",
+        )}
         confirmText={t("Delete")}
         cancelText={t("Cancel")}
         onConfirm={confirmDelete}

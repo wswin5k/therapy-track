@@ -9,7 +9,7 @@ import {
 } from "./Medicine";
 import { ScheduledDosageRecord, UnscheduledDosageRecord } from "./DosageRecord";
 
-function extarctDate(datetime: Date): string {
+function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
 }
 
@@ -272,14 +272,15 @@ export async function dbDeleteScheduledDosageRecord(
   await db.runAsync("DELETE FROM scheduled_dosage_records WHERE id = ?", id);
 }
 
-
 export async function dbDeleteScheduledDosageRecordsForSchedule(
   db: SQLiteDatabase,
   scheduleId: number,
 ) {
-  await db.runAsync("DELETE FROM scheduled_dosage_records WHERE schedule = ?", scheduleId);
+  await db.runAsync(
+    "DELETE FROM scheduled_dosage_records WHERE schedule = ?",
+    scheduleId,
+  );
 }
-
 
 export async function dbGetScheduledDosageRecords(
   db: SQLiteDatabase,
@@ -288,25 +289,25 @@ export async function dbGetScheduledDosageRecords(
 ): Promise<ScheduledDosageRecord[]> {
   let queryStr = "SELECT * FROM scheduled_dosage_records ";
   if (startDate && endDate) {
-    const startDateStr = extarctDate(startDate);
-    const endDateStr = extarctDate(endDate);
+    const startDateStr = extractDate(startDate);
+    const endDateStr = extractDate(endDate);
     queryStr =
       queryStr +
       `
-    WHERE date >= date('${startDateStr}')
-    AND date <= date('${endDateStr}')`;
+    WHERE date(date) >= '${startDateStr}'
+    AND date(date) <= '${endDateStr}'`;
   } else if (startDate) {
-    const startDateStr = extarctDate(startDate);
+    const startDateStr = extractDate(startDate);
     queryStr =
       queryStr +
       `
-    WHERE date >= date('${startDateStr}')`;
+    WHERE date(date) >= '${startDateStr}'`;
   } else if (endDate) {
-    const endDateStr = extarctDate(endDate);
+    const endDateStr = extractDate(endDate);
     queryStr =
       queryStr +
       `
-    WHERE date <= date('${endDateStr}')`;
+    WHERE date(date) <= '${endDateStr}'`;
   }
 
   const rows = await db.getAllAsync<ScheduledDosageRecordRow>(queryStr);
@@ -330,7 +331,7 @@ export async function dbInsertUnscheduledDosageRecord(
   const result = await db.runAsync(
     "INSERT INTO unscheduled_dosage_records (record_date, date, medicine, dose_amount) VALUES (?, ?, ?, ?)",
     new Date().toISOString(),
-    extarctDate(record.date),
+    extractDate(record.date),
     record.medicineId,
     record.doseAmount,
   );
@@ -354,30 +355,29 @@ export async function dbGetUnscheduledDosageRecords(
   endDate?: Date,
 ): Promise<UnscheduledDosageRecord[]> {
   let queryStr = "SELECT * FROM unscheduled_dosage_records ";
-  let whereClause = "";
   if (startDate && endDate) {
-    const startDateStr = extarctDate(startDate);
-    const endDateStr = extarctDate(endDate);
-    whereClause = `
-    WHERE date >= date('${startDateStr}')
-    AND date <= date('${endDateStr}')`;
+    const startDateStr = extractDate(startDate);
+    const endDateStr = extractDate(endDate);
+    queryStr =
+      queryStr +
+      `
+    WHERE date(date) >= '${startDateStr}'
+    AND date(date) <= '${endDateStr}'`;
   } else if (startDate) {
-    const startDateStr = extarctDate(startDate);
-    whereClause = `
-    WHERE date >= date('${startDateStr}')`;
+    const startDateStr = extractDate(startDate);
+    queryStr =
+      queryStr +
+      `
+    WHERE date(date) >= '${startDateStr}'`;
   } else if (endDate) {
-    const endDateStr = extarctDate(endDate);
-    whereClause = `
-    WHERE date <= date('${endDateStr}')`;
+    const endDateStr = extractDate(endDate);
+    queryStr =
+      queryStr +
+      `
+    WHERE date(date) <= '${endDateStr}'`;
   }
-  queryStr = `SELECT * FROM unscheduled_dosage_records
-      ${whereClause}
-      ORDER BY record_date ASC
-  `;
-  console.log(queryStr);
 
   const rows = await db.getAllAsync<UncheduledDosageRecordRow>(queryStr);
-  console.log(rows);
   return rows.map(
     (row) =>
       new UnscheduledDosageRecord(
