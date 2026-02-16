@@ -26,18 +26,21 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "EditMedicineScreen"
+  "EditScheduleScreen"
 >;
+
 function ScheduleListItem({
   schedule,
   loadSchedules,
   optionsOpened,
   handleOptionsToggle,
+  onPress,
 }: {
   schedule: Schedule;
   loadSchedules: () => Promise<void>;
   optionsOpened: boolean;
   handleOptionsToggle: () => void;
+  onPress: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const db = useSQLiteContext();
@@ -122,7 +125,7 @@ function ScheduleListItem({
         visible={deleteDialogVisible}
         title={t("Delete confirmation")}
         message={t(
-          "This action is going to parnamently delete the schedule and " +
+          "This action is going to pernamently delete the schedule and " +
             "all of its associated dosage records. Do you want to proceed?",
         )}
         confirmText={t("Delete")}
@@ -133,6 +136,7 @@ function ScheduleListItem({
       {optionsOpened && renderOptions()}
 
       <TouchableOpacity
+        onPress={onPress}
         onLongPress={handleOptionsToggle}
         style={[
           styles.scheduleItem,
@@ -144,20 +148,22 @@ function ScheduleListItem({
         ]}
       >
         <View style={styles.scheduleContent}>
-          <Text style={[styles.medicineName, { color: theme.colors.text }]}>
+          <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
             {schedule.medicine.name}
           </Text>
-          <Text style={[styles.doses, { color: theme.colors.textSecondary }]}>
+          <Text
+            style={[styles.itemText, { color: theme.colors.textSecondary }]}
+          >
             {t(schedule.medicine.baseUnit, { count: 2 })}
           </Text>
           <Text
-            style={[styles.frequency, { color: theme.colors.textSecondary }]}
+            style={[styles.itemText, { color: theme.colors.textSecondary }]}
           >
             {frequencyLabel}
           </Text>
 
           <Text
-            style={[styles.dateRange, { color: theme.colors.textSecondary }]}
+            style={[styles.itemText, { color: theme.colors.textSecondary }]}
           >
             {dateRange}
           </Text>
@@ -173,7 +179,6 @@ export function SchedulesListScreen() {
   const { t, i18n } = useTranslation();
 
   const [schedules, setSchedules] = React.useState<Schedule[]>([]);
-  const [refreshing, setRefreshing] = React.useState(false);
   const [optionsOpened, setOptionsOpened] = React.useState<Array<boolean>>([]);
 
   const loadSchedules = React.useCallback(async () => {
@@ -181,12 +186,6 @@ export function SchedulesListScreen() {
     setSchedules(result);
     setOptionsOpened(Array.from({ length: result.length }, () => false));
   }, []);
-
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true);
-    await loadSchedules();
-    setRefreshing(false);
-  }, [loadSchedules]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -216,6 +215,14 @@ export function SchedulesListScreen() {
     };
   };
 
+  const handleOptionsOff = () => {
+    const newOptionsOpened = Array.from(
+      { length: optionsOpened.length },
+      () => false,
+    );
+    setOptionsOpened(newOptionsOpened);
+  };
+
   return (
     <DefaultMainContainer>
       <ScrollView style={styles.list}>
@@ -226,6 +233,7 @@ export function SchedulesListScreen() {
               schedule={s}
               optionsOpened={optionsOpened[idx]}
               loadSchedules={loadSchedules}
+              onPress={handleOptionsOff}
               handleOptionsToggle={createHandleOptionsToggle(idx)}
             />
           );
@@ -253,7 +261,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
   },
-
   optionsOverlay: {
     ...StyleSheet.absoluteFillObject,
     flexDirection: "row",
@@ -267,21 +274,14 @@ const styles = StyleSheet.create({
   scheduleContent: {
     flex: 1,
   },
-  medicineName: {
+  itemTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 4,
   },
-  frequency: {
-    fontSize: 14,
+  itemText: {
+    fontSize: 15,
     marginBottom: 2,
-  },
-  doses: {
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  dateRange: {
-    fontSize: 13,
   },
   optionsButton: {
     paddingHorizontal: 12,

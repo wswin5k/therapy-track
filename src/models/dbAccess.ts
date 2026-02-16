@@ -56,6 +56,28 @@ function parseActiveIngredients(json: string) {
   );
 }
 
+export async function dbUpdateMedicine(
+  db: SQLiteDatabase,
+  medicine: {
+    name: string;
+    baseUnit: BaseUnit;
+    activeIngredients: ActiveIngredient[];
+    dbId: number;
+  },
+) {
+  const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
+
+  await db.runAsync(
+    `UPDATE medicines
+    SET name = ?, base_unit = ?, active_ingredients = ?
+    WHERE id = ?`,
+    medicine.name,
+    strKeyOfBaseUnit(medicine.baseUnit),
+    activeIngredientsStr,
+    medicine.dbId,
+  );
+}
+
 export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
   const rows = await db.getAllAsync<MedicineRow>(`
       SELECT id, name, base_unit, active_ingredients

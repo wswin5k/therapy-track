@@ -9,7 +9,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { useRoute, useNavigation, useTheme } from "@react-navigation/native";
+import {
+  useRoute,
+  useNavigation,
+  useTheme,
+  useFocusEffect,
+} from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
@@ -17,24 +22,27 @@ import {
   IngredientAmountUnit,
   ActiveIngredient,
   NAME_MAX_LENGHT,
+  Medicine,
 } from "../../models/Medicine";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { dbUpdateMedicine } from "../../models/dbAccess";
+import { useSQLiteContext } from "expo-sqlite";
 
 class ActiveIngedientInfo {
   name: string | null;
-  weight: number | null;
+  amount: number | null;
   unit: IngredientAmountUnit | null;
   elementKey: number;
 
   constructor(
     elementKey: number,
     name: string | null = null,
-    weight: number | null = null,
+    amount: number | null = null,
     unit: IngredientAmountUnit | null = null,
   ) {
     this.elementKey = elementKey;
     this.name = name;
-    this.weight = weight;
+    this.amount = amount;
     this.unit = unit;
   }
 }
@@ -86,13 +94,13 @@ function ActiveIngredientRow({
           ]}
           placeholder="Name"
           placeholderTextColor={theme.colors.textTertiary}
-          value={name}
+          value={activeIngredientInfo.name ?? ""}
         />
       </View>
       <View style={{ flex: 1.2 }}>
         <TextInput
           onChangeText={(weightStr: string) => {
-            activeIngredientInfo.weight = parseFloat(weightStr);
+            activeIngredientInfo.amount = parseFloat(weightStr);
           }}
           style={[
             styles.input,
@@ -108,8 +116,8 @@ function ActiveIngredientRow({
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType="numeric"
           defaultValue={
-            activeIngredientInfo.weight
-              ? activeIngredientInfo.weight.toString()
+            activeIngredientInfo.amount
+              ? activeIngredientInfo.amount.toString()
               : ""
           }
         />
@@ -125,6 +133,9 @@ function ActiveIngredientRow({
           onValueChange={(unit: IngredientAmountUnit) => {
             activeIngredientInfo.unit = unit;
           }}
+          selectedValue={
+            activeIngredientInfo.unit ?? IngredientAmountUnit.Miligram
+          }
           style={[styles.picker, { color: theme.colors.text }]}
           dropdownIconColor={theme.colors.text}
         >
@@ -168,8 +179,8 @@ type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
 export function EditMedicineScreen() {
   const { t, i18n } = useTranslation();
   const route = useRoute();
+  const db = useSQLiteContext();
   const navigation = useNavigation<EditMedicineScreenNavigationProp>();
-
   const theme = useTheme();
 
   const [name, setName] = React.useState("");
@@ -181,7 +192,6 @@ export function EditMedicineScreen() {
   const [ingredientErrors, setIngredientErrors] = React.useState<
     Record<number, { name?: boolean; weight?: boolean }>
   >({});
-  const mode = (route.params as { mode?: "schedule" | "one-time" })?.mode;
 
   const [nActiveIngredients, setNActiveIngredients] = React.useState<number>(1);
   const elementKeyCounter = React.useRef<number>(nActiveIngredients);
@@ -190,6 +200,32 @@ export function EditMedicineScreen() {
       { length: nActiveIngredients },
       (_, idx) => new ActiveIngedientInfo(idx),
     ),
+  );
+
+  const [mode, setMode] = React.useState<
+    "save-and-go-back" | "schedule" | "one-time"
+  >("save-and-go-back");
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const params = route.params as {
+        mode: "save-and-go-back" | "schedule" | "one-time";
+        medicine: Medicine;
+      };
+      setMode(params.mode);
+      const mInit = params.medicine;
+      if (mInit) {
+        setName(mInit.name);
+
+        setBaseUnit(mInit.baseUnit);
+
+        activeIngredientsRefs.current = mInit.activeIngredients.map(
+          (ai, idx) => new ActiveIngedientInfo(idx, ai.name, ai.amount, ai.unit),
+        );
+        setNActiveIngredients(mInit.activeIngredients.length);
+      }
+
+    }, []),
   );
 
   const validate = (): MedicineValidated | null => {
@@ -211,7 +247,7 @@ export function EditMedicineScreen() {
             errors.name = true;
             medicineValidated = null;
           }
-          if (ingredient.weight === null || isNaN(ingredient.weight)) {
+          if (ingredient.amount === null || isNaN(ingredient.amount)) {
             errors.weight = true;
             medicineValidated = null;
           }
@@ -223,9 +259,9 @@ export function EditMedicineScreen() {
         setIngredientErrors(newIngredientErrors);
         if (Object.keys(newIngredientErrors).length === 0) {
           const activeIngredients = activeIngredientsRefs.current
-            .filter((ing) => ing.name && ing.weight && ing.unit)
+            .filter((ing) => ing.name && ing.amount && ing.unit)
             .map(
-              (ing) => new ActiveIngredient(ing.name!, ing.weight!, ing.unit!),
+              (ing) => new ActiveIngredient(ing.name!, ing.amount!, ing.unit!),
             );
 
           return {
@@ -257,8 +293,15 @@ export function EditMedicineScreen() {
       navigation.navigate("EditScheduleScreen", {
         medicine: medicineValidated,
       });
+    } else if (mode === "save-and-go-back") {
+      dbUpdateMedicine(db, { dbId: 1, ...medicineValidated });
+      navigation.goBack();
+    } else {
+      // mode === "one-time"
+      navigation.navigate("EditSingleDosageScreen", {
+        medicine: medicineValidated,
+      });
     }
-    // If mode is "one-time", we'll handle it later (do nothing for now)
   };
 
   const handleAddActiveIngredient = () => {
@@ -299,6 +342,7 @@ export function EditMedicineScreen() {
             setName(text);
             if (nameError) setNameError(false);
           }}
+          value={name}
         />
         {nameError && (
           <Text style={[styles.errorText, { color: theme.colors.error }]}>
@@ -388,7 +432,9 @@ export function EditMedicineScreen() {
           onPress={handleSave}
           style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
         >
-          <Text style={styles.nextButtonText}>Next</Text>
+          <Text style={styles.nextButtonText}>
+            {mode === "save-and-go-back" ? "Save" : "Next"}
+          </Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>

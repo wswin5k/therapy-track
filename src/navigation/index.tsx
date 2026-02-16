@@ -23,7 +23,10 @@ export interface MedicineParam {
 
 export type RootStackParamList = {
   HomeTabs: undefined;
-  EditMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
+  EditMedicineScreen: {
+    mode: "save-and-go-back" | "schedule" | "one-time";
+    medicine?: Medicine;
+  };
   SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
   EditScheduleScreen: {
     medicine: MedicineParam;
