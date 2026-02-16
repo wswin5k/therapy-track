@@ -162,7 +162,7 @@ function MedicineListItem({
           <Text
             style={[styles.itemText, { color: theme.colors.textSecondary }]}
           >
-            {medicine.activeIngredientsString()}
+            {medicine.activeIngredientsString().join("\n")}
           </Text>
         </View>
       </TouchableOpacity>

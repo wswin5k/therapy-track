@@ -220,11 +220,11 @@ export function EditMedicineScreen() {
         setBaseUnit(mInit.baseUnit);
 
         activeIngredientsRefs.current = mInit.activeIngredients.map(
-          (ai, idx) => new ActiveIngedientInfo(idx, ai.name, ai.amount, ai.unit),
+          (ai, idx) =>
+            new ActiveIngedientInfo(idx, ai.name, ai.amount, ai.unit),
         );
         setNActiveIngredients(mInit.activeIngredients.length);
       }
-
     }, []),
   );
 
