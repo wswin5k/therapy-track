@@ -11,26 +11,28 @@ import { Picker } from "@react-native-picker/picker";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { SafeAreaView } from "react-native-safe-area-context";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import {
   Dose,
   Frequency,
   FrequencySelection,
+  Group,
   IntervalUnit,
-  Schedule,
   strKeyOfFrequeencySelection,
 } from "../../models/Schedule";
-import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MedicineParam, RootStackParamList } from "..";
-import { ActiveIngredient, BaseUnit, Medicine } from "../../models/Medicine";
 import { useSQLiteContext } from "expo-sqlite";
 import {
-  dbGetScheduleWithMedicine,
+  dbGetGroups,
   dbInsertSchedule,
   dbInsertScheduleWithMedicine,
-  dbUpdateSchedule,
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
@@ -42,6 +44,22 @@ const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1),
 };
 
+function assingDefaultGroups(groups: Group[]): Map<number, number> {
+  const doseIdxToGroup = new Map();
+
+  groups.forEach((g, idx) => {
+    if (g.name === "Morning") {
+      doseIdxToGroup.set(0, idx);
+    } else if (g.name === "Afternoon") {
+      doseIdxToGroup.set(1, idx);
+    } else if (g.name === "Evening") {
+      doseIdxToGroup.set(2, idx);
+    }
+  });
+
+  return doseIdxToGroup;
+}
+
 type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "EditScheduleScreen"
@@ -50,16 +68,18 @@ type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
 export default function EditScheduleScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-
   const navigation = useNavigation<EditScheduleScreenNavigationProp>();
   const route = useRoute();
   const db = useSQLiteContext();
 
   const freqRef = React.useRef<Frequency>(frequencySelectionMap["OnceDaily"]);
 
-  const [nDoses, setNDoses] = React.useState<number>(0);
+  const [nDoses, setNDoses] = React.useState<number>(1);
   const dosesRefs = React.useRef<Array<number>>(
     Array.from({ length: nDoses }, () => 1),
+  );
+  const dosesGroupsRefs = React.useRef<Array<number | null>>(
+    Array.from({ length: nDoses }, () => null),
   );
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
@@ -71,31 +91,34 @@ export default function EditScheduleScreen() {
   const [endDate, setEndDate] = React.useState<Date | null>(null);
 
   const [medicine, setMedicine] = React.useState<MedicineParam | null>(null);
-  const [schedule, setSchedule] = React.useState<Schedule | null>(null);
+  const [groups, setGroups] = React.useState<Group[]>([]);
+  const [defaultGroups, setDefaultGroups] = React.useState<Map<number, number>>(
+    new Map(),
+  );
 
-  React.useEffect(() => {
-    const setData = async () => {
-      const params = route.params as {
-        medicine: MedicineParam;
-        scheduleId?: number;
+  useFocusEffect(
+    React.useCallback(() => {
+      const setData = async () => {
+        const params = route.params as {
+          medicine: MedicineParam;
+          scheduleId?: number;
+        };
+        setMedicine(params.medicine);
+
+        const groups = await dbGetGroups(db);
+        setGroups(groups);
+
+        const defaultGroups = assingDefaultGroups(groups);
+        for (let i = 0; i < nDoses; i++) {
+          dosesGroupsRefs.current[i] = defaultGroups.get(0) ?? null;
+        }
+
+        setDefaultGroups(defaultGroups);
+        console.log(groups);
       };
-      setMedicine(params.medicine);
-
-      const schedule = params.scheduleId
-        ? await dbGetScheduleWithMedicine(db, params.scheduleId)
-        : null;
-
-      setSchedule(schedule);
-
-      if (schedule) {
-        dosesRefs.current = schedule.doses.map((d) => d.amount);
-        setNDoses(schedule.freq.numberOfDoses);
-        setStartDate(schedule.startDate);
-        setEndDate(schedule.endDate);
-      }
-    };
-    setData();
-  }, []);
+      setData();
+    }, []),
+  );
 
   const handleSelectStartDate = () => {
     setIsStartDatePickerOpened(true);
@@ -141,48 +164,24 @@ export default function EditScheduleScreen() {
       throw Error("Frequency has not been set");
     }
 
-    const doses = Array.from(
-      dosesRefs.current.entries(),
-      ([index, amount]) => new Dose(amount, index, null),
-    );
+    const doses = Array.from(dosesRefs.current.entries(), ([index, amount]) => {
+      const group =
+        dosesGroupsRefs.current[index] === null
+          ? null
+          : groups[dosesGroupsRefs.current[index]];
+      return new Dose(amount, index, null, group);
+    });
+    console.log(dosesGroupsRefs.current);
+    console.log(doses);
 
     if (medicine && medicine.dbId) {
-      if (schedule) {
-        if (
-          startDate !== schedule.startDate ||
-          endDate !== schedule.endDate ||
-          freqRef.current !== schedule.freq ||
-          doses !== schedule.doses
-        ) {
-          await dbUpdateSchedule(db, {
-            dbId: schedule.dbId,
-            startDate,
-            endDate,
-            freq: freqRef.current,
-            doses,
-          });
-        }
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: "HomeTabs",
-              state: {
-                routes: [{ name: "SchedulesList" }],
-              },
-            },
-          ],
-        });
-      } else {
-        await dbInsertSchedule(db, medicine.dbId, {
-          startDate,
-          endDate,
-          freq: freqRef.current,
-          doses,
-        });
-
-        navigation.navigate("HomeTabs");
-      }
+      await dbInsertSchedule(db, medicine.dbId, {
+        startDate,
+        endDate,
+        freq: freqRef.current,
+        doses,
+      });
+      navigation.navigate("HomeTabs");
     } else if (medicine) {
       await dbInsertScheduleWithMedicine(db, medicine, {
         startDate,
@@ -201,19 +200,26 @@ export default function EditScheduleScreen() {
     const freq = frequencySelectionMap[itemKey];
     freqRef.current = freq;
     if (freq.numberOfDoses !== nDoses) {
+      console.log(freq.numberOfDoses);
       setNDoses(freq.numberOfDoses);
     }
   };
 
-  const handleDoseInput = (idx: number) => {
+  const createDoseInputHandler = (idx: number) => {
     return (value: number) => {
       dosesRefs.current[idx] = value;
     };
   };
 
+  const createGroupInputHandler = (idx: number) => {
+    return (groupIdx: number) => {
+      dosesGroupsRefs.current[idx] = groupIdx === -1 ? null : groupIdx;
+    };
+  };
+
   const doseHeader = medicine
-    ? `Dose (number of ${t(medicine.baseUnit, { count: 4 })})`
-    : "Dose";
+    ? `Number of ${t(medicine.baseUnit, { count: 4 })}`
+    : "Amount";
 
   return (
     <DefaultMainContainer>
@@ -232,7 +238,6 @@ export default function EditScheduleScreen() {
         >
           <Picker
             style={[styles.picker, { color: theme.colors.text }]}
-            selectedValue={schedule?.freq.getFrequencyLabel()}
             dropdownIconColor={theme.colors.text}
             onValueChange={handleFrequencyPicker}
           >
@@ -250,29 +255,58 @@ export default function EditScheduleScreen() {
           </Picker>
         </View>
 
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t(doseHeader)}
-        </Text>
+        <View style={[styles.doseRow]}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t(doseHeader)}
+          </Text>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Group (optional)")}
+          </Text>
+        </View>
 
         <View>
-          {nDoses === 1 ? (
-            <SmallNumberStepper
-              onChange={handleDoseInput(0)}
-              defaultValue={dosesRefs.current[0]}
-            />
-          ) : (
-            Array.from({ length: nDoses }, (_, idx) => (
-              <View key={idx} style={styles.ingredientRow}>
-                <Text style={{ color: theme.colors.text }}>
-                  {t("Dose", { count: idx, oridnal: true })}
-                </Text>
-                <SmallNumberStepper
-                  onChange={handleDoseInput(idx)}
-                  defaultValue={dosesRefs.current[idx]}
-                />
+          {Array.from({ length: nDoses }, (_, idx) => (
+            <View key={idx} style={styles.doseRow}>
+              <View>
+                {nDoses !== 1 && (
+                  <Text style={{ color: theme.colors.text }}>
+                    {t("Dose", { count: idx, oridnal: true })}
+                  </Text>
+                )}
               </View>
-            ))
-          )}
+
+              <SmallNumberStepper
+                onChange={createDoseInputHandler(idx)}
+                defaultValue={dosesRefs.current[idx]}
+              />
+              <Picker
+                style={[
+                  styles.picker,
+                  { borderWidth: 2, width: 200, color: theme.colors.text },
+                ]}
+                selectedValue={defaultGroups.get(idx) ?? -1}
+                dropdownIconColor={theme.colors.text}
+                onValueChange={createGroupInputHandler(idx)}
+              >
+                <Picker.Item
+                  key={-1}
+                  label={t("None")}
+                  value={-1}
+                  style={styles.pickerItem}
+                  color={theme.colors.textTertiary}
+                />
+                {groups.map((g, gIdx) => (
+                  <Picker.Item
+                    key={gIdx}
+                    label={t(g.name)}
+                    value={gIdx}
+                    style={styles.pickerItem}
+                    color={theme.colors.text}
+                  />
+                ))}
+              </Picker>
+            </View>
+          ))}
         </View>
 
         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
@@ -390,11 +424,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   picker: {
-    width: "100%",
     height: 50,
   },
   pickerItem: {
     fontSize: 16,
+    borderWidth: 2,
   },
   footer: {
     position: "absolute",
@@ -415,9 +449,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  ingredientRow: {
+  doseRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-around",
     gap: 8,
     marginBottom: 10,
   },

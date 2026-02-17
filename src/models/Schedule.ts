@@ -1,5 +1,27 @@
 import { Medicine } from "./Medicine";
 
+export class Group {
+  name: string;
+  color: string;
+  isReminderOn: boolean;
+  reminderTime: string | null;
+  dbId: number;
+
+  constructor(
+    name: string,
+    color: string,
+    isReminderOn: boolean,
+    reminderTime: string | null,
+    dbId: number,
+  ) {
+    this.name = name;
+    this.color = color;
+    this.isReminderOn = isReminderOn;
+    this.reminderTime = reminderTime; // hh:mm
+    this.dbId = dbId;
+  }
+}
+
 export enum FrequencySelection {
   OnceDaily = "Once daily",
   TwiceDaily = "Twice daily",
@@ -56,11 +78,18 @@ export class Dose {
   amount: number;
   index: number;
   offset: number | null;
+  group: Group | null;
 
-  constructor(amount: number, index: number, offset: number | null) {
+  constructor(
+    amount: number,
+    index: number,
+    offset: number | null,
+    group: Group | null = null,
+  ) {
     this.amount = amount;
     this.index = index;
     this.offset = offset;
+    this.group = group;
   }
 }
 

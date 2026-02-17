@@ -13,6 +13,7 @@ import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
 import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
+import PartiallyEditScheduleScreen from "./screens/PartiallyEditScheduleScreen";
 
 export interface MedicineParam {
   name: string;
@@ -30,7 +31,9 @@ export type RootStackParamList = {
   SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
   EditScheduleScreen: {
     medicine: MedicineParam;
-    scheduleId?: number;
+  };
+  PartiallyEditScheduleScreen: {
+    scheduleId: number;
   };
   EditSingleDosageScreen: {
     medicine: {
@@ -140,6 +143,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Edit schedule",
+      },
+    },
+    PartiallyEditScheduleScreen: {
+      screen: PartiallyEditScheduleScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit schedule dates",
       },
     },
     EditSingleDosageScreen: {

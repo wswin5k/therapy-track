@@ -1,5 +1,5 @@
 import { SQLiteDatabase } from "expo-sqlite";
-import { Schedule, Frequency, IntervalUnit, Dose } from "./Schedule";
+import { Schedule, Frequency, IntervalUnit, Dose, Group } from "./Schedule";
 import {
   ActiveIngredient,
   BaseUnit,
@@ -46,6 +46,14 @@ interface UncheduledDosageRecordRow {
   date: string;
   medicine: number;
   dose_amount: number;
+}
+
+interface GroupRow {
+  id: number;
+  name: string;
+  color: string;
+  is_reminder_on: number;
+  reminder_time: string | null;
 }
 
 function parseActiveIngredients(json: string) {
@@ -111,8 +119,30 @@ function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
   );
   const dosesData = JSON.parse(row.doses);
   const doses = dosesData.map(
-    (dd: { amount: number; index: number; offset: number }) =>
-      new Dose(dd.amount, dd.index, dd.offset),
+    (dd: {
+      amount: number;
+      index: number;
+      offset: number;
+      group: {
+        dbId: number;
+        name: string;
+        color: string;
+        isReminderOn: boolean;
+        reminderTime: string | null;
+      } | null;
+    }) => {
+      console.log("dd: ", dd.group, dd.group?.dbId);
+      const group = dd.group
+        ? new Group(
+            dd.group.name,
+            dd.group.color,
+            dd.group.isReminderOn,
+            dd.group.reminderTime,
+            dd.group.dbId,
+          )
+        : null;
+      return new Dose(dd.amount, dd.index, dd.offset, group);
+    },
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(
@@ -211,23 +241,17 @@ export async function dbUpdateSchedule(
     dbId: number;
     startDate: Date;
     endDate: Date | null;
-    doses: Dose[];
-    freq: Frequency;
   },
 ) {
-  const dosesJson = JSON.stringify(schedule.doses);
-  const freqJson = JSON.stringify(schedule.freq);
   const startDateStr = schedule.startDate.toISOString();
   const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
 
   await db.runAsync(
     `UPDATE schedules
-    SET start_date = ?, end_date = ?, doses = ?, freq = ?
+    SET start_date = ?, end_date = ?
     WHERE id = ?`,
     startDateStr,
     endDateStr,
-    dosesJson,
-    freqJson,
     schedule.dbId,
   );
 }
@@ -410,4 +434,21 @@ export async function dbGetUnscheduledDosageRecords(
         row.dose_amount,
       ),
   );
+}
+
+export async function dbGetGroups(db: SQLiteDatabase): Promise<Group[]> {
+  const rows = await db.getAllAsync<GroupRow>(`
+      SELECT id, name, color, is_reminder_on, reminder_time
+      FROM groups
+    `);
+
+  return rows.map((row) => {
+    return new Group(
+      row.name,
+      row.color,
+      row.is_reminder_on !== 0,
+      row.reminder_time,
+      row.id,
+    );
+  });
 }

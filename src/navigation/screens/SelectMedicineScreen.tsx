@@ -3,7 +3,12 @@ import { useTranslation } from "react-i18next";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useSQLiteContext } from "expo-sqlite";
-import { useRoute, useNavigation, useTheme } from "@react-navigation/native";
+import {
+  useRoute,
+  useNavigation,
+  useTheme,
+  useFocusEffect,
+} from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Medicine } from "../../models/Medicine";
@@ -19,21 +24,22 @@ export function SelectMedicineScreen() {
   const { t, i18n } = useTranslation();
   const route = useRoute();
   const navigation = useNavigation<SelectMedicineScreenNavigationProp>();
-
-  const theme = useTheme();
-  const [medicines, setMedicines] = React.useState<Medicine[]>([]);
-
   const db = useSQLiteContext();
+  const theme = useTheme();
+
+  const [medicines, setMedicines] = React.useState<Medicine[]>([]);
 
   const mode = (route.params as { mode: "schedule" | "one-time" }).mode;
 
-  React.useEffect(() => {
-    async function setup() {
-      const result = await dbGetMedicines(db);
-      setMedicines(result);
-    }
-    setup();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      async function setup() {
+        const result = await dbGetMedicines(db);
+        setMedicines(result);
+      }
+      setup();
+    }, []),
+  );
 
   const handleAddNewMedicine = () => {
     navigation.navigate("EditMedicineScreen", { mode: mode });

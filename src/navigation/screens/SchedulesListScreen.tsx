@@ -65,8 +65,7 @@ function ScheduleListItem({
   };
 
   const handleEdit = () => {
-    navigation.navigate("EditScheduleScreen", {
-      medicine: schedule.medicine,
+    navigation.navigate("PartiallyEditScheduleScreen", {
       scheduleId: schedule.dbId,
     });
   };
