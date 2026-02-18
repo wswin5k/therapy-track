@@ -481,7 +481,7 @@ export function Home() {
               </LinearGradient>
             ),
         )}
-        {
+        {!isEmpty ? (
           <LinearGradient
             key={-1}
             colors={[
@@ -505,8 +505,9 @@ export function Home() {
             {renderScheduledDosages()}
             {renderUnscheduledDosages()}
           </LinearGradient>
-        }
-        {isEmpty && renderEmptyState()}
+        ) : (
+          renderEmptyState()
+        )}
       </ScrollView>
 
       <FloatingActionButton actions={fabActions} position="right" />

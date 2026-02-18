@@ -43,13 +43,28 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       dose_index INTEGER,
       FOREIGN KEY(schedule) REFERENCES schedules(id));
 
+      CREATE TABLE groups (
+      id INTEGER PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL,
+      is_reminder_on BOOLEAN NOT NULL DEFAULT FALSE,
+      reminder_time TEXT DEFAULT NULL);
+
       CREATE TABLE unscheduled_dosage_records (
       id INTEGER PRIMARY KEY NOT NULL,
       record_date TEXT NOT NULL,
       date TEXT NOT NULL,
       medicine INTEGER NOT NULL,
       dose_amount REAL NOT NULL,
+      group_ INTEGER,
+      FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(medicine) REFERENCES medicines(id));
+
+
+      INSERT INTO groups (name, color) VALUES ("Morning", "#ffff64ff");
+      INSERT INTO groups (name, color) VALUES ("Afternoon", "#30c82dff");
+      INSERT INTO groups (name, color) VALUES ("Evening", "#2f39c9ff");
+
     `);
     });
     currentDbVersion = 1;
@@ -60,4 +75,4 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-export const DATABASE_NAME: string = "main16.db";
+export const DATABASE_NAME: string = "main26.db";
