@@ -14,6 +14,8 @@ import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
 import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
 import PartiallyEditScheduleScreen from "./screens/PartiallyEditScheduleScreen";
+import { EditGroupScreen } from "./screens/EditGroupScreen";
+import { GroupListScreen } from "./screens/GroupListScreen";
 
 export interface MedicineParam {
   name: string;
@@ -41,6 +43,15 @@ export type RootStackParamList = {
       baseUnit: BaseUnit;
       activeIngredients: ActiveIngredient[];
       dbId?: number;
+    };
+  };
+  EditGroupScreen: {
+    group?: {
+      name: string;
+      color: string;
+      isReminderOn: boolean;
+      reminderTime: string | null;
+      dbId: number;
     };
   };
   NotFound: undefined;
@@ -91,6 +102,15 @@ const HomeTabs = createDrawerNavigator({
         title: "Schedules",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
           <Ionicons name="calendar" size={size} color={color} />
+        ),
+      },
+    },
+    GroupsList: {
+      screen: GroupListScreen,
+      options: {
+        title: "Groups",
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Ionicons name="folder" size={size} color={color} />
         ),
       },
     },
@@ -157,6 +177,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Edit single dosage",
+      },
+    },
+    EditGroupScreen: {
+      screen: EditGroupScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit group",
       },
     },
     NotFound: {

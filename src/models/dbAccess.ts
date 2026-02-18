@@ -495,3 +495,70 @@ async function dbGetDoses(
     scheduleId,
   );
 }
+
+export async function dbInsertGroup(
+  db: SQLiteDatabase,
+  group: {
+    name: string;
+    color: string;
+    isReminderOn: boolean;
+    reminderTime: string | null;
+  },
+): Promise<number> {
+  const db_insert = await db.runAsync(
+    "INSERT INTO groups (name, color, is_reminder_on, reminder_time) VALUES (?, ?, ?, ?)",
+    group.name,
+    group.color,
+    group.isReminderOn ? 1 : 0,
+    group.reminderTime,
+  );
+  return db_insert.lastInsertRowId;
+}
+
+export async function dbUpdateGroup(
+  db: SQLiteDatabase,
+  group: {
+    name: string;
+    color: string;
+    isReminderOn: boolean;
+    reminderTime: string | null;
+    dbId: number;
+  },
+) {
+  await db.runAsync(
+    `UPDATE groups
+    SET name = ?, color = ?, is_reminder_on = ?, reminder_time = ?
+    WHERE id = ?`,
+    group.name,
+    group.color,
+    group.isReminderOn ? 1 : 0,
+    group.reminderTime,
+    group.dbId,
+  );
+}
+
+export async function dbDeleteGroup(db: SQLiteDatabase, id: number) {
+  await db.runAsync("DELETE FROM groups WHERE id = ?", id);
+}
+
+export async function dbGroupHasDoses(
+  db: SQLiteDatabase,
+  groupId: number,
+): Promise<boolean> {
+  const result = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM doses WHERE group_ = ?",
+    groupId,
+  );
+  return (result?.count ?? 0) > 0;
+}
+
+export async function dbGroupHasUnscheduledRecords(
+  db: SQLiteDatabase,
+  groupId: number,
+): Promise<boolean> {
+  const result = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM unscheduled_dosage_records WHERE group_ = ?",
+    groupId,
+  );
+  return (result?.count ?? 0) > 0;
+}
