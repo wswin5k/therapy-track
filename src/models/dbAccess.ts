@@ -21,7 +21,7 @@ interface ScheduleWithMedicineRow {
   medicine_active_ingredients: string;
   start_date: string;
   end_date: string | null;
-  doses: string;
+  doses: DoseRow[];
   freq: string;
 }
 
@@ -46,7 +46,15 @@ interface UncheduledDosageRecordRow {
   date: string;
   medicine: number;
   dose_amount: number;
-  group_: number;
+  group_: number | null;
+}
+
+interface DoseRow {
+  id: number;
+  amount: number;
+  index_: number;
+  offset: number | null;
+  group_: number | null;
 }
 
 interface GroupRow {
@@ -136,31 +144,9 @@ function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
     active_ingredients,
     row.medicine,
   );
-  const dosesData = JSON.parse(row.doses);
-  const doses = dosesData.map(
-    (dd: {
-      amount: number;
-      index: number;
-      offset: number;
-      group: {
-        dbId: number;
-        name: string;
-        color: string;
-        isReminderOn: boolean;
-        reminderTime: string | null;
-      } | null;
-    }) => {
-      const group = dd.group
-        ? new Group(
-            dd.group.name,
-            dd.group.color,
-            dd.group.isReminderOn,
-            dd.group.reminderTime,
-            dd.group.dbId,
-          )
-        : null;
-      return new Dose(dd.amount, dd.index, dd.offset, group);
-    },
+  const doses = row.doses.map(
+    (dd: DoseRow) =>
+      new Dose(dd.amount, dd.index_, dd.offset, dd.group_, dd.id),
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(
@@ -200,9 +186,12 @@ export async function dbGetScheduleWithMedicine(
       ORDER BY s.start_date DESC
     `);
 
+  const dosesRows = await dbGetDoses(db, scheduleId);
+
   if (row === null) {
     throw Error("No schedule with given id.");
   }
+  row.doses = dosesRows;
   return parseScheduleWithMedicineRow(row);
 }
 
@@ -218,12 +207,15 @@ export async function dbGetSchedulesWithMedicines(
         m.active_ingredients as medicine_active_ingredients,
         s.start_date,
         s.end_date,
-        s.doses,
         s.freq
       FROM schedules s
       JOIN medicines m ON s.medicine = m.id
       ORDER BY s.start_date DESC
     `);
+
+  for (const row of rows) {
+    row.doses = await dbGetDoses(db, row.id);
+  }
 
   return rows.map(parseScheduleWithMedicineRow);
 }
@@ -234,23 +226,28 @@ export async function dbInsertSchedule(
   schedule: {
     startDate: Date;
     endDate: Date | null;
-    doses: Dose[];
+    doses: {
+      amount: number;
+      index: number;
+      offset: number | null;
+      groupId: number | null;
+    }[];
     freq: Frequency;
   },
 ) {
-  const dosesJson = JSON.stringify(schedule.doses);
   const freqJson = JSON.stringify(schedule.freq);
   const startDateStr = schedule.startDate.toISOString();
   const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
 
-  await db.runAsync(
-    "INSERT INTO schedules (medicine, start_date, end_date, doses, freq) VALUES (?, ?, ?, ?, ?)",
+  const result = await db.runAsync(
+    "INSERT INTO schedules (medicine, start_date, end_date, freq) VALUES (?, ?, ?, ?)",
     medicineId,
     startDateStr,
     endDateStr,
-    dosesJson,
     freqJson,
   );
+  const scheduleId = result.lastInsertRowId;
+  await dbInsertDoses(db, scheduleId, schedule.doses);
 }
 
 export async function dbUpdateSchedule(
@@ -284,7 +281,12 @@ export async function dbInsertScheduleWithMedicine(
   schedule: {
     startDate: Date;
     endDate: Date | null;
-    doses: Dose[];
+    doses: {
+      amount: number;
+      index: number;
+      offset: number | null;
+      groupId: number | null;
+    }[];
     freq: Frequency;
   },
 ) {
@@ -293,6 +295,7 @@ export async function dbInsertScheduleWithMedicine(
 }
 
 export async function dbDeleteSchedule(db: SQLiteDatabase, id: number) {
+  await db.runAsync("DELETE FROM doses WHERE schedule = ?", id);
   await db.runAsync("DELETE FROM schedules WHERE id = ?", id);
 }
 
@@ -455,4 +458,40 @@ export async function dbGetGroups(db: SQLiteDatabase): Promise<Group[]> {
       row.id,
     );
   });
+}
+
+async function dbInsertDoses(
+  db: SQLiteDatabase,
+  scheduleId: number,
+  doses: {
+    amount: number;
+    index: number;
+    offset: number | null;
+    groupId: number | null;
+  }[],
+): Promise<number[]> {
+  const ids = [];
+  for (const dose of doses) {
+    const result = await db.runAsync(
+      "INSERT INTO doses (amount, index_, offset, group_, schedule) VALUES (?, ?, ?, ?, ?)",
+      dose.amount,
+      dose.index,
+      dose.offset,
+      dose.groupId,
+      scheduleId,
+    );
+    ids.push(result.lastInsertRowId);
+  }
+  return ids;
+}
+
+async function dbGetDoses(
+  db: SQLiteDatabase,
+  scheduleId: number,
+): Promise<DoseRow[]> {
+  return await db.getAllAsync<DoseRow>(
+    `
+    SELECT * FROM doses WHERE schedule = ?`,
+    scheduleId,
+  );
 }

@@ -26,12 +26,20 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       base_unit TEXT NOT NULL,
       active_ingredients TEXT NOT NULL );
 
+      CREATE TABLE doses (id INTEGER PRIMARY KEY NOT NULL,
+      amount REAL NOT NULL,
+      index_ INTEGER NOT NULL,
+      offset INTEGER,
+      group_ INTEGER,
+      schedule INTEGER,
+      FOREIGN KEY(group_) REFERENCES groups(id),
+      FOREIGN KEY(schedule) REFERENCES schedules(id));
+
       CREATE TABLE schedules (
       id INTEGER PRIMARY KEY NOT NULL,
       medicine INTEGER,
       start_date TEXT NOT NULL,
       end_date TEXT,
-      doses TEXT NOT NULL,
       freq TEXT NOT NULL,
       FOREIGN KEY(medicine) REFERENCES medicines(id) ON DELETE CASCADE);
 
@@ -60,7 +68,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(medicine) REFERENCES medicines(id));
 
-
       INSERT INTO groups (name, color) VALUES ("Morning", "#ffff64ff");
       INSERT INTO groups (name, color) VALUES ("Afternoon", "#30c82dff");
       INSERT INTO groups (name, color) VALUES ("Evening", "#2f39c9ff");
@@ -75,4 +82,4 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-export const DATABASE_NAME: string = "main26.db";
+export const DATABASE_NAME: string = "main28.db";

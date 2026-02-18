@@ -78,18 +78,21 @@ export class Dose {
   amount: number;
   index: number;
   offset: number | null;
-  group: Group | null;
+  groupId: number | null;
+  dbId: number;
 
   constructor(
     amount: number,
     index: number,
     offset: number | null,
-    group: Group | null = null,
+    groupId: number | null = null,
+    dbId: number,
   ) {
     this.amount = amount;
     this.index = index;
     this.offset = offset;
-    this.group = group;
+    this.groupId = groupId;
+    this.dbId = dbId;
   }
 }
 

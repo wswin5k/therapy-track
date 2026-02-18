@@ -169,11 +169,11 @@ export default function EditScheduleScreen() {
     const doses = Array.from(
       amountsRef.current.entries(),
       ([index, amount]) => {
-        const group =
+        const groupId =
           groupsRef.current[index] === null
             ? null
-            : groups[groupsRef.current[index]];
-        return new Dose(amount, index, null, group);
+            : groups[groupsRef.current[index]].dbId;
+        return { amount, index, offset: null, groupId };
       },
     );
 

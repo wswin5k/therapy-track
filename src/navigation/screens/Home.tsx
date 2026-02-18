@@ -220,7 +220,7 @@ export function Home() {
     let newScheduledDosages = new Map<number | null, DosageInfo[]>();
     for (const s of schedulesToday) {
       for (const dose of s.doses) {
-        const groupId = dose.group?.dbId ?? null;
+        const groupId = dose.groupId;
         const groupDosages = newScheduledDosages.get(groupId) || [];
         const dosageRecord = dosageRecords.find(
           (dr) => dr.scheduleId === s.dbId && dr.doseIndex == dose.index,
@@ -386,7 +386,7 @@ export function Home() {
     );
   };
 
-  const getScheduledDosages = (groupId: number | undefined) =>
+  const getScheduledDosages = (groupId?: number) =>
     scheduledDosages.get(groupId ?? null);
 
   const renderScheduledDosages = (group?: Group) => {
@@ -409,7 +409,7 @@ export function Home() {
     return "";
   };
 
-  const getUnscheduledDosages = (groupId: number | undefined) =>
+  const getUnscheduledDosages = (groupId?: number) =>
     unscheduledDosages.get(groupId ?? null);
 
   const renderUnscheduledDosages = (group?: Group) => {
@@ -481,7 +481,7 @@ export function Home() {
               </LinearGradient>
             ),
         )}
-        {!isEmpty ? (
+        {(getUnscheduledDosages() || getScheduledDosages()) && (
           <LinearGradient
             key={-1}
             colors={[
@@ -501,13 +501,11 @@ export function Home() {
                 Ungrouped
               </Text>
             )}
-
             {renderScheduledDosages()}
             {renderUnscheduledDosages()}
           </LinearGradient>
-        ) : (
-          renderEmptyState()
         )}
+        {isEmpty && renderEmptyState()}
       </ScrollView>
 
       <FloatingActionButton actions={fabActions} position="right" />
