@@ -21,11 +21,16 @@ import {
   dbGetSchedulesWithMedicines,
   dbGetUnscheduledDosageRecords,
   dbInsertScheduledDosageRecord,
+  dbGetGroups,
+  dbDeleteUnscheduledDosageRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
 import { BaseUnit, Medicine } from "../../models/Medicine";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { LinearGradient } from "expo-linear-gradient";
+import Ionicons from "@react-native-vector-icons/ionicons";
+import { Group } from "../../models/Schedule";
 
 class DosageInfo {
   medicineName: string;
@@ -80,6 +85,90 @@ type HomeNavigationProp = NativeStackNavigationProp<
   "HomeTabs"
 >;
 
+function UnscheduledDosage({
+  dosage,
+  bottomBorder,
+  loadUnscheduledRecords,
+}: {
+  dosage: UnscheduledDosageInfo;
+  bottomBorder: boolean;
+  loadUnscheduledRecords: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const db = useSQLiteContext();
+
+  const [optionsOpened, setOptionsOpened] = React.useState<boolean>(false);
+
+  const handleOptionsToggle = () => {
+    setOptionsOpened(!optionsOpened);
+  };
+
+  const handleDelete = async () => {
+    await dbDeleteUnscheduledDosageRecord(db, dosage.dosageRecordId);
+    loadUnscheduledRecords();
+  };
+
+  const renderOptions = () => (
+    <TouchableOpacity
+      style={[styles.optionsOverlay, { zIndex: 1, position: "absolute" }]}
+      onLongPress={handleOptionsToggle}
+    >
+      <TouchableOpacity
+        style={[styles.optionsButton, { backgroundColor: theme.colors.error }]}
+        onPress={handleDelete}
+      >
+        <Text style={styles.optionsButtonText}>{t("Delete")}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.optionsButton,
+          { backgroundColor: theme.colors.primary },
+        ]}
+        onPress={handleOptionsToggle}
+      >
+        <Text style={styles.optionsButtonText}>{t("Cancel")}</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View>
+      {optionsOpened && renderOptions()}
+      <TouchableOpacity
+        key={dosage.dosageRecordId}
+        style={[
+          styles.scheduleItem,
+          {
+            borderColor: theme.colors.border,
+            filter: optionsOpened ? "blur(4px), opacity(50%)" : "opacity(50%)",
+            borderBottomWidth: bottomBorder ? 2 : 0,
+          },
+        ]}
+        onLongPress={handleOptionsToggle}
+      >
+        <View style={[styles.scheduleContent, { flex: 5 }]}>
+          <Text
+            style={[
+              styles.contentText,
+              {
+                textDecorationLine: "line-through",
+                color: theme.colors.text,
+              },
+            ]}
+          >
+            {dosage.medicineName}
+            {"  –  "}
+            {dosage.amount}{" "}
+            {t(dosage.medicineBaseUnit, { count: dosage.amount })}
+          </Text>
+          <Ionicons name="checkmark-circle" size={24} color="#00ff00" />
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export function Home() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeNavigationProp>();
@@ -88,15 +177,30 @@ export function Home() {
 
   const [date, setDate] = React.useState(new Date());
 
+  const [groups, setGroups] = React.useState<Map<number | null, Group>>(
+    new Map(),
+  );
   const [scheduledDosages, setScheduledDosages] = React.useState<
-    Map<number, Map<number, DosageInfo>>
+    Map<number | null, DosageInfo[]>
   >(new Map());
   const [isDosageDone, setIsDosageDone] = React.useState<Map<number, boolean>>(
     new Map(),
   );
   const [unscheduledDosages, setUnscheduledDosages] = React.useState<
-    Array<UnscheduledDosageInfo>
-  >([]);
+    Map<number | null, UnscheduledDosageInfo[]>
+  >(new Map());
+
+  const [isEmpty, setIsEmpty] = React.useState<boolean>(true);
+  const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
+
+  const loadGroups = React.useCallback(async () => {
+    const groups = await dbGetGroups(db);
+    const idToGroup = new Map();
+    groups.forEach((g) => {
+      idToGroup.set(g.dbId, g);
+    });
+    setGroups(idToGroup);
+  }, []);
 
   const loadScheduledDosages = React.useCallback(async () => {
     const result = await dbGetSchedulesWithMedicines(db);
@@ -108,38 +212,46 @@ export function Home() {
       );
     });
 
-    let newScheduledDosages = new Map<number, Map<number, DosageInfo>>();
+    let newIsEmpty = true;
+    let newAreGroupsEmpty = true;
 
+    const dosageRecords = await dbGetScheduledDosageRecords(db, date, date);
+
+    let newScheduledDosages = new Map<number | null, DosageInfo[]>();
     for (const s of schedulesToday) {
-      for (const [idx, dose] of s.doses.entries()) {
-        const dosages = newScheduledDosages.get(idx) || new Map();
-        dosages.set(
-          pair(s.dbId, dose.index),
+      for (const dose of s.doses) {
+        const groupId = dose.group?.dbId ?? null;
+        const groupDosages = newScheduledDosages.get(groupId) || [];
+        const dosageRecord = dosageRecords.find(
+          (dr) => dr.scheduleId === s.dbId && dr.doseIndex == dose.index,
+        );
+        const dosageRecordId = dosageRecord ? dosageRecord.dbId : null;
+        groupDosages.push(
           new DosageInfo(
             s.medicine.name,
             s.medicine.baseUnit,
             dose.amount,
             dose.index,
             s.dbId,
+            dosageRecordId,
           ),
         );
-        newScheduledDosages.set(idx, dosages);
+        newIsEmpty = false;
+        if (groupId !== null) {
+          newAreGroupsEmpty = false;
+        }
+        newScheduledDosages.set(groupId, groupDosages);
       }
     }
-
-    const dosageRecords = await dbGetScheduledDosageRecords(db, date, date);
+    setScheduledDosages(newScheduledDosages);
+    if (!newIsEmpty) setIsEmpty(newIsEmpty);
+    if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     const newIsDosageDone = new Map<number, boolean>();
     dosageRecords.forEach((dr) => {
       const key = pair(dr.scheduleId, dr.doseIndex);
       newIsDosageDone.set(key, true);
-      const dosage = newScheduledDosages.get(dr.doseIndex)?.get(key);
-      if (dosage) {
-        dosage.dosageRecordId = dr.dbId;
-      }
     });
-
-    setScheduledDosages(newScheduledDosages);
     setIsDosageDone(newIsDosageDone);
   }, []);
 
@@ -156,24 +268,36 @@ export function Home() {
       medicinesMap.set(m.dbId, m);
     });
 
-    const newUnscheduledDosageInfos: UnscheduledDosageInfo[] = [];
+    let newIsEmpty = true;
+    let newAreGroupsEmpty = true;
+    const newUnscheduledDosageInfos = new Map();
     unscheduledDosageRecords.map((dr) => {
+      const groupDosages = newUnscheduledDosageInfos.get(dr.groupId) || [];
       const m = medicinesMap.get(dr.medicineId);
       if (m) {
-        newUnscheduledDosageInfos.push(
+        groupDosages.push(
           new UnscheduledDosageInfo(m?.name, m.baseUnit, dr.amount, dr.dbId),
         );
+        newIsEmpty = false;
+        if (dr.groupId !== null) {
+          newAreGroupsEmpty = false;
+        }
       }
+      newUnscheduledDosageInfos.set(dr.groupId, groupDosages);
     });
+
+    if (!newIsEmpty) setIsEmpty(newIsEmpty);
+    if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     setUnscheduledDosages(newUnscheduledDosageInfos);
   };
 
   useFocusEffect(
     React.useCallback(() => {
+      loadGroups();
       loadScheduledDosages();
       loadUnscheduledRecords();
-    }, [loadScheduledDosages]),
+    }, []),
   );
 
   const handleCheck = async (dosage: DosageInfo) => {
@@ -213,70 +337,104 @@ export function Home() {
     },
   ];
 
-  const renderScheduledDosage = (dosage: DosageInfo, key: number) => {
+  const renderScheduledDosage = (dosage: DosageInfo, bottomBorder: boolean) => {
+    const isDone = isDosageDone.get(pair(dosage.scheduleId, dosage.index));
+
     return (
-      <View
-        key={key}
+      <TouchableOpacity
         style={[
           styles.scheduleItem,
           {
-            backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
+            filter: isDone ? "opacity(50%)" : "",
+            borderBottomWidth: bottomBorder ? 2 : 0,
           },
         ]}
+        onPress={() => handleCheck(dosage)}
       >
         <View style={[styles.scheduleContent, { flex: 5 }]}>
-          <Text style={[styles.medicineName, { color: theme.colors.text }]}>
-            {dosage.medicineName} {dosage.amount}{" "}
-            {t(dosage.medicineBaseUnit, { count: dosage.amount })}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[
-            {
-              flex: 1,
-            },
-            styles.checkButton,
-          ]}
-          onPress={() => handleCheck(dosage)}
-        >
-          <View
+          <Text
             style={[
-              styles.checkIcon,
+              styles.contentText,
               {
-                backgroundColor: isDosageDone.get(
-                  pair(dosage.scheduleId, dosage.index),
-                )
-                  ? theme.colors.success
-                  : theme.colors.textSecondary,
+                textDecorationLine: isDone ? "line-through" : "none",
+                color: theme.colors.text,
               },
             ]}
-          ></View>
-        </TouchableOpacity>
-      </View>
+          >
+            {dosage.medicineName}
+            {"  –  "}
+            {dosage.amount}{" "}
+            {t(dosage.medicineBaseUnit, { count: dosage.amount })}
+          </Text>
+          <Text
+            style={[
+              styles.contentText,
+              {
+                textDecorationLine: isDone ? "line-through" : "none",
+                color: theme.colors.text,
+              },
+            ]}
+          ></Text>
+          {isDone ? (
+            <Ionicons name="checkmark-circle" size={24} color="#00ff00" />
+          ) : (
+            <Ionicons name="ellipse" size={24} color="#4a4a4aff" />
+          )}
+        </View>
+      </TouchableOpacity>
     );
   };
 
-  const renderUnscheduledDosage = (dosage: UnscheduledDosageInfo) => {
-    return (
-      <View
-        key={dosage.dosageRecordId}
-        style={[
-          styles.scheduleItem,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.border,
-          },
-        ]}
-      >
-        <View style={styles.scheduleContent}>
-          <Text style={[styles.medicineName, { color: theme.colors.text }]}>
-            {dosage.medicineName} {dosage.amount}{" "}
-            {t(dosage.medicineBaseUnit, { count: dosage.amount })}
+  const getScheduledDosages = (groupId: number | undefined) =>
+    scheduledDosages.get(groupId ?? null);
+
+  const renderScheduledDosages = (group?: Group) => {
+    const dosages = getScheduledDosages(group?.dbId);
+    const lastIdx = dosages?.length ? dosages.length - 1 : 0;
+    if (dosages) {
+      return (
+        <>
+          <Text style={[styles.modeLabel, { color: theme.colors.text }]}>
+            Scheduled dosages
           </Text>
-        </View>
-      </View>
-    );
+          {dosages.map((di, idx) => (
+            <View key={pair(di.scheduleId, di.index)}>
+              {renderScheduledDosage(di, idx !== lastIdx)}
+            </View>
+          ))}
+        </>
+      );
+    }
+    return "";
+  };
+
+  const getUnscheduledDosages = (groupId: number | undefined) =>
+    unscheduledDosages.get(groupId ?? null);
+
+  const renderUnscheduledDosages = (group?: Group) => {
+    const dosages = getUnscheduledDosages(group?.dbId);
+    const lastIdx = dosages?.length ? dosages.length - 1 : 0;
+    if (dosages) {
+      return (
+        <>
+          <Text
+            style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
+          >
+            Unscheduled dosages
+          </Text>
+          {dosages.map((di, idx) => (
+            <View key={di.dosageRecordId}>
+              <UnscheduledDosage
+                dosage={di}
+                bottomBorder={idx !== lastIdx}
+                loadUnscheduledRecords={loadUnscheduledRecords}
+              />
+            </View>
+          ))}
+        </>
+      );
+    }
   };
 
   const renderEmptyState = () => (
@@ -292,33 +450,63 @@ export function Home() {
     </View>
   );
 
-  let key = 0;
-  let scheduledDosagesFlat = new Array<[number, DosageInfo]>();
-  for (const intakes of scheduledDosages.values()) {
-    for (const [idx, dosage] of intakes.entries()) {
-      scheduledDosagesFlat.push([idx, dosage]);
-      key += 1;
-    }
-  }
-
   return (
     <DefaultMainContainer>
       <ScrollView style={styles.list}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Scheduled dosages")}
-        </Text>
-        {scheduledDosagesFlat.map(([key, intake]) =>
-          renderScheduledDosage(intake, key),
+        {[...groups.values()].map(
+          (group) =>
+            (getUnscheduledDosages(group.dbId) ||
+              getScheduledDosages(group.dbId)) && (
+              <LinearGradient
+                key={group.dbId}
+                colors={[
+                  theme.colors.surface,
+                  theme.colors.surface,
+                  theme.colors.surface,
+                ]}
+                start={{ x: 0.0, y: 0.0 }}
+                end={{ x: 1, y: 1.0 }}
+                style={[
+                  styles.groupContainer,
+                  { borderColor: theme.colors.border },
+                ]}
+              >
+                <Text
+                  style={[styles.headerLabel, { color: theme.colors.text }]}
+                >
+                  {group.name}
+                </Text>
+                {renderScheduledDosages(group)}
+                {renderUnscheduledDosages(group)}
+              </LinearGradient>
+            ),
         )}
-        {unscheduledDosages.length > 0 ? (
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t("One time dosages")}
-          </Text>
-        ) : (
-          ""
-        )}
-        {unscheduledDosages.map((di) => renderUnscheduledDosage(di))}
-        {!unscheduledDosages && !scheduledDosagesFlat && renderEmptyState()}
+        {
+          <LinearGradient
+            key={-1}
+            colors={[
+              theme.colors.surface,
+              theme.colors.surface,
+              theme.colors.surface,
+            ]}
+            start={{ x: 0.0, y: 0.0 }}
+            end={{ x: 1, y: 1.0 }}
+            style={[
+              styles.groupContainer,
+              { borderColor: theme.colors.border },
+            ]}
+          >
+            {areGroupsEmpty || (
+              <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+                Ungrouped
+              </Text>
+            )}
+
+            {renderScheduledDosages()}
+            {renderUnscheduledDosages()}
+          </LinearGradient>
+        }
+        {isEmpty && renderEmptyState()}
       </ScrollView>
 
       <FloatingActionButton actions={fabActions} position="right" />
@@ -328,28 +516,42 @@ export function Home() {
 
 const styles = StyleSheet.create({
   list: {
-    padding: 16,
+    padding: 10,
   },
   scheduleItem: {
     flex: 1,
     flexDirection: "row",
-    borderRadius: 12,
-    marginBottom: 12,
+    borderRadius: 2,
     alignItems: "center",
-    borderWidth: 1,
+    margin: 1,
   },
   headerLabel: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "500",
     marginBottom: 8,
+    alignSelf: "center",
+  },
+  modeLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 8,
+    alignSelf: "center",
   },
   scheduleContent: {
     flex: 1,
     padding: 16,
+    flexDirection: "row",
+    gap: 5,
+    justifyContent: "space-between",
   },
-  medicineName: {
-    fontSize: 18,
-    fontWeight: "bold",
+  groupContainer: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+  },
+  contentText: {
+    fontSize: 15,
+    fontWeight: 400,
     marginBottom: 4,
   },
   frequency: {
@@ -364,7 +566,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   checkIcon: {
-    borderRadius: 10,
+    borderRadius: 15,
     height: 25,
     width: 25,
   },
@@ -390,6 +592,30 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
+    textAlign: "center",
+  },
+  optionsOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: "row",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: "rgba(255, 0, 0, 0.0)",
+    justifyContent: "space-around",
+    alignItems: "center",
+    borderWidth: 0,
+    borderColor: "red",
+  },
+  optionsButton: {
+    borderRadius: 8,
+    minWidth: "25%",
+    minHeight: 35,
+    justifyContent: "center",
+  },
+  optionsButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "500",
     textAlign: "center",
   },
 });

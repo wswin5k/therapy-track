@@ -75,10 +75,10 @@ export default function EditScheduleScreen() {
   const freqRef = React.useRef<Frequency>(frequencySelectionMap["OnceDaily"]);
 
   const [nDoses, setNDoses] = React.useState<number>(1);
-  const dosesRefs = React.useRef<Array<number>>(
+  const amountsRef = React.useRef<Array<number>>(
     Array.from({ length: nDoses }, () => 1),
   );
-  const dosesGroupsRefs = React.useRef<Array<number | null>>(
+  const groupsRef = React.useRef<Array<number | null>>(
     Array.from({ length: nDoses }, () => null),
   );
 
@@ -96,6 +96,13 @@ export default function EditScheduleScreen() {
     new Map(),
   );
 
+  const updateGroupsRefWithDefaults = (nDoses: number) => {
+    const defaultGroups = assingDefaultGroups(groups);
+    for (let i = 0; i < nDoses; i++) {
+      groupsRef.current[i] = defaultGroups.get(i) ?? null;
+    }
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       const setData = async () => {
@@ -108,13 +115,8 @@ export default function EditScheduleScreen() {
         const groups = await dbGetGroups(db);
         setGroups(groups);
 
-        const defaultGroups = assingDefaultGroups(groups);
-        for (let i = 0; i < nDoses; i++) {
-          dosesGroupsRefs.current[i] = defaultGroups.get(0) ?? null;
-        }
-
-        setDefaultGroups(defaultGroups);
-        console.log(groups);
+        setDefaultGroups(assingDefaultGroups(groups));
+        updateGroupsRefWithDefaults(nDoses);
       };
       setData();
     }, []),
@@ -164,15 +166,16 @@ export default function EditScheduleScreen() {
       throw Error("Frequency has not been set");
     }
 
-    const doses = Array.from(dosesRefs.current.entries(), ([index, amount]) => {
-      const group =
-        dosesGroupsRefs.current[index] === null
-          ? null
-          : groups[dosesGroupsRefs.current[index]];
-      return new Dose(amount, index, null, group);
-    });
-    console.log(dosesGroupsRefs.current);
-    console.log(doses);
+    const doses = Array.from(
+      amountsRef.current.entries(),
+      ([index, amount]) => {
+        const group =
+          groupsRef.current[index] === null
+            ? null
+            : groups[groupsRef.current[index]];
+        return new Dose(amount, index, null, group);
+      },
+    );
 
     if (medicine && medicine.dbId) {
       await dbInsertSchedule(db, medicine.dbId, {
@@ -202,18 +205,19 @@ export default function EditScheduleScreen() {
     if (freq.numberOfDoses !== nDoses) {
       console.log(freq.numberOfDoses);
       setNDoses(freq.numberOfDoses);
+      updateGroupsRefWithDefaults(freq.numberOfDoses);
     }
   };
 
   const createDoseInputHandler = (idx: number) => {
     return (value: number) => {
-      dosesRefs.current[idx] = value;
+      amountsRef.current[idx] = value;
     };
   };
 
   const createGroupInputHandler = (idx: number) => {
     return (groupIdx: number) => {
-      dosesGroupsRefs.current[idx] = groupIdx === -1 ? null : groupIdx;
+      groupsRef.current[idx] = groupIdx === -1 ? null : groupIdx;
     };
   };
 
@@ -277,7 +281,7 @@ export default function EditScheduleScreen() {
 
               <SmallNumberStepper
                 onChange={createDoseInputHandler(idx)}
-                defaultValue={dosesRefs.current[idx]}
+                defaultValue={amountsRef.current[idx]}
               />
               <Picker
                 style={[

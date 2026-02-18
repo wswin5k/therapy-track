@@ -26,6 +26,7 @@ export class UnscheduledDosageRecord {
   date: Date;
   medicineId: number;
   amount: number;
+  groupId: number | null;
 
   constructor(
     dbId: number,
@@ -33,11 +34,13 @@ export class UnscheduledDosageRecord {
     date: Date,
     medicineId: number,
     amount: number,
+    groupId: number | null,
   ) {
     this.dbId = dbId;
     this.record_date = record_date;
     this.date = date;
     this.medicineId = medicineId;
     this.amount = amount;
+    this.groupId = groupId;
   }
 }

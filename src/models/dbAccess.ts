@@ -46,6 +46,7 @@ interface UncheduledDosageRecordRow {
   date: string;
   medicine: number;
   dose_amount: number;
+  group_: number;
 }
 
 interface GroupRow {
@@ -107,6 +108,24 @@ export async function dbDeleteMedicine(db: SQLiteDatabase, id: number) {
   await db.runAsync("DELETE FROM medicines WHERE id = ?", id);
 }
 
+export async function dbInsertMedicine(
+  db: SQLiteDatabase,
+  medicine: {
+    name: string;
+    baseUnit: BaseUnit;
+    activeIngredients: ActiveIngredient[];
+  },
+): Promise<number> {
+  const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
+  const db_insert = await db.runAsync(
+    "INSERT INTO medicines (name, base_unit, active_ingredients) VALUES (?, ?, ?)",
+    medicine.name,
+    strKeyOfBaseUnit(medicine.baseUnit),
+    activeIngredientsStr,
+  );
+  return db_insert.lastInsertRowId;
+}
+
 function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
   const active_ingredients = parseActiveIngredients(
     row.medicine_active_ingredients,
@@ -131,7 +150,6 @@ function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
         reminderTime: string | null;
       } | null;
     }) => {
-      console.log("dd: ", dd.group, dd.group?.dbId);
       const group = dd.group
         ? new Group(
             dd.group.name,
@@ -270,27 +288,8 @@ export async function dbInsertScheduleWithMedicine(
     freq: Frequency;
   },
 ) {
-  const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
-  const db_insert1 = await db.runAsync(
-    "INSERT INTO medicines (name, base_unit, active_ingredients) VALUES (?, ?, ?)",
-    medicine.name,
-    strKeyOfBaseUnit(medicine.baseUnit),
-    activeIngredientsStr,
-  );
-
-  const dosesJson = JSON.stringify(schedule.doses);
-  const freqJson = JSON.stringify(schedule.freq);
-  const startDateStr = schedule.startDate.toISOString();
-  const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
-
-  await db.runAsync(
-    "INSERT INTO schedules (medicine, start_date, end_date, doses, freq) VALUES (?, ?, ?, ?, ?)",
-    db_insert1.lastInsertRowId,
-    startDateStr,
-    endDateStr,
-    dosesJson,
-    freqJson,
-  );
+  const medicineId = await dbInsertMedicine(db, medicine);
+  await dbInsertSchedule(db, medicineId, schedule);
 }
 
 export async function dbDeleteSchedule(db: SQLiteDatabase, id: number) {
@@ -371,17 +370,21 @@ export async function dbGetScheduledDosageRecords(
 
 export async function dbInsertUnscheduledDosageRecord(
   db: SQLiteDatabase,
-  record: { date: Date; medicineId: number; doseAmount: number },
+  record: {
+    date: Date;
+    medicineId: number;
+    doseAmount: number;
+    group: number | null;
+  },
 ): Promise<number> {
-  console.log(record);
   const result = await db.runAsync(
-    "INSERT INTO unscheduled_dosage_records (record_date, date, medicine, dose_amount) VALUES (?, ?, ?, ?)",
+    "INSERT INTO unscheduled_dosage_records (record_date, date, medicine, dose_amount, group_) VALUES (?, ?, ?, ?, ?)",
     new Date().toISOString(),
     extractDate(record.date),
     record.medicineId,
     record.doseAmount,
+    record.group,
   );
-  console.log(result.lastInsertRowId);
   return result.lastInsertRowId;
 }
 
@@ -432,6 +435,7 @@ export async function dbGetUnscheduledDosageRecords(
         new Date(row.date),
         row.medicine,
         row.dose_amount,
+        row.group_,
       ),
   );
 }

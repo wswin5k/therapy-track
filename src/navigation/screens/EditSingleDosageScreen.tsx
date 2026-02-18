@@ -6,12 +6,23 @@ import RNDateTimePicker, {
 import React from "react";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
-import { dbInsertUnscheduledDosageRecord } from "../../models/dbAccess";
+import {
+  dbGetGroups,
+  dbInsertMedicine,
+  dbInsertUnscheduledDosageRecord,
+} from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
-import { ActiveIngredient, BaseUnit } from "../../models/Medicine";
-import { RootStackParamList } from "..";
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  useTheme,
+} from "@react-navigation/native";
+import { ActiveIngredient, BaseUnit, Medicine } from "../../models/Medicine";
+import { MedicineParam, RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Picker } from "@react-native-picker/picker";
+import { Group } from "../../models/Schedule";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -21,18 +32,36 @@ type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
 export function EditSingleDosageScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-
+  const navigation = useNavigation<EditSingeDosageScreenNavigationProp>();
+  const route = useRoute();
   const db = useSQLiteContext();
 
   const [date, setDate] = React.useState<Date | null>(null);
   const [dateError, setDateError] = React.useState<boolean>(false);
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
-
   const [dose, setDose] = React.useState<number>(1);
+  const groupIdxRef = React.useRef<number | null>(null);
 
-  const navigation = useNavigation<EditSingeDosageScreenNavigationProp>();
-  const route = useRoute();
+  const [medicine, setMedicine] = React.useState<MedicineParam | null>(null);
+  const [groups, setGroups] = React.useState<Group[]>([]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const setData = async () => {
+        setMedicine(
+          (
+            route.params as {
+              medicine: MedicineParam;
+            }
+          ).medicine,
+        );
+        const groups = await dbGetGroups(db);
+        setGroups(groups);
+      };
+      setData();
+    }, []),
+  );
 
   const handleSelectDate = () => {
     setIsDatePickerOpened(true);
@@ -48,25 +77,14 @@ export function EditSingleDosageScreen() {
     }
   };
 
-  const medicine = (
-    route.params as {
-      medicine: {
-        name: string;
-        baseUnit: BaseUnit;
-        activeIngredients: ActiveIngredient[];
-        dbId?: number;
-      };
-    }
-  ).medicine;
-
   const validate = (): {
     date: Date;
-    medicineId: number;
+    medicine: MedicineParam;
     doseAmount: number;
   } | null => {
     if (date) {
-      if (medicine && medicine.dbId) {
-        return { date: date, medicineId: medicine.dbId, doseAmount: dose };
+      if (medicine) {
+        return { date: date, medicine: medicine, doseAmount: dose };
       } else {
         throw Error("Medicine has not been set");
       }
@@ -81,10 +99,15 @@ export function EditSingleDosageScreen() {
     if (!dataValidated) {
       return;
     }
+    const medicineId =
+      dataValidated.medicine.dbId ??
+      (await dbInsertMedicine(db, dataValidated.medicine));
+
     await dbInsertUnscheduledDosageRecord(db, {
       date: dataValidated.date,
-      medicineId: dataValidated.medicineId,
+      medicineId: medicineId,
       doseAmount: dataValidated.doseAmount,
+      group: groupIdxRef.current ? groups[groupIdxRef.current].dbId : null,
     });
 
     navigation.navigate("HomeTabs");
@@ -92,6 +115,10 @@ export function EditSingleDosageScreen() {
 
   const handleDoseChange = (value: number) => {
     setDose(value);
+  };
+
+  const handleGroupChange = (groupIdx: number) => {
+    groupIdxRef.current = groupIdx === -1 ? null : groupIdx;
   };
 
   return (
@@ -120,6 +147,34 @@ export function EditSingleDosageScreen() {
           {date ? date.toDateString() : "Select date"}
         </Text>
       </TouchableOpacity>
+
+      <Picker
+        style={[
+          styles.picker,
+          { borderWidth: 2, width: 200, color: theme.colors.text },
+        ]}
+        selectedValue={-1}
+        dropdownIconColor={theme.colors.text}
+        onValueChange={handleGroupChange}
+      >
+        <Picker.Item
+          key={-1}
+          label={t("None")}
+          value={-1}
+          style={styles.pickerItem}
+          color={theme.colors.textTertiary}
+        />
+        {groups.map((g, gIdx) => (
+          <Picker.Item
+            key={gIdx}
+            label={t(g.name)}
+            value={gIdx}
+            style={styles.pickerItem}
+            color={theme.colors.text}
+          />
+        ))}
+      </Picker>
+
       {isDatePickerOpened ? (
         <RNDateTimePicker
           mode="date"
