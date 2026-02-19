@@ -178,7 +178,7 @@ export function SchedulesListScreen() {
   const { t, i18n } = useTranslation();
 
   const [schedules, setSchedules] = React.useState<Schedule[]>([]);
-  const [optionsOpened, setOptionsOpened] = React.useState<Array<boolean>>([]);
+  const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
 
   const loadSchedules = React.useCallback(async () => {
     const result = await dbGetSchedulesWithMedicines(db);

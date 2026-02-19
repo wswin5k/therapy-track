@@ -75,10 +75,10 @@ export default function EditScheduleScreen() {
   const freqRef = React.useRef<Frequency>(frequencySelectionMap["OnceDaily"]);
 
   const [nDoses, setNDoses] = React.useState<number>(1);
-  const amountsRef = React.useRef<Array<number>>(
+  const amountsRef = React.useRef<number[]>(
     Array.from({ length: nDoses }, () => 1),
   );
-  const groupsRef = React.useRef<Array<number | null>>(
+  const groupsRef = React.useRef<(number | null)[]>(
     Array.from({ length: nDoses }, () => null),
   );
 

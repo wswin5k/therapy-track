@@ -16,9 +16,7 @@ export function DefaultMainContainer({
       style={[styles.safeArea, { backgroundColor: theme.colors.background }]}
       edges={["bottom", "left", "right"]}
     >
-      <View
-        style={[styles.scrollContainer, { justifyContent: justifyContent }]}
-      >
+      <View style={[styles.mainContainer, { justifyContent: justifyContent }]}>
         {children}
       </View>
     </SafeAreaView>
@@ -29,7 +27,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  scrollContainer: {
+  mainContainer: {
     flex: 1,
     justifyContent: "flex-start",
     padding: 10,

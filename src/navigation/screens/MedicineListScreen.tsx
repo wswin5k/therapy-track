@@ -179,7 +179,7 @@ export function MedicineListScreen() {
   const [medicinesWithSchedules, setMedicineWithSchedules] = React.useState<
     Set<number>
   >(new Set());
-  const [optionsOpened, setOptionsOpened] = React.useState<Array<boolean>>([]);
+  const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
 
   const loadData = React.useCallback(async () => {
     const medicines = await dbGetMedicines(db);
