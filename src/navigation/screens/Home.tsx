@@ -31,6 +31,9 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Group } from "../../models/Schedule";
+import RNDateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 
 class DosageInfo {
   medicineName: string;
@@ -176,6 +179,8 @@ export function Home() {
   const theme = useTheme();
 
   const [date, setDate] = React.useState(new Date());
+  const [isDatePickerOpened, setIsDatePickerOpened] =
+    React.useState<boolean>(false);
 
   const [groups, setGroups] = React.useState<Map<number | null, Group>>(
     new Map(),
@@ -192,6 +197,14 @@ export function Home() {
 
   const [isEmpty, setIsEmpty] = React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
+
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString(i18n.language, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
   const loadGroups = React.useCallback(async () => {
     const groups = await dbGetGroups(db);
@@ -253,7 +266,7 @@ export function Home() {
       newIsDosageDone.set(key, true);
     });
     setIsDosageDone(newIsDosageDone);
-  }, []);
+  }, [date]);
 
   const loadUnscheduledRecords = async () => {
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(
@@ -294,11 +307,32 @@ export function Home() {
 
   useFocusEffect(
     React.useCallback(() => {
+      const newDate = new Date();
+      setDate(newDate);
+      navigation.setOptions({ title: formatDate(date) });
+    }, []),
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
       loadGroups();
       loadScheduledDosages();
       loadUnscheduledRecords();
-    }, []),
+    }, [date]),
   );
+
+  React.useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => setIsDatePickerOpened(true)}
+          style={{ marginLeft: 16, marginRight: 20 }}
+        >
+          <Ionicons name="calendar" size={28} color={theme.colors.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const handleCheck = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
@@ -321,6 +355,15 @@ export function Home() {
       const newIsDosageDone = new Map(isDosageDone);
       newIsDosageDone.set(pair(dosage.scheduleId, dosage.index), true);
       setIsDosageDone(newIsDosageDone);
+    }
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
+    setIsDatePickerOpened(false);
+    if (event.type === "dismissed") {
+    } else if (newDate) {
+      setDate(newDate);
+      navigation.setOptions({ title: formatDate(newDate) });
     }
   };
 
@@ -452,6 +495,15 @@ export function Home() {
 
   return (
     <DefaultMainContainer>
+      {isDatePickerOpened ? (
+        <RNDateTimePicker
+          mode="date"
+          value={date}
+          onChange={handleDateChange}
+        />
+      ) : (
+        ""
+      )}
       <ScrollView style={styles.list}>
         {[...groups.values()].map(
           (group) =>

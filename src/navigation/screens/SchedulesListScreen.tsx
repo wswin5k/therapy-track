@@ -70,7 +70,7 @@ function ScheduleListItem({
     });
   };
 
-  const formatDate = (date: Date): string => {
+  const formatDate = (date: Date, language): string => {
     return date.toLocaleDateString(i18n.language, {
       year: "numeric",
       month: "short",

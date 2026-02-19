@@ -81,7 +81,7 @@ const HomeTabs = createDrawerNavigator({
     Home: {
       screen: Home,
       options: {
-        title: "Today",
+        drawerLabel: "Home",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
           <Ionicons name="home" size={size} color={color} />
         ),
@@ -140,7 +140,7 @@ const RootStack = createNativeStackNavigator({
     HomeTabs: {
       screen: HomeTabs,
       options: {
-        title: "Today",
+        title: "Home",
         headerShown: false,
       },
     },

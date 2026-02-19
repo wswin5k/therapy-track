@@ -259,10 +259,7 @@ export function GroupListScreen() {
             })}
         <TouchableOpacity
           onPress={handleAddGroup}
-          style={[
-            styles.addButton,
-            { borderColor: theme.colors.primary },
-          ]}
+          style={[styles.addButton, { borderColor: theme.colors.primary }]}
         >
           <Text style={styles.addButtonText}>{t("+ Add Group")}</Text>
         </TouchableOpacity>
