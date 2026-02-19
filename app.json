@@ -37,7 +37,15 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1D86E2",
+          "defaultChannel": "medication-reminders"
+        }
+      ]
     ]
   }
 }

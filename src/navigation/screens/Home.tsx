@@ -34,6 +34,10 @@ import { Group } from "../../models/Schedule";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import {
+  cancelGroupNotification,
+  scheduleGroupNotification,
+} from "../../services/notificationService";
 
 class DosageInfo {
   medicineName: string;
@@ -42,6 +46,7 @@ class DosageInfo {
   index: number;
   scheduleId: number;
   dosageRecordId: number | null;
+  groupId: number | null;
 
   constructor(
     medicinName: string,
@@ -50,6 +55,7 @@ class DosageInfo {
     index: number,
     scheduleId: number,
     dosageRecordId: number | null = null,
+    groupId: number | null,
   ) {
     this.medicineName = medicinName;
     this.medicineBaseUnit = medicineBaseUnit;
@@ -57,6 +63,7 @@ class DosageInfo {
     this.index = index;
     this.scheduleId = scheduleId;
     this.dosageRecordId = dosageRecordId;
+    this.groupId = groupId;
   }
 }
 
@@ -247,6 +254,7 @@ export function Home() {
             dose.index,
             s.dbId,
             dosageRecordId,
+            groupId,
           ),
         );
         newIsEmpty = false;
@@ -355,6 +363,29 @@ export function Home() {
       const newIsDosageDone = new Map(isDosageDone);
       newIsDosageDone.set(pair(dosage.scheduleId, dosage.index), true);
       setIsDosageDone(newIsDosageDone);
+    }
+
+    if (dosage.groupId) {
+      let allInGroupDone = true;
+      for (const di of scheduledDosages.get(dosage.groupId) ?? []) {
+        if (di.dosageRecordId === null) {
+          allInGroupDone = false;
+        }
+      }
+      if (allInGroupDone) {
+        cancelGroupNotification(dosage.groupId);
+      } else {
+        const group = groups.get(dosage.groupId);
+        if (group) {
+          if (group.reminderTime && group.isReminderOn) {
+            scheduleGroupNotification({
+              reminderTime: group.reminderTime,
+              dbId: dosage.groupId,
+              name: group.name,
+            });
+          }
+        }
+      }
     }
   };
 

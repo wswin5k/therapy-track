@@ -108,7 +108,7 @@ const HomeTabs = createDrawerNavigator({
     GroupsList: {
       screen: GroupListScreen,
       options: {
-        title: "Groups",
+        title: "Groups and Notifications",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
           <Ionicons name="folder" size={size} color={color} />
         ),

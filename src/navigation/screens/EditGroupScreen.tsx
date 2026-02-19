@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  Alert,
 } from "react-native";
 import RNDateTimePicker, {
   DateTimePickerEvent,
@@ -24,6 +25,11 @@ import { Group } from "../../models/Schedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { dbInsertGroup, dbUpdateGroup } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
+import {
+  scheduleGroupNotification,
+  cancelGroupNotification,
+  requestNotificationPermissions,
+} from "../../services/notificationService";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -131,20 +137,39 @@ export function EditGroupScreen() {
       reminderTime: isReminderOn ? reminderTime : null,
     };
 
+    let groupId: number;
+
     if (isEditMode && group) {
       await dbUpdateGroup(db, {
         ...groupData,
         dbId: group.dbId,
       });
+      groupId = group.dbId;
     } else {
-      await dbInsertGroup(db, groupData);
+      groupId = await dbInsertGroup(db, groupData);
     }
+
+    if (isReminderOn && reminderTime) {
+      await scheduleGroupNotification({
+        name: groupData.name,
+        dbId: groupId,
+        reminderTime: reminderTime,
+      });
+    } else {
+      await cancelGroupNotification(groupId);
+    }
+
     navigation.goBack();
   };
 
-  const handleReminderToggle = (value: boolean) => {
-    setIsReminderOn(value);
-    if (!value) {
+  const handleReminderToggle = async (value: boolean) => {
+    if (value) {
+      const hasPermission = await requestNotificationPermissions();
+      if (hasPermission) {
+        setIsReminderOn(true);
+      }
+    } else {
+      setIsReminderOn(false);
       setReminderTimeError(false);
     }
   };

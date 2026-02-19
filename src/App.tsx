@@ -1,6 +1,4 @@
-import { Assets as NavigationAssets } from "@react-navigation/elements";
 import { DarkTheme, DefaultTheme } from "@react-navigation/native";
-import { Asset } from "expo-asset";
 import { createURL } from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
 import React from "react";
@@ -9,14 +7,18 @@ import { Navigation } from "./navigation";
 import { SQLiteProvider } from "expo-sqlite";
 import { DATABASE_NAME, migrateDbIfNeeded } from "./models/dbMigration";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
-Asset.loadAsync([
-  ...NavigationAssets,
-  require("./assets/newspaper.png"),
-  require("./assets/bell.png"),
-]);
+import * as Notifications from "expo-notifications";
 
 SplashScreen.preventAutoHideAsync();
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 const prefix = createURL("/");
 

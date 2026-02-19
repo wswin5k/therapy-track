@@ -23,6 +23,7 @@ import { Group } from "../../models/Schedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
+import { cancelGroupNotification } from "../../services/notificationService";
 
 function GroupListItem({
   group,
@@ -56,6 +57,7 @@ function GroupListItem({
   };
 
   const confirmDelete = async () => {
+    await cancelGroupNotification(group.dbId);
     await dbDeleteGroup(db, group.dbId);
     setDeleteDialogVisible(false);
     await loadData();
