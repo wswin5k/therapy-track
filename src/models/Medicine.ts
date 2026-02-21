@@ -2,14 +2,17 @@ export const NAME_MAX_LENGHT: number = 100;
 
 export enum BaseUnit {
   Pill = "pill",
-  Ml = "ml",
-  Teaspoonfull = "teaspoonfull (5ml)",
+  Ml = "mililiter (ml)",
+  Teaspoonful = "5 mililiters (5ml, teaspoonful)",
   Drop = "drop",
   InjectioPen = "injection pen",
   Sachet = "sachet",
   PressOfTheDosingPump = "press of a dosing pump",
   Vial = "vial",
   PreFilledSyringe = "pre-filled syringe",
+  Tablet = "tablet",
+  Gram = "gram (g)",
+  Unit = "unit",
 }
 
 export function strKeyOfBaseUnit(x: BaseUnit) {
@@ -21,6 +24,7 @@ export enum IngredientAmountUnit {
   Gram = "g",
   Microgram = "µg",
   InternationalUnit = "IU",
+  Unit = "unit",
 }
 
 export class ActiveIngredient {

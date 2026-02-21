@@ -281,7 +281,7 @@ export function EditGroupScreen() {
           onPress={handleSave}
           style={[styles.saveButton, { backgroundColor: theme.colors.primary }]}
         >
-          <Text style={styles.saveButtonText}>{t("Save")}</Text>
+          <Text style={[styles.saveButtonText]}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -330,7 +330,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },

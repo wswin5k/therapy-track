@@ -18,7 +18,6 @@ import {
   useRoute,
   useTheme,
 } from "@react-navigation/native";
-import { ActiveIngredient, BaseUnit, Medicine } from "../../models/Medicine";
 import { MedicineParam, RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Picker } from "@react-native-picker/picker";
@@ -51,11 +50,11 @@ export function EditSingleDosageScreen() {
       const setData = async () => {
         const params = route.params as {
           medicine: MedicineParam;
-          selectedDate?: Date;
+          selectedDate?: string;
         };
         setMedicine(params.medicine);
         if (params.selectedDate) {
-          setDate(params.selectedDate);
+          setDate(new Date(params.selectedDate));
         } else {
           setDate(new Date());
         }
@@ -110,7 +109,8 @@ export function EditSingleDosageScreen() {
       date: dataValidated.date,
       medicineId: medicineId,
       doseAmount: dataValidated.doseAmount,
-      group: groupIdxRef.current ? groups[groupIdxRef.current].dbId : null,
+      group:
+        groupIdxRef.current !== null ? groups[groupIdxRef.current].dbId : null,
     });
 
     navigation.navigate("HomeTabs");
@@ -126,113 +126,150 @@ export function EditSingleDosageScreen() {
 
   return (
     <DefaultMainContainer>
-      <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-        {t("Dose")}
-      </Text>
-      <View style={styles.doseContainer}>
-        <SmallNumberStepper onChange={handleDoseChange} />
-      </View>
-      <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-        {t("Date")}
-      </Text>
-      <TouchableOpacity
-        onPress={handleSelectDate}
-        style={[
-          styles.input,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.border,
-          },
-          dateError && { borderColor: theme.colors.error, borderWidth: 2 },
-        ]}
-      >
-        <Text style={[styles.inputText, { color: theme.colors.text }]}>
-          {date ? date.toDateString() : "Select date"}
-        </Text>
-      </TouchableOpacity>
+      <View style={[styles.mainContainer]}>
+        <View style={[styles.rowContainer]}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Dose")}
+          </Text>
+          <View style={styles.doseContainer}>
+            <SmallNumberStepper onChange={handleDoseChange} />
+          </View>
+        </View>
 
-      <Picker
-        style={[
-          styles.picker,
-          { borderWidth: 2, width: 200, color: theme.colors.text },
-        ]}
-        selectedValue={-1}
-        dropdownIconColor={theme.colors.text}
-        onValueChange={handleGroupChange}
-      >
-        <Picker.Item
-          key={-1}
-          label={t("None")}
-          value={-1}
-          style={styles.pickerItem}
-          color={theme.colors.textTertiary}
-        />
-        {groups.map((g, gIdx) => (
-          <Picker.Item
-            key={gIdx}
-            label={t(g.name)}
-            value={gIdx}
-            style={styles.pickerItem}
-            color={theme.colors.text}
+        <View style={[styles.rowContainer]}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Date")}
+          </Text>
+          <TouchableOpacity
+            onPress={handleSelectDate}
+            style={[
+              styles.dateButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+              dateError && { borderColor: theme.colors.error, borderWidth: 2 },
+            ]}
+          >
+            <Text style={[styles.inputText, { color: theme.colors.text }]}>
+              {date ? date.toDateString() : "Select date"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.rowContainer]}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Group (optional)")}
+          </Text>
+
+          <View
+            style={[
+              styles.pickerContainer,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <Picker
+              style={[styles.picker, { color: theme.colors.text }]}
+              itemStyle={[
+                styles.pickerItem,
+                { backgroundColor: theme.colors.surface },
+              ]}
+              selectedValue={-1}
+              dropdownIconColor={theme.colors.text}
+              onValueChange={handleGroupChange}
+              mode="dropdown"
+            >
+              <Picker.Item
+                key={-1}
+                label={t("None")}
+                value={-1}
+                color={theme.colors.textTertiary}
+              />
+              {groups.map((g, gIdx) => (
+                <Picker.Item
+                  key={gIdx}
+                  label={t(g.name)}
+                  value={gIdx}
+                  color={theme.colors.text}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
+        {isDatePickerOpened ? (
+          <RNDateTimePicker
+            mode="date"
+            value={date ?? new Date()}
+            onChange={handleDateChange}
           />
-        ))}
-      </Picker>
-
-      {isDatePickerOpened ? (
-        <RNDateTimePicker
-          mode="date"
-          value={date ?? new Date()}
-          onChange={handleDateChange}
-        />
-      ) : (
-        ""
-      )}
-      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
-        <TouchableOpacity
-          onPress={handleSave}
-          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
-        >
-          <Text style={styles.nextButtonText}>{t("Save")}</Text>
-        </TouchableOpacity>
+        ) : (
+          ""
+        )}
+        <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+          <TouchableOpacity
+            onPress={handleSave}
+            style={[
+              styles.nextButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
+          >
+            <Text style={styles.nextButtonText}>{t("Save")}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </DefaultMainContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    padding: 16,
+  mainContainer: {
+    flex: 1,
+  },
+  doseContainer: {
+    width: "45%",
+    height: 52,
   },
   headerLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "400",
   },
-  doseContainer: {},
-  input: {
-    height: 50,
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 60,
+    margin: 15,
+    paddingLeft: 10,
+  },
+  dateButton: {
+    height: 52,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     justifyContent: "center",
-    marginBottom: 10,
+    width: "45%",
   },
-  inputError: {
+  dateError: {
     borderWidth: 2,
   },
   inputText: {
     fontSize: 16,
   },
-  fullWidthPickerContainer: {
-    height: 50,
-    borderWidth: 1,
+  pickerContainer: {
+    height: 52,
     borderRadius: 8,
     justifyContent: "center",
-    marginBottom: 15,
+    borderWidth: 1,
+    width: "45%",
+    overflow: "hidden",
   },
   picker: {
     width: "100%",
     height: 50,
+    borderWidth: 1,
   },
   pickerItem: {
     fontSize: 16,
@@ -248,18 +285,12 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     paddingVertical: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
   },
   nextButtonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  ingredientRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
   },
 });

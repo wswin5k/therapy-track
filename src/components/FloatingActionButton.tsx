@@ -115,7 +115,7 @@ export function FloatingActionButton({
             style={[
               styles.labelContainer,
               position === "right" ? { marginRight: 10 } : { marginLeft: 10 },
-              { backgroundColor: theme.colors.card },
+              { backgroundColor: theme.colors.background },
             ]}
           >
             <Text style={[styles.labelText, { color: theme.colors.text }]}>

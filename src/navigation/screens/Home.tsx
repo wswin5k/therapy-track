@@ -122,7 +122,7 @@ function UnscheduledDosage({
   const renderOptions = () => (
     <TouchableOpacity
       style={[styles.optionsOverlay, { zIndex: 1, position: "absolute" }]}
-      onLongPress={handleOptionsToggle}
+      onPress={handleOptionsToggle}
     >
       <TouchableOpacity
         style={[styles.optionsButton, { backgroundColor: theme.colors.error }]}
@@ -409,7 +409,7 @@ export function Home() {
       onPress: () =>
         navigation.navigate("SelectMedicineScreen", {
           mode: "one-time",
-          selectedDate: date,
+          selectedDate: date.toISOString(),
         }),
     },
     {
@@ -451,9 +451,17 @@ export function Home() {
             {t(dosage.medicineBaseUnit, { count: dosage.amount })}
           </Text>
           {isDone ? (
-            <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
+            <Ionicons
+              name="checkmark-circle"
+              size={24}
+              color={theme.colors.success}
+            />
           ) : (
-            <Ionicons name="ellipse" size={24} color="#4a4a4aff" />
+            <Ionicons
+              name="ellipse"
+              size={24}
+              color={theme.colors.textTertiary}
+            />
           )}
         </View>
       </TouchableOpacity>
@@ -542,7 +550,7 @@ export function Home() {
               getScheduledDosages(group.dbId)) && (
               <LinearGradient
                 key={group.dbId}
-                colors={[theme.colors.surface, theme.colors.surface]}
+                colors={[theme.colors.card, theme.colors.card]}
                 start={{ x: 1, y: 0.0 }}
                 end={{ x: 0.0, y: 10 }}
                 style={[
@@ -563,11 +571,7 @@ export function Home() {
         {(getUnscheduledDosages() || getScheduledDosages()) && (
           <LinearGradient
             key={-1}
-            colors={[
-              theme.colors.surface,
-              theme.colors.surface,
-              theme.colors.surface,
-            ]}
+            colors={[theme.colors.card, theme.colors.card, theme.colors.card]}
             start={{ x: 0.0, y: 0.0 }}
             end={{ x: 1, y: 1.0 }}
             style={[

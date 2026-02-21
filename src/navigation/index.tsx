@@ -31,7 +31,7 @@ export type RootStackParamList = {
     medicine?: Medicine;
   };
   SelectMedicineScreen:
-    | { mode: "schedule" | "one-time"; selectedDate?: Date }
+    | { mode: "schedule" | "one-time"; selectedDate?: string }
     | undefined;
   EditScheduleScreen: {
     medicine: MedicineParam;
@@ -46,7 +46,7 @@ export type RootStackParamList = {
       activeIngredients: ActiveIngredient[];
       dbId?: number;
     };
-    selectedDate?: Date;
+    selectedDate?: string;
   };
   EditGroupScreen: {
     group?: {
@@ -63,7 +63,7 @@ export type RootStackParamList = {
 const HomeTabs = createDrawerNavigator({
   screenOptions: ({ theme, navigation }) => ({
     drawerActiveTintColor: theme.colors.primary,
-    drawerInactiveTintColor: theme.colors.textSecondary,
+    drawerInactiveTintColor: theme.colors.text,
     drawerStyle: {
       backgroundColor: theme.colors.card,
     },
@@ -179,7 +179,7 @@ const RootStack = createNativeStackNavigator({
       screen: EditSingleDosageScreen,
       options: {
         presentation: "modal",
-        title: "Edit single dosage",
+        title: "Add single dosage",
       },
     },
     EditGroupScreen: {

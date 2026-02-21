@@ -263,7 +263,9 @@ export function GroupListScreen() {
           onPress={handleAddGroup}
           style={[styles.addButton, { borderColor: theme.colors.primary }]}
         >
-          <Text style={styles.addButtonText}>{t("+ Add Group")}</Text>
+          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
+            {t("+ Add Group")}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </DefaultMainContainer>
@@ -317,7 +319,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   addButtonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },

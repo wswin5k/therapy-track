@@ -42,7 +42,15 @@ export default function SmallNumberStepper({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.border }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}
+    >
       <Pressable
         onPress={() => handlePress("decrement")}
         style={({ pressed }) => [
@@ -89,15 +97,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 12,
+    borderWidth: 1,
+    borderRadius: 8,
     padding: 4,
-    width: 150,
     justifyContent: "space-between",
   },
   button: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     elevation: 2,
@@ -107,7 +115,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   valueContainer: {
     minWidth: 30,
@@ -115,6 +123,6 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "500",
   },
 });

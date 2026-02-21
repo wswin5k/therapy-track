@@ -28,7 +28,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 
-class ActiveIngedientInfo {
+class ActiveIngredientInfo {
   name: string | null;
   amount: number | null;
   unit: IngredientAmountUnit | null;
@@ -48,7 +48,7 @@ class ActiveIngedientInfo {
 }
 
 type ActiveIngedientRowProps = {
-  activeIngredientInfo: ActiveIngedientInfo;
+  activeIngredientInfo: ActiveIngredientInfo;
   removeCallback: () => void;
   removeButton: boolean;
   errors?: { name?: boolean; weight?: boolean };
@@ -87,6 +87,7 @@ function ActiveIngredientRow({
             {
               borderColor: theme.colors.border,
               color: theme.colors.text,
+              backgroundColor: theme.colors.surface,
             },
             errors?.name
               ? { borderColor: theme.colors.error, borderWidth: 1 }
@@ -107,6 +108,7 @@ function ActiveIngredientRow({
             {
               borderColor: theme.colors.border,
               color: theme.colors.text,
+              backgroundColor: theme.colors.surface,
             },
             errors?.weight
               ? { borderColor: theme.colors.error, borderWidth: 1 }
@@ -126,7 +128,10 @@ function ActiveIngredientRow({
         style={[
           styles.pickerContainer,
           { flex: 1.2 },
-          { borderColor: theme.colors.border },
+          {
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+          },
         ]}
       >
         <Picker
@@ -138,6 +143,7 @@ function ActiveIngredientRow({
           }
           style={[styles.picker, { color: theme.colors.text }]}
           dropdownIconColor={theme.colors.text}
+          mode="dropdown"
         >
           {Object.values(IngredientAmountUnit).map((unit) => (
             <Picker.Item
@@ -186,7 +192,6 @@ export function EditMedicineScreen() {
   const [name, setName] = React.useState("");
   const [baseUnit, setBaseUnit] = React.useState<BaseUnit | null>(null);
 
-  // Validation State
   const [nameError, setNameError] = React.useState(false);
   const [baseUnitError, setBaseUnitError] = React.useState(false);
   const [ingredientErrors, setIngredientErrors] = React.useState<
@@ -198,7 +203,7 @@ export function EditMedicineScreen() {
   const activeIngredientsRefs = React.useRef(
     Array.from(
       { length: nActiveIngredients },
-      (_, idx) => new ActiveIngedientInfo(idx),
+      (_, idx) => new ActiveIngredientInfo(idx),
     ),
   );
 
@@ -221,7 +226,7 @@ export function EditMedicineScreen() {
 
         activeIngredientsRefs.current = mInit.activeIngredients.map(
           (ai, idx) =>
-            new ActiveIngedientInfo(idx, ai.name, ai.amount, ai.unit),
+            new ActiveIngredientInfo(idx, ai.name, ai.amount, ai.unit),
         );
         setNActiveIngredients(mInit.activeIngredients.length);
       }
@@ -229,58 +234,60 @@ export function EditMedicineScreen() {
   );
 
   const validate = (): MedicineValidated | null => {
-    let medicineValidated = null;
+    let medicineValidated = true;
 
     if (name.trim() && name.length < NAME_MAX_LENGHT) {
       setNameError(false);
-
-      if (baseUnit) {
-        setBaseUnitError(false);
-
-        const newIngredientErrors: Record<
-          number,
-          { name?: boolean; weight?: boolean }
-        > = {};
-        activeIngredientsRefs.current.forEach((ingredient) => {
-          const errors: { name?: boolean; weight?: boolean } = {};
-          if (!ingredient.name || !ingredient.name.trim()) {
-            errors.name = true;
-            medicineValidated = null;
-          }
-          if (ingredient.amount === null || isNaN(ingredient.amount)) {
-            errors.weight = true;
-            medicineValidated = null;
-          }
-
-          if (Object.keys(errors).length > 0) {
-            newIngredientErrors[ingredient.elementKey] = errors;
-          }
-        });
-        setIngredientErrors(newIngredientErrors);
-        if (Object.keys(newIngredientErrors).length === 0) {
-          const activeIngredients = activeIngredientsRefs.current
-            .filter((ing) => ing.name && ing.amount && ing.unit)
-            .map(
-              (ing) => new ActiveIngredient(ing.name!, ing.amount!, ing.unit!),
-            );
-
-          return {
-            name,
-            baseUnit,
-            activeIngredients,
-          };
-        } else {
-          medicineValidated = null;
-        }
-      } else {
-        setBaseUnitError(true);
-        medicineValidated = null;
-      }
     } else {
       setNameError(true);
-      medicineValidated = null;
+      medicineValidated = false;
     }
-    return medicineValidated;
+
+    if (baseUnit) {
+      setBaseUnitError(false);
+    } else {
+      setBaseUnitError(true);
+      medicineValidated = false;
+    }
+
+    let activeIngredients: ActiveIngredient[] = [];
+
+    const newIngredientErrors: Record<
+      number,
+      { name?: boolean; weight?: boolean }
+    > = {};
+    activeIngredientsRefs.current.forEach((ingredient) => {
+      const errors: { name?: boolean; weight?: boolean } = {};
+      if (!ingredient.name || !ingredient.name.trim()) {
+        errors.name = true;
+        medicineValidated = false;
+      }
+      if (ingredient.amount === null || isNaN(ingredient.amount)) {
+        errors.weight = true;
+        medicineValidated = false;
+      }
+
+      if (Object.keys(errors).length > 0) {
+        newIngredientErrors[ingredient.elementKey] = errors;
+      }
+    });
+    setIngredientErrors(newIngredientErrors);
+    if (Object.keys(newIngredientErrors).length === 0) {
+      activeIngredients = activeIngredientsRefs.current
+        .filter((ing) => ing.name && ing.amount && ing.unit)
+        .map((ing) => new ActiveIngredient(ing.name!, ing.amount!, ing.unit!));
+    } else {
+      medicineValidated = false;
+    }
+
+    if (medicineValidated && baseUnit && activeIngredients) {
+      return {
+        name,
+        baseUnit,
+        activeIngredients,
+      };
+    }
+    return null;
   };
 
   const handleSave = async () => {
@@ -306,7 +313,7 @@ export function EditMedicineScreen() {
 
   const handleAddActiveIngredient = () => {
     activeIngredientsRefs.current.push(
-      new ActiveIngedientInfo(elementKeyCounter.current),
+      new ActiveIngredientInfo(elementKeyCounter.current),
     );
     elementKeyCounter.current += 1;
     setNActiveIngredients(nActiveIngredients + 1);
@@ -322,41 +329,37 @@ export function EditMedicineScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        {/*         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
           {t("Medicine Name")}
-        </Text>
-        <TextInput
-          placeholder="e.g. Ibuprofen"
-          placeholderTextColor={theme.colors.textTertiary}
-          style={[
-            styles.input,
-            {
-              borderColor: theme.colors.border,
-              color: theme.colors.text,
-            },
-            nameError
-              ? { borderColor: theme.colors.error, borderWidth: 1 }
-              : {},
-          ]}
-          onChangeText={(text: string) => {
-            setName(text);
-            if (nameError) setNameError(false);
-          }}
-          value={name}
-        />
-        {nameError && (
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            {t("Medicine name is required")}
-          </Text>
-        )}
-
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Base Unit")}
-        </Text>
+        </Text> */}
+        <View style={[styles.rowContainer]}>
+          <TextInput
+            placeholder="Medicine Name"
+            placeholderTextColor={theme.colors.textTertiary}
+            style={[
+              styles.input,
+              {
+                borderColor: theme.colors.border,
+                color: theme.colors.text,
+                backgroundColor: theme.colors.surface,
+              },
+              nameError
+                ? { borderColor: theme.colors.error, borderWidth: 1 }
+                : {},
+            ]}
+            onChangeText={(text: string) => {
+              setName(text);
+            }}
+            value={name}
+          />
+        </View>
         <View
           style={[
             styles.fullWidthPickerContainer,
-            { borderColor: theme.colors.border },
+            {
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+            },
             baseUnitError
               ? { borderColor: theme.colors.error, borderWidth: 1 }
               : {},
@@ -366,13 +369,12 @@ export function EditMedicineScreen() {
             selectedValue={baseUnit}
             onValueChange={(itemValue) => {
               setBaseUnit(itemValue);
-              if (baseUnitError) setBaseUnitError(false);
             }}
             style={[styles.picker, { color: theme.colors.text }]}
             dropdownIconColor={theme.colors.text}
           >
             <Picker.Item
-              label="Select an option"
+              label="Select base unit"
               value=""
               color={theme.colors.textTertiary}
             />
@@ -387,11 +389,6 @@ export function EditMedicineScreen() {
             ))}
           </Picker>
         </View>
-        {baseUnitError && (
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            {t("Base unit is required")}
-          </Text>
-        )}
 
         <Text
           style={[
@@ -446,34 +443,42 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerLabel: {
-    fontSize: 17,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "500",
     marginBottom: 8,
   },
-  input: {
+  rowContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 30,
     height: 60,
+  },
+  input: {
+    height: 55,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 16,
+    width: "100%",
   },
   ingredientRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
     marginBottom: 10,
+    gap: 10,
   },
   ingredientsList: {
     marginBottom: 15,
   },
   pickerContainer: {
-    height: 60,
+    height: 55,
     borderWidth: 1,
     borderRadius: 8,
     justifyContent: "center",
   },
   fullWidthPickerContainer: {
-    height: 60,
+    height: 55,
     borderWidth: 1,
     borderRadius: 8,
     justifyContent: "center",
@@ -497,7 +502,6 @@ const styles = StyleSheet.create({
   },
   removeButtonText: {
     fontSize: 20,
-    color: "#ff3b30",
     fontWeight: "bold",
   },
   addButton: {
@@ -506,11 +510,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderStyle: "dashed",
     alignItems: "center",
-    marginTop: 5,
   },
   addButtonText: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontSize: 17,
+    fontWeight: "600",
   },
   footer: {
     position: "absolute",

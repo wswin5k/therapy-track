@@ -31,7 +31,7 @@ export function SelectMedicineScreen() {
 
   const mode = (route.params as { mode: "schedule" | "one-time" }).mode;
   const selectedDate = (
-    route.params as { mode: "schedule" | "one-time"; selectedDate?: Date }
+    route.params as { mode: "schedule" | "one-time"; selectedDate?: string }
   ).selectedDate;
 
   useFocusEffect(
@@ -80,7 +80,10 @@ export function SelectMedicineScreen() {
       <View
         style={[
           styles.fullWidthPickerContainer,
-          { borderColor: theme.colors.border },
+          {
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+          },
         ]}
       >
         <Picker
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   picker: {
-    paddingVertical: 15,
+    paddingVertical: 16,
     fontWeight: "500",
   },
   pickerItem: {
