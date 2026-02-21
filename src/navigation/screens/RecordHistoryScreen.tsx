@@ -213,7 +213,6 @@ export function RecordHistoryScreen() {
       }
     } catch (error) {
       Alert.alert("Error", `Failed to save the file ${error}`);
-    } finally {
     }
     setIsMenuOpen(false);
   }, [dailyRecords, tableHeaders]);
@@ -255,7 +254,7 @@ export function RecordHistoryScreen() {
           contentContainerStyle={[styles.scrollContainer]}
           horizontal={true}
         >
-          <DataTable style={[styles.table]}>
+          <DataTable>
             <DataTable.Row
               style={[
                 styles.tableHeader,
@@ -277,7 +276,7 @@ export function RecordHistoryScreen() {
                     ]}
                     textStyle={[
                       styles.headerText,
-                      { color: theme.colors.primary },
+                      { color: theme.colors.text },
                     ]}
                   >
                     {header}
@@ -334,7 +333,6 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   scrollContainer: {},
-  table: {},
   tableHeader: {
     margin: 0,
   },
@@ -356,7 +354,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: "rgba(0, 0, 0, 0.0)",
     justifyContent: "center",
     alignItems: "center",
     height: "100%",

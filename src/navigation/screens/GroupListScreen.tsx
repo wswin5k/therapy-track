@@ -151,7 +151,7 @@ function GroupListItem({
         style={[
           styles.itemContainer,
           {
-            backgroundColor: theme.colors.surface,
+            backgroundColor: theme.colors.card,
             borderColor: theme.colors.border,
             filter: optionsOpened ? "blur(4px)" : "none",
           },

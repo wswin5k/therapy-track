@@ -329,9 +329,6 @@ export function EditMedicineScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/*         <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Medicine Name")}
-        </Text> */}
         <View style={[styles.rowContainer]}>
           <TextInput
             placeholder="Medicine Name"

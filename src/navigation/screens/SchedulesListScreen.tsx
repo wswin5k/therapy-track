@@ -70,7 +70,7 @@ function ScheduleListItem({
     });
   };
 
-  const formatDate = (date: Date, language): string => {
+  const formatDate = (date: Date): string => {
     return date.toLocaleDateString(i18n.language, {
       year: "numeric",
       month: "short",
@@ -140,7 +140,7 @@ function ScheduleListItem({
         style={[
           styles.scheduleItem,
           {
-            backgroundColor: theme.colors.surface,
+            backgroundColor: theme.colors.card,
             borderColor: theme.colors.border,
             filter: optionsOpened ? "blur(4px)" : "none",
           },
@@ -178,7 +178,7 @@ export function SchedulesListScreen() {
   const { t, i18n } = useTranslation();
 
   const [schedules, setSchedules] = React.useState<Schedule[]>([]);
-  const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
+  const [optionsOpened, setOptionsOpened] = React.useState<Array<boolean>>([]);
 
   const loadSchedules = React.useCallback(async () => {
     const result = await dbGetSchedulesWithMedicines(db);
