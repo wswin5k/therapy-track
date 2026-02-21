@@ -30,7 +30,9 @@ export type RootStackParamList = {
     mode: "save-and-go-back" | "schedule" | "one-time";
     medicine?: Medicine;
   };
-  SelectMedicineScreen: { mode: "schedule" | "one-time" } | undefined;
+  SelectMedicineScreen:
+    | { mode: "schedule" | "one-time"; selectedDate?: Date }
+    | undefined;
   EditScheduleScreen: {
     medicine: MedicineParam;
   };
@@ -44,6 +46,7 @@ export type RootStackParamList = {
       activeIngredients: ActiveIngredient[];
       dbId?: number;
     };
+    selectedDate?: Date;
   };
   EditGroupScreen: {
     group?: {

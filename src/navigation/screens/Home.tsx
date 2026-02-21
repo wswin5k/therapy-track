@@ -166,13 +166,18 @@ function UnscheduledDosage({
                 color: theme.colors.text,
               },
             ]}
+            numberOfLines={1}
           >
             {dosage.medicineName}
             {"  –  "}
             {dosage.amount}{" "}
             {t(dosage.medicineBaseUnit, { count: dosage.amount })}
           </Text>
-          <Ionicons name="checkmark-circle" size={24} color="#00ff00" />
+          <Ionicons
+            name="checkmark-circle"
+            size={24}
+            color={theme.colors.success}
+          />
         </View>
       </TouchableOpacity>
     </View>
@@ -402,7 +407,10 @@ export function Home() {
     {
       label: "Single dosage",
       onPress: () =>
-        navigation.navigate("SelectMedicineScreen", { mode: "one-time" }),
+        navigation.navigate("SelectMedicineScreen", {
+          mode: "one-time",
+          selectedDate: date,
+        }),
     },
     {
       label: "Schedule",
@@ -435,23 +443,15 @@ export function Home() {
                 color: theme.colors.text,
               },
             ]}
+            numberOfLines={1}
           >
             {dosage.medicineName}
             {"  –  "}
             {dosage.amount}{" "}
             {t(dosage.medicineBaseUnit, { count: dosage.amount })}
           </Text>
-          <Text
-            style={[
-              styles.contentText,
-              {
-                textDecorationLine: isDone ? "line-through" : "none",
-                color: theme.colors.text,
-              },
-            ]}
-          ></Text>
           {isDone ? (
-            <Ionicons name="checkmark-circle" size={24} color="#00ff00" />
+            <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
           ) : (
             <Ionicons name="ellipse" size={24} color="#4a4a4aff" />
           )}
@@ -542,13 +542,9 @@ export function Home() {
               getScheduledDosages(group.dbId)) && (
               <LinearGradient
                 key={group.dbId}
-                colors={[
-                  theme.colors.surface,
-                  theme.colors.surface,
-                  theme.colors.surface,
-                ]}
-                start={{ x: 0.0, y: 0.0 }}
-                end={{ x: 1, y: 1.0 }}
+                colors={[theme.colors.surface, theme.colors.surface]}
+                start={{ x: 1, y: 0.0 }}
+                end={{ x: 0.0, y: 10 }}
                 style={[
                   styles.groupContainer,
                   { borderColor: theme.colors.border },
@@ -635,6 +631,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 400,
     marginBottom: 4,
+    maxWidth: "85%",
   },
   frequency: {
     fontSize: 14,

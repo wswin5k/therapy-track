@@ -30,6 +30,9 @@ export function SelectMedicineScreen() {
   const [medicines, setMedicines] = React.useState<Medicine[]>([]);
 
   const mode = (route.params as { mode: "schedule" | "one-time" }).mode;
+  const selectedDate = (
+    route.params as { mode: "schedule" | "one-time"; selectedDate?: Date }
+  ).selectedDate;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -57,6 +60,7 @@ export function SelectMedicineScreen() {
       // mode === "one-time"
       navigation.navigate("EditSingleDosageScreen", {
         medicine: medicines[medicineIdx],
+        selectedDate: selectedDate,
       });
     }
   };
@@ -81,7 +85,7 @@ export function SelectMedicineScreen() {
       >
         <Picker
           onValueChange={handleSelectMedicine}
-          style={[styles.picker, { color: theme.colors.text }]}
+          itemStyle={[styles.picker, { color: theme.colors.text }]}
           dropdownIconColor={theme.colors.text}
         >
           <Picker.Item
@@ -117,34 +121,39 @@ export function SelectMedicineScreen() {
 
 const styles = StyleSheet.create({
   headerLabel: {
-    fontSize: 17,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "500",
     textAlign: "center",
+    margin: 15,
   },
   fullWidthPickerContainer: {
+    maxWidth: "80%",
+    width: 300,
     height: 60,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 10,
     justifyContent: "center",
-    paddingBottom: 10,
-    paddingTop: 10,
+    alignSelf: "center",
+    padding: 15,
   },
   picker: {
-    width: "100%",
-    height: 60,
-    borderRadius: 10,
+    paddingVertical: 15,
+    fontWeight: "500",
   },
   pickerItem: {
-    fontSize: 16,
+    fontSize: 18,
   },
   nextButton: {
+    maxWidth: "80%",
+    width: 300,
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
+    alignSelf: "center",
   },
   nextButtonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
 });

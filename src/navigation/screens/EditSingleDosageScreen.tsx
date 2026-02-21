@@ -49,13 +49,16 @@ export function EditSingleDosageScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const setData = async () => {
-        setMedicine(
-          (
-            route.params as {
-              medicine: MedicineParam;
-            }
-          ).medicine,
-        );
+        const params = route.params as {
+          medicine: MedicineParam;
+          selectedDate?: Date;
+        };
+        setMedicine(params.medicine);
+        if (params.selectedDate) {
+          setDate(params.selectedDate);
+        } else {
+          setDate(new Date());
+        }
         const groups = await dbGetGroups(db);
         setGroups(groups);
       };
@@ -178,7 +181,7 @@ export function EditSingleDosageScreen() {
       {isDatePickerOpened ? (
         <RNDateTimePicker
           mode="date"
-          value={new Date()}
+          value={date ?? new Date()}
           onChange={handleDateChange}
         />
       ) : (
