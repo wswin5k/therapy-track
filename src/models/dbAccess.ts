@@ -165,7 +165,7 @@ function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
   );
 }
 
-export async function dbGetScheduleWithMedicine(
+export async function dbGetSchedule(
   db: SQLiteDatabase,
   scheduleId: number,
 ): Promise<Schedule> {
@@ -178,7 +178,6 @@ export async function dbGetScheduleWithMedicine(
         m.active_ingredients as medicine_active_ingredients,
         s.start_date,
         s.end_date,
-        s.doses,
         s.freq
       FROM schedules s
       JOIN medicines m ON s.medicine = m.id

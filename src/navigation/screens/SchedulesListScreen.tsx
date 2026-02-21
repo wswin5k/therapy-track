@@ -95,7 +95,7 @@ function ScheduleListItem({
         ]}
         onPress={handleEdit}
       >
-        <Text style={styles.optionsButtonText}>{t("Edit")}</Text>
+        <Text style={styles.optionsButtonText}>{t("Edit dates")}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[

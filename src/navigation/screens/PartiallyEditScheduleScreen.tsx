@@ -18,10 +18,7 @@ import {
   useTheme,
 } from "@react-navigation/native";
 import { useSQLiteContext } from "expo-sqlite";
-import {
-  dbGetScheduleWithMedicine,
-  dbUpdateSchedule,
-} from "../../models/dbAccess";
+import { dbGetSchedule, dbUpdateSchedule } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
 export default function PartiallyEditScheduleScreen() {
@@ -47,7 +44,7 @@ export default function PartiallyEditScheduleScreen() {
         const params = route.params as {
           scheduleId: number;
         };
-        const schedule = await dbGetScheduleWithMedicine(db, params.scheduleId);
+        const schedule = await dbGetSchedule(db, params.scheduleId);
 
         setSchedule(schedule);
         if (schedule) {
@@ -123,27 +120,29 @@ export default function PartiallyEditScheduleScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Start date")}
-        </Text>
-        <TouchableOpacity
-          onPress={handleSelectStartDate}
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-            startDateError && {
-              borderColor: theme.colors.error,
-              borderWidth: 2,
-            },
-          ]}
-        >
-          <Text style={[styles.inputText, { color: theme.colors.text }]}>
-            {startDate ? startDate.toDateString() : "Select date"}
+        <View style={styles.rowContainer}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Start date")}
           </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSelectStartDate}
+            style={[
+              styles.dateButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+              startDateError && {
+                borderColor: theme.colors.error,
+                borderWidth: 2,
+              },
+            ]}
+          >
+            <Text style={[styles.inputText, { color: theme.colors.text }]}>
+              {startDate ? startDate.toDateString() : t("Select date")}
+            </Text>
+          </TouchableOpacity>
+        </View>
         {isStartDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
@@ -154,23 +153,25 @@ export default function PartiallyEditScheduleScreen() {
           ""
         )}
 
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("End date")}
-        </Text>
-        <TouchableOpacity
-          onPress={handleSelectEndDate}
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.inputText, { color: theme.colors.text }]}>
-            {endDate ? endDate.toDateString() : "Select date"}
+        <View style={styles.rowContainer}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("End date")}
           </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSelectEndDate}
+            style={[
+              styles.dateButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.inputText, { color: theme.colors.text }]}>
+              {endDate ? endDate.toDateString() : t("Infinitely")}
+            </Text>
+          </TouchableOpacity>
+        </View>
         {isEndDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
@@ -212,17 +213,24 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "400",
+    width: "45%",
   },
-  input: {
-    height: 50,
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 60,
+    marginVertical: 16,
+  },
+  dateButton: {
+    height: 52,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     justifyContent: "center",
-    marginBottom: 10,
+    width: "45%",
   },
   inputText: {
     fontSize: 16,
@@ -238,7 +246,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     paddingVertical: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
   },
   saveButtonText: {
