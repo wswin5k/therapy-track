@@ -5,10 +5,8 @@ import {
   Text,
   TextInput,
   View,
-  ScrollView,
   TouchableOpacity,
   Switch,
-  Alert,
 } from "react-native";
 import RNDateTimePicker, {
   DateTimePickerEvent,
@@ -36,7 +34,7 @@ type EditGroupScreenNavigationProp = NativeStackNavigationProp<
   "EditGroupScreen"
 >;
 
-const DEFAULT_GROUP_COLOR = "#808080"; // Gray
+const DEFAULT_GROUP_COLOR = "#808080";
 
 function formatTimeToString(date: Date): string {
   const hours = date.getHours().toString().padStart(2, "0");
@@ -183,39 +181,38 @@ export function EditGroupScreen() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Group Name")}
-        </Text>
-        <TextInput
-          placeholder={t("e.g. After lunch")}
-          placeholderTextColor={theme.colors.textTertiary}
-          style={[
-            styles.input,
-            {
-              borderColor: theme.colors.border,
-              color: theme.colors.text,
-            },
-            nameError
-              ? { borderColor: theme.colors.error, borderWidth: 1 }
-              : {},
-          ]}
-          onChangeText={(text: string) => {
-            setName(text);
-            if (nameError) setNameError(false);
-          }}
-          value={name}
-        />
-        {nameError && (
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            {t("Group name is required")}
+      <View style={styles.mainContainer}>
+        <View style={[styles.rowContainer]}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Group Name")}
           </Text>
-        )}
+          <TextInput
+            placeholder={t("e.g. After lunch")}
+            placeholderTextColor={theme.colors.textTertiary}
+            style={[
+              styles.input,
+              {
+                borderColor: theme.colors.border,
+                color: theme.colors.text,
+                backgroundColor: theme.colors.surface,
+              },
+              nameError
+                ? { borderColor: theme.colors.error, borderWidth: 1 }
+                : {},
+            ]}
+            onChangeText={(text: string) => {
+              setName(text);
+              if (nameError) setNameError(false);
+            }}
+            value={name}
+          />
+        </View>
 
-        <View style={styles.switchRow}>
+        <View style={styles.rowContainer}>
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
             {t("Enable Reminder")}
           </Text>
+
           <Switch
             value={isReminderOn}
             onValueChange={handleReminderToggle}
@@ -223,12 +220,13 @@ export function EditGroupScreen() {
               false: theme.colors.border,
               true: theme.colors.primary,
             }}
-            thumbColor="#fff"
+            thumbColor={theme.colors.surface}
+            style={styles.switch}
           />
         </View>
 
         {isReminderOn && (
-          <>
+          <View style={[styles.rowContainer]}>
             <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
               {t("Reminder Time")}
             </Text>
@@ -259,12 +257,7 @@ export function EditGroupScreen() {
                 {reminderTime ? reminderTime : t("Select time")}
               </Text>
             </TouchableOpacity>
-            {reminderTimeError && (
-              <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                {t("Reminder time is required when reminder is enabled")}
-              </Text>
-            )}
-          </>
+          </View>
         )}
 
         {isTimePickerOpened && (
@@ -274,14 +267,14 @@ export function EditGroupScreen() {
             onChange={handleTimeChange}
           />
         )}
-      </ScrollView>
+      </View>
 
       <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
           style={[styles.saveButton, { backgroundColor: theme.colors.primary }]}
         >
-          <Text style={[styles.saveButtonText]}>{t("Save")}</Text>
+          <Text style={styles.saveButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -289,16 +282,23 @@ export function EditGroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  mainContainer: {
     padding: 16,
   },
   headerLabel: {
-    fontSize: 17,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "400",
+  },
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 60,
+    margin: 15,
   },
   input: {
-    height: 60,
+    height: 52,
+    width: "45%",
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -308,12 +308,8 @@ const styles = StyleSheet.create({
   inputText: {
     fontSize: 16,
   },
-  switchRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 20,
+  switch: {
+    transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
   },
   footer: {
     position: "absolute",
@@ -326,16 +322,12 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     paddingVertical: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
   },
   saveButtonText: {
+    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  errorText: {
-    fontSize: 12,
-    marginTop: 2,
-    marginBottom: 10,
   },
 });

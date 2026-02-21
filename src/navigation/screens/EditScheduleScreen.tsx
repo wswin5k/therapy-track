@@ -72,7 +72,8 @@ export default function EditScheduleScreen() {
   const route = useRoute();
   const db = useSQLiteContext();
 
-  const freqRef = React.useRef<Frequency>(frequencySelectionMap["OnceDaily"]);
+  const freqRef = React.useRef<Frequency | null>(null);
+  const [freqError, setFreqError] = React.useState<boolean>(false);
 
   const [nDoses, setNDoses] = React.useState<number>(1);
   const amountsRef = React.useRef<number[]>(
@@ -150,20 +151,50 @@ export default function EditScheduleScreen() {
     setIsEndDatePickerOpened(false);
   };
 
-  const handleSave = async () => {
-    // Clear previous error state
-    setStartDateError(false);
-    // Validate required fields
-    if (!startDate) {
-      setStartDateError(true);
-      return;
-    }
-    if (endDate && startDate > endDate) {
-      setStartDateError(true);
-      return;
-    }
+  const validate = (): {
+    freq: Frequency;
+    startDate: Date;
+    endDate: Date | null;
+  } | null => {
+    let isDataValid = true;
+
     if (!freqRef.current) {
-      throw Error("Frequency has not been set");
+      isDataValid = false;
+      setFreqError(true);
+    } else {
+      setFreqError(false);
+    }
+
+    if (!startDate) {
+      isDataValid = false;
+      setStartDateError(true);
+    } else {
+      setStartDateError(false);
+    }
+
+    if (!(endDate === null || (startDate && endDate && startDate > endDate))) {
+      isDataValid = false;
+    } else {
+      isDataValid = true;
+    }
+
+    if (isDataValid && freqRef.current && startDate) {
+      return {
+        freq: freqRef.current,
+        startDate,
+        endDate,
+      };
+    }
+    return null;
+  };
+
+  const handleSave = async () => {
+    const validatedData = validate();
+
+    console.log(validatedData);
+
+    if (!validatedData) {
+      return;
     }
 
     const doses = Array.from(
@@ -179,17 +210,17 @@ export default function EditScheduleScreen() {
 
     if (medicine && medicine.dbId) {
       await dbInsertSchedule(db, medicine.dbId, {
-        startDate,
-        endDate,
-        freq: freqRef.current,
+        startDate: validatedData.startDate,
+        endDate: validatedData.endDate,
+        freq: validatedData.freq,
         doses,
       });
       navigation.navigate("HomeTabs");
     } else if (medicine) {
       await dbInsertScheduleWithMedicine(db, medicine, {
-        startDate,
-        endDate,
-        freq: freqRef.current,
+        startDate: validatedData.startDate,
+        endDate: validatedData.endDate,
+        freq: validatedData.freq,
         doses,
       });
       navigation.navigate("HomeTabs");
@@ -198,7 +229,11 @@ export default function EditScheduleScreen() {
     }
   };
 
-  const handleFrequencyPicker = (item: FrequencySelection) => {
+  const handleFrequencyPicker = (item: FrequencySelection | "") => {
+    if (!item) {
+      freqRef.current = null;
+      return;
+    }
     const itemKey = strKeyOfFrequeencySelection(item);
     const freq = frequencySelectionMap[itemKey];
     freqRef.current = freq;
@@ -228,112 +263,139 @@ export default function EditScheduleScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Frequency")}
-        </Text>
-        <View
-          style={[
-            styles.fullWidthPickerContainer,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Picker
-            style={[styles.picker, { color: theme.colors.text }]}
-            dropdownIconColor={theme.colors.text}
-            onValueChange={handleFrequencyPicker}
+        <View style={[styles.rowContainer, { marginBottom: 30 }]}>
+          <View
+            style={[
+              styles.fullWidthPickerContainer,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+              freqError && {
+                borderColor: theme.colors.error,
+                borderWidth: 2,
+              },
+            ]}
           >
-            {Object.entries(FrequencySelection).map(([k, v]) => {
-              return (
-                <Picker.Item
-                  key={k}
-                  label={t(v)}
-                  value={v}
-                  style={styles.pickerItem}
-                  color={theme.colors.text}
-                />
-              );
-            })}
-          </Picker>
-        </View>
-
-        <View style={[styles.doseRow]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t(doseHeader)}
-          </Text>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t("Group (optional)")}
-          </Text>
-        </View>
-
-        <View>
-          {Array.from({ length: nDoses }, (_, idx) => (
-            <View key={idx} style={styles.doseRow}>
-              <View>
-                {nDoses !== 1 && (
-                  <Text style={{ color: theme.colors.text }}>
-                    {t("Dose", { count: idx, oridnal: true })}
-                  </Text>
-                )}
-              </View>
-
-              <SmallNumberStepper
-                onChange={createDoseInputHandler(idx)}
-                defaultValue={amountsRef.current[idx]}
+            <Picker
+              style={[styles.picker, { color: theme.colors.text }]}
+              dropdownIconColor={theme.colors.text}
+              onValueChange={handleFrequencyPicker}
+            >
+              <Picker.Item
+                label="Select frequency"
+                value=""
+                color={theme.colors.textTertiary}
               />
-              <Picker
-                style={[
-                  styles.picker,
-                  { borderWidth: 2, width: 200, color: theme.colors.text },
-                ]}
-                selectedValue={defaultGroups.get(idx) ?? -1}
-                dropdownIconColor={theme.colors.text}
-                onValueChange={createGroupInputHandler(idx)}
-              >
-                <Picker.Item
-                  key={-1}
-                  label={t("None")}
-                  value={-1}
-                  style={styles.pickerItem}
-                  color={theme.colors.textTertiary}
-                />
-                {groups.map((g, gIdx) => (
+              {Object.entries(FrequencySelection).map(([k, v]) => {
+                return (
                   <Picker.Item
-                    key={gIdx}
-                    label={t(g.name)}
-                    value={gIdx}
+                    key={k}
+                    label={t(v)}
+                    value={v}
                     style={styles.pickerItem}
                     color={theme.colors.text}
                   />
-                ))}
-              </Picker>
+                );
+              })}
+            </Picker>
+          </View>
+        </View>
+
+        <View style={[styles.rowDose]}>
+          <View style={styles.doseHeaderContainer}>
+            <Text
+              style={[
+                styles.doseHeaderLabel,
+                { flex: 1, color: theme.colors.text },
+              ]}
+            >
+              {t(doseHeader)}
+            </Text>
+          </View>
+          <View style={styles.doseHeaderContainer}>
+            <Text
+              style={[
+                styles.doseHeaderLabel,
+                { flex: 1, color: theme.colors.text },
+              ]}
+            >
+              {t("Group (optional)")}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.dosesContainer}>
+          {Array.from({ length: nDoses }, (_, idx) => (
+            <View key={idx} style={styles.rowDose}>
+              <View style={styles.doseAmountContainer}>
+                <SmallNumberStepper
+                  onChange={createDoseInputHandler(idx)}
+                  defaultValue={amountsRef.current[idx]}
+                />
+              </View>
+              <View
+                style={[
+                  styles.pickerContainer,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+              >
+                <Picker
+                  style={[styles.picker, { color: theme.colors.text }]}
+                  itemStyle={[
+                    styles.pickerItem,
+                    { backgroundColor: theme.colors.surface },
+                  ]}
+                  selectedValue={defaultGroups.get(idx) ?? -1}
+                  dropdownIconColor={theme.colors.text}
+                  onValueChange={createGroupInputHandler(idx)}
+                >
+                  <Picker.Item
+                    key={-1}
+                    label={t("None")}
+                    value={-1}
+                    color={theme.colors.textTertiary}
+                  />
+                  {groups.map((g, gIdx) => (
+                    <Picker.Item
+                      key={gIdx}
+                      label={t(g.name)}
+                      value={gIdx}
+                      color={theme.colors.text}
+                    />
+                  ))}
+                </Picker>
+              </View>
             </View>
           ))}
         </View>
 
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Start date")}
-        </Text>
-        <TouchableOpacity
-          onPress={handleSelectStartDate}
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-            startDateError && {
-              borderColor: theme.colors.error,
-              borderWidth: 2,
-            },
-          ]}
-        >
-          <Text style={[styles.inputText, { color: theme.colors.text }]}>
-            {startDate ? startDate.toDateString() : "Select date"}
+        <View style={styles.rowContainer}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Start date")}
           </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSelectStartDate}
+            style={[
+              styles.dateButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+              startDateError && {
+                borderColor: theme.colors.error,
+                borderWidth: 2,
+              },
+            ]}
+          >
+            <Text style={[styles.inputText, { color: theme.colors.text }]}>
+              {startDate ? startDate.toDateString() : t("Select date")}
+            </Text>
+          </TouchableOpacity>
+        </View>
         {isStartDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
@@ -344,23 +406,26 @@ export default function EditScheduleScreen() {
           ""
         )}
 
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("End date")}
-        </Text>
-        <TouchableOpacity
-          onPress={handleSelectEndDate}
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.inputText, { color: theme.colors.text }]}>
-            {endDate ? endDate.toDateString() : "Select date"}
+        <View style={styles.rowContainer}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("End date")}
           </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSelectEndDate}
+            style={[
+              styles.dateButton,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.inputText, { color: theme.colors.text }]}>
+              {endDate ? endDate.toDateString() : t("Infinitely")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {isEndDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
@@ -371,10 +436,6 @@ export default function EditScheduleScreen() {
         ) : (
           ""
         )}
-        {/* 
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("That's 2 weeks")}
-        </Text> */}
       </ScrollView>
 
       <View
@@ -399,20 +460,50 @@ export default function EditScheduleScreen() {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    padding: 16,
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 60,
+  },
+  dosesContainer: {
+    marginBottom: 30,
+  },
+  rowDose: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 60,
+  },
+  doseHeaderLabel: {
+    fontSize: 16,
+  },
+  doseHeaderContainer: {
+    width: "45%",
+    /*     borderWidth: 1,
+    borderColor: "red", */
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  doseAmountContainer: {
+    width: "45%",
+    height: 52,
   },
   headerLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "400",
+    width: "45%",
   },
-  input: {
-    height: 50,
+  dateButton: {
+    height: 52,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     justifyContent: "center",
-    marginBottom: 10,
+    width: "45%",
   },
   inputError: {
     borderWidth: 2,
@@ -421,18 +512,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   fullWidthPickerContainer: {
-    height: 50,
+    height: 55,
     borderWidth: 1,
     borderRadius: 8,
     justifyContent: "center",
-    marginBottom: 15,
+    width: "100%",
   },
-  picker: {
-    height: 50,
+  pickerContainer: {
+    height: 52,
+    borderRadius: 8,
+    justifyContent: "center",
+    borderWidth: 1,
+    width: "45%",
+    overflow: "hidden",
   },
+  picker: {},
   pickerItem: {
     fontSize: 16,
-    borderWidth: 2,
   },
   footer: {
     position: "absolute",
@@ -445,19 +541,12 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     paddingVertical: 15,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: "center",
   },
   nextButtonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  doseRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    gap: 8,
-    marginBottom: 10,
   },
 });
