@@ -1,6 +1,16 @@
 import React from "react";
-import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 import { useTheme } from "@react-navigation/native";
+
+function isClose(a: number, b: number) {
+  return Math.abs(a - b) < 1e-5;
+}
 
 type SmallNumberStepperProps = {
   min?: number;
@@ -10,7 +20,7 @@ type SmallNumberStepperProps = {
 };
 
 export default function SmallNumberStepper({
-  min = 1,
+  min = 0.25,
   max = 100,
   defaultValue = 1,
   onChange,
@@ -21,14 +31,34 @@ export default function SmallNumberStepper({
   const handlePress = (type: "increment" | "decrement") => {
     let newValue = count;
     if (type === "increment" && count < max) {
-      newValue = count + 1.0;
+      if (newValue >= 1) {
+        newValue = Math.floor(count + 1.0);
+      } else if (count >= 0.75) {
+        newValue = 1;
+      } else if (count >= 0.5) {
+        newValue = 0.75;
+      } else if (count >= 0.25) {
+        newValue = 0.5;
+      } else {
+        newValue = 1;
+      }
     } else if (type === "decrement" && count > min) {
-      newValue = count - 1.0;
+      if (newValue > 1) {
+        newValue = Math.ceil(count - 1.0);
+      } else if (count > 0.75) {
+        newValue = 0.75;
+      } else if (count > 0.5) {
+        newValue = 0.5;
+      } else if (count > 0.25) {
+        newValue = 0.25;
+      } else {
+        newValue = 1;
+      }
     }
 
     if (newValue !== count) {
       setCount(newValue);
-      if (onChange) onChange(newValue);
+      onChange(newValue);
     }
   };
 
@@ -36,8 +66,10 @@ export default function SmallNumberStepper({
     const parsed = parseFloat(v);
     if (isFinite(parsed) && !isNaN(parsed) && min < parsed && parsed < max) {
       setCount(parsed);
+      onChange(parsed);
     } else {
       setCount(1.0);
+      onChange(1.0);
     }
   };
 
@@ -56,7 +88,7 @@ export default function SmallNumberStepper({
         style={({ pressed }) => [
           styles.button,
           { backgroundColor: theme.colors.card },
-          count === min && {
+          isClose(count, min) && {
             opacity: 0.3,
             backgroundColor: theme.colors.background,
           },
@@ -69,7 +101,9 @@ export default function SmallNumberStepper({
       <View style={styles.valueContainer}>
         <TextInput
           keyboardType="numeric"
-          defaultValue={count.toString()}
+          defaultValue={
+            count.toString()
+          }
           onChangeText={handleChangeText}
           style={[styles.valueText, { color: theme.colors.text }]}
         />
@@ -80,7 +114,7 @@ export default function SmallNumberStepper({
         style={({ pressed }) => [
           styles.button,
           { backgroundColor: theme.colors.card },
-          count === max && {
+          isClose(count, max) && {
             opacity: 0.3,
             backgroundColor: theme.colors.background,
           },

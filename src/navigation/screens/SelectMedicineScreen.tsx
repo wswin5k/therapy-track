@@ -74,7 +74,6 @@ export function SelectMedicineScreen() {
 
     return `${m.name} ${t(m.baseUnit, { count: 2 })} ${ingredientsStr}`;
   };
-  console.log("render");
 
   return (
     <DefaultMainContainer justifyContent="center">
