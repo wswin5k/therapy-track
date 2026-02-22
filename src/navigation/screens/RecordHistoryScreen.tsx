@@ -16,14 +16,17 @@ import {
 import { DataTable } from "react-native-paper";
 import React from "react";
 import {
+  dbGetMedicines,
   dbGetScheduledDosageRecords,
   dbGetSchedulesWithMedicines,
+  dbGetUnscheduledDosageRecords,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { Schedule } from "../../models/Schedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
+import { Medicine } from "../../models/Medicine";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -132,6 +135,33 @@ export function RecordHistoryScreen() {
         headersSet.add(label.slice(0, 200));
         let amountTotal = dRecrod.get(label) || 0;
         amountTotal += ai.amount * schedule.doses[r.doseIndex].amount;
+        dRecrod.set(label, amountTotal);
+      }
+      dayToHeaderValues.set(extractDate(r.date), dRecrod);
+    }
+
+    const unscheduledRecords = await dbGetUnscheduledDosageRecords(db);
+    const medicine = await dbGetMedicines(db);
+    const medicineMap = new Map<number, Medicine>();
+    for (const m of medicine) {
+      medicineMap.set(m.dbId, m);
+    }
+
+    for (const r of unscheduledRecords) {
+      const dRecrod =
+        dayToHeaderValues.get(extractDate(r.date)) || new Map<string, number>();
+
+      const medicine = medicineMap.get(r.medicineId);
+
+      if (!medicine) {
+        throw Error("Record not connected to medicine");
+      }
+
+      for (const ai of medicine.activeIngredients) {
+        const label = `${ai.name} [${ai.unit}]`;
+        headersSet.add(label.slice(0, 200));
+        let amountTotal = dRecrod.get(label) || 0;
+        amountTotal += ai.amount * r.amount;
         dRecrod.set(label, amountTotal);
       }
       dayToHeaderValues.set(extractDate(r.date), dRecrod);
