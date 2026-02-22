@@ -310,20 +310,23 @@ export function Home() {
     setUnscheduledDosages(newUnscheduledDosageInfos);
   }, [date, db]);
 
+  const formatDate = React.useCallback(
+    (date: Date): string => {
+      return date.toLocaleDateString(i18n.language, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    },
+    [i18n.language],
+  );
+
   useFocusEffect(
     React.useCallback(() => {
-      const formatDate = (date: Date): string => {
-        return date.toLocaleDateString(i18n.language, {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-      };
-
       const newDate = new Date();
       setDate(newDate);
-      navigation.setOptions({ title: formatDate(date) });
-    }, [date, navigation, i18n.language]),
+      navigation.setOptions({ title: formatDate(newDate) });
+    }, [navigation, formatDate]),
   );
 
   useFocusEffect(
@@ -399,6 +402,7 @@ export function Home() {
     if (event.type === "dismissed") {
     } else if (newDate) {
       setDate(newDate);
+      navigation.setOptions({ title: formatDate(newDate) });
     }
   };
 
