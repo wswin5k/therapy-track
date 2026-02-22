@@ -74,6 +74,7 @@ export function SelectMedicineScreen() {
 
     return `${m.name} ${t(m.baseUnit, { count: 2 })} ${ingredientsStr}`;
   };
+  console.log("render");
 
   return (
     <DefaultMainContainer justifyContent="center">
@@ -86,26 +87,28 @@ export function SelectMedicineScreen() {
           },
         ]}
       >
-        <Picker
-          onValueChange={handleSelectMedicine}
-          itemStyle={[styles.picker, { color: theme.colors.text }]}
-          dropdownIconColor={theme.colors.text}
-        >
-          <Picker.Item
-            label="Select existing medicine"
-            value={-1}
-            color={theme.colors.textTertiary}
-          />
-          {medicines.map((m, idx) => (
+        {medicines.length > 0 && (
+          <Picker
+            onValueChange={handleSelectMedicine}
+            itemStyle={[styles.picker, { color: theme.colors.text }]}
+            dropdownIconColor={theme.colors.text}
+          >
             <Picker.Item
-              key={m.dbId}
-              label={createMedicineLabel(m)}
-              value={idx}
-              style={styles.pickerItem}
-              color={theme.colors.text}
+              label="Select existing medicine"
+              value={-1}
+              color={theme.colors.textTertiary}
             />
-          ))}
-        </Picker>
+            {medicines.map((m, idx) => (
+              <Picker.Item
+                key={m.dbId}
+                label={createMedicineLabel(m)}
+                value={idx}
+                style={styles.pickerItem}
+                color={theme.colors.text}
+              />
+            ))}
+          </Picker>
+        )}
       </View>
 
       <Text style={[styles.headerLabel, { color: theme.colors.text }]}>

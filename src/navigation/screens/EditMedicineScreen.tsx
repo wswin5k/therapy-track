@@ -27,6 +27,7 @@ import {
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
+import { DropdownPicker } from "../../components/DropdownPicker";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -83,7 +84,7 @@ function ActiveIngredientRow({
             setName(text);
           }}
           style={[
-            styles.input,
+            styles.ingredientInput,
             {
               borderColor: theme.colors.border,
               color: theme.colors.text,
@@ -104,7 +105,7 @@ function ActiveIngredientRow({
             activeIngredientInfo.amount = parseFloat(weightStr);
           }}
           style={[
-            styles.input,
+            styles.ingredientInput,
             {
               borderColor: theme.colors.border,
               color: theme.colors.text,
@@ -124,37 +125,23 @@ function ActiveIngredientRow({
           }
         />
       </View>
-      <View
-        style={[
-          styles.pickerContainer,
-          { flex: 1.2 },
-          {
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface,
-          },
-        ]}
-      >
-        <Picker
+      <View style={{ flex: 1.2 }}>
+        <DropdownPicker
+          options={Object.values(IngredientAmountUnit)}
+          initialValue={
+            activeIngredientInfo.unit ?? IngredientAmountUnit.Miligram
+          }
           onValueChange={(unit: IngredientAmountUnit) => {
             activeIngredientInfo.unit = unit;
           }}
-          selectedValue={
-            activeIngredientInfo.unit ?? IngredientAmountUnit.Miligram
-          }
-          style={[styles.picker, { color: theme.colors.text }]}
-          dropdownIconColor={theme.colors.text}
-          mode="dropdown"
-        >
-          {Object.values(IngredientAmountUnit).map((unit) => (
-            <Picker.Item
-              key={unit}
-              label={unit}
-              value={unit}
-              style={styles.pickerItem}
-              color={theme.colors.text}
-            />
-          ))}
-        </Picker>
+          getLabel={(unit) => unit}
+          placeholder="Unit"
+          pressableStyle={{
+            ...styles.pickerContainer,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+          }}
+        />
       </View>
       {removeButton ? (
         <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
@@ -457,6 +444,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 16,
+    width: "100%",
+  },
+  ingredientInput: {
+    height: 55,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 15,
     width: "100%",
   },
   ingredientRow: {

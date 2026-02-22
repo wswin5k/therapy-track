@@ -13,7 +13,6 @@ import RNDateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import {
-  Dose,
   Frequency,
   FrequencySelection,
   Group,
@@ -35,6 +34,7 @@ import {
   dbInsertScheduleWithMedicine,
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { DropdownPicker } from "../../components/DropdownPicker";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
@@ -263,7 +263,7 @@ export default function EditScheduleScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={[styles.rowContainer, { marginBottom: 30 }]}>
+        <View style={[styles.rowContainer, { marginBottom: 20 }]}>
           <View
             style={[
               styles.fullWidthPickerContainer,
@@ -302,23 +302,17 @@ export default function EditScheduleScreen() {
           </View>
         </View>
 
-        <View style={[styles.rowDose]}>
+        <View style={[styles.rowDosesHeader]}>
           <View style={styles.doseHeaderContainer}>
             <Text
-              style={[
-                styles.doseHeaderLabel,
-                { flex: 1, color: theme.colors.text },
-              ]}
+              style={[styles.doseHeaderLabel, { color: theme.colors.text }]}
             >
               {t(doseHeader)}
             </Text>
           </View>
           <View style={styles.doseHeaderContainer}>
             <Text
-              style={[
-                styles.doseHeaderLabel,
-                { flex: 1, color: theme.colors.text },
-              ]}
+              style={[styles.doseHeaderLabel, { color: theme.colors.text }]}
             >
               {t("Group (optional)")}
             </Text>
@@ -343,31 +337,22 @@ export default function EditScheduleScreen() {
                   },
                 ]}
               >
-                <Picker
-                  style={[styles.picker, { color: theme.colors.text }]}
-                  itemStyle={[
-                    styles.pickerItem,
-                    { backgroundColor: theme.colors.surface },
-                  ]}
-                  selectedValue={defaultGroups.get(idx) ?? -1}
-                  dropdownIconColor={theme.colors.text}
+                <DropdownPicker
+                  options={[-1].concat(
+                    Array.from({ length: groups.length }, (_, i) => i),
+                  )}
+                  initialValue={defaultGroups.get(idx) ?? -1}
                   onValueChange={createGroupInputHandler(idx)}
-                >
-                  <Picker.Item
-                    key={-1}
-                    label={t("None")}
-                    value={-1}
-                    color={theme.colors.textTertiary}
-                  />
-                  {groups.map((g, gIdx) => (
-                    <Picker.Item
-                      key={gIdx}
-                      label={t(g.name)}
-                      value={gIdx}
-                      color={theme.colors.text}
-                    />
-                  ))}
-                </Picker>
+                  getLabel={(gIdx) =>
+                    gIdx === -1 ? "None" : groups[gIdx].name
+                  }
+                  placeholder="group"
+                  pressableStyle={{
+                    ...styles.picker,
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                  }}
+                />
               </View>
             </View>
           ))}
@@ -461,7 +446,7 @@ export default function EditScheduleScreen() {
 const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
-    paddingHorizontal: 16,
+    padding: 16,
   },
   rowContainer: {
     flexDirection: "row",
@@ -471,6 +456,12 @@ const styles = StyleSheet.create({
   },
   dosesContainer: {
     marginBottom: 30,
+  },
+  rowDosesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 40,
   },
   rowDose: {
     flexDirection: "row",
@@ -483,8 +474,6 @@ const styles = StyleSheet.create({
   },
   doseHeaderContainer: {
     width: "45%",
-    /*     borderWidth: 1,
-    borderColor: "red", */
     justifyContent: "center",
     alignItems: "center",
   },

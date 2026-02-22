@@ -20,8 +20,8 @@ import {
 } from "@react-navigation/native";
 import { MedicineParam, RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Picker } from "@react-native-picker/picker";
 import { Group } from "../../models/Schedule";
+import { DropdownPicker } from "../../components/DropdownPicker";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -170,32 +170,20 @@ export function EditSingleDosageScreen() {
               },
             ]}
           >
-            <Picker
-              style={[styles.picker, { color: theme.colors.text }]}
-              itemStyle={[
-                styles.pickerItem,
-                { backgroundColor: theme.colors.surface },
-              ]}
-              selectedValue={-1}
-              dropdownIconColor={theme.colors.text}
+            <DropdownPicker
+              options={[-1].concat(
+                Array.from({ length: groups.length }, (_, i) => i),
+              )}
+              initialValue={-1}
               onValueChange={handleGroupChange}
-              mode="dropdown"
-            >
-              <Picker.Item
-                key={-1}
-                label={t("None")}
-                value={-1}
-                color={theme.colors.textTertiary}
-              />
-              {groups.map((g, gIdx) => (
-                <Picker.Item
-                  key={gIdx}
-                  label={t(g.name)}
-                  value={gIdx}
-                  color={theme.colors.text}
-                />
-              ))}
-            </Picker>
+              getLabel={(idx) => (idx === -1 ? "None" : groups[idx].name)}
+              placeholder="group"
+              pressableStyle={{
+                ...styles.picker,
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surface,
+              }}
+            />
           </View>
         </View>
 
