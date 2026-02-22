@@ -29,7 +29,7 @@ type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export function EditSingleDosageScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<EditSingeDosageScreenNavigationProp>();
   const route = useRoute();
@@ -62,7 +62,7 @@ export function EditSingleDosageScreen() {
         setGroups(groups);
       };
       setData();
-    }, []),
+    }, [db, route.params]),
   );
 
   const handleSelectDate = () => {

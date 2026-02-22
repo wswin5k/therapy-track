@@ -63,17 +63,13 @@ function ActiveIngredientRow({
   errors,
   theme,
 }: ActiveIngedientRowProps) {
-  const [name, setName] = React.useState<string>(
-    activeIngredientInfo.name ? activeIngredientInfo.name : "",
-  );
-
   const handleRemove = () => {
     removeCallback();
   };
 
   React.useEffect(() => {
     activeIngredientInfo.unit = IngredientAmountUnit.Miligram;
-  }, []);
+  }, [activeIngredientInfo]);
 
   return (
     <View style={styles.ingredientRow}>
@@ -81,7 +77,6 @@ function ActiveIngredientRow({
         <TextInput
           onChangeText={(text: string) => {
             activeIngredientInfo.name = text;
-            setName(text);
           }}
           style={[
             styles.ingredientInput,
@@ -170,7 +165,7 @@ type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export function EditMedicineScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const route = useRoute();
   const db = useSQLiteContext();
   const navigation = useNavigation<EditMedicineScreenNavigationProp>();
@@ -217,7 +212,7 @@ export function EditMedicineScreen() {
         );
         setNActiveIngredients(mInit.activeIngredients.length);
       }
-    }, []),
+    }, [route.params]),
   );
 
   const validate = (): MedicineValidated | null => {

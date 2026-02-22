@@ -38,7 +38,7 @@ function MedicineListItem({
   handleOptionsToggle: () => void;
   onPress: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const navigation = useNavigation();
   const theme = useTheme();
@@ -171,7 +171,7 @@ function MedicineListItem({
 }
 
 export function MedicineListScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
 
@@ -193,7 +193,7 @@ export function MedicineListScreen() {
     setMedicineWithSchedules(newMedicinesWithSchedules);
 
     setOptionsOpened(Array.from({ length: medicines.length }, () => false));
-  }, []);
+  }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {

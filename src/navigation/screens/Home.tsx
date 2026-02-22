@@ -104,7 +104,7 @@ function UnscheduledDosage({
   bottomBorder: boolean;
   loadUnscheduledRecords: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const db = useSQLiteContext();
 
@@ -210,14 +210,6 @@ export function Home() {
   const [isEmpty, setIsEmpty] = React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
 
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString(i18n.language, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
   const loadGroups = React.useCallback(async () => {
     const groups = await dbGetGroups(db);
     const idToGroup = new Map();
@@ -225,7 +217,7 @@ export function Home() {
       idToGroup.set(g.dbId, g);
     });
     setGroups(idToGroup);
-  }, []);
+  }, [db]);
 
   const loadScheduledDosages = React.useCallback(async () => {
     const result = await dbGetSchedulesWithMedicines(db);
@@ -248,7 +240,7 @@ export function Home() {
         const groupId = dose.groupId;
         const groupDosages = newScheduledDosages.get(groupId) || [];
         const dosageRecord = dosageRecords.find(
-          (dr) => dr.scheduleId === s.dbId && dr.doseIndex == dose.index,
+          (dr) => dr.scheduleId === s.dbId && dr.doseIndex === dose.index,
         );
         const dosageRecordId = dosageRecord ? dosageRecord.dbId : null;
         groupDosages.push(
@@ -279,9 +271,9 @@ export function Home() {
       newIsDosageDone.set(key, true);
     });
     setIsDosageDone(newIsDosageDone);
-  }, [date]);
+  }, [date, db]);
 
-  const loadUnscheduledRecords = async () => {
+  const loadUnscheduledRecords = React.useCallback(async () => {
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(
       db,
       date,
@@ -316,14 +308,22 @@ export function Home() {
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     setUnscheduledDosages(newUnscheduledDosageInfos);
-  };
+  }, [date, db]);
 
   useFocusEffect(
     React.useCallback(() => {
+      const formatDate = (date: Date): string => {
+        return date.toLocaleDateString(i18n.language, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      };
+
       const newDate = new Date();
       setDate(newDate);
       navigation.setOptions({ title: formatDate(date) });
-    }, []),
+    }, [date, navigation, i18n.language]),
   );
 
   useFocusEffect(
@@ -331,7 +331,7 @@ export function Home() {
       loadGroups();
       loadScheduledDosages();
       loadUnscheduledRecords();
-    }, [date]),
+    }, [loadGroups, loadScheduledDosages, loadUnscheduledRecords]),
   );
 
   React.useEffect(() => {
@@ -345,7 +345,7 @@ export function Home() {
         </TouchableOpacity>
       ),
     });
-  }, [navigation]);
+  }, [navigation, theme.colors]);
 
   const handleCheck = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
@@ -399,7 +399,6 @@ export function Home() {
     if (event.type === "dismissed") {
     } else if (newDate) {
       setDate(newDate);
-      navigation.setOptions({ title: formatDate(newDate) });
     }
   };
 

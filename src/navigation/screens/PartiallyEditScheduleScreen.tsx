@@ -22,7 +22,7 @@ import { dbGetSchedule, dbUpdateSchedule } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 
 export default function PartiallyEditScheduleScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
@@ -53,7 +53,7 @@ export default function PartiallyEditScheduleScreen() {
         }
       };
       setData();
-    }, []),
+    }, [db, route.params]),
   );
 
   const handleSelectStartDate = () => {

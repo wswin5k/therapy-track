@@ -175,16 +175,16 @@ function ScheduleListItem({
 export function SchedulesListScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const [schedules, setSchedules] = React.useState<Schedule[]>([]);
-  const [optionsOpened, setOptionsOpened] = React.useState<Array<boolean>>([]);
+  const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
 
   const loadSchedules = React.useCallback(async () => {
     const result = await dbGetSchedulesWithMedicines(db);
     setSchedules(result);
     setOptionsOpened(Array.from({ length: result.length }, () => false));
-  }, []);
+  }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {

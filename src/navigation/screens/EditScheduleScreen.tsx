@@ -66,7 +66,7 @@ type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export default function EditScheduleScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<EditScheduleScreenNavigationProp>();
   const route = useRoute();
@@ -97,12 +97,15 @@ export default function EditScheduleScreen() {
     new Map(),
   );
 
-  const updateGroupsRefWithDefaults = (nDoses: number) => {
-    const defaultGroups = assingDefaultGroups(groups);
-    for (let i = 0; i < nDoses; i++) {
-      groupsRef.current[i] = defaultGroups.get(i) ?? null;
-    }
-  };
+  const updateGroupsRefWithDefaults = React.useCallback(
+    (nDoses: number) => {
+      const defaultGroups = assingDefaultGroups(groups);
+      for (let i = 0; i < nDoses; i++) {
+        groupsRef.current[i] = defaultGroups.get(i) ?? null;
+      }
+    },
+    [groups],
+  );
 
   useFocusEffect(
     React.useCallback(() => {
@@ -120,7 +123,7 @@ export default function EditScheduleScreen() {
         updateGroupsRefWithDefaults(nDoses);
       };
       setData();
-    }, []),
+    }, [db, nDoses, route.params, updateGroupsRefWithDefaults]),
   );
 
   const handleSelectStartDate = () => {

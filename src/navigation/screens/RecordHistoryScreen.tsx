@@ -187,10 +187,7 @@ export function RecordHistoryScreen() {
     const newTableHeaders = Array.from(headersSet);
     newTableHeaders.unshift("Date");
     setTableHeaders(newTableHeaders);
-
-    console.log(headersSet);
-    console.log(days);
-  }, []);
+  }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -198,9 +195,9 @@ export function RecordHistoryScreen() {
     }, [loadData]),
   );
 
-  const handleMenuToggle = () => {
+  const handleMenuToggle = React.useCallback(() => {
     setIsMenuOpen(!isMenuOpen);
-  };
+  }, [isMenuOpen]);
 
   const handleSaveToCSV = React.useCallback(async () => {
     try {
@@ -262,7 +259,7 @@ export function RecordHistoryScreen() {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, isMenuOpen]);
+  }, [navigation, isMenuOpen, handleMenuToggle, theme.colors]);
 
   const hasRecords = dailyRecords.length > 0;
 

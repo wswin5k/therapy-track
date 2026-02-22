@@ -21,7 +21,7 @@ type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export function SelectMedicineScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const route = useRoute();
   const navigation = useNavigation<SelectMedicineScreenNavigationProp>();
   const db = useSQLiteContext();
@@ -41,7 +41,7 @@ export function SelectMedicineScreen() {
         setMedicines(result);
       }
       setup();
-    }, []),
+    }, [db]),
   );
 
   const handleAddNewMedicine = () => {
