@@ -226,12 +226,13 @@ export function RecordHistoryScreen() {
           await FileSystem.writeAsStringAsync(fileUri, csvContent, {
             encoding: FileSystem.EncodingType.UTF8,
           });
-        } else {
+        }
+/*         else {
           await shareAsync(tempFileUri, {
             mimeType: "text/csv",
             dialogTitle: "Share CSV File",
           });
-        }
+        } */
       } else {
         await shareAsync(tempFileUri, {
           UTI: ".csv",

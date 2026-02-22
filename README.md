@@ -31,7 +31,9 @@ npx expo run:android --variant release
 ```
 
 ### Build apk file
+
 - Prebuild the app
+
 ```sh
 npx expo prebuild
 ```
