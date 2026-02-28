@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "drug-track",
-    "slug": "drug-track",
+    "name": "Therapy Track",
+    "slug": "therapy-track",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "drugtrack",
+    "scheme": "therapytrack",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.drugtrack"
+      "bundleIdentifier": "org.therapytrack"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.drugtrack"
+      "package": "org.therapytrack"
     },
     "androidNavigationBar": {
       "visible": "always",
@@ -33,7 +33,7 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#1D86E2",
-          "defaultChannel": "medication-reminders"
+          "defaultChannel": "therapy-track-group-reminders"
         }
       ]
     ]

@@ -21,13 +21,16 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     }
 
     if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("medication-reminders", {
-        name: "Medication Reminders", // todo branding
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#1D86E2",
-        sound: "default",
-      });
+      await Notifications.setNotificationChannelAsync(
+        "therapy-track-group-reminders",
+        {
+          name: "Therapy track group reminders",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#1D86E2",
+          sound: "default",
+        },
+      );
     }
     return true;
   } catch (error) {
@@ -61,7 +64,7 @@ export async function scheduleGroupNotification(group: {
   await Notifications.scheduleNotificationAsync({
     identifier,
     content: {
-      title: "Drug Track Reminder", // TODO: branding
+      title: "Therapy Track reminder",
       body: `${group.name} medications are due`,
       data: { groupId: group.dbId },
       sound: true,
