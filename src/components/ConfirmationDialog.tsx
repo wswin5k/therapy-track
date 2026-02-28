@@ -39,7 +39,12 @@ export function ConfirmationDialog({
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[styles.dialog, { backgroundColor: theme.colors.card }]}>
+          <View
+            style={[
+              styles.dialog,
+              { backgroundColor: theme.colors.background },
+            ]}
+          >
             <Text style={[styles.title, { color: theme.colors.text }]}>
               {title}
             </Text>
@@ -53,7 +58,10 @@ export function ConfirmationDialog({
                 style={[
                   styles.button,
                   styles.cancelButton,
-                  { borderColor: theme.colors.border },
+                  {
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.card,
+                  },
                 ]}
                 onPress={onCancel}
               >
@@ -65,7 +73,7 @@ export function ConfirmationDialog({
                 style={[styles.button, { backgroundColor: theme.colors.error }]}
                 onPress={onConfirm}
               >
-                <Text style={[styles.buttonText, { color: theme.colors.text }]}>
+                <Text style={[styles.buttonText, { color: "white" }]}>
                   {confirmText}
                 </Text>
               </TouchableOpacity>

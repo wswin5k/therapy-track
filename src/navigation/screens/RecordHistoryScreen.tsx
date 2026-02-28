@@ -263,14 +263,13 @@ export function RecordHistoryScreen() {
     });
   }, [navigation, isMenuOpen, handleMenuToggle, theme.colors]);
 
-
-    const renderEmptyState = () => (
-      <View style={styles.emptyContainer}>
-        <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-          {t("No dosage records found.")}
-        </Text>
-      </View>
-    );
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("No dosage records found.")}
+      </Text>
+    </View>
+  );
 
   return (
     <DefaultMainContainer>

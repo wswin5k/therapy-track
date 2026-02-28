@@ -22,6 +22,7 @@ import { MedicineParam, RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Group } from "../../models/Schedule";
 import { DropdownPicker } from "../../components/DropdownPicker";
+import { baseUnitToDoseHeader } from "../baseUnitMappings";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -124,12 +125,16 @@ export function EditSingleDosageScreen() {
     groupIdxRef.current = groupIdx === -1 ? null : groupIdx;
   };
 
+  const doseHeader = medicine
+    ? baseUnitToDoseHeader(medicine.baseUnit)
+    : "Dose";
+
   return (
     <DefaultMainContainer>
       <View style={[styles.mainContainer]}>
         <View style={[styles.rowContainer]}>
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t("Dose")}
+            {doseHeader}
           </Text>
           <View style={styles.doseContainer}>
             <SmallNumberStepper onChange={handleDoseChange} />

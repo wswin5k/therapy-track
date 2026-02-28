@@ -26,16 +26,16 @@ const CustomLightTheme: ReactNavigation.Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "#9CAFAA",
+    primary: "#72b4bc",
     background: "#F9F8F6",
     surface: "#f2f0eb",
     card: "#EFE9E3",
+    border: "#e0e0e0",
     text: "#363636ff",
     textSecondary: "#666666",
     textTertiary: "#999999",
     success: "#10ce20",
     error: "#ff544bff",
-    border: "#e0e0e0",
   },
 };
 
@@ -43,16 +43,16 @@ const CustomDarkTheme: ReactNavigation.Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: "#87B6BC",
-    background: "#57564F",
-    card: "#7A7A73",
+    primary: "#72b4bc",
+    background: "#423f3c",
+    surface: "#3b3839",
+    card: "#33302e",
+    border: "#262525",
     text: "#D3DAD9",
-    border: "#38383a",
-    surface: "#7A7A73",
     textSecondary: "#c1c1c5ff",
-    textTertiary: "#8e8e93ff",
-    success: "#30d158",
-    error: "#ff453a",
+    textTertiary: "#bdbdc2ff",
+    success: "#10ce20",
+    error: "#ff544bff",
   },
 };
 

@@ -248,7 +248,7 @@ export function MedicineListScreen() {
             />
           );
         })}
-        {medicines.length == 0 && renderEmptyState()}
+        {medicines.length === 0 && renderEmptyState()}
       </ScrollView>
     </DefaultMainContainer>
   );

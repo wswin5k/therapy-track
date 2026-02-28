@@ -211,7 +211,8 @@ export function Home() {
   >(new Map());
 
   const [isScheduledEmpty, setIsScheduledEmpty] = React.useState<boolean>(true);
-  const [isUnscheduledEmpty, setIsUnscheduledEmpty] = React.useState<boolean>(true);
+  const [isUnscheduledEmpty, setIsUnscheduledEmpty] =
+    React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
 
   const [areMedicinesEmpty, setAreMedicinesEmpty] =
@@ -644,6 +645,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 10,
+    borderWidth: 0.7,
   },
   contentText: {
     fontSize: 15,

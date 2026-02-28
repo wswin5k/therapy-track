@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   nextButtonText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 17.5,
+    fontWeight: "500",
   },
 });

@@ -35,7 +35,12 @@ export function InformationDialog({
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
         >
-          <View style={[styles.dialog, { backgroundColor: theme.colors.card }]}>
+          <View
+            style={[
+              styles.dialog,
+              { backgroundColor: theme.colors.background },
+            ]}
+          >
             <Text style={[styles.title, { color: theme.colors.text }]}>
               {title}
             </Text>
@@ -49,7 +54,10 @@ export function InformationDialog({
                 style={[
                   styles.button,
                   styles.closeButton,
-                  { borderColor: theme.colors.border },
+                  {
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.card,
+                  },
                 ]}
                 onPress={onClose}
               >

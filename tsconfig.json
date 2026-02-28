@@ -3,5 +3,6 @@
   "compilerOptions": {
     "moduleResolution": "bundler",
     "strict": true
-  }
+  },
+  "exclude": ["snippets"]
 }
