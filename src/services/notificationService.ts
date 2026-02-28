@@ -17,7 +17,6 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     const { status: newStatus } = await Notifications.requestPermissionsAsync();
 
     if (newStatus !== Notifications.PermissionStatus.GRANTED) {
-      console.warn("Notification permissions not granted");
       return false;
     }
 

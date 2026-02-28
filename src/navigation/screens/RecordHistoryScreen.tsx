@@ -110,7 +110,6 @@ export function RecordHistoryScreen() {
 
   const loadData = React.useCallback(async () => {
     const scheduledRecords = await dbGetScheduledDosageRecords(db);
-    console.log(scheduledRecords);
 
     const schedules = await dbGetSchedulesWithMedicines(db);
     const schedulesMap = new Map<number, Schedule>();

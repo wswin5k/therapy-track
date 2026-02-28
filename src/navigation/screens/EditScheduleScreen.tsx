@@ -130,7 +130,6 @@ export default function EditScheduleScreen() {
   };
 
   const handleStartDateChange = (event: DateTimePickerEvent, date?: Date) => {
-    console.log(event.type);
     if (event.type === "dismissed") {
       setStartDate(null);
     } else if (date) {
@@ -193,8 +192,6 @@ export default function EditScheduleScreen() {
   const handleSave = async () => {
     const validatedData = validate();
 
-    console.log(validatedData);
-
     if (!validatedData) {
       return;
     }
@@ -240,7 +237,6 @@ export default function EditScheduleScreen() {
     const freq = frequencySelectionMap[itemKey];
     freqRef.current = freq;
     if (freq.numberOfDoses !== nDoses) {
-      console.log(freq.numberOfDoses);
       setNDoses(freq.numberOfDoses);
       updateGroupsRefWithDefaults(freq.numberOfDoses);
     }
