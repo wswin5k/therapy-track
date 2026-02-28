@@ -210,6 +210,9 @@ export function Home() {
   const [isEmpty, setIsEmpty] = React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
 
+  const [areMedicinesEmpty, setAreMedicinesEmpty] =
+    React.useState<boolean>(false);
+
   const loadGroups = React.useCallback(async () => {
     const groups = await dbGetGroups(db);
     const idToGroup = new Map();
@@ -285,6 +288,11 @@ export function Home() {
     medicines.forEach((m) => {
       medicinesMap.set(m.dbId, m);
     });
+    if (medicines.length > 0) {
+      setAreMedicinesEmpty(false);
+    } else {
+      setAreMedicinesEmpty(true);
+    }
 
     let newIsEmpty = true;
     let newAreGroupsEmpty = true;
@@ -410,15 +418,19 @@ export function Home() {
     {
       label: "Single dosage",
       onPress: () =>
-        navigation.navigate("SelectMedicineScreen", {
-          mode: "one-time",
-          selectedDate: date.toISOString(),
-        }),
+        areMedicinesEmpty
+          ? navigation.navigate("EditMedicineScreen", { mode: "one-time" })
+          : navigation.navigate("SelectMedicineScreen", {
+              mode: "one-time",
+              selectedDate: date.toISOString(),
+            }),
     },
     {
       label: "Schedule",
       onPress: () =>
-        navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
+        areMedicinesEmpty
+          ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
+          : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
     },
   ];
 

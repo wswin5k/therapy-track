@@ -66,7 +66,6 @@ type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export default function EditScheduleScreen() {
-  console.log("render");
   const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<EditScheduleScreenNavigationProp>();
