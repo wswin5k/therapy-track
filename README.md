@@ -1,6 +1,6 @@
-<div style="display:flex; justify-content: center; padding: 40px;">
+<p align="center">
 <img src="assets/icon.png" alt="App icon — a tablet on a blue screen with checkmark" width="200"/>
-</div>
+</p>
 
 # Therapy Track – simple pills tracker and reminder
 
@@ -27,6 +27,11 @@
   ```
 
 ## Release build for android
+Install dependencies
+
+```sh
+npm install
+```
 
 ### Install with adb
 
@@ -48,3 +53,5 @@ npx expo prebuild
 cd android
 ./gradlew assembleRelease
 ```
+
+The apk will be in `app/build/outputs/apk/release/app-release.apk`
