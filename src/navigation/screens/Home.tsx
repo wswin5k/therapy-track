@@ -30,7 +30,7 @@ import { BaseUnit, Medicine } from "../../models/Medicine";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { Group } from "../../models/Schedule";
+import { Frequency, FrequencySelection, Group } from "../../models/Schedule";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -90,6 +90,13 @@ class UnscheduledDosageInfo {
 const pair = (a: number, b: number): number => {
   return 0.5 * (a + b) * (a + b + 1) + b;
 };
+
+function dayDifference(firstTime: Date, secondDate: Date): number {
+  const oneDay = 24 * 60 * 60 * 1000;
+  return Math.round(
+    Math.abs((firstTime.getTime() - secondDate.getTime()) / oneDay),
+  );
+}
 
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -231,10 +238,19 @@ export function Home() {
     const result = await dbGetSchedulesWithMedicines(db);
     const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
-      return (
+      const timeMatch =
         s.startDate.getTime() <= selectedTime &&
-        (!s.endDate || (s.endDate && selectedTime <= s.endDate.getTime()))
-      );
+        (!s.endDate || (s.endDate && selectedTime <= s.endDate.getTime()));
+
+      let dayFreqMatch = true;
+      if (s.freq.intervalUnit === "week") {
+        const dayDiff = dayDifference(date, s.startDate);
+        if (dayDiff % (s.freq.intervalLength * 7) !== 0) {
+          dayFreqMatch = false;
+        }
+      }
+
+      return timeMatch && dayFreqMatch;
     });
 
     let newIsEmpty = true;
