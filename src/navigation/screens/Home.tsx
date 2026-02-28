@@ -484,7 +484,9 @@ export function Home() {
             {dosage.medicineName}
             {"  –  "}
             {dosage.amount}{" "}
-            {t(dosage.medicineBaseUnit, { count: dosage.amount })}
+            {t(baseUnitToSingularShortForm[dosage.medicineBaseUnit], {
+              count: dosage.amount,
+            })}
           </Text>
           {isDone ? (
             <Ionicons

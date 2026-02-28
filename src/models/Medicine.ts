@@ -5,7 +5,7 @@ export enum BaseUnit {
   Capsule = "Capsule",
   Ml = "Ml",
   Teaspoon = "Teaspoon",
-  InjectioPen = "InjectioPen",
+  InjectionPen = "InjectionPen",
   Drop = "Drop",
   Sachet = "Sachet",
   PressOfADosingPump = "PressOfADosingPump",
