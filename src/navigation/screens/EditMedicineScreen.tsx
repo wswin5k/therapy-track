@@ -93,6 +93,7 @@ function ActiveIngredientRow({
           placeholder="Name"
           placeholderTextColor={theme.colors.textTertiary}
           defaultValue={activeIngredientInfo.name ?? ""}
+          autoCapitalize="none"
         />
       </View>
       <View style={{ flex: 1.2 }}>
