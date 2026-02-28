@@ -104,8 +104,16 @@ export default function EditScheduleScreen() {
       for (let i = 0; i < nDoses; i++) {
         groupsRef.current[i] = defaultGroups.get(i) ?? null;
       }
+      console.log("update groups");
     },
     [groups],
+  );
+
+  useFocusEffect(
+    React.useCallback(
+      () => updateGroupsRefWithDefaults(nDoses),
+      [updateGroupsRefWithDefaults],
+    ),
   );
 
   useFocusEffect(
