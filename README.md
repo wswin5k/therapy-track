@@ -1,3 +1,7 @@
+<div style="display:flex; justify-content: center; padding: 40px;">
+<img src="assets/icon.png" alt="App icon — a tablet on a blue screen with checkmark" width="200"/>
+</div>
+
 # Therapy Track – simple pills tracker and reminder
 
 ## Running the development build
