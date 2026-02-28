@@ -227,7 +227,7 @@ export function RecordHistoryScreen() {
             encoding: FileSystem.EncodingType.UTF8,
           });
         }
-/*         else {
+        /*         else {
           await shareAsync(tempFileUri, {
             mimeType: "text/csv",
             dialogTitle: "Share CSV File",

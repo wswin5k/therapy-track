@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  TextInput,
-} from "react-native";
+import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "@react-navigation/native";
 
 function isClose(a: number, b: number) {
@@ -101,9 +95,7 @@ export default function SmallNumberStepper({
       <View style={styles.valueContainer}>
         <TextInput
           keyboardType="numeric"
-          defaultValue={
-            count.toString()
-          }
+          defaultValue={count.toString()}
           onChangeText={handleChangeText}
           style={[styles.valueText, { color: theme.colors.text }]}
         />

@@ -91,7 +91,7 @@ function ActiveIngredientRow({
           ]}
           placeholder="Name"
           placeholderTextColor={theme.colors.textTertiary}
-          value={activeIngredientInfo.name ?? ""}
+          defaultValue={activeIngredientInfo.name ?? ""}
         />
       </View>
       <View style={{ flex: 1.2 }}>

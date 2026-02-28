@@ -66,6 +66,7 @@ type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export default function EditScheduleScreen() {
+  console.log("render");
   const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<EditScheduleScreenNavigationProp>();
@@ -118,12 +119,10 @@ export default function EditScheduleScreen() {
 
         const groups = await dbGetGroups(db);
         setGroups(groups);
-
         setDefaultGroups(assingDefaultGroups(groups));
-        updateGroupsRefWithDefaults(nDoses);
       };
       setData();
-    }, [db, nDoses, route.params, updateGroupsRefWithDefaults]),
+    }, [db, route.params]),
   );
 
   const handleSelectStartDate = () => {
