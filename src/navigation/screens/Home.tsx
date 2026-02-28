@@ -560,7 +560,7 @@ export function Home() {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textTertiary }]}>
-        {t("Nothing planned for today.")}
+        {t("Nothing planned for selected day.")}
       </Text>
     </View>
   );
