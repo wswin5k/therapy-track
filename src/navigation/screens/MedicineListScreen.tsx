@@ -22,6 +22,7 @@ import { Medicine } from "../../models/Medicine";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
+import { baseUnitToSingularShortForm } from "../baseUnitMappings";
 
 function MedicineListItem({
   medicine,
@@ -157,7 +158,7 @@ function MedicineListItem({
           <Text
             style={[styles.itemText, { color: theme.colors.textSecondary }]}
           >
-            {t(medicine.baseUnit, { count: 2 })}
+            {t(baseUnitToSingularShortForm[medicine.baseUnit], { count: 2 })}
           </Text>
           <Text
             style={[styles.itemText, { color: theme.colors.textSecondary }]}

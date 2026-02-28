@@ -28,6 +28,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
+import { baseUnitToUnitSelectionLabel } from "../baseUnitMappings";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -68,7 +69,7 @@ function ActiveIngredientRow({
   };
 
   React.useEffect(() => {
-    activeIngredientInfo.unit = IngredientAmountUnit.Miligram;
+    activeIngredientInfo.unit = IngredientAmountUnit.Milligram;
   }, [activeIngredientInfo]);
 
   return (
@@ -124,7 +125,7 @@ function ActiveIngredientRow({
         <DropdownPicker
           options={Object.values(IngredientAmountUnit)}
           initialValue={
-            activeIngredientInfo.unit ?? IngredientAmountUnit.Miligram
+            activeIngredientInfo.unit ?? IngredientAmountUnit.Milligram
           }
           onValueChange={(unit: IngredientAmountUnit) => {
             activeIngredientInfo.unit = unit;
@@ -360,8 +361,8 @@ export function EditMedicineScreen() {
             {Object.values(BaseUnit).map((unit) => (
               <Picker.Item
                 key={unit}
-                label={unit}
                 value={unit}
+                label={baseUnitToUnitSelectionLabel(unit)}
                 style={styles.pickerItem}
                 color={theme.colors.text}
               />

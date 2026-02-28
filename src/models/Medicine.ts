@@ -1,18 +1,18 @@
 export const NAME_MAX_LENGHT: number = 100;
 
 export enum BaseUnit {
-  Pill = "pill",
-  Ml = "mililiter (ml)",
-  Teaspoonful = "5 mililiters (5ml, teaspoonful)",
-  Drop = "drop",
-  InjectioPen = "injection pen",
-  Sachet = "sachet",
-  PressOfTheDosingPump = "press of a dosing pump",
-  Vial = "vial",
-  PreFilledSyringe = "pre-filled syringe",
-  Tablet = "tablet",
-  Gram = "gram (g)",
-  Unit = "unit",
+  Tablet = "Tablet",
+  Capsule = "Capsule",
+  Ml = "Ml",
+  Teaspoon = "Teaspoon",
+  InjectioPen = "InjectioPen",
+  Drop = "Drop",
+  Sachet = "Sachet",
+  PressOfADosingPump = "PressOfADosingPump",
+  Vial = "Vial",
+  PreFilledSyringe = "PreFilledSyringe",
+  Gram = "Gram",
+  Unit = "Unit",
 }
 
 export function strKeyOfBaseUnit(x: BaseUnit) {
@@ -20,7 +20,7 @@ export function strKeyOfBaseUnit(x: BaseUnit) {
 }
 
 export enum IngredientAmountUnit {
-  Miligram = "mg",
+  Milligram = "mg",
   Gram = "g",
   Microgram = "µg",
   InternationalUnit = "IU",

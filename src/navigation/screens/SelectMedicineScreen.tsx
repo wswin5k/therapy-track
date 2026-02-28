@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Medicine } from "../../models/Medicine";
 import { dbGetMedicines } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { baseUnitToSingularShortForm } from "../baseUnitMappings";
 
 type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -72,7 +73,7 @@ export function SelectMedicineScreen() {
 
     ingredientsStr = ingredientsStr ? "(" + ingredientsStr + ")" : "";
 
-    return `${m.name} ${t(m.baseUnit, { count: 2 })} ${ingredientsStr}`;
+    return `${m.name} ${t(baseUnitToSingularShortForm[m.baseUnit], { count: 2 })} ${ingredientsStr}`;
   };
 
   return (

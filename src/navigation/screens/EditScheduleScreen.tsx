@@ -35,6 +35,7 @@ import {
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../components/DropdownPicker";
+import { baseUnitToDoseHeader } from "../baseUnitMappings";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
@@ -258,8 +259,8 @@ export default function EditScheduleScreen() {
   };
 
   const doseHeader = medicine
-    ? `Number of ${t(medicine.baseUnit, { count: 4 })}`
-    : "Amount";
+    ? baseUnitToDoseHeader(medicine.baseUnit)
+    : "Dose";
 
   return (
     <DefaultMainContainer>

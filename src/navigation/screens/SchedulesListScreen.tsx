@@ -23,6 +23,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { baseUnitToSingularShortForm } from "../baseUnitMappings";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -153,7 +154,9 @@ function ScheduleListItem({
           <Text
             style={[styles.itemText, { color: theme.colors.textSecondary }]}
           >
-            {t(schedule.medicine.baseUnit, { count: 2 })}
+            {t(baseUnitToSingularShortForm[schedule.medicine.baseUnit], {
+              count: 2,
+            })}
           </Text>
           <Text
             style={[styles.itemText, { color: theme.colors.textSecondary }]}

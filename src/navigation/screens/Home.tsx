@@ -38,6 +38,7 @@ import {
   cancelGroupNotification,
   scheduleGroupNotification,
 } from "../../services/notificationService";
+import { baseUnitToSingularShortForm } from "../baseUnitMappings";
 
 class DosageInfo {
   medicineName: string;
@@ -171,7 +172,9 @@ function UnscheduledDosage({
             {dosage.medicineName}
             {"  –  "}
             {dosage.amount}{" "}
-            {t(dosage.medicineBaseUnit, { count: dosage.amount })}
+            {t(baseUnitToSingularShortForm[dosage.medicineBaseUnit], {
+              count: dosage.amount,
+            })}
           </Text>
           <Ionicons
             name="checkmark-circle"
