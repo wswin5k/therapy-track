@@ -210,7 +210,8 @@ export function Home() {
     Map<number | null, UnscheduledDosageInfo[]>
   >(new Map());
 
-  const [isEmpty, setIsEmpty] = React.useState<boolean>(true);
+  const [isScheduledEmpty, setIsScheduledEmpty] = React.useState<boolean>(true);
+  const [isUnscheduledEmpty, setIsUnscheduledEmpty] = React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
 
   const [areMedicinesEmpty, setAreMedicinesEmpty] =
@@ -268,7 +269,7 @@ export function Home() {
       }
     }
     setScheduledDosages(newScheduledDosages);
-    if (!newIsEmpty) setIsEmpty(newIsEmpty);
+    setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     const newIsDosageDone = new Map<number, boolean>();
@@ -315,7 +316,7 @@ export function Home() {
       newUnscheduledDosageInfos.set(dr.groupId, groupDosages);
     });
 
-    if (!newIsEmpty) setIsEmpty(newIsEmpty);
+    setIsUnscheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     setUnscheduledDosages(newUnscheduledDosageInfos);
@@ -539,13 +540,8 @@ export function Home() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("Nothing planned for today")}
-      </Text>
-      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t(
-          "Use the button with a plus sign to add a schedule or one time entry.",
-        )}
+      <Text style={[styles.emptyText, { color: theme.colors.textTertiary }]}>
+        {t("Nothing planned for today.")}
       </Text>
     </View>
   );
@@ -606,7 +602,7 @@ export function Home() {
             {renderUnscheduledDosages()}
           </LinearGradient>
         )}
-        {isEmpty && renderEmptyState()}
+        {isScheduledEmpty && isUnscheduledEmpty && renderEmptyState()}
       </ScrollView>
 
       <FloatingActionButton actions={fabActions} position="right" />
@@ -687,13 +683,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 17,
+    fontWeight: "400",
     marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
   },
   optionsOverlay: {
     ...StyleSheet.absoluteFillObject,

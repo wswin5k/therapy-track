@@ -198,10 +198,10 @@ export function SchedulesListScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No schedules yet")}
+        {t("No schedules added yet.")}
       </Text>
       <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Add a schedule from the Home screen")}
+        {t("Add a schedule from the Home screen.")}
       </Text>
     </View>
   );
@@ -240,7 +240,7 @@ export function SchedulesListScreen() {
             />
           );
         })}
-        {!schedules && renderEmptyState()}
+        {schedules.length === 0 && renderEmptyState()}
       </ScrollView>
     </DefaultMainContainer>
   );
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "500",
     marginBottom: 8,
   },
   emptySubtext: {

@@ -27,6 +27,7 @@ import Ionicons from "@react-native-vector-icons/ionicons";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
 import { Medicine } from "../../models/Medicine";
+import { useTranslation } from "react-i18next";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -98,6 +99,7 @@ export function MenuModal({
 }
 
 export function RecordHistoryScreen() {
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
   const navigation = useNavigation();
@@ -262,7 +264,14 @@ export function RecordHistoryScreen() {
     });
   }, [navigation, isMenuOpen, handleMenuToggle, theme.colors]);
 
-  const hasRecords = dailyRecords.length > 0;
+
+    const renderEmptyState = () => (
+      <View style={styles.emptyContainer}>
+        <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+          {t("No dosage records found.")}
+        </Text>
+      </View>
+    );
 
   return (
     <DefaultMainContainer>
@@ -271,12 +280,8 @@ export function RecordHistoryScreen() {
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
       ></MenuModal>
-      {!hasRecords ? (
-        <Text
-          style={[styles.emptyState, { color: theme.colors.textSecondary }]}
-        >
-          No dosage records found
-        </Text>
+      {dailyRecords.length === 0 ? (
+        renderEmptyState()
       ) : (
         <ScrollView
           contentContainerStyle={[styles.scrollContainer]}
@@ -354,11 +359,14 @@ export function RecordHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  emptyState: {
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 40,
-    fontStyle: "italic",
+  emptyContainer: {
+    alignItems: "center",
+    padding: 36,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "500",
+    marginBottom: 8,
   },
   scrollContainer: {},
   tableHeader: {
