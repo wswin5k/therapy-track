@@ -1,6 +1,5 @@
 import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { createURL } from "expo-linking";
-import * as SplashScreen from "expo-splash-screen";
 import React from "react";
 import { useColorScheme } from "react-native";
 import { Navigation } from "./navigation";
@@ -8,8 +7,6 @@ import { SQLiteProvider } from "expo-sqlite";
 import { DATABASE_NAME, migrateDbIfNeeded } from "./models/dbMigration";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
-
-SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -69,9 +66,6 @@ export function App() {
           linking={{
             enabled: "auto",
             prefixes: [prefix],
-          }}
-          onReady={() => {
-            SplashScreen.hideAsync();
           }}
         />
       </SafeAreaProvider>

@@ -6,7 +6,6 @@
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "scheme": "therapytrack",
     "ios": {
       "supportsTablet": true,
@@ -19,11 +18,6 @@
       },
       "package": "org.therapytrack"
     },
-    "androidNavigationBar": {
-      "visible": "always",
-      "barStyle": "dark-content",
-      "backgroundColor": "#00000000"
-    },
     "plugins": [
       "expo-asset",
       "@react-native-community/datetimepicker",
@@ -35,7 +29,8 @@
           "color": "#1D86E2",
           "defaultChannel": "therapy-track-group-reminders"
         }
-      ]
+      ],
+      "expo-sharing"
     ]
   }
 }
