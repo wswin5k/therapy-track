@@ -33,12 +33,10 @@ yarn-error.*
 .env*.local
 
 # typescript
-*.tsbuildinfo
+*.tsbuildinfoS
 
 app-example
 
-
-android
 
 ios
 
