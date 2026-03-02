@@ -7,6 +7,9 @@ import { SQLiteProvider } from "expo-sqlite";
 import { DATABASE_NAME, migrateDbIfNeeded } from "./models/dbMigration";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
+import * as SplashScreen from "expo-splash-screen";
+
+SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -66,6 +69,9 @@ export function App() {
           linking={{
             enabled: "auto",
             prefixes: [prefix],
+          }}
+          onReady={() => {
+            SplashScreen.hideAsync();
           }}
         />
       </SafeAreaProvider>

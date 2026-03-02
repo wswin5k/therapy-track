@@ -29,6 +29,13 @@
           "color": "#1D86E2",
           "defaultChannel": "therapy-track-group-reminders"
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#8EA6A9",
+          "image": "./assets/icon.png"
+        }
       ]
     ]
   }

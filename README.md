@@ -27,6 +27,7 @@
   ```
 
 ## Release build for android
+
 Install dependencies
 
 ```sh
