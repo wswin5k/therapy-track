@@ -6,6 +6,7 @@
     "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "therapytrack",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "org.therapytrack"
@@ -28,8 +29,7 @@
           "color": "#1D86E2",
           "defaultChannel": "therapy-track-group-reminders"
         }
-      ],
-      "expo-sharing"
+      ]
     ]
   }
 }
