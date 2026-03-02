@@ -1,0 +1,5 @@
+* Track your medicine use, both with schedules and one-time entries.
+* Get notified when it's time to take the medicines.
+* View your past use and export it to CSV.
+
+The app is in its early stage of development and more features are to come.
