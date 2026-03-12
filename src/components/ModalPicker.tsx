@@ -48,10 +48,7 @@ export function ModalPicker<T>({
   };
 
   const getLabelSafe = (value: T | null): string => {
-    if (!value) {
-      return placeholder;
-    }
-    return getLabel(value);
+    return value ? getLabel(value) : placeholder;
   };
 
   const selectedLabel = getLabelSafe(selectedValue);
@@ -193,7 +190,7 @@ export function ModalPicker<T>({
 
 const styles = StyleSheet.create({
   defaultPressableStyle: {
-    height: 55,
+    height: 56,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
@@ -240,7 +237,6 @@ const styles = StyleSheet.create({
   listContent: {
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "red",
     maxHeight: "70%",
     width: "85%",
   },
@@ -261,6 +257,5 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontSize: 20,
-    fontWeight: "bold",
   },
 });
