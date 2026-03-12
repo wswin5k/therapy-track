@@ -9,7 +9,7 @@
     "ios": "expo run:ios",
     "lint": "eslint .",
     "lintfix": "eslint --fix .",
-    "format": "prettier --write ."
+    "format": "prettier --write src"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

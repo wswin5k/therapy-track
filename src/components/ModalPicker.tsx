@@ -10,6 +10,7 @@ import {
   StyleProp,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
+import Ionicons from "@react-native-vector-icons/ionicons";
 
 interface ModalPickerProps<T> {
   values: T[];
@@ -119,6 +120,7 @@ export function ModalPicker<T>({
         visible={modalVisible}
         transparent={true}
         onRequestClose={handleModalClose}
+        animationType="fade"
       >
         {showTitle}
         <TouchableOpacity
@@ -130,7 +132,7 @@ export function ModalPicker<T>({
             style={[
               styles.listContent,
               {
-                backgroundColor: theme.colors.surface,
+                backgroundColor: theme.colors.card,
                 borderColor: theme.colors.border,
               },
             ]}
@@ -150,7 +152,7 @@ export function ModalPicker<T>({
                         borderBottomColor: theme.colors.border,
                       },
                       isSelected && {
-                        backgroundColor: theme.colors.primary + "15",
+                        backgroundColor: theme.colors.primary + "20",
                       },
                       index === values.length - 1 && { borderBottomWidth: 0 },
                     ]}
@@ -170,14 +172,13 @@ export function ModalPicker<T>({
                       {getLabelSafe(value)}
                     </Text>
                     {isSelected && (
-                      <Text
+                      <Ionicons
                         style={[
                           styles.checkmark,
                           { color: theme.colors.primary },
                         ]}
-                      >
-                        ✓
-                      </Text>
+                        name="checkmark"
+                      ></Ionicons>
                     )}
                   </TouchableOpacity>
                 );
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   defaultPressableText: {
-    fontSize: 17.5,
+    fontSize: 16,
     flex: 1,
   },
   chevron: {
@@ -215,13 +216,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  listContent: {
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "red",
-    maxHeight: "70%",
-    width: "85%",
   },
   titleContainer: {
     flexDirection: "row",
@@ -243,16 +237,23 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "300",
   },
+  listContent: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "red",
+    maxHeight: "70%",
+    width: "85%",
+  },
   listItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    height: 56,
     paddingHorizontal: 20,
-    paddingVertical: 20,
     borderBottomWidth: 1,
   },
   listItemText: {
-    fontSize: 17.5,
+    fontSize: 16,
     overflow: "hidden",
   },
   selectedItemText: {
