@@ -22,3 +22,18 @@ allprojects {
 
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
+
+allprojects {
+    repositories {
+        exclusiveContent {
+            filter {
+                includeGroup "app.notifee"
+            }
+            forRepository {
+                maven {
+                    url "$rootDir/../node_modules/@notifee/react-native/android/libs"
+                }
+            }
+        }
+    }
+}
