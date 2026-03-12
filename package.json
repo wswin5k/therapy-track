@@ -9,12 +9,11 @@
     "ios": "expo run:ios",
     "lint": "eslint .",
     "lintfix": "eslint --fix .",
-    "format": "prettier --write ."
+    "format": "prettier --write src"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
     "@react-native-community/datetimepicker": "8.4.4",
-    "@react-native-picker/picker": "^2.11.4",
     "@react-native-vector-icons/ionicons": "^12.3.0",
     "@react-navigation/drawer": "^7.8.0",
     "@react-navigation/elements": "^2.6.4",

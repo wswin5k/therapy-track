@@ -30,7 +30,7 @@ import { BaseUnit, Medicine } from "../../models/Medicine";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { Frequency, FrequencySelection, Group } from "../../models/Schedule";
+import { Group } from "../../models/Schedule";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";

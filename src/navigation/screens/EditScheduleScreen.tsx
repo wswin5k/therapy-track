@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -36,6 +35,7 @@ import {
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { baseUnitToDoseHeader } from "../baseUnitMappings";
+import { ModalPicker } from "../../components/ModalPicker";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
@@ -73,6 +73,7 @@ export default function EditScheduleScreen() {
   const route = useRoute();
   const db = useSQLiteContext();
 
+  const [freq, setFreq] = React.useState<FrequencySelection | null>(null);
   const freqRef = React.useRef<Frequency | null>(null);
   const [freqError, setFreqError] = React.useState<boolean>(false);
 
@@ -235,11 +236,13 @@ export default function EditScheduleScreen() {
     }
   };
 
-  const handleFrequencyPicker = (item: FrequencySelection | "") => {
+  const handleFrequencyPicker = (item: FrequencySelection | null) => {
     if (!item) {
       freqRef.current = null;
+      setFreq(null);
       return;
     }
+    setFreq(item);
     const itemKey = strKeyOfFrequeencySelection(item);
     const freq = frequencySelectionMap[itemKey];
     freqRef.current = freq;
@@ -269,42 +272,15 @@ export default function EditScheduleScreen() {
     <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={[styles.rowContainer, { marginBottom: 20 }]}>
-          <View
-            style={[
-              styles.fullWidthPickerContainer,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-              freqError && {
-                borderColor: theme.colors.error,
-                borderWidth: 2,
-              },
-            ]}
-          >
-            <Picker
-              style={[styles.picker, { color: theme.colors.text }]}
-              dropdownIconColor={theme.colors.text}
-              onValueChange={handleFrequencyPicker}
-            >
-              <Picker.Item
-                label="Select frequency"
-                value=""
-                color={theme.colors.textTertiary}
-              />
-              {Object.entries(FrequencySelection).map(([k, v]) => {
-                return (
-                  <Picker.Item
-                    key={k}
-                    label={t(v)}
-                    value={v}
-                    style={styles.pickerItem}
-                    color={theme.colors.text}
-                  />
-                );
-              })}
-            </Picker>
-          </View>
+          <ModalPicker
+            values={Object.values(FrequencySelection)}
+            selectedValue={freq}
+            onValueChange={handleFrequencyPicker}
+            getLabel={(v) => v}
+            placeholder="Select frequency"
+            pressableStyle={styles.fullWidthPickerContainer}
+            error={freqError}
+          />
         </View>
 
         <View style={[styles.rowDosesHeader]}>
@@ -353,7 +329,6 @@ export default function EditScheduleScreen() {
                   }
                   placeholder="group"
                   pressableStyle={{
-                    ...styles.picker,
                     borderColor: theme.colors.border,
                     backgroundColor: theme.colors.surface,
                   }}
@@ -519,10 +494,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     width: "45%",
     overflow: "hidden",
-  },
-  picker: {},
-  pickerItem: {
-    fontSize: 16,
   },
   footer: {
     position: "absolute",

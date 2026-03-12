@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   useRoute,
@@ -14,7 +13,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Medicine } from "../../models/Medicine";
 import { dbGetMedicines } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { baseUnitToSingularShortForm } from "../baseUnitMappings";
+import { ModalPicker } from "../../components/ModalPicker";
 
 type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -49,18 +48,18 @@ export function SelectMedicineScreen() {
     navigation.navigate("EditMedicineScreen", { mode: mode });
   };
 
-  const handleSelectMedicine = (medicineIdx: number) => {
-    if (medicineIdx < 0) {
+  const handleSelectMedicine = (medicine?: Medicine) => {
+    if (!medicine) {
       return;
     }
     if (mode === "schedule") {
       navigation.navigate("EditScheduleScreen", {
-        medicine: medicines[medicineIdx],
+        medicine: medicine,
       });
     } else {
       // mode === "one-time"
       navigation.navigate("EditSingleDosageScreen", {
-        medicine: medicines[medicineIdx],
+        medicine: medicine,
         selectedDate: selectedDate,
       });
     }
@@ -73,43 +72,21 @@ export function SelectMedicineScreen() {
 
     ingredientsStr = ingredientsStr ? "(" + ingredientsStr + ")" : "";
 
-    return `${m.name} ${t(baseUnitToSingularShortForm[m.baseUnit], { count: 2 })} ${ingredientsStr}`;
+    return `${m.name}  ${ingredientsStr}`;
   };
 
   return (
     <DefaultMainContainer justifyContent="center">
-      <View
-        style={[
-          styles.fullWidthPickerContainer,
-          {
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface,
-          },
-        ]}
-      >
-        {medicines.length > 0 && (
-          <Picker
-            onValueChange={handleSelectMedicine}
-            itemStyle={[styles.picker, { color: theme.colors.text }]}
-            dropdownIconColor={theme.colors.text}
-          >
-            <Picker.Item
-              label="Select existing medicine"
-              value={-1}
-              color={theme.colors.textTertiary}
-            />
-            {medicines.map((m, idx) => (
-              <Picker.Item
-                key={m.dbId}
-                label={createMedicineLabel(m)}
-                value={idx}
-                style={styles.pickerItem}
-                color={theme.colors.text}
-              />
-            ))}
-          </Picker>
-        )}
-      </View>
+      {medicines.length > 0 && (
+        <ModalPicker
+          values={medicines}
+          onValueChange={handleSelectMedicine}
+          getLabel={createMedicineLabel}
+          placeholder="Select existing medicine"
+          selectedValue={null}
+          pressableStyle={styles.fullWidthPickerContainer}
+        />
+      )}
 
       <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
         {t("or")}
@@ -141,13 +118,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignSelf: "center",
     padding: 15,
-  },
-  picker: {
-    paddingVertical: 16,
-    fontWeight: "500",
-  },
-  pickerItem: {
-    fontSize: 18,
   },
   nextButton: {
     maxWidth: "80%",
