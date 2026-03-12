@@ -19,7 +19,6 @@ interface ModalPickerProps<T> {
   selectedValue: T | null;
   placeholder?: string;
   pressableStyle?: StyleProp<ViewStyle>;
-  disabled?: boolean;
   showTitle?: boolean;
   error?: boolean;
 }
@@ -31,7 +30,6 @@ export function ModalPicker<T>({
   selectedValue = null,
   placeholder = "Select an option",
   pressableStyle,
-  disabled = false,
   showTitle = false,
   error = false,
 }: ModalPickerProps<T>) {
@@ -84,7 +82,7 @@ export function ModalPicker<T>({
   return (
     <>
       <TouchableOpacity
-        onPress={() => !disabled && setModalVisible(true)}
+        onPress={() => setModalVisible(true)}
         style={[
           styles.defaultPressableStyle,
           {
@@ -92,13 +90,11 @@ export function ModalPicker<T>({
             backgroundColor: theme.colors.surface,
           },
           pressableStyle,
-          disabled && styles.disabled,
           error && {
             borderColor: theme.colors.error,
             borderWidth: 1,
           },
         ]}
-        disabled={disabled}
       >
         <Text
           style={[
@@ -204,9 +200,6 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: 12,
     marginLeft: 8,
-  },
-  disabled: {
-    opacity: 0.5,
   },
   modalOverlay: {
     flex: 1,
