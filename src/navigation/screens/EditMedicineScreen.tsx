@@ -8,7 +8,6 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import {
   useRoute,
   useNavigation,
@@ -29,6 +28,7 @@ import { dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { baseUnitToUnitSelectionLabel } from "../baseUnitMappings";
+import { ModalPicker } from "../../components/ModalPicker";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -334,43 +334,17 @@ export function EditMedicineScreen() {
             value={name}
           />
         </View>
-        <View
-          style={[
-            styles.fullWidthPickerContainer,
-            {
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-            },
-            baseUnitError
-              ? { borderColor: theme.colors.error, borderWidth: 1 }
-              : {},
-          ]}
-        >
-          <Picker
-            selectedValue={baseUnit}
-            onValueChange={(itemValue) => {
-              setBaseUnit(itemValue);
-            }}
-            style={[styles.picker, { color: theme.colors.text }]}
-            dropdownIconColor={theme.colors.text}
-          >
-            <Picker.Item
-              label="Select base unit"
-              value=""
-              color={theme.colors.textTertiary}
-            />
-            {Object.values(BaseUnit).map((unit) => (
-              <Picker.Item
-                key={unit}
-                value={unit}
-                label={baseUnitToUnitSelectionLabel(unit)}
-                style={styles.pickerItem}
-                color={theme.colors.text}
-              />
-            ))}
-          </Picker>
-        </View>
-
+        <ModalPicker
+          values={Object.values(BaseUnit)}
+          selectedValue={baseUnit}
+          onValueChange={(value) => {
+            setBaseUnit(value);
+          }}
+          getLabel={baseUnitToUnitSelectionLabel}
+          placeholder="Select base unit"
+          pressableStyle={styles.fullWidthPickerContainer}
+          error={baseUnitError}
+        />
         <Text
           style={[
             styles.headerLabel,

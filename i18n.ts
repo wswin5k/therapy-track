@@ -19,7 +19,7 @@ const resources = {
 
       tablet_other: "tablets",
       capsule_other: "capsules",
-      milliliter_ohter: "milliliters",
+      milliliter_other: "milliliters",
       "5ml dose_other": "5ml doses",
       drop_other: "drops",
       "injection pen_other": "injection pens",
