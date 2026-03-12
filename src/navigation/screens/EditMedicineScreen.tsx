@@ -447,13 +447,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 5,
   },
-  picker: {
-    width: "100%",
-    height: 60,
-  },
-  pickerItem: {
-    fontSize: 16,
-  },
   removeButton: {
     width: 20,
     height: 50,

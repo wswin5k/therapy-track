@@ -239,6 +239,7 @@ export default function EditScheduleScreen() {
   const handleFrequencyPicker = (item: FrequencySelection | null) => {
     if (!item) {
       freqRef.current = null;
+      setFreq(null);
       return;
     }
     setFreq(item);
@@ -328,7 +329,6 @@ export default function EditScheduleScreen() {
                   }
                   placeholder="group"
                   pressableStyle={{
-                    ...styles.picker,
                     borderColor: theme.colors.border,
                     backgroundColor: theme.colors.surface,
                   }}
@@ -494,10 +494,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     width: "45%",
     overflow: "hidden",
-  },
-  picker: {},
-  pickerItem: {
-    fontSize: 16,
   },
   footer: {
     position: "absolute",

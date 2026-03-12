@@ -119,10 +119,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     padding: 15,
   },
-  picker: {
-    paddingVertical: 16,
-    fontWeight: "500",
-  },
   nextButton: {
     maxWidth: "80%",
     width: 300,
