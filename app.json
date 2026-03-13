@@ -22,7 +22,6 @@
       "expo-asset",
       "@react-native-community/datetimepicker",
       "expo-sqlite",
-      "./plugins/withNotifeeResolution",
       [
         "expo-notifications",
         {
