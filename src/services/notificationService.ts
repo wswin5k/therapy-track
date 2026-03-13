@@ -30,10 +30,8 @@ async function createNotificationChannel(): Promise<void> {
 
 export async function requestNotificationPermissions(): Promise<boolean> {
   try {
-    // Create the notification channel first
     await createNotificationChannel();
 
-    // Check existing permissions
     const settings = await notifee.getNotificationSettings();
 
     if (settings.authorizationStatus === AuthorizationStatus.AUTHORIZED) {
@@ -41,11 +39,9 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     }
 
     if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
-      // User has explicitly denied, can't request again
       return false;
     }
 
-    // Request permissions (mainly for Android 13+)
     const newSettings = await notifee.requestPermission();
 
     return newSettings.authorizationStatus === AuthorizationStatus.AUTHORIZED;
@@ -75,18 +71,14 @@ export async function scheduleGroupNotification(group: {
 
   const identifier = getNotificationIdentifier(group.dbId);
 
-  // Cancel existing notification for this group
   await cancelGroupNotification(group.dbId);
 
-  // Ensure channel exists
   await createNotificationChannel();
 
-  // Calculate the timestamp for the next occurrence
   const now = new Date();
   const scheduledDate = new Date();
   scheduledDate.setHours(hour, minute, 0, 0);
 
-  // If the time has already passed today, schedule for tomorrow
   if (scheduledDate.getTime() <= now.getTime()) {
     scheduledDate.setDate(scheduledDate.getDate() + 1);
   }
