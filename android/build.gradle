@@ -23,6 +23,7 @@ allprojects {
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
 
+// https://github.com/invertase/notifee/issues/1284
 allprojects {
   repositories {
     exclusiveContent {
