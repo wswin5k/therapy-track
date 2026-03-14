@@ -26,6 +26,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import {
   scheduleGroupNotification,
   requestNotificationPermissions,
+  cancelGroupNotification,
 } from "../../services/notificationService";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
@@ -153,7 +154,7 @@ export function EditGroupScreen() {
         reminderTime: reminderTime,
       });
     } else {
-      // await cancelGroupNotification(groupId);
+      await cancelGroupNotification(groupId);
     }
 
     navigation.goBack();
