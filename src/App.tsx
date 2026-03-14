@@ -6,22 +6,9 @@ import { Navigation } from "./navigation";
 import { SQLiteProvider } from "expo-sqlite";
 import { DATABASE_NAME, migrateDbIfNeeded } from "./models/dbMigration";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import notifee, { EventType } from "@notifee/react-native";
 import * as SplashScreen from "expo-splash-screen";
 
 SplashScreen.preventAutoHideAsync();
-
-// Set up notification foreground event handler for Notifee
-notifee.onForegroundEvent(({ type, detail }) => {
-  switch (type) {
-    case EventType.DISMISSED:
-      console.log("Notification dismissed", detail.notification);
-      break;
-    case EventType.PRESS:
-      console.log("Notification pressed", detail.notification);
-      break;
-  }
-});
 
 const prefix = createURL("/");
 

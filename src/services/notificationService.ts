@@ -4,6 +4,8 @@ import notifee, {
   RepeatFrequency,
   TriggerType,
   TimestampTrigger,
+  EventType,
+  EventDetail,
 } from "@notifee/react-native";
 import { Platform } from "react-native";
 
@@ -22,33 +24,24 @@ async function createNotificationChannel(): Promise<void> {
       vibration: true,
       vibrationPattern: [300, 500],
       lights: true,
-      lightColor: "#1D86E2",
+      lightColor: "#72b4bc",
       sound: "default",
     });
   }
 }
 
 export async function requestNotificationPermissions(): Promise<boolean> {
-  try {
-    await createNotificationChannel();
+  await createNotificationChannel();
 
-    const settings = await notifee.getNotificationSettings();
+  const settings = await notifee.getNotificationSettings();
 
-    if (settings.authorizationStatus === AuthorizationStatus.AUTHORIZED) {
-      return true;
-    }
-
-    if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
-      return false;
-    }
-
-    const newSettings = await notifee.requestPermission();
-
-    return newSettings.authorizationStatus === AuthorizationStatus.AUTHORIZED;
-  } catch (error) {
-    console.error("Error requesting notification permissions:", error);
-    return false;
+  if (settings.authorizationStatus === AuthorizationStatus.AUTHORIZED) {
+    return true;
   }
+
+  const newSettings = await notifee.requestPermission();
+
+  return newSettings.authorizationStatus === AuthorizationStatus.AUTHORIZED;
 }
 
 export async function scheduleGroupNotification(group: {
@@ -87,9 +80,7 @@ export async function scheduleGroupNotification(group: {
     type: TriggerType.TIMESTAMP,
     timestamp: scheduledDate.getTime(),
     repeatFrequency: RepeatFrequency.DAILY,
-    alarmManager: {
-      allowWhileIdle: true,
-    },
+    alarmManager: false,
   };
 
   await notifee.createTriggerNotification(
@@ -110,7 +101,7 @@ export async function scheduleGroupNotification(group: {
       },
       ios: {
         sound: "default",
-        categoryId: "therapy-track-reminder",
+        categoryId: CHANNEL_ID,
       },
     },
     trigger,
@@ -122,4 +113,21 @@ export async function scheduleGroupNotification(group: {
 export async function cancelGroupNotification(groupId: number): Promise<void> {
   const identifier = getNotificationIdentifier(groupId);
   await notifee.cancelNotification(identifier);
+}
+
+export function notificationHandler({
+  type,
+  detail,
+}: {
+  type: EventType;
+  detail: EventDetail;
+}) {
+  switch (type) {
+    case EventType.DISMISSED:
+      console.log("Notification dismissed", detail.notification);
+      break;
+    case EventType.PRESS:
+      console.log("Notification pressed", detail.notification);
+      break;
+  }
 }

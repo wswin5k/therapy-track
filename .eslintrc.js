@@ -4,5 +4,5 @@ module.exports = {
   rules: {
     "prettier/prettier": "error",
   },
-  ignorePatterns: ["/dist/*", "/node_modules/*", "/app-example/*"],
+  ignorePatterns: ["/dist/*", "/node_modules/*", "/snippets/*"],
 };

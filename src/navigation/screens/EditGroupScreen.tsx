@@ -25,7 +25,6 @@ import { dbInsertGroup, dbUpdateGroup } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   scheduleGroupNotification,
-  cancelGroupNotification,
   requestNotificationPermissions,
 } from "../../services/notificationService";
 
@@ -154,7 +153,7 @@ export function EditGroupScreen() {
         reminderTime: reminderTime,
       });
     } else {
-      await cancelGroupNotification(groupId);
+      // await cancelGroupNotification(groupId);
     }
 
     navigation.goBack();
@@ -217,10 +216,10 @@ export function EditGroupScreen() {
             value={isReminderOn}
             onValueChange={handleReminderToggle}
             trackColor={{
-              false: theme.colors.border,
+              false: theme.colors.surface,
               true: theme.colors.primary,
             }}
-            thumbColor={theme.colors.surface}
+            thumbColor={theme.colors.card}
             style={styles.switch}
           />
         </View>
