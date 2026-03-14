@@ -6,13 +6,9 @@ import notifee, { EventDetail, EventType } from "@notifee/react-native";
 
 notifee.onBackgroundEvent(
   async ({ type, detail }: { type: EventType; detail: EventDetail }) => {
-    const { notification, pressAction } = detail;
+    const { notification } = detail;
 
     if (!notification || !notification.id) {
-      return Promise.resolve();
-    }
-
-    if (!pressAction) {
       return Promise.resolve();
     }
 
