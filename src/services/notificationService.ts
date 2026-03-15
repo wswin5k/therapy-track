@@ -114,20 +114,3 @@ export async function cancelGroupNotification(groupId: number): Promise<void> {
   const identifier = getNotificationIdentifier(groupId);
   await notifee.cancelNotification(identifier);
 }
-
-export function notificationHandler({
-  type,
-  detail,
-}: {
-  type: EventType;
-  detail: EventDetail;
-}) {
-  switch (type) {
-    case EventType.DISMISSED:
-      console.log("Notification dismissed", detail.notification);
-      break;
-    case EventType.PRESS:
-      console.log("Notification pressed", detail.notification);
-      break;
-  }
-}
