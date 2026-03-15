@@ -19,7 +19,7 @@ import {
 } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Group } from "../../models/Schedule";
+import { Group } from "../../models/Frequency";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { dbInsertGroup, dbUpdateGroup } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";

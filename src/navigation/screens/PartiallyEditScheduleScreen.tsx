@@ -10,7 +10,7 @@ import {
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { Schedule } from "../../models/Schedule";
+import { Schedule } from "../../models/MedicineSchedule";
 import {
   useFocusEffect,
   useNavigation,

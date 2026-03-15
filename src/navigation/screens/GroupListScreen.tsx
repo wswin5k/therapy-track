@@ -19,7 +19,7 @@ import {
   dbGroupHasDoses,
   dbGroupHasUnscheduledRecords,
 } from "../../models/dbAccess";
-import { Group } from "../../models/Schedule";
+import { Group } from "../../models/Frequency";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";

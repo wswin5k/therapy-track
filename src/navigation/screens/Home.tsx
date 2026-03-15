@@ -26,11 +26,11 @@ import {
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
-import { BaseUnit, Medicine } from "../../models/Medicine";
+import { BaseUnit, Medicine } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { Group } from "../../models/Schedule";
+import { Group } from "../../models/Frequency";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -38,7 +38,7 @@ import {
   cancelGroupNotification,
   scheduleGroupNotification,
 } from "../../services/notificationService";
-import { baseUnitToSingularShortForm } from "../baseUnitMappings";
+import { baseUnitToSingularShortForm } from "../enumMappings";
 
 class DosageInfo {
   medicineName: string;
@@ -195,6 +195,7 @@ function UnscheduledDosage({
 }
 
 export function Home() {
+  console.log("render");
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeNavigationProp>();
   const db = useSQLiteContext();
@@ -437,7 +438,7 @@ export function Home() {
 
   const fabActions = [
     {
-      label: "Single dosage",
+      label: "Medicine Single dosage",
       onPress: () =>
         areMedicinesEmpty
           ? navigation.navigate("EditMedicineScreen", { mode: "one-time" })
@@ -447,13 +448,25 @@ export function Home() {
             }),
     },
     {
-      label: "Schedule",
+      label: "Medicine Schedule",
       onPress: () =>
         areMedicinesEmpty
           ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
           : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
     },
+    {
+      label: "Assessment Schedule",
+      onPress: () => {
+        console.log("click");
+/*         navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
+ */                areMedicinesEmpty
+          ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
+          : navigation.navigate("SelectMedicineScreen", { mode: "schedule" })
+      },
+    },
   ];
+
+  console.log("render");
 
   const renderScheduledDosage = (dosage: DosageInfo, bottomBorder: boolean) => {
     const isDone = isDosageDone.get(pair(dosage.scheduleId, dosage.index));

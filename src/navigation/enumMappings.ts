@@ -1,5 +1,6 @@
 import i18next from "i18next";
-import { BaseUnit } from "../models/Medicine";
+import { BaseUnit } from "../models/MedicineSchedule";
+import { AssessmentType } from "../models/AssessmentSchedule";
 
 function capitalizeFirstLetter(val: string) {
   return String(val).charAt(0).toUpperCase() + String(val).slice(1);
@@ -43,4 +44,23 @@ export function baseUnitToDoseHeader(key: BaseUnit): string {
   return capitalizeFirstLetter(
     i18next.t(baseUnitToSingularShortForm[key], { count: 2 }),
   );
+}
+
+export const frequencySelectionToDisplayForm: { [key: string]: string } = {
+  OnceDaily: "Once daily",
+  TwiceDaily: "Twice daily",
+  ThriceDaily: "Three times daily",
+  OnceWeekly: "Weekly",
+  OnceBiweekly: "Every two weeks",
+};
+
+export function assessmentTypeToDisplayForm(key: AssessmentType) {
+  const mapping = {
+    Numeric: "Number",
+    Boolean: "Yes/No",
+    SingleSelect: "Single select",
+    MultiSelect: "Multiplce select",
+    Text: "Text",
+  };
+  return mapping[key];
 }

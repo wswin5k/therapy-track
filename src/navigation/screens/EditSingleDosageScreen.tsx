@@ -20,9 +20,9 @@ import {
 } from "@react-navigation/native";
 import { MedicineParam, RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Group } from "../../models/Schedule";
+import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToDoseHeader } from "../baseUnitMappings";
+import { baseUnitToDoseHeader } from "../enumMappings";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

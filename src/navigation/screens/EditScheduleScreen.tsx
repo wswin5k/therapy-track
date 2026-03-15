@@ -11,13 +11,12 @@ import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
+import { Group } from "../../models/Frequency";
 import {
   Frequency,
   FrequencySelection,
-  Group,
   IntervalUnit,
-  strKeyOfFrequeencySelection,
-} from "../../models/Schedule";
+} from "../../models/Frequency";
 import {
   useFocusEffect,
   useNavigation,
@@ -34,7 +33,7 @@ import {
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToDoseHeader } from "../baseUnitMappings";
+import { baseUnitToDoseHeader } from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
@@ -243,8 +242,7 @@ export default function EditScheduleScreen() {
       return;
     }
     setFreq(item);
-    const itemKey = strKeyOfFrequeencySelection(item);
-    const freq = frequencySelectionMap[itemKey];
+    const freq = frequencySelectionMap[item];
     freqRef.current = freq;
     if (freq.numberOfDoses !== nDoses) {
       setNDoses(freq.numberOfDoses);

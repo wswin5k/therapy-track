@@ -18,11 +18,11 @@ import {
   dbGetMedicines,
   dbGetSchedulesWithMedicines,
 } from "../../models/dbAccess";
-import { Medicine } from "../../models/Medicine";
+import { Medicine } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
-import { baseUnitToSingularShortForm } from "../baseUnitMappings";
+import { baseUnitToSingularShortForm } from "../enumMappings";
 
 function MedicineListItem({
   medicine,

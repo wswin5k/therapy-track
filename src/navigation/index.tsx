@@ -6,7 +6,11 @@ import { Home } from "./screens/Home";
 import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
 import { SchedulesListScreen } from "./screens/SchedulesListScreen";
-import type { ActiveIngredient, BaseUnit, Medicine } from "../models/Medicine";
+import type {
+  ActiveIngredient,
+  BaseUnit,
+  Medicine,
+} from "../models/MedicineSchedule";
 import EditScheduleScreen from "./screens/EditScheduleScreen";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
@@ -16,6 +20,8 @@ import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
 import PartiallyEditScheduleScreen from "./screens/PartiallyEditScheduleScreen";
 import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
+import { Assessment } from "../models/AssessmentSchedule";
+import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
 
 export interface MedicineParam {
   name: string;
@@ -29,6 +35,10 @@ export type RootStackParamList = {
   EditMedicineScreen: {
     mode: "save-and-go-back" | "schedule" | "one-time";
     medicine?: Medicine;
+  };
+  EditAssessmentScreen: {
+    mode: "save-and-go-back" | "schedule" | "one-time";
+    assessment?: Assessment;
   };
   SelectMedicineScreen:
     | { mode: "schedule" | "one-time"; selectedDate?: string }
@@ -159,6 +169,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Edit medicine",
+      },
+    },
+    EditAssessmentScreen: {
+      screen: EditAssessmentScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit assessment",
       },
     },
     EditScheduleScreen: {

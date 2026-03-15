@@ -1,13 +1,15 @@
 import { SQLiteDatabase } from "expo-sqlite";
-import { Schedule, Frequency, IntervalUnit, Dose, Group } from "./Schedule";
+import { Schedule, Dose } from "./MedicineSchedule";
+import { Group } from "./Frequency";
+import { Frequency, IntervalUnit } from "./Frequency";
 import {
   ActiveIngredient,
   BaseUnit,
   IngredientAmountUnit,
   Medicine,
   strKeyOfBaseUnit,
-} from "./Medicine";
-import { ScheduledDosageRecord, UnscheduledDosageRecord } from "./DosageRecord";
+} from "./MedicineSchedule";
+import { ScheduledDosageRecord, UnscheduledDosageRecord } from "./Records";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -158,7 +160,7 @@ function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
   return new Schedule(
     medicineData,
     new Date(row.start_date),
-    row.end_date ? new Date(row.end_date) : (null as any),
+    row.end_date ? new Date(row.end_date) : null,
     frequency,
     doses,
     row.id,

@@ -1,3 +1,5 @@
+import { Frequency } from "./Frequency";
+
 export const NAME_MAX_LENGHT: number = 100;
 
 export enum BaseUnit {
@@ -61,5 +63,52 @@ export class Medicine {
     return this.activeIngredients.map(
       (ai) => `${ai.name} ${ai.amount}${ai.unit}`,
     );
+  }
+}
+
+export class Dose {
+  amount: number;
+  index: number;
+  offset: number | null;
+  groupId: number | null;
+  dbId: number;
+
+  constructor(
+    amount: number,
+    index: number,
+    offset: number | null,
+    groupId: number | null = null,
+    dbId: number,
+  ) {
+    this.amount = amount;
+    this.index = index;
+    this.offset = offset;
+    this.groupId = groupId;
+    this.dbId = dbId;
+  }
+}
+
+export class Schedule {
+  medicine: Medicine;
+  startDate: Date;
+  endDate: Date | null;
+  freq: Frequency;
+  doses: Dose[];
+  dbId: number;
+
+  constructor(
+    medicine: Medicine,
+    startDate: Date,
+    endDate: Date | null,
+    freq: Frequency,
+    doses: Dose[],
+    dbId: number,
+  ) {
+    this.medicine = medicine;
+    this.startDate = startDate;
+    this.endDate = endDate;
+    this.freq = freq;
+    this.doses = doses;
+    this.dbId = dbId;
   }
 }

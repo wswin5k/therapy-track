@@ -76,9 +76,52 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     });
     currentDbVersion = 1;
   }
-  // if (currentDbVersion === 1) {
-  //   Add more migrations
-  // }
+  if (currentDbVersion === 1) {
+    db.withTransactionAsync(async () => {
+      await db.execAsync(`
+      CREATE TABLE assessments (id INTEGER PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      value_domain TEXT );
+
+      CREATE TABLE assessment_instances (id INTEGER PRIMARY KEY NOT NULL,
+      index_ INTEGER NOT NULL,
+      offset INTEGER,
+      group_ INTEGER,
+      assessment_schedule INTEGER,
+      FOREIGN KEY(group_) REFERENCES groups(id),
+      FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
+
+      CREATE TABLE assessment_schedules (
+      id INTEGER PRIMARY KEY NOT NULL,
+      assessment INTEGER,
+      start_date TEXT NOT NULL,
+      end_date TEXT,
+      freq TEXT NOT NULL,
+      FOREIGN KEY(assessment) REFERENCES assessments(id) ON DELETE CASCADE);
+    
+      CREATE TABLE scheduled_assessment_records (
+      id INTEGER PRIMARY KEY NOT NULL,
+      record_date TEXT NOT NULL,
+      date TEXT NOT NULL,
+      assessment_schedule INTEGER,
+      instance_index INTEGER,
+      value TEXT,
+      FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
+
+      CREATE TABLE unscheduled_assessment_records (
+      id INTEGER PRIMARY KEY NOT NULL,
+      record_date TEXT NOT NULL,
+      date TEXT NOT NULL,
+      assessment INTEGER NOT NULL,
+      value TEXT,
+      group_ INTEGER,
+      FOREIGN KEY(group_) REFERENCES groups(id),
+      FOREIGN KEY(assessment) REFERENCES assessments(id));
+    `);
+    });
+    currentDbVersion = 2;
+  }
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 

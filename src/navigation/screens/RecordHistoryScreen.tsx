@@ -22,11 +22,11 @@ import {
   dbGetUnscheduledDosageRecords,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { Schedule } from "../../models/Schedule";
+import { Schedule } from "../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
-import { Medicine } from "../../models/Medicine";
+import { Medicine } from "../../models/MedicineSchedule";
 import { useTranslation } from "react-i18next";
 
 function extractDate(datetime: Date): string {
