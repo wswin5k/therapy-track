@@ -438,7 +438,7 @@ export function Home() {
 
   const fabActions = [
     {
-      label: "Medicine Single dosage",
+      label: "One-off Medicine",
       onPress: () =>
         areMedicinesEmpty
           ? navigation.navigate("EditMedicineScreen", { mode: "one-time" })
@@ -448,20 +448,22 @@ export function Home() {
             }),
     },
     {
-      label: "Medicine Schedule",
+      label: "Schedule Medicine",
       onPress: () =>
         areMedicinesEmpty
           ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
           : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
     },
     {
-      label: "Assessment Schedule",
+      label: "Schedule Assessment",
       onPress: () => {
-        console.log("click");
-/*         navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
- */                areMedicinesEmpty
-          ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
-          : navigation.navigate("SelectMedicineScreen", { mode: "schedule" })
+        navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
+      },
+    },
+    {
+      label: "One-off Assessment",
+      onPress: () => {
+        navigation.navigate("EditAssessmentScreen", { mode: "one-time" });
       },
     },
   ];

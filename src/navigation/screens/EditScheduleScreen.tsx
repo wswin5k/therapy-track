@@ -33,7 +33,10 @@ import {
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToDoseHeader } from "../enumMappings";
+import {
+  baseUnitToDoseHeader,
+  frequencySelectionToDisplayForm,
+} from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
@@ -274,7 +277,7 @@ export default function EditScheduleScreen() {
             values={Object.values(FrequencySelection)}
             selectedValue={freq}
             onValueChange={handleFrequencyPicker}
-            getLabel={(v) => v}
+            getLabel={frequencySelectionToDisplayForm}
             placeholder="Select frequency"
             pressableStyle={styles.fullWidthPickerContainer}
             error={freqError}

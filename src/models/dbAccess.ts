@@ -9,7 +9,12 @@ import {
   Medicine,
   strKeyOfBaseUnit,
 } from "./MedicineSchedule";
-import { ScheduledDosageRecord, UnscheduledDosageRecord } from "./Records";
+import {
+  AssessmentValueType,
+  ScheduledDosageRecord,
+  UnscheduledDosageRecord,
+} from "./Records";
+import { AssessmentType, ValueDomain } from "./AssessmentSchedule";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -562,4 +567,42 @@ export async function dbGroupHasUnscheduledRecords(
     groupId,
   );
   return (result?.count ?? 0) > 0;
+}
+
+export async function dbInsertAssessment(
+  db: SQLiteDatabase,
+  assessment: {
+    name: string;
+    type: AssessmentType;
+    value_domain: ValueDomain;
+  },
+): Promise<number> {
+  const valueDomainStr = JSON.stringify(assessment.value_domain);
+  const db_insert = await db.runAsync(
+    "INSERT INTO assessments (name, type, value_domain) VALUES (?, ?, ?)",
+    assessment.name,
+    assessment.type,
+    valueDomainStr,
+  );
+  return db_insert.lastInsertRowId;
+}
+
+export async function dbInsertUnscheduledAssessmentRecord(
+  db: SQLiteDatabase,
+  record: {
+    date: Date;
+    assessmentId: number;
+    value: AssessmentValueType;
+    group: number | null;
+  },
+): Promise<number> {
+  const result = await db.runAsync(
+    "INSERT INTO unscheduled_assessment_records (record_date, date, assessment, value, group_) VALUES (?, ?, ?, ?, ?)",
+    new Date().toISOString(),
+    extractDate(record.date),
+    record.assessmentId,
+    record.value.toString(),
+    record.group,
+  );
+  return result.lastInsertRowId;
 }

@@ -20,13 +20,25 @@ import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
 import PartiallyEditScheduleScreen from "./screens/PartiallyEditScheduleScreen";
 import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
-import { Assessment } from "../models/AssessmentSchedule";
+import {
+  Assessment,
+  AssessmentType,
+  ValueDomain,
+} from "../models/AssessmentSchedule";
 import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
+import { EditSingleMeasurmentScreen } from "./screens/EditSingleMeasurmentScreen";
 
 export interface MedicineParam {
   name: string;
   baseUnit: BaseUnit;
   activeIngredients: ActiveIngredient[];
+  dbId?: number;
+}
+
+export interface AssessmentParam {
+  name: string;
+  type: AssessmentType;
+  value_domain: ValueDomain;
   dbId?: number;
 }
 
@@ -54,6 +66,14 @@ export type RootStackParamList = {
       name: string;
       baseUnit: BaseUnit;
       activeIngredients: ActiveIngredient[];
+      dbId?: number;
+    };
+    selectedDate?: string;
+  };
+  EditSingleMeasurmentScreen: {
+    assessment: {
+      name: string;
+      assessmentType: AssessmentType;
       dbId?: number;
     };
     selectedDate?: string;
@@ -197,6 +217,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Add single dosage",
+      },
+    },
+    EditSingleMeasurmentScreen: {
+      screen: EditSingleMeasurmentScreen,
+      options: {
+        presentation: "modal",
+        title: "Add single measurment",
       },
     },
     EditGroupScreen: {

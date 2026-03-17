@@ -3,8 +3,6 @@ import { Frequency } from "./Frequency";
 export enum AssessmentType {
   Numeric = "Numeric",
   Boolean = "Boolean",
-  SingleSelect = "SingleSelect",
-  MultiSelect = "MultiSelect",
   Text = "Text",
 }
 
@@ -23,7 +21,10 @@ export class SelectValueDomain {
   constructor(public values: string[]) {}
 }
 
-type ValueDomain = NumericValueDomain | SelectValueDomain | TextValueDomain;
+export type ValueDomain =
+  | NumericValueDomain
+  | SelectValueDomain
+  | TextValueDomain;
 
 export class Assessment {
   constructor(
@@ -43,7 +44,7 @@ class AssessmentInstance {
   ) {}
 }
 
-class AssessmentSchedule {
+export class AssessmentSchedule {
   constructor(
     public assessment: Assessment,
     public startDate: Date,
