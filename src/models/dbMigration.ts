@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 1;
+  const DATABASE_VERSION = 2;
 
   const pragma_user_version = await db.getFirstAsync<{
     user_version: number;
@@ -84,7 +84,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       type TEXT NOT NULL,
       value_domain TEXT );
 
-      CREATE TABLE assessment_instances (id INTEGER PRIMARY KEY NOT NULL,
+      CREATE TABLE measurments (id INTEGER PRIMARY KEY NOT NULL,
       index_ INTEGER NOT NULL,
       offset INTEGER,
       group_ INTEGER,
@@ -100,16 +100,16 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       freq TEXT NOT NULL,
       FOREIGN KEY(assessment) REFERENCES assessments(id) ON DELETE CASCADE);
     
-      CREATE TABLE scheduled_assessment_records (
+      CREATE TABLE scheduled_measurment_records (
       id INTEGER PRIMARY KEY NOT NULL,
       record_date TEXT NOT NULL,
       date TEXT NOT NULL,
       assessment_schedule INTEGER,
-      instance_index INTEGER,
+      measurment_index INTEGER,
       value TEXT,
       FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
 
-      CREATE TABLE unscheduled_assessment_records (
+      CREATE TABLE unscheduled_measurment_records (
       id INTEGER PRIMARY KEY NOT NULL,
       record_date TEXT NOT NULL,
       date TEXT NOT NULL,
@@ -125,4 +125,4 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-export const DATABASE_NAME: string = "main.db";
+export const DATABASE_NAME: string = "main1.db";

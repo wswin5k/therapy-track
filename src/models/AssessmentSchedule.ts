@@ -1,5 +1,7 @@
 import { Frequency } from "./Frequency";
 
+const TEXT_MAX_LENGTH = 1000;
+
 export enum AssessmentType {
   Numeric = "Numeric",
   Boolean = "Boolean",
@@ -24,18 +26,32 @@ export class SelectValueDomain {
 export type ValueDomain =
   | NumericValueDomain
   | SelectValueDomain
-  | TextValueDomain;
+  | TextValueDomain
+  | null;
+
+export function getDefaultValueDomain(
+  type: AssessmentType,
+): ValueDomain | null {
+  switch (type) {
+    case AssessmentType.Text:
+      return new TextValueDomain(TEXT_MAX_LENGTH);
+    case AssessmentType.Numeric:
+      return new NumericValueDomain(-Infinity, +Infinity);
+    default:
+      return null;
+  }
+}
 
 export class Assessment {
   constructor(
     public name: string,
     public type: AssessmentType,
-    public value_domain: ValueDomain | null,
+    public valueDomain: ValueDomain,
     public dbId: number,
   ) {}
 }
 
-class AssessmentInstance {
+class Measurment {
   constructor(
     public index: number,
     public offset: number | null,
@@ -50,7 +66,7 @@ export class AssessmentSchedule {
     public startDate: Date,
     public endDate: Date | null,
     public freq: Frequency,
-    public instances: AssessmentInstance[],
+    public measurments: Measurment[],
     public dbId: number,
   ) {}
 }

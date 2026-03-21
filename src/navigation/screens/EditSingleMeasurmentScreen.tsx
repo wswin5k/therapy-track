@@ -1,4 +1,10 @@
-import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  View,
+  TextInput,
+} from "react-native";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import RNDateTimePicker, {
   DateTimePickerEvent,
@@ -9,7 +15,7 @@ import SmallNumberStepper from "../../components/SmallNumberStepper";
 import {
   dbGetGroups,
   dbInsertAssessment,
-  dbInsertUnscheduledAssessmentRecord,
+  dbInsertUnscheduledMeasurmentRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import {
@@ -23,7 +29,8 @@ import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { AssessmentType } from "../../models/AssessmentSchedule";
 import { Checkbox } from "react-native-paper";
-import { AssessmentValueType } from "../../models/Records";
+import { AssessmentValue } from "../../models/Records";
+import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 export function EditSingleMeasurmentScreen() {
   const { t } = useTranslation();
@@ -36,7 +43,7 @@ export function EditSingleMeasurmentScreen() {
   const [dateError, setDateError] = React.useState<boolean>(false);
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
-  const [value, setValue] = React.useState<AssessmentValueType | null>(null);
+  const [value, setValue] = React.useState<AssessmentValue | null>(null);
   const [valueError, setValueError] = React.useState<boolean>(false);
   const groupIdxRef = React.useRef<number | null>(null);
 
@@ -82,12 +89,12 @@ export function EditSingleMeasurmentScreen() {
   const validate = (): {
     date: Date;
     assessment: AssessmentParam;
-    value: AssessmentValueType;
+    value: AssessmentValue;
   } | null => {
     if (date) {
       if (assessment) {
         if (value) {
-          return { date: date, assessment, value };
+          return { date, assessment, value };
         } else {
           setValueError(true);
         }
@@ -102,14 +109,18 @@ export function EditSingleMeasurmentScreen() {
 
   const handleSave = async () => {
     const dataValidated = validate();
+    console.log(dataValidated);
     if (!dataValidated) {
       return;
     }
+
+    console.log(dataValidated.assessment);
+
     const assessmentId =
       dataValidated.assessment.dbId ??
       (await dbInsertAssessment(db, dataValidated.assessment));
 
-    await dbInsertUnscheduledAssessmentRecord(db, {
+    await dbInsertUnscheduledMeasurmentRecord(db, {
       date: dataValidated.date,
       assessmentId: assessmentId,
       value: dataValidated.value,
@@ -120,7 +131,7 @@ export function EditSingleMeasurmentScreen() {
     navigation.navigate("HomeTabs");
   };
 
-  const handleValueChange = (value: AssessmentValueType) => {
+  const handleValueChange = (value: AssessmentValue) => {
     setValue(value);
   };
 
@@ -130,26 +141,37 @@ export function EditSingleMeasurmentScreen() {
 
   const renderNumericInput = () => {
     return (
-      <View style={[styles.rowContainer]}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {"Value"}
-        </Text>
-        <View style={styles.doseContainer}>
-          <SmallNumberStepper onChange={handleValueChange} />
-        </View>
+      <View style={styles.valueInputContainer}>
+        <SmallNumberStepper onChange={handleValueChange} />
       </View>
     );
   };
 
   const renderBooleanInput = () => {
     return (
-      <View style={[styles.rowContainer]}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {"Value"}
-        </Text>
-        <View style={styles.doseContainer}>
-          <Checkbox status="unchecked" onPress={() => {}} />
-        </View>
+      <View style={styles.valueInputContainer}>
+        <Checkbox status="unchecked" onPress={() => {}} />
+      </View>
+    );
+  };
+
+  const renderTextInput = () => {
+    return (
+      <View style={styles.valueInputContainer}>
+        <TextInput
+          onChangeText={handleValueChange}
+          style={[
+            styles.textInput,
+            {
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+            },
+            valueError && {
+              borderColor: theme.colors.error,
+              borderWidth: ERROR_BORDER_WIDTH,
+            },
+          ]}
+        />
       </View>
     );
   };
@@ -163,12 +185,24 @@ export function EditSingleMeasurmentScreen() {
   switch (assessment?.type) {
     case AssessmentType.Numeric:
       renderInput = renderNumericInput;
+      break;
     case AssessmentType.Boolean:
       renderInput = renderBooleanInput;
+      break;
+    case AssessmentType.Text:
+      renderInput = renderTextInput;
+      break;
   }
 
   return (
     <DefaultMainContainer>
+      <View style={[styles.rowContainer]}>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {"Value"}
+        </Text>
+        {renderInput()}
+      </View>
+
       <View style={[styles.mainContainer]}>
         <View style={[styles.rowContainer]}>
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
@@ -221,8 +255,6 @@ export function EditSingleMeasurmentScreen() {
           </View>
         </View>
 
-        {renderInput()}
-
         {isDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
@@ -252,9 +284,16 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
-  doseContainer: {
+  valueInputContainer: {
     width: "45%",
     height: 52,
+  },
+  textInput: {
+    borderWidth: 1,
+    fontSize: 16,
+    height: 52,
+    borderRadius: 8,
+    paddingHorizontal: 12,
   },
   headerLabel: {
     fontSize: 18,

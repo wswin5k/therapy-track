@@ -10,11 +10,12 @@ import {
   strKeyOfBaseUnit,
 } from "./MedicineSchedule";
 import {
-  AssessmentValueType,
+  AssessmentValue,
   ScheduledDosageRecord,
   UnscheduledDosageRecord,
+  UnscheduledMeasurmentRecord,
 } from "./Records";
-import { AssessmentType, ValueDomain } from "./AssessmentSchedule";
+import { Assessment, AssessmentType, NumericValueDomain, TextValueDomain, ValueDomain } from "./AssessmentSchedule";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -72,12 +73,75 @@ interface GroupRow {
   reminder_time: string | null;
 }
 
+interface AssessmentRow {
+  id: number;
+  name: string;
+  type: AssessmentType;
+  value_domain: string | null;
+}
+
+interface UncheduledMeasurmentRecordRow {
+  id: number;
+  record_date: string;
+  date: string;
+  assessment: number;
+  value: string;
+  group_: number | null;
+  assessment_type: AssessmentType,
+}
+
 function parseActiveIngredients(json: string) {
   const aiData = JSON.parse(json);
   return aiData.map(
     (ai: { name: string; amount: number; unit: string }) =>
       new ActiveIngredient(ai.name, ai.amount, ai.unit as IngredientAmountUnit),
   );
+}
+
+function parseValueDomain(json: string | null, assessmentType: AssessmentType) {
+  if (!json) {
+    return null;
+  }
+  const vdData = JSON.parse(json);
+  switch (assessmentType) {
+    case AssessmentType.Numeric:
+      return new NumericValueDomain(vdData.min, vdData.max);
+    case AssessmentType.Text:
+      return new TextValueDomain(vdData.max_characters);
+    default:
+      return null;
+  }
+}
+
+function parseAssessmentValue(value: string, assessmentType: AssessmentType): AssessmentValue {
+  switch (assessmentType) {
+    case AssessmentType.Numeric:
+      return Number.parseFloat(value);
+    case AssessmentType.Boolean:
+      return value === "true";
+    default:
+      return value;
+  }
+}
+
+function getDateFilterClause(startDate?: Date, endDate?: Date): string {
+  if (startDate && endDate) {
+    const startDateStr = extractDate(startDate);
+    const endDateStr = extractDate(endDate);
+    return `
+    WHERE date(date) >= '${startDateStr}'
+    AND date(date) <= '${endDateStr}'`;
+  } else if (startDate) {
+    const startDateStr = extractDate(startDate);
+    return `
+    WHERE date(date) >= '${startDateStr}'`;
+  } else if (endDate) {
+    const endDateStr = extractDate(endDate);
+    return `
+    WHERE date(date) <= '${endDateStr}'`;
+  } else {
+    return "";
+  }
 }
 
 export async function dbUpdateMedicine(
@@ -342,27 +406,8 @@ export async function dbGetScheduledDosageRecords(
   endDate?: Date,
 ): Promise<ScheduledDosageRecord[]> {
   let queryStr = "SELECT * FROM scheduled_dosage_records ";
-  if (startDate && endDate) {
-    const startDateStr = extractDate(startDate);
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'
-    AND date(date) <= '${endDateStr}'`;
-  } else if (startDate) {
-    const startDateStr = extractDate(startDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'`;
-  } else if (endDate) {
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) <= '${endDateStr}'`;
-  }
+
+  queryStr += getDateFilterClause(startDate, endDate);
 
   const rows = await db.getAllAsync<ScheduledDosageRecordRow>(queryStr);
   return rows.map(
@@ -413,27 +458,8 @@ export async function dbGetUnscheduledDosageRecords(
   endDate?: Date,
 ): Promise<UnscheduledDosageRecord[]> {
   let queryStr = "SELECT * FROM unscheduled_dosage_records ";
-  if (startDate && endDate) {
-    const startDateStr = extractDate(startDate);
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'
-    AND date(date) <= '${endDateStr}'`;
-  } else if (startDate) {
-    const startDateStr = extractDate(startDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'`;
-  } else if (endDate) {
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) <= '${endDateStr}'`;
-  }
+
+  queryStr += getDateFilterClause(startDate, endDate);
 
   const rows = await db.getAllAsync<UncheduledDosageRecordRow>(queryStr);
   return rows.map(
@@ -551,22 +577,30 @@ export async function dbGroupHasDoses(
   db: SQLiteDatabase,
   groupId: number,
 ): Promise<boolean> {
-  const result = await db.getFirstAsync<{ count: number }>(
+  const resultDoses = await db.getFirstAsync<{ count: number }>(
     "SELECT COUNT(*) as count FROM doses WHERE group_ = ?",
     groupId,
   );
-  return (result?.count ?? 0) > 0;
+  const resultMeasurments = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM measurments WHERE group_ = ?",
+    groupId,
+  );
+  return (resultDoses?.count ?? resultMeasurments?.count ?? 0) > 0;
 }
 
 export async function dbGroupHasUnscheduledRecords(
   db: SQLiteDatabase,
   groupId: number,
 ): Promise<boolean> {
-  const result = await db.getFirstAsync<{ count: number }>(
+  const resultDosages = await db.getFirstAsync<{ count: number }>(
     "SELECT COUNT(*) as count FROM unscheduled_dosage_records WHERE group_ = ?",
     groupId,
   );
-  return (result?.count ?? 0) > 0;
+  const resultMeasurments = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM unscheduled_measurment_records WHERE group_ = ?",
+    groupId,
+  );
+  return (resultDosages?.count ?? resultMeasurments?.count ?? 0) > 0;
 }
 
 export async function dbInsertAssessment(
@@ -587,17 +621,17 @@ export async function dbInsertAssessment(
   return db_insert.lastInsertRowId;
 }
 
-export async function dbInsertUnscheduledAssessmentRecord(
+export async function dbInsertUnscheduledMeasurmentRecord(
   db: SQLiteDatabase,
   record: {
     date: Date;
     assessmentId: number;
-    value: AssessmentValueType;
+    value: AssessmentValue;
     group: number | null;
   },
 ): Promise<number> {
   const result = await db.runAsync(
-    "INSERT INTO unscheduled_assessment_records (record_date, date, assessment, value, group_) VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO unscheduled_measurment_records (record_date, date, assessment, value, group_) VALUES (?, ?, ?, ?, ?)",
     new Date().toISOString(),
     extractDate(record.date),
     record.assessmentId,
@@ -605,4 +639,52 @@ export async function dbInsertUnscheduledAssessmentRecord(
     record.group,
   );
   return result.lastInsertRowId;
+}
+
+
+export async function dbGetUnscheduledMeasurmentRecords(
+  db: SQLiteDatabase,
+  startDate?: Date,
+  endDate?: Date,
+): Promise<UnscheduledMeasurmentRecord[]> {
+  let queryStr = `SELECT r.*, a.type as assessment_type
+  FROM unscheduled_dosage_records as r
+  JOIN assessments as a ON r.assessmentId = a.id,
+  `;
+
+  queryStr += getDateFilterClause(startDate, endDate);
+
+  const rows = await db.getAllAsync<UncheduledMeasurmentRecordRow>(queryStr);
+  return rows.map(
+    (row) => {
+      const value = parseAssessmentValue(row.value, AssessmentType[row.assessment_type])
+      return new UnscheduledMeasurmentRecord(
+        row.id,
+        new Date(row.record_date),
+        new Date(row.date),
+        row.assessment,
+        value,
+        row.group_,
+      )
+    }
+
+  );
+}
+
+export async function dbGetAssessments(db: SQLiteDatabase): Promise<Assessment[]> {
+  const rows = await db.getAllAsync<AssessmentRow>(`
+      SELECT id, name, type, value_domain
+      FROM assessments
+    `);
+
+  return rows.map((row) => {
+    const assessmentType = AssessmentType[row.type];
+    const valueDomain = row.value_domain ? null : parseValueDomain(row.value_domain, assessmentType);
+    return new Assessment(
+      row.name,
+      assessmentType,
+      valueDomain,
+      row.id,
+    );
+  });
 }

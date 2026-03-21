@@ -23,6 +23,8 @@ import {
   dbInsertScheduledDosageRecord,
   dbGetGroups,
   dbDeleteUnscheduledDosageRecord,
+  dbGetUnscheduledMeasurmentRecords,
+  dbGetAssessments,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
@@ -39,6 +41,8 @@ import {
   scheduleGroupNotification,
 } from "../../services/notificationService";
 import { baseUnitToSingularShortForm } from "../enumMappings";
+import { AssessmentValue } from "../../models/Records";
+import { Assessment } from "../../models/AssessmentSchedule";
 
 class DosageInfo {
   medicineName: string;
@@ -75,16 +79,24 @@ class UnscheduledDosageInfo {
   dosageRecordId: number;
 
   constructor(
-    medicinName: string,
+    medicineName: string,
     medicineBaseUnit: BaseUnit,
     amount: number,
     dosageRecordId: number,
   ) {
-    this.medicineName = medicinName;
+    this.medicineName = medicineName;
     this.medicineBaseUnit = medicineBaseUnit;
     this.amount = amount;
     this.dosageRecordId = dosageRecordId;
   }
+}
+
+class UnscheduledMeasurmentInfo {
+  constructor(
+    public assessmentName: string,
+    public value: AssessmentValue,
+    public measurmentRecordId: number,
+  ) {}
 }
 
 const pair = (a: number, b: number): number => {
@@ -195,7 +207,6 @@ function UnscheduledDosage({
 }
 
 export function Home() {
-  console.log("render");
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeNavigationProp>();
   const db = useSQLiteContext();
@@ -215,6 +226,9 @@ export function Home() {
     new Map(),
   );
   const [unscheduledDosages, setUnscheduledDosages] = React.useState<
+    Map<number | null, UnscheduledDosageInfo[]>
+  >(new Map());
+  const [unscheduledMeasurements, setUnscheduledMeasurments] = React.useState<
     Map<number | null, UnscheduledDosageInfo[]>
   >(new Map());
 
@@ -334,10 +348,47 @@ export function Home() {
       newUnscheduledDosageInfos.set(dr.groupId, groupDosages);
     });
 
-    setIsUnscheduledEmpty(newIsEmpty);
+    setIsUnscheduledEmpty(newIsEmpty && isUnscheduledEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     setUnscheduledDosages(newUnscheduledDosageInfos);
+  }, [date, db]);
+
+  const loadUnscheduledMeasurmentRecords = React.useCallback(async () => {
+    const unscheduledMeasurmentRecords = await dbGetUnscheduledMeasurmentRecords(
+      db,
+      date,
+      date,
+    );
+
+    const assessmentsMap = new Map<number, Assessment>();
+    const assessments = await dbGetAssessments(db);
+    assessments.forEach((a) => {
+      assessmentsMap.set(a.dbId, a);
+    });
+
+    let newIsEmpty = true;
+    let newAreGroupsEmpty = true;
+    const newUnscheduledMeasurmentInfos = new Map();
+    unscheduledMeasurmentRecords.map((mr) => {
+      const groupDosages = newUnscheduledMeasurmentInfos.get(mr.groupId) || [];
+      const a = assessmentsMap.get(mr.assessmentId);
+      if (a) {
+        groupDosages.push(
+          new UnscheduledMeasurmentInfo(a?.name, mr.value, mr.dbId),
+        );
+        newIsEmpty = false;
+        if (mr.groupId !== null) {
+          newAreGroupsEmpty = false;
+        }
+      }
+      newUnscheduledMeasurmentInfos.set(mr.groupId, groupDosages);
+    });
+
+    setIsUnscheduledEmpty(newIsEmpty && isUnscheduledEmpty);
+    if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
+
+    setUnscheduledMeasurments(newUnscheduledMeasurmentInfos);
   }, [date, db]);
 
   const formatDate = React.useCallback(
@@ -364,7 +415,8 @@ export function Home() {
       loadGroups();
       loadScheduledDosages();
       loadUnscheduledRecords();
-    }, [loadGroups, loadScheduledDosages, loadUnscheduledRecords]),
+      loadUnscheduledMeasurmentRecords();
+    }, [loadGroups, loadScheduledDosages, loadUnscheduledRecords, loadUnscheduledMeasurmentRecords]),
   );
 
   React.useEffect(() => {
@@ -454,12 +506,12 @@ export function Home() {
           ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
           : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
     },
-    {
+/*     {
       label: "Schedule Assessment",
       onPress: () => {
         navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
       },
-    },
+    }, */
     {
       label: "One-off Assessment",
       onPress: () => {
@@ -467,8 +519,6 @@ export function Home() {
       },
     },
   ];
-
-  console.log("render");
 
   const renderScheduledDosage = (dosage: DosageInfo, bottomBorder: boolean) => {
     const isDone = isDosageDone.get(pair(dosage.scheduleId, dosage.index));
@@ -556,7 +606,7 @@ export function Home() {
           <Text
             style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
           >
-            Unscheduled dosages
+            Unscheduled
           </Text>
           {dosages.map((di, idx) => (
             <View key={di.dosageRecordId}>
@@ -678,7 +728,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 10,
-    borderWidth: 0.7,
+    borderWidth: 0.8,
   },
   contentText: {
     fontSize: 15,

@@ -73,7 +73,7 @@ export type RootStackParamList = {
   EditSingleMeasurmentScreen: {
     assessment: {
       name: string;
-      assessmentType: AssessmentType;
+      type: AssessmentType;
       dbId?: number;
     };
     selectedDate?: string;

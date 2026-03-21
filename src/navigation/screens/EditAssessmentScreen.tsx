@@ -20,7 +20,11 @@ import { NAME_MAX_LENGHT } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { useSQLiteContext } from "expo-sqlite";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
-import { Assessment, AssessmentType } from "../../models/AssessmentSchedule";
+import {
+  Assessment,
+  AssessmentType,
+  ValueDomain,
+} from "../../models/AssessmentSchedule";
 import { ModalPicker } from "../../components/ModalPicker";
 
 type EditAssessmentScreenNavigationProp = NativeStackNavigationProp<
@@ -63,7 +67,8 @@ export function EditAssessmentScreen() {
 
   const validate = (): {
     name: string;
-    assessmentType: AssessmentType;
+    type: AssessmentType;
+    valueDomain: ValueDomain;
   } | null => {
     let medicineValidated = true;
 
@@ -84,7 +89,8 @@ export function EditAssessmentScreen() {
     if (medicineValidated && assessmentType) {
       return {
         name,
-        assessmentType,
+        type: assessmentType,
+        valueDomain: null,
       };
     }
     return null;
@@ -95,20 +101,18 @@ export function EditAssessmentScreen() {
     if (!assessmentValidated) {
       return;
     }
-    /* 
     if (mode === "schedule") {
-      navigation.navigate("EditScheduleScreen", {
+      /*       navigation.navigate("EditScheduleScreen", {
         medicine: medicineValidated,
-      });
+      }); */
     } else if (mode === "save-and-go-back") {
-      dbUpdateMedicine(db, { dbId: 1, ...medicineValidated });
       navigation.goBack();
     } else {
       // mode === "one-time"
-      navigation.navigate("EditSingleDosageScreen", {
-        medicine: medicineValidated,
+      navigation.navigate("EditSingleMeasurmentScreen", {
+        assessment: assessmentValidated,
       });
-    } */
+    }
   };
 
   return (
