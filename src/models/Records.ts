@@ -31,7 +31,7 @@ export class ScheduledMeasurmentRecord {
     public value: AssessmentValue,
   ) {}
 }
-1
+
 export class UnscheduledMeasurmentRecord {
   constructor(
     public dbId: number,

@@ -15,7 +15,13 @@ import {
   UnscheduledDosageRecord,
   UnscheduledMeasurmentRecord,
 } from "./Records";
-import { Assessment, AssessmentType, NumericValueDomain, TextValueDomain, ValueDomain } from "./AssessmentSchedule";
+import {
+  Assessment,
+  AssessmentType,
+  NumericValueDomain,
+  TextValueDomain,
+  ValueDomain,
+} from "./AssessmentSchedule";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -87,7 +93,7 @@ interface UncheduledMeasurmentRecordRow {
   assessment: number;
   value: string;
   group_: number | null;
-  assessment_type: AssessmentType,
+  assessment_type: AssessmentType;
 }
 
 function parseActiveIngredients(json: string) {
@@ -113,7 +119,10 @@ function parseValueDomain(json: string | null, assessmentType: AssessmentType) {
   }
 }
 
-function parseAssessmentValue(value: string, assessmentType: AssessmentType): AssessmentValue {
+function parseAssessmentValue(
+  value: string,
+  assessmentType: AssessmentType,
+): AssessmentValue {
   switch (assessmentType) {
     case AssessmentType.Numeric:
       return Number.parseFloat(value);
@@ -538,7 +547,8 @@ export async function dbInsertGroup(
   },
 ): Promise<number> {
   const db_insert = await db.runAsync(
-    "INSERT INTO groups (name, color, is_reminder_on, reminder_time) VALUES (?, ?, ?, ?)",
+    `INSERT INTO groups 
+    (name, color, is_reminder_on, reminder_time) VALUES (?, ?, ?, ?)`,
     group.name,
     group.color,
     group.isReminderOn ? 1 : 0,
@@ -631,7 +641,8 @@ export async function dbInsertUnscheduledMeasurmentRecord(
   },
 ): Promise<number> {
   const result = await db.runAsync(
-    "INSERT INTO unscheduled_measurment_records (record_date, date, assessment, value, group_) VALUES (?, ?, ?, ?, ?)",
+    `INSERT INTO unscheduled_measurment_records 
+    (record_date, date, assessment, value, group_) VALUES (?, ?, ?, ?, ?)`,
     new Date().toISOString(),
     extractDate(record.date),
     record.assessmentId,
@@ -641,37 +652,37 @@ export async function dbInsertUnscheduledMeasurmentRecord(
   return result.lastInsertRowId;
 }
 
-
 export async function dbGetUnscheduledMeasurmentRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
 ): Promise<UnscheduledMeasurmentRecord[]> {
   let queryStr = `SELECT r.*, a.type as assessment_type
-  FROM unscheduled_dosage_records as r
-  JOIN assessments as a ON r.assessmentId = a.id,
-  `;
+  FROM unscheduled_measurment_records as r
+  JOIN assessments as a ON r.assessment = a.id`;
 
   queryStr += getDateFilterClause(startDate, endDate);
 
   const rows = await db.getAllAsync<UncheduledMeasurmentRecordRow>(queryStr);
-  return rows.map(
-    (row) => {
-      const value = parseAssessmentValue(row.value, AssessmentType[row.assessment_type])
-      return new UnscheduledMeasurmentRecord(
-        row.id,
-        new Date(row.record_date),
-        new Date(row.date),
-        row.assessment,
-        value,
-        row.group_,
-      )
-    }
-
-  );
+  return rows.map((row) => {
+    const value = parseAssessmentValue(
+      row.value,
+      AssessmentType[row.assessment_type],
+    );
+    return new UnscheduledMeasurmentRecord(
+      row.id,
+      new Date(row.record_date),
+      new Date(row.date),
+      row.assessment,
+      value,
+      row.group_,
+    );
+  });
 }
 
-export async function dbGetAssessments(db: SQLiteDatabase): Promise<Assessment[]> {
+export async function dbGetAssessments(
+  db: SQLiteDatabase,
+): Promise<Assessment[]> {
   const rows = await db.getAllAsync<AssessmentRow>(`
       SELECT id, name, type, value_domain
       FROM assessments
@@ -679,12 +690,9 @@ export async function dbGetAssessments(db: SQLiteDatabase): Promise<Assessment[]
 
   return rows.map((row) => {
     const assessmentType = AssessmentType[row.type];
-    const valueDomain = row.value_domain ? null : parseValueDomain(row.value_domain, assessmentType);
-    return new Assessment(
-      row.name,
-      assessmentType,
-      valueDomain,
-      row.id,
-    );
+    const valueDomain = row.value_domain
+      ? null
+      : parseValueDomain(row.value_domain, assessmentType);
+    return new Assessment(row.name, assessmentType, valueDomain, row.id);
   });
 }

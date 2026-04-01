@@ -17,8 +17,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     return;
   }
   if (currentDbVersion === 0) {
-    db.withTransactionAsync(async () => {
-      await db.execAsync(`
+    await db.execAsync(`
       PRAGMA journal_mode = 'wal';
 
       CREATE TABLE medicines (id INTEGER PRIMARY KEY NOT NULL,
@@ -73,12 +72,10 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       INSERT INTO groups (name, color) VALUES ("Evening", "#2f39c9ff");
 
     `);
-    });
     currentDbVersion = 1;
   }
   if (currentDbVersion === 1) {
-    db.withTransactionAsync(async () => {
-      await db.execAsync(`
+    await db.execAsync(`
       CREATE TABLE assessments (id INTEGER PRIMARY KEY NOT NULL,
       name TEXT NOT NULL,
       type TEXT NOT NULL,
@@ -119,10 +116,9 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(assessment) REFERENCES assessments(id));
     `);
-    });
     currentDbVersion = 2;
   }
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-export const DATABASE_NAME: string = "main1.db";
+export const DATABASE_NAME: string = "main5.db";

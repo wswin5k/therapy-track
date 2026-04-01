@@ -355,11 +355,8 @@ export function Home() {
   }, [date, db]);
 
   const loadUnscheduledMeasurmentRecords = React.useCallback(async () => {
-    const unscheduledMeasurmentRecords = await dbGetUnscheduledMeasurmentRecords(
-      db,
-      date,
-      date,
-    );
+    const unscheduledMeasurmentRecords =
+      await dbGetUnscheduledMeasurmentRecords(db, date, date);
 
     const assessmentsMap = new Map<number, Assessment>();
     const assessments = await dbGetAssessments(db);
@@ -416,7 +413,12 @@ export function Home() {
       loadScheduledDosages();
       loadUnscheduledRecords();
       loadUnscheduledMeasurmentRecords();
-    }, [loadGroups, loadScheduledDosages, loadUnscheduledRecords, loadUnscheduledMeasurmentRecords]),
+    }, [
+      loadGroups,
+      loadScheduledDosages,
+      loadUnscheduledRecords,
+      loadUnscheduledMeasurmentRecords,
+    ]),
   );
 
   React.useEffect(() => {
@@ -506,7 +508,7 @@ export function Home() {
           ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
           : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
     },
-/*     {
+    /*     {
       label: "Schedule Assessment",
       onPress: () => {
         navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
