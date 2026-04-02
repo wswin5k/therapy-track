@@ -281,7 +281,7 @@ export function EditMedicineScreen() {
     }
 
     if (mode === "schedule") {
-      navigation.navigate("EditScheduleScreen", {
+      navigation.navigate("EditMedicineScheduleScreen", {
         medicine: medicineValidated,
       });
     } else if (mode === "save-and-go-back") {

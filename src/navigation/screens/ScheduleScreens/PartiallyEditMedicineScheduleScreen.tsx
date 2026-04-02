@@ -10,7 +10,7 @@ import {
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { Schedule } from "../../models/MedicineSchedule";
+import { Schedule } from "../../../models/MedicineSchedule";
 import {
   useFocusEffect,
   useNavigation,
@@ -18,10 +18,10 @@ import {
   useTheme,
 } from "@react-navigation/native";
 import { useSQLiteContext } from "expo-sqlite";
-import { dbGetSchedule, dbUpdateSchedule } from "../../models/dbAccess";
-import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { dbGetSchedule, dbUpdateSchedule } from "../../../models/dbAccess";
+import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 
-export default function PartiallyEditScheduleScreen() {
+export default function PartiallyEditMedicineScheduleScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();

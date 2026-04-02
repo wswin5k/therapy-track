@@ -10,13 +10,13 @@ import {
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import SmallNumberStepper from "../../components/SmallNumberStepper";
-import { Group } from "../../models/Frequency";
+import SmallNumberStepper from "../../../components/SmallNumberStepper";
+import { Group } from "../../../models/Frequency";
 import {
   Frequency,
   FrequencySelection,
   IntervalUnit,
-} from "../../models/Frequency";
+} from "../../../models/Frequency";
 import {
   useFocusEffect,
   useNavigation,
@@ -24,20 +24,20 @@ import {
   useTheme,
 } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { MedicineParam, RootStackParamList } from "..";
+import { MedicineParam, RootStackParamList } from "../..";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   dbGetGroups,
   dbInsertSchedule,
   dbInsertScheduleWithMedicine,
-} from "../../models/dbAccess";
-import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { DropdownPicker } from "../../components/DropdownPicker";
+} from "../../../models/dbAccess";
+import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
+import { DropdownPicker } from "../../../components/DropdownPicker";
 import {
   baseUnitToDoseHeader,
   frequencySelectionToDisplayForm,
-} from "../enumMappings";
-import { ModalPicker } from "../../components/ModalPicker";
+} from "../../enumMappings";
+import { ModalPicker } from "../../../components/ModalPicker";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
@@ -63,15 +63,15 @@ function assingDefaultGroups(groups: Group[]): Map<number, number> {
   return doseIdxToGroup;
 }
 
-type EditScheduleScreenNavigationProp = NativeStackNavigationProp<
+type EditMedicineScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "EditScheduleScreen"
+  "EditMedicineScheduleScreen"
 >;
 
-export default function EditScheduleScreen() {
+export default function EditMedicineScheduleScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigation = useNavigation<EditScheduleScreenNavigationProp>();
+  const navigation = useNavigation<EditMedicineScheduleScreenNavigationProp>();
   const route = useRoute();
   const db = useSQLiteContext();
 

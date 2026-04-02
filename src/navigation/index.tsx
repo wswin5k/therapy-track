@@ -11,13 +11,13 @@ import type {
   BaseUnit,
   Medicine,
 } from "../models/MedicineSchedule";
-import EditScheduleScreen from "./screens/EditScheduleScreen";
+import EditMedicineScheduleScreen from "./screens/ScheduleScreens/EditMedicineScheduleScreen";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
 import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
-import PartiallyEditScheduleScreen from "./screens/PartiallyEditScheduleScreen";
+import PartiallyEditMedicineScheduleScreen from "./screens/ScheduleScreens/PartiallyEditMedicineScheduleScreen";
 import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
 import {
@@ -55,10 +55,10 @@ export type RootStackParamList = {
   SelectMedicineScreen:
     | { mode: "schedule" | "one-time"; selectedDate?: string }
     | undefined;
-  EditScheduleScreen: {
+  EditMedicineScheduleScreen: {
     medicine: MedicineParam;
   };
-  PartiallyEditScheduleScreen: {
+  PartiallyEditMedicineScheduleScreen: {
     scheduleId: number;
   };
   EditSingleDosageScreen: {
@@ -198,15 +198,15 @@ const RootStack = createNativeStackNavigator({
         title: "Edit assessment",
       },
     },
-    EditScheduleScreen: {
-      screen: EditScheduleScreen,
+    EditMedicineScheduleScreen: {
+      screen: EditMedicineScheduleScreen,
       options: {
         presentation: "modal",
         title: "Edit schedule",
       },
     },
-    PartiallyEditScheduleScreen: {
-      screen: PartiallyEditScheduleScreen,
+    PartiallyEditMedicineScheduleScreen: {
+      screen: PartiallyEditMedicineScheduleScreen,
       options: {
         presentation: "modal",
         title: "Edit schedule dates",

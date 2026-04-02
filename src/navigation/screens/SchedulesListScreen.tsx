@@ -27,7 +27,7 @@ import { baseUnitToSingularShortForm } from "../enumMappings";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "EditScheduleScreen"
+  "EditMedicineScheduleScreen"
 >;
 
 function ScheduleListItem({
@@ -66,7 +66,7 @@ function ScheduleListItem({
   };
 
   const handleEdit = () => {
-    navigation.navigate("PartiallyEditScheduleScreen", {
+    navigation.navigate("PartiallyEditMedicineScheduleScreen", {
       scheduleId: schedule.dbId,
     });
   };

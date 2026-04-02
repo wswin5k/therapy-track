@@ -53,7 +53,7 @@ export function SelectMedicineScreen() {
       return;
     }
     if (mode === "schedule") {
-      navigation.navigate("EditScheduleScreen", {
+      navigation.navigate("EditMedicineScheduleScreen", {
         medicine: medicine,
       });
     } else {

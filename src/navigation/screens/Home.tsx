@@ -600,12 +600,12 @@ export function Home() {
           ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
           : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
     },
-    /*     {
+    {
       label: "Schedule Assessment",
       onPress: () => {
         navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
       },
-    }, */
+    },
     {
       label: "One-off Assessment",
       onPress: () => {
