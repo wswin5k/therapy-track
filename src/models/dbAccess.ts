@@ -618,10 +618,10 @@ export async function dbInsertAssessment(
   assessment: {
     name: string;
     type: AssessmentType;
-    value_domain: ValueDomain;
+    valueDomain: ValueDomain;
   },
 ): Promise<number> {
-  const valueDomainStr = JSON.stringify(assessment.value_domain);
+  const valueDomainStr = JSON.stringify(assessment.valueDomain);
   const db_insert = await db.runAsync(
     "INSERT INTO assessments (name, type, value_domain) VALUES (?, ?, ?)",
     assessment.name,
@@ -705,4 +705,43 @@ export async function dbDeleteUnscheduledMeasurmentRecord(
     "DELETE FROM unscheduled_measurment_records WHERE id = ?",
     recordId,
   );
+}
+
+export async function dbInsertAssessmentSchedule(
+  db: SQLiteDatabase,
+  assessmentId: number,
+  schedule: {
+    startDate: Date;
+    endDate: Date | null;
+    freq: Frequency;
+  },
+) {
+  const freqJson = JSON.stringify(schedule.freq);
+  const startDateStr = schedule.startDate.toISOString();
+  const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
+
+  await db.runAsync(
+    "INSERT INTO assessment_schedules (assessment, start_date, end_date, freq) VALUES (?, ?, ?, ?)",
+    assessmentId,
+    startDateStr,
+    endDateStr,
+    freqJson,
+  );
+}
+
+export async function dbInsertAssessmentScheduleWithMedicine(
+  db: SQLiteDatabase,
+  assessment: {
+    name: string;
+    type: AssessmentType;
+    valueDomain: ValueDomain;
+  },
+  schedule: {
+    startDate: Date;
+    endDate: Date | null;
+    freq: Frequency;
+  },
+) {
+  const assessmentId = await dbInsertAssessment(db, assessment);
+  await dbInsertAssessmentSchedule(db, assessmentId, schedule);
 }

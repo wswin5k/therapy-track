@@ -27,6 +27,7 @@ import {
 } from "../models/AssessmentSchedule";
 import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
 import { EditSingleMeasurmentScreen } from "./screens/EditSingleMeasurmentScreen";
+import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
 
 export interface MedicineParam {
   name: string;
@@ -38,7 +39,7 @@ export interface MedicineParam {
 export interface AssessmentParam {
   name: string;
   type: AssessmentType;
-  value_domain: ValueDomain;
+  valueDomain: ValueDomain;
   dbId?: number;
 }
 
@@ -57,6 +58,9 @@ export type RootStackParamList = {
     | undefined;
   EditMedicineScheduleScreen: {
     medicine: MedicineParam;
+  };
+  EditAssessmentScheduleScreen: {
+    assessment: AssessmentParam;
   };
   PartiallyEditMedicineScheduleScreen: {
     scheduleId: number;
@@ -200,6 +204,13 @@ const RootStack = createNativeStackNavigator({
     },
     EditMedicineScheduleScreen: {
       screen: EditMedicineScheduleScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit schedule",
+      },
+    },
+    EditAssessmentScheduleScreen: {
+      screen: EditAssessmentScheduleScreen,
       options: {
         presentation: "modal",
         title: "Edit schedule",

@@ -102,9 +102,9 @@ export function EditAssessmentScreen() {
       return;
     }
     if (mode === "schedule") {
-      /*       navigation.navigate("EditScheduleScreen", {
-        medicine: medicineValidated,
-      }); */
+      navigation.navigate("EditAssessmentScheduleScreen", {
+        assessment: assessmentValidated,
+      });
     } else if (mode === "save-and-go-back") {
       navigation.goBack();
     } else {
