@@ -453,11 +453,11 @@ export async function dbInsertUnscheduledDosageRecord(
 
 export async function dbDeleteUnscheduledDosageRecord(
   db: SQLiteDatabase,
-  intakeRecordId: number,
+  recordId: number,
 ) {
   await db.runAsync(
     "DELETE FROM unscheduled_dosage_records WHERE id = ?",
-    intakeRecordId,
+    recordId,
   );
 }
 
@@ -695,4 +695,14 @@ export async function dbGetAssessments(
       : parseValueDomain(row.value_domain, assessmentType);
     return new Assessment(row.name, assessmentType, valueDomain, row.id);
   });
+}
+
+export async function dbDeleteUnscheduledMeasurmentRecord(
+  db: SQLiteDatabase,
+  recordId: number,
+) {
+  await db.runAsync(
+    "DELETE FROM unscheduled_measurment_records WHERE id = ?",
+    recordId,
+  );
 }

@@ -25,6 +25,7 @@ import {
   dbDeleteUnscheduledDosageRecord,
   dbGetUnscheduledMeasurmentRecords,
   dbGetAssessments,
+  dbDeleteUnscheduledMeasurmentRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
@@ -206,6 +207,97 @@ function UnscheduledDosage({
   );
 }
 
+function UnscheduledMeasurment({
+  measurment,
+  bottomBorder,
+  loadUnscheduledRecords,
+}: {
+  measurment: UnscheduledMeasurmentInfo;
+  bottomBorder: boolean;
+  loadUnscheduledRecords: () => void;
+}) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const db = useSQLiteContext();
+
+  const [optionsOpened, setOptionsOpened] = React.useState<boolean>(false);
+
+  const handleOptionsToggle = () => {
+    setOptionsOpened(!optionsOpened);
+  };
+
+  const handleDelete = async () => {
+    await dbDeleteUnscheduledMeasurmentRecord(
+      db,
+      measurment.measurmentRecordId,
+    );
+    loadUnscheduledRecords();
+  };
+
+  const renderOptions = () => (
+    <TouchableOpacity
+      style={[styles.optionsOverlay, { zIndex: 1, position: "absolute" }]}
+      onPress={handleOptionsToggle}
+    >
+      <TouchableOpacity
+        style={[styles.optionsButton, { backgroundColor: theme.colors.error }]}
+        onPress={handleDelete}
+      >
+        <Text style={styles.optionsButtonText}>{t("Delete")}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          styles.optionsButton,
+          { backgroundColor: theme.colors.primary },
+        ]}
+        onPress={handleOptionsToggle}
+      >
+        <Text style={styles.optionsButtonText}>{t("Cancel")}</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View>
+      {optionsOpened && renderOptions()}
+      <TouchableOpacity
+        key={measurment.measurmentRecordId}
+        style={[
+          styles.scheduleItem,
+          {
+            borderColor: theme.colors.border,
+            filter: optionsOpened ? "blur(4px), opacity(50%)" : "opacity(50%)",
+            borderBottomWidth: bottomBorder ? 2 : 0,
+          },
+        ]}
+        onLongPress={handleOptionsToggle}
+      >
+        <View style={[styles.scheduleContent, { flex: 5 }]}>
+          <Text
+            style={[
+              styles.contentText,
+              {
+                textDecorationLine: "line-through",
+                color: theme.colors.text,
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {measurment.assessmentName}
+            {"  –  "}
+            {t("assessment")}
+          </Text>
+          <Ionicons
+            name="checkmark-circle"
+            size={24}
+            color={theme.colors.success}
+          />
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export function Home() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeNavigationProp>();
@@ -229,7 +321,7 @@ export function Home() {
     Map<number | null, UnscheduledDosageInfo[]>
   >(new Map());
   const [unscheduledMeasurements, setUnscheduledMeasurments] = React.useState<
-    Map<number | null, UnscheduledDosageInfo[]>
+    Map<number | null, UnscheduledMeasurmentInfo[]>
   >(new Map());
 
   const [isScheduledEmpty, setIsScheduledEmpty] = React.useState<boolean>(true);
@@ -312,7 +404,7 @@ export function Home() {
     setIsDosageDone(newIsDosageDone);
   }, [date, db]);
 
-  const loadUnscheduledRecords = React.useCallback(async () => {
+  const loadUnscheduledDosageRecords = React.useCallback(async () => {
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(
       db,
       date,
@@ -411,12 +503,12 @@ export function Home() {
     React.useCallback(() => {
       loadGroups();
       loadScheduledDosages();
-      loadUnscheduledRecords();
+      loadUnscheduledDosageRecords();
       loadUnscheduledMeasurmentRecords();
     }, [
       loadGroups,
       loadScheduledDosages,
-      loadUnscheduledRecords,
+      loadUnscheduledDosageRecords,
       loadUnscheduledMeasurmentRecords,
     ]),
   );
@@ -599,29 +691,40 @@ export function Home() {
   const getUnscheduledDosages = (groupId?: number) =>
     unscheduledDosages.get(groupId ?? null);
 
-  const renderUnscheduledDosages = (group?: Group) => {
+  const getUnscheduledMeasurments = (groupId?: number) =>
+    unscheduledMeasurements.get(groupId ?? null);
+
+  const renderUnscheduled = (group?: Group) => {
     const dosages = getUnscheduledDosages(group?.dbId);
+    const measurments = getUnscheduledMeasurments(group?.dbId);
     const lastIdx = dosages?.length ? dosages.length - 1 : 0;
-    if (dosages) {
-      return (
-        <>
-          <Text
-            style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
-          >
-            Unscheduled
-          </Text>
-          {dosages.map((di, idx) => (
+    return (
+      <>
+        <Text style={[styles.modeLabel, { color: theme.colors.textSecondary }]}>
+          Unscheduled
+        </Text>
+        {dosages &&
+          dosages.map((di, idx) => (
             <View key={di.dosageRecordId}>
               <UnscheduledDosage
                 dosage={di}
                 bottomBorder={idx !== lastIdx}
-                loadUnscheduledRecords={loadUnscheduledRecords}
+                loadUnscheduledRecords={loadUnscheduledDosageRecords}
               />
             </View>
           ))}
-        </>
-      );
-    }
+        {measurments &&
+          measurments.map((di, idx) => (
+            <View key={di.measurmentRecordId}>
+              <UnscheduledMeasurment
+                measurment={di}
+                bottomBorder={idx !== lastIdx}
+                loadUnscheduledRecords={loadUnscheduledMeasurmentRecords}
+              />
+            </View>
+          ))}
+      </>
+    );
   };
 
   const renderEmptyState = () => (
@@ -647,7 +750,8 @@ export function Home() {
         {[...groups.values()].map(
           (group) =>
             (getUnscheduledDosages(group.dbId) ||
-              getScheduledDosages(group.dbId)) && (
+              getScheduledDosages(group.dbId) ||
+              getUnscheduledMeasurments(group.dbId)) && (
               <LinearGradient
                 key={group.dbId}
                 colors={[theme.colors.card, theme.colors.card]}
@@ -664,11 +768,13 @@ export function Home() {
                   {group.name}
                 </Text>
                 {renderScheduledDosages(group)}
-                {renderUnscheduledDosages(group)}
+                {renderUnscheduled(group)}
               </LinearGradient>
             ),
         )}
-        {(getUnscheduledDosages() || getScheduledDosages()) && (
+        {(getUnscheduledDosages() ||
+          getScheduledDosages() ||
+          getUnscheduledMeasurments()) && (
           <LinearGradient
             key={-1}
             colors={[theme.colors.card, theme.colors.card, theme.colors.card]}
@@ -685,7 +791,7 @@ export function Home() {
               </Text>
             )}
             {renderScheduledDosages()}
-            {renderUnscheduledDosages()}
+            {renderUnscheduled()}
           </LinearGradient>
         )}
         {isScheduledEmpty && isUnscheduledEmpty && renderEmptyState()}

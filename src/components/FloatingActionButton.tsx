@@ -124,7 +124,6 @@ export function FloatingActionButton({
           </View>
           <TouchableOpacity
             onPress={() => {
-              console.log("press");
               action.onPress();
               closeMenu();
             }}
