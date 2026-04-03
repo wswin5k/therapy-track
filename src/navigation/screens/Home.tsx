@@ -26,6 +26,10 @@ import {
   dbGetUnscheduledMeasurmentRecords,
   dbGetAssessments,
   dbDeleteUnscheduledMeasurmentRecord,
+  dbGetAssessmentSchedulesWithAssessments,
+  dbGetScheduledMeasurmentRecords,
+  dbInsertScheduledMeasurmentRecord,
+  dbDeleteScheduledMeasurmentRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
@@ -43,7 +47,8 @@ import {
 } from "../../services/notificationService";
 import { baseUnitToSingularShortForm } from "../enumMappings";
 import { AssessmentValue } from "../../models/Records";
-import { Assessment } from "../../models/AssessmentSchedule";
+import { Assessment, AssessmentType } from "../../models/AssessmentSchedule";
+import { AssessmentInputDialog } from "../../components/ValueInputDialog";
 
 class DosageInfo {
   medicineName: string;
@@ -97,6 +102,18 @@ class UnscheduledMeasurmentInfo {
     public assessmentName: string,
     public value: AssessmentValue,
     public measurmentRecordId: number,
+  ) {}
+}
+
+class ScheduledMeasurmentInfo {
+  constructor(
+    public assessmentName: string,
+    public assessmentType: AssessmentType,
+    public value: AssessmentValue | null,
+    public index: number,
+    public assessmentScheduleId: number,
+    public measurmentRecordId: number | null,
+    public groupId: number | null,
   ) {}
 }
 
@@ -298,6 +315,127 @@ function UnscheduledMeasurment({
   );
 }
 
+function ScheduledDosage({
+  dosage,
+  isDone,
+  bottomBorder,
+  handleClick,
+}: {
+  dosage: DosageInfo;
+  isDone: boolean;
+  bottomBorder: boolean;
+  handleClick: (dosage: DosageInfo) => void;
+}) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.scheduleItem,
+        {
+          borderColor: theme.colors.border,
+          filter: isDone ? "opacity(50%)" : "",
+          borderBottomWidth: bottomBorder ? 2 : 0,
+        },
+      ]}
+      onPress={() => handleClick(dosage)}
+    >
+      <View style={[styles.scheduleContent, { flex: 5 }]}>
+        <Text
+          style={[
+            styles.contentText,
+            {
+              textDecorationLine: isDone ? "line-through" : "none",
+              color: theme.colors.text,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {dosage.medicineName}
+          {"  –  "}
+          {dosage.amount}{" "}
+          {t(baseUnitToSingularShortForm[dosage.medicineBaseUnit], {
+            count: dosage.amount,
+          })}
+        </Text>
+        {isDone ? (
+          <Ionicons
+            name="checkmark-circle"
+            size={24}
+            color={theme.colors.success}
+          />
+        ) : (
+          <Ionicons
+            name="ellipse"
+            size={24}
+            color={theme.colors.textTertiary}
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function ScheduledMeasurment({
+  measurment,
+  isDone,
+  bottomBorder,
+  handleClick,
+}: {
+  measurment: ScheduledMeasurmentInfo;
+  isDone: boolean;
+  bottomBorder: boolean;
+  handleClick: (measurment: ScheduledMeasurmentInfo) => void;
+}) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.scheduleItem,
+        {
+          borderColor: theme.colors.border,
+          filter: isDone ? "opacity(50%)" : "",
+          borderBottomWidth: bottomBorder ? 2 : 0,
+        },
+      ]}
+      onPress={() => handleClick(measurment)}
+    >
+      <View style={[styles.scheduleContent, { flex: 5 }]}>
+        <Text
+          style={[
+            styles.contentText,
+            {
+              textDecorationLine: isDone ? "line-through" : "none",
+              color: theme.colors.text,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {measurment.assessmentName}
+          {"  –  "}
+          {t("assessment")}
+        </Text>
+        {isDone ? (
+          <Ionicons
+            name="checkmark-circle"
+            size={24}
+            color={theme.colors.success}
+          />
+        ) : (
+          <Ionicons
+            name="ellipse"
+            size={24}
+            color={theme.colors.textTertiary}
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export function Home() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeNavigationProp>();
@@ -323,6 +461,14 @@ export function Home() {
   const [unscheduledMeasurements, setUnscheduledMeasurments] = React.useState<
     Map<number | null, UnscheduledMeasurmentInfo[]>
   >(new Map());
+  const [scheduledMeasurments, setScheduledMeasurments] = React.useState<
+    Map<number | null, ScheduledMeasurmentInfo[]>
+  >(new Map());
+  const [scheduledMeasurmentsValues, setScheduledMeasurmentValues] =
+    React.useState<Map<number, AssessmentValue>>(new Map());
+
+  const [clickedScheduledMeasurment, setClickedScheduledMeasurment] =
+    React.useState<ScheduledMeasurmentInfo | null>(null);
 
   const [isScheduledEmpty, setIsScheduledEmpty] = React.useState<boolean>(true);
   const [isUnscheduledEmpty, setIsUnscheduledEmpty] =
@@ -393,7 +539,7 @@ export function Home() {
       }
     }
     setScheduledDosages(newScheduledDosages);
-    setIsScheduledEmpty(newIsEmpty);
+    if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     const newIsDosageDone = new Map<number, boolean>();
@@ -402,6 +548,80 @@ export function Home() {
       newIsDosageDone.set(key, true);
     });
     setIsDosageDone(newIsDosageDone);
+  }, [date, db]);
+
+  const loadScheduledMeasurments = React.useCallback(async () => {
+    const result = await dbGetAssessmentSchedulesWithAssessments(db);
+    const selectedTime = date.getTime();
+    const schedulesToday = result.filter((s) => {
+      const timeMatch =
+        s.startDate.getTime() <= selectedTime &&
+        (!s.endDate || (s.endDate && selectedTime <= s.endDate.getTime()));
+
+      let dayFreqMatch = true;
+      if (s.freq.intervalUnit === "week") {
+        const dayDiff = dayDifference(date, s.startDate);
+        if (dayDiff % (s.freq.intervalLength * 7) !== 0) {
+          dayFreqMatch = false;
+        }
+      }
+
+      return timeMatch && dayFreqMatch;
+    });
+
+    let newIsEmpty = true;
+    let newAreGroupsEmpty = true;
+
+    const measurmentRecords = await dbGetScheduledMeasurmentRecords(
+      db,
+      date,
+      date,
+    );
+
+    let newScheduledMeasurments = new Map<
+      number | null,
+      ScheduledMeasurmentInfo[]
+    >();
+    for (const s of schedulesToday) {
+      for (const measurment of s.measurments) {
+        const groupId = measurment.groupId;
+        const groupMeasurments = newScheduledMeasurments.get(groupId) || [];
+        const measurmentRecord = measurmentRecords.find(
+          (mr) =>
+            mr.assessmentScheduleId === s.dbId &&
+            mr.measurmentIndex === measurment.index,
+        );
+        const measurmentRecordId = measurmentRecord
+          ? measurmentRecord.dbId
+          : null;
+        groupMeasurments.push(
+          new ScheduledMeasurmentInfo(
+            s.assessment.name,
+            s.assessment.type,
+            measurmentRecord ? measurmentRecord.value : null,
+            measurment.index,
+            s.dbId,
+            measurmentRecordId,
+            groupId,
+          ),
+        );
+        newIsEmpty = false;
+        if (groupId !== null) {
+          newAreGroupsEmpty = false;
+        }
+        newScheduledMeasurments.set(groupId, groupMeasurments);
+      }
+    }
+    setScheduledMeasurments(newScheduledMeasurments);
+    if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
+    if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
+
+    const newScheduledMeasurmentsValues = new Map<number, AssessmentValue>();
+    measurmentRecords.forEach((mr) => {
+      const key = pair(mr.assessmentScheduleId, mr.measurmentIndex);
+      newScheduledMeasurmentsValues.set(key, mr.value);
+    });
+    setScheduledMeasurmentValues(newScheduledMeasurmentsValues);
   }, [date, db]);
 
   const loadUnscheduledDosageRecords = React.useCallback(async () => {
@@ -440,7 +660,7 @@ export function Home() {
       newUnscheduledDosageInfos.set(dr.groupId, groupDosages);
     });
 
-    setIsUnscheduledEmpty(newIsEmpty && isUnscheduledEmpty);
+    if (!newIsEmpty) setIsUnscheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     setUnscheduledDosages(newUnscheduledDosageInfos);
@@ -474,7 +694,7 @@ export function Home() {
       newUnscheduledMeasurmentInfos.set(mr.groupId, groupDosages);
     });
 
-    setIsUnscheduledEmpty(newIsEmpty && isUnscheduledEmpty);
+    if (!newIsEmpty) setIsUnscheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
     setUnscheduledMeasurments(newUnscheduledMeasurmentInfos);
@@ -504,11 +724,13 @@ export function Home() {
       loadGroups();
       loadScheduledDosages();
       loadUnscheduledDosageRecords();
+      loadScheduledMeasurments();
       loadUnscheduledMeasurmentRecords();
     }, [
       loadGroups,
       loadScheduledDosages,
       loadUnscheduledDosageRecords,
+      loadScheduledMeasurments,
       loadUnscheduledMeasurmentRecords,
     ]),
   );
@@ -526,7 +748,7 @@ export function Home() {
     });
   }, [navigation, theme.colors]);
 
-  const handleCheck = async (dosage: DosageInfo) => {
+  const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
       await dbDeleteScheduledDosageRecord(db, dosage.dosageRecordId);
 
@@ -573,6 +795,46 @@ export function Home() {
     }
   };
 
+  const handleMeasurmentClick = (measurment: ScheduledMeasurmentInfo) => {
+    setClickedScheduledMeasurment(measurment);
+  };
+
+  const handleMeasurmentInputCancel = () => {
+    setClickedScheduledMeasurment(null);
+  };
+
+  const handleMeasurmentInputSave = async (value: AssessmentValue) => {
+    if (clickedScheduledMeasurment) {
+      if (clickedScheduledMeasurment.measurmentRecordId) {
+        await dbDeleteScheduledMeasurmentRecord(
+          db,
+          clickedScheduledMeasurment.measurmentRecordId,
+        );
+      }
+      const measurmentRecordId = await dbInsertScheduledMeasurmentRecord(db, {
+        date,
+        assessmentScheduleId: clickedScheduledMeasurment.assessmentScheduleId,
+        measurmentIndex: clickedScheduledMeasurment.index,
+        value,
+      });
+
+      clickedScheduledMeasurment.measurmentRecordId = measurmentRecordId;
+      clickedScheduledMeasurment.value = value;
+
+      const newScheduledMeasurmentsValues = new Map(scheduledMeasurmentsValues);
+      newScheduledMeasurmentsValues.set(
+        pair(
+          clickedScheduledMeasurment.assessmentScheduleId,
+          clickedScheduledMeasurment.index,
+        ),
+        value,
+      );
+      setScheduledMeasurmentValues(newScheduledMeasurmentsValues);
+    }
+
+    setClickedScheduledMeasurment(null);
+  };
+
   const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
     setIsDatePickerOpened(false);
     if (event.type === "dismissed") {
@@ -614,78 +876,56 @@ export function Home() {
     },
   ];
 
-  const renderScheduledDosage = (dosage: DosageInfo, bottomBorder: boolean) => {
-    const isDone = isDosageDone.get(pair(dosage.scheduleId, dosage.index));
-
-    return (
-      <TouchableOpacity
-        style={[
-          styles.scheduleItem,
-          {
-            borderColor: theme.colors.border,
-            filter: isDone ? "opacity(50%)" : "",
-            borderBottomWidth: bottomBorder ? 2 : 0,
-          },
-        ]}
-        onPress={() => handleCheck(dosage)}
-      >
-        <View style={[styles.scheduleContent, { flex: 5 }]}>
-          <Text
-            style={[
-              styles.contentText,
-              {
-                textDecorationLine: isDone ? "line-through" : "none",
-                color: theme.colors.text,
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {dosage.medicineName}
-            {"  –  "}
-            {dosage.amount}{" "}
-            {t(baseUnitToSingularShortForm[dosage.medicineBaseUnit], {
-              count: dosage.amount,
-            })}
-          </Text>
-          {isDone ? (
-            <Ionicons
-              name="checkmark-circle"
-              size={24}
-              color={theme.colors.success}
-            />
-          ) : (
-            <Ionicons
-              name="ellipse"
-              size={24}
-              color={theme.colors.textTertiary}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   const getScheduledDosages = (groupId?: number) =>
     scheduledDosages.get(groupId ?? null);
+  const getScheduledMeasurments = (groupId?: number) =>
+    scheduledMeasurments.get(groupId ?? null);
 
   const renderScheduledDosages = (group?: Group) => {
     const dosages = getScheduledDosages(group?.dbId);
-    const lastIdx = dosages?.length ? dosages.length - 1 : 0;
-    if (dosages) {
-      return (
-        <>
+    const measurments = getScheduledMeasurments(group?.dbId);
+    const lastIdx = measurments
+      ? measurments.length - 1
+      : dosages?.length
+        ? dosages.length - 1
+        : 0;
+    return (
+      <>
+        {(dosages || measurments) && (
           <Text style={[styles.modeLabel, { color: theme.colors.text }]}>
-            Scheduled dosages
+            Scheduled
           </Text>
-          {dosages.map((di, idx) => (
+        )}
+        {dosages &&
+          dosages.map((di, idx) => (
             <View key={pair(di.scheduleId, di.index)}>
-              {renderScheduledDosage(di, idx !== lastIdx)}
+              <ScheduledDosage
+                dosage={di}
+                isDone={
+                  isDosageDone.get(pair(di.scheduleId, di.index)) ?? false
+                }
+                bottomBorder={!(!measurments && idx === lastIdx)}
+                handleClick={handleDosageClick}
+              />
             </View>
           ))}
-        </>
-      );
-    }
-    return "";
+        {measurments &&
+          measurments.map((mi, idx) => (
+            <View key={pair(mi.assessmentScheduleId, mi.index)}>
+              <ScheduledMeasurment
+                measurment={mi}
+                isDone={
+                  scheduledMeasurmentsValues.get(
+                    pair(mi.assessmentScheduleId, mi.index),
+                  ) !== undefined
+                }
+                bottomBorder={!(idx === lastIdx)}
+                handleClick={handleMeasurmentClick}
+              />
+            </View>
+          ))}
+      </>
+    );
   };
 
   const getUnscheduledDosages = (groupId?: number) =>
@@ -697,18 +937,26 @@ export function Home() {
   const renderUnscheduled = (group?: Group) => {
     const dosages = getUnscheduledDosages(group?.dbId);
     const measurments = getUnscheduledMeasurments(group?.dbId);
-    const lastIdx = dosages?.length ? dosages.length - 1 : 0;
+    const lastIdx = measurments
+      ? measurments.length - 1
+      : dosages?.length
+        ? dosages.length - 1
+        : 0;
     return (
       <>
-        <Text style={[styles.modeLabel, { color: theme.colors.textSecondary }]}>
-          Unscheduled
-        </Text>
+        {(dosages || measurments) && (
+          <Text
+            style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
+          >
+            Unscheduled
+          </Text>
+        )}
         {dosages &&
           dosages.map((di, idx) => (
             <View key={di.dosageRecordId}>
               <UnscheduledDosage
                 dosage={di}
-                bottomBorder={idx !== lastIdx}
+                bottomBorder={!(!measurments && idx === lastIdx)}
                 loadUnscheduledRecords={loadUnscheduledDosageRecords}
               />
             </View>
@@ -718,7 +966,7 @@ export function Home() {
             <View key={di.measurmentRecordId}>
               <UnscheduledMeasurment
                 measurment={di}
-                bottomBorder={idx !== lastIdx}
+                bottomBorder={!(idx === lastIdx)}
                 loadUnscheduledRecords={loadUnscheduledMeasurmentRecords}
               />
             </View>
@@ -746,12 +994,24 @@ export function Home() {
       ) : (
         ""
       )}
+      {clickedScheduledMeasurment && (
+        <AssessmentInputDialog
+          visible={clickedScheduledMeasurment !== null}
+          title={clickedScheduledMeasurment.assessmentName + " value"}
+          assessmentType={clickedScheduledMeasurment.assessmentType}
+          initialValue={clickedScheduledMeasurment.value}
+          onCancel={handleMeasurmentInputCancel}
+          onSave={handleMeasurmentInputSave}
+        />
+      )}
+
       <ScrollView style={styles.list}>
         {[...groups.values()].map(
           (group) =>
             (getUnscheduledDosages(group.dbId) ||
               getScheduledDosages(group.dbId) ||
-              getUnscheduledMeasurments(group.dbId)) && (
+              getUnscheduledMeasurments(group.dbId) ||
+              getScheduledMeasurments(group.dbId)) && (
               <LinearGradient
                 key={group.dbId}
                 colors={[theme.colors.card, theme.colors.card]}
@@ -774,7 +1034,8 @@ export function Home() {
         )}
         {(getUnscheduledDosages() ||
           getScheduledDosages() ||
-          getUnscheduledMeasurments()) && (
+          getUnscheduledMeasurments() ||
+          getScheduledMeasurments()) && (
           <LinearGradient
             key={-1}
             colors={[theme.colors.card, theme.colors.card, theme.colors.card]}

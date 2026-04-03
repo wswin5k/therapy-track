@@ -51,7 +51,7 @@ export class Assessment {
   ) {}
 }
 
-class Measurment {
+export class Measurment {
   constructor(
     public index: number,
     public offset: number | null,

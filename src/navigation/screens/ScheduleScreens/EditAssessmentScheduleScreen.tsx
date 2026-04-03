@@ -168,11 +168,20 @@ export default function EditAssessmentScheduleScreen() {
       return;
     }
 
+    const measurments = Array.from(
+      groupsRef.current.entries(),
+      ([index, groupIdx]) => {
+        const groupId = groupIdx === null ? null : groups[groupIdx].dbId;
+        return { index, offset: null, groupId };
+      },
+    );
+
     if (assessment && assessment.dbId) {
       await dbInsertAssessmentSchedule(db, assessment.dbId, {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
+        measurments,
       });
       navigation.navigate("HomeTabs");
     } else if (assessment) {
@@ -180,6 +189,7 @@ export default function EditAssessmentScheduleScreen() {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
+        measurments,
       });
       navigation.navigate("HomeTabs");
     } else {

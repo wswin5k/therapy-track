@@ -103,7 +103,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       date TEXT NOT NULL,
       assessment_schedule INTEGER,
       measurment_index INTEGER,
-      value TEXT,
+      value TEXT NOT NULL,
       FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
 
       CREATE TABLE unscheduled_measurment_records (
@@ -111,7 +111,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       record_date TEXT NOT NULL,
       date TEXT NOT NULL,
       assessment INTEGER NOT NULL,
-      value TEXT,
+      value TEXT NOT NULL,
       group_ INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(assessment) REFERENCES assessments(id));

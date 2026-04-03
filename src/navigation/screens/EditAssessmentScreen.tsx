@@ -1,5 +1,4 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
 import {
   StyleSheet,
   Text,
@@ -18,7 +17,6 @@ import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NAME_MAX_LENGHT } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { useSQLiteContext } from "expo-sqlite";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import {
   Assessment,
@@ -33,9 +31,7 @@ type EditAssessmentScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export function EditAssessmentScreen() {
-  const { t } = useTranslation();
   const route = useRoute();
-  const db = useSQLiteContext();
   const navigation = useNavigation<EditAssessmentScreenNavigationProp>();
   const theme = useTheme();
 
