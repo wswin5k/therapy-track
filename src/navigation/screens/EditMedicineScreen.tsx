@@ -22,12 +22,12 @@ import {
   ActiveIngredient,
   NAME_MAX_LENGHT,
   Medicine,
-} from "../../models/Medicine";
+} from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToUnitSelectionLabel } from "../baseUnitMappings";
+import { baseUnitToUnitSelectionLabel } from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
 
 class ActiveIngredientInfo {
@@ -281,7 +281,7 @@ export function EditMedicineScreen() {
     }
 
     if (mode === "schedule") {
-      navigation.navigate("EditScheduleScreen", {
+      navigation.navigate("EditMedicineScheduleScreen", {
         medicine: medicineValidated,
       });
     } else if (mode === "save-and-go-back") {

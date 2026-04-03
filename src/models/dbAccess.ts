@@ -1,13 +1,30 @@
 import { SQLiteDatabase } from "expo-sqlite";
-import { Schedule, Frequency, IntervalUnit, Dose, Group } from "./Schedule";
+import { Schedule, Dose } from "./MedicineSchedule";
+import { Group } from "./Frequency";
+import { Frequency, IntervalUnit } from "./Frequency";
 import {
   ActiveIngredient,
   BaseUnit,
   IngredientAmountUnit,
   Medicine,
   strKeyOfBaseUnit,
-} from "./Medicine";
-import { ScheduledDosageRecord, UnscheduledDosageRecord } from "./DosageRecord";
+} from "./MedicineSchedule";
+import {
+  AssessmentValue,
+  ScheduledDosageRecord,
+  ScheduledMeasurmentRecord,
+  UnscheduledDosageRecord,
+  UnscheduledMeasurmentRecord,
+} from "./Records";
+import {
+  Assessment,
+  AssessmentSchedule,
+  AssessmentType,
+  Measurment,
+  NumericValueDomain,
+  TextValueDomain,
+  ValueDomain,
+} from "./AssessmentSchedule";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -65,12 +82,107 @@ interface GroupRow {
   reminder_time: string | null;
 }
 
+interface AssessmentRow {
+  id: number;
+  name: string;
+  type: AssessmentType;
+  value_domain: string | null;
+}
+
+interface UncheduledMeasurmentRecordRow {
+  id: number;
+  record_date: string;
+  date: string;
+  assessment: number;
+  value: string;
+  group_: number | null;
+  assessment_type: AssessmentType;
+}
+
+interface AssessmentScheduleWithAssessmentRow {
+  id: number;
+  assessment: number;
+  assessment_name: string;
+  assessment_type: AssessmentType;
+  assessment_value_domain: string | null;
+  start_date: string;
+  end_date: string | null;
+  measurments: MeasurmentRow[];
+  freq: string;
+}
+
+interface MeasurmentRow {
+  id: number;
+  index_: number;
+  offset: number | null;
+  group_: number | null;
+}
+
+interface ScheduledMeasurmentRecordRow {
+  id: number;
+  record_date: string;
+  date: string;
+  assessment_schedule: number;
+  measurment_index: number;
+  value: string;
+  assessment_type: AssessmentType;
+}
+
 function parseActiveIngredients(json: string) {
   const aiData = JSON.parse(json);
   return aiData.map(
     (ai: { name: string; amount: number; unit: string }) =>
       new ActiveIngredient(ai.name, ai.amount, ai.unit as IngredientAmountUnit),
   );
+}
+
+function parseValueDomain(json: string | null, assessmentType: AssessmentType) {
+  if (!json) {
+    return null;
+  }
+  const vdData = JSON.parse(json);
+  switch (assessmentType) {
+    case AssessmentType.Numeric:
+      return new NumericValueDomain(vdData.min, vdData.max);
+    case AssessmentType.Text:
+      return new TextValueDomain(vdData.max_characters);
+    default:
+      return null;
+  }
+}
+
+function parseAssessmentValue(
+  value: string,
+  assessmentType: AssessmentType,
+): AssessmentValue {
+  switch (assessmentType) {
+    case AssessmentType.Numeric:
+      return Number.parseFloat(value);
+    case AssessmentType.Boolean:
+      return value === "true";
+    default:
+      return value;
+  }
+}
+
+function getDateFilterClause(startDate?: Date, endDate?: Date): string {
+  if (startDate && endDate) {
+    const startDateStr = extractDate(startDate);
+    const endDateStr = extractDate(endDate);
+    return `
+    WHERE date(date) >= '${startDateStr}'
+    AND date(date) <= '${endDateStr}'`;
+  } else if (startDate) {
+    const startDateStr = extractDate(startDate);
+    return `
+    WHERE date(date) >= '${startDateStr}'`;
+  } else if (endDate) {
+    const endDateStr = extractDate(endDate);
+    return `
+    WHERE date(date) <= '${endDateStr}'`;
+  } else {
+    return "";
+  }
 }
 
 export async function dbUpdateMedicine(
@@ -158,9 +270,42 @@ function parseScheduleWithMedicineRow(row: ScheduleWithMedicineRow): Schedule {
   return new Schedule(
     medicineData,
     new Date(row.start_date),
-    row.end_date ? new Date(row.end_date) : (null as any),
+    row.end_date ? new Date(row.end_date) : null,
     frequency,
     doses,
+    row.id,
+  );
+}
+
+function parseAssessmentScheduleWithAssessmentRow(
+  row: AssessmentScheduleWithAssessmentRow,
+): AssessmentSchedule {
+  const assessmentValueDomain = row.assessment_value_domain
+    ? null
+    : parseValueDomain(row.assessment_value_domain, row.assessment_type);
+  const assessment = new Assessment(
+    row.assessment_name,
+    row.assessment_type,
+    assessmentValueDomain,
+    row.assessment,
+  );
+  const measurments = row.measurments.map(
+    (dd: MeasurmentRow) =>
+      new Measurment(dd.index_, dd.offset, dd.group_, dd.id),
+  );
+  const freqData = JSON.parse(row.freq);
+  const frequency = new Frequency(
+    freqData.intervalUnit as IntervalUnit,
+    freqData.intervalLength,
+    freqData.numberOfDoses,
+  );
+
+  return new AssessmentSchedule(
+    assessment,
+    new Date(row.start_date),
+    row.end_date ? new Date(row.end_date) : null,
+    frequency,
+    measurments,
     row.id,
   );
 }
@@ -335,27 +480,8 @@ export async function dbGetScheduledDosageRecords(
   endDate?: Date,
 ): Promise<ScheduledDosageRecord[]> {
   let queryStr = "SELECT * FROM scheduled_dosage_records ";
-  if (startDate && endDate) {
-    const startDateStr = extractDate(startDate);
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'
-    AND date(date) <= '${endDateStr}'`;
-  } else if (startDate) {
-    const startDateStr = extractDate(startDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'`;
-  } else if (endDate) {
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) <= '${endDateStr}'`;
-  }
+
+  queryStr += getDateFilterClause(startDate, endDate);
 
   const rows = await db.getAllAsync<ScheduledDosageRecordRow>(queryStr);
   return rows.map(
@@ -366,6 +492,33 @@ export async function dbGetScheduledDosageRecords(
         new Date(row.date),
         row.schedule,
         row.dose_index,
+      ),
+  );
+}
+
+export async function dbGetScheduledMeasurmentRecords(
+  db: SQLiteDatabase,
+  startDate?: Date,
+  endDate?: Date,
+): Promise<ScheduledMeasurmentRecord[]> {
+  let queryStr = `SELECT r.*, a.type as assessment_type
+  FROM scheduled_measurment_records as r
+  JOIN assessment_schedules as s ON r.assessment_schedule = s.id
+  JOIN assessments as a ON s.assessment = a.id
+  `;
+
+  queryStr += getDateFilterClause(startDate, endDate);
+
+  const rows = await db.getAllAsync<ScheduledMeasurmentRecordRow>(queryStr);
+  return rows.map(
+    (row) =>
+      new ScheduledMeasurmentRecord(
+        row.id,
+        new Date(row.record_date),
+        new Date(row.date),
+        row.assessment_schedule,
+        row.measurment_index,
+        parseAssessmentValue(row.value, row.assessment_type),
       ),
   );
 }
@@ -392,11 +545,11 @@ export async function dbInsertUnscheduledDosageRecord(
 
 export async function dbDeleteUnscheduledDosageRecord(
   db: SQLiteDatabase,
-  intakeRecordId: number,
+  recordId: number,
 ) {
   await db.runAsync(
     "DELETE FROM unscheduled_dosage_records WHERE id = ?",
-    intakeRecordId,
+    recordId,
   );
 }
 
@@ -406,27 +559,8 @@ export async function dbGetUnscheduledDosageRecords(
   endDate?: Date,
 ): Promise<UnscheduledDosageRecord[]> {
   let queryStr = "SELECT * FROM unscheduled_dosage_records ";
-  if (startDate && endDate) {
-    const startDateStr = extractDate(startDate);
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'
-    AND date(date) <= '${endDateStr}'`;
-  } else if (startDate) {
-    const startDateStr = extractDate(startDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) >= '${startDateStr}'`;
-  } else if (endDate) {
-    const endDateStr = extractDate(endDate);
-    queryStr =
-      queryStr +
-      `
-    WHERE date(date) <= '${endDateStr}'`;
-  }
+
+  queryStr += getDateFilterClause(startDate, endDate);
 
   const rows = await db.getAllAsync<UncheduledDosageRecordRow>(queryStr);
   return rows.map(
@@ -505,7 +639,8 @@ export async function dbInsertGroup(
   },
 ): Promise<number> {
   const db_insert = await db.runAsync(
-    "INSERT INTO groups (name, color, is_reminder_on, reminder_time) VALUES (?, ?, ?, ?)",
+    `INSERT INTO groups 
+    (name, color, is_reminder_on, reminder_time) VALUES (?, ?, ?, ?)`,
     group.name,
     group.color,
     group.isReminderOn ? 1 : 0,
@@ -544,20 +679,263 @@ export async function dbGroupHasDoses(
   db: SQLiteDatabase,
   groupId: number,
 ): Promise<boolean> {
-  const result = await db.getFirstAsync<{ count: number }>(
+  const resultDoses = await db.getFirstAsync<{ count: number }>(
     "SELECT COUNT(*) as count FROM doses WHERE group_ = ?",
     groupId,
   );
-  return (result?.count ?? 0) > 0;
+  const resultMeasurments = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM measurments WHERE group_ = ?",
+    groupId,
+  );
+  return (resultDoses?.count ?? 0) > 0 || (resultMeasurments?.count ?? 0) > 0;
 }
 
 export async function dbGroupHasUnscheduledRecords(
   db: SQLiteDatabase,
   groupId: number,
 ): Promise<boolean> {
-  const result = await db.getFirstAsync<{ count: number }>(
+  const resultDosages = await db.getFirstAsync<{ count: number }>(
     "SELECT COUNT(*) as count FROM unscheduled_dosage_records WHERE group_ = ?",
     groupId,
   );
-  return (result?.count ?? 0) > 0;
+  const resultMeasurments = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM unscheduled_measurment_records WHERE group_ = ?",
+    groupId,
+  );
+  return (resultDosages?.count ?? 0) > 0 || (resultMeasurments?.count ?? 0) > 0;
+}
+
+export async function dbInsertAssessment(
+  db: SQLiteDatabase,
+  assessment: {
+    name: string;
+    type: AssessmentType;
+    valueDomain: ValueDomain;
+  },
+): Promise<number> {
+  const valueDomainStr = JSON.stringify(assessment.valueDomain);
+  const db_insert = await db.runAsync(
+    "INSERT INTO assessments (name, type, value_domain) VALUES (?, ?, ?)",
+    assessment.name,
+    assessment.type,
+    valueDomainStr,
+  );
+  return db_insert.lastInsertRowId;
+}
+
+export async function dbInsertUnscheduledMeasurmentRecord(
+  db: SQLiteDatabase,
+  record: {
+    date: Date;
+    assessmentId: number;
+    value: AssessmentValue;
+    group: number | null;
+  },
+): Promise<number> {
+  const result = await db.runAsync(
+    `INSERT INTO unscheduled_measurment_records 
+    (record_date, date, assessment, value, group_) VALUES (?, ?, ?, ?, ?)`,
+    new Date().toISOString(),
+    extractDate(record.date),
+    record.assessmentId,
+    record.value.toString(),
+    record.group,
+  );
+  return result.lastInsertRowId;
+}
+
+export async function dbGetUnscheduledMeasurmentRecords(
+  db: SQLiteDatabase,
+  startDate?: Date,
+  endDate?: Date,
+): Promise<UnscheduledMeasurmentRecord[]> {
+  let queryStr = `SELECT r.*, a.type as assessment_type
+  FROM unscheduled_measurment_records as r
+  JOIN assessments as a ON r.assessment = a.id`;
+
+  queryStr += getDateFilterClause(startDate, endDate);
+
+  const rows = await db.getAllAsync<UncheduledMeasurmentRecordRow>(queryStr);
+  return rows.map((row) => {
+    const value = parseAssessmentValue(
+      row.value,
+      AssessmentType[row.assessment_type],
+    );
+    return new UnscheduledMeasurmentRecord(
+      row.id,
+      new Date(row.record_date),
+      new Date(row.date),
+      row.assessment,
+      value,
+      row.group_,
+    );
+  });
+}
+
+export async function dbInsertScheduledMeasurmentRecord(
+  db: SQLiteDatabase,
+  record: {
+    date: Date;
+    assessmentScheduleId: number;
+    measurmentIndex: number;
+    value: AssessmentValue;
+  },
+): Promise<number> {
+  const result = await db.runAsync(
+    `INSERT INTO scheduled_measurment_records 
+    (record_date, date, assessment_schedule, measurment_index, value) 
+    VALUES (?, ?, ?, ?, ?)`,
+    new Date().toISOString(),
+    extractDate(record.date),
+    record.assessmentScheduleId,
+    record.measurmentIndex,
+    record.value,
+  );
+  return result.lastInsertRowId;
+}
+
+export async function dbDeleteScheduledMeasurmentRecord(
+  db: SQLiteDatabase,
+  id: number,
+) {
+  await db.runAsync(
+    "DELETE FROM scheduled_measurment_records WHERE id = ?",
+    id,
+  );
+}
+
+export async function dbGetAssessments(
+  db: SQLiteDatabase,
+): Promise<Assessment[]> {
+  const rows = await db.getAllAsync<AssessmentRow>(`
+      SELECT id, name, type, value_domain
+      FROM assessments
+    `);
+
+  return rows.map((row) => {
+    const assessmentType = AssessmentType[row.type];
+    const valueDomain = row.value_domain
+      ? null
+      : parseValueDomain(row.value_domain, assessmentType);
+    return new Assessment(row.name, assessmentType, valueDomain, row.id);
+  });
+}
+
+export async function dbDeleteUnscheduledMeasurmentRecord(
+  db: SQLiteDatabase,
+  recordId: number,
+) {
+  await db.runAsync(
+    "DELETE FROM unscheduled_measurment_records WHERE id = ?",
+    recordId,
+  );
+}
+
+async function dbInsertMeasurments(
+  db: SQLiteDatabase,
+  assessmentScheduleId: number,
+  measurments: {
+    index: number;
+    offset: number | null;
+    groupId: number | null;
+  }[],
+): Promise<number[]> {
+  const ids = [];
+  for (const m of measurments) {
+    const result = await db.runAsync(
+      "INSERT INTO measurments (index_, offset, group_, assessment_schedule) VALUES (?, ?, ?, ?)",
+      m.index,
+      m.offset,
+      m.groupId,
+      assessmentScheduleId,
+    );
+    ids.push(result.lastInsertRowId);
+  }
+  return ids;
+}
+
+export async function dbInsertAssessmentSchedule(
+  db: SQLiteDatabase,
+  assessmentId: number,
+  schedule: {
+    startDate: Date;
+    endDate: Date | null;
+    measurments: {
+      index: number;
+      offset: number | null;
+      groupId: number | null;
+    }[];
+    freq: Frequency;
+  },
+) {
+  const freqJson = JSON.stringify(schedule.freq);
+  const startDateStr = schedule.startDate.toISOString();
+  const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
+
+  const result = await db.runAsync(
+    "INSERT INTO assessment_schedules (assessment, start_date, end_date, freq) VALUES (?, ?, ?, ?)",
+    assessmentId,
+    startDateStr,
+    endDateStr,
+    freqJson,
+  );
+
+  const assessmentScheduleId = result.lastInsertRowId;
+  await dbInsertMeasurments(db, assessmentScheduleId, schedule.measurments);
+}
+
+export async function dbInsertAssessmentScheduleWithMedicine(
+  db: SQLiteDatabase,
+  assessment: {
+    name: string;
+    type: AssessmentType;
+    valueDomain: ValueDomain;
+  },
+  schedule: {
+    startDate: Date;
+    endDate: Date | null;
+    measurments: {
+      index: number;
+      offset: number | null;
+      groupId: number | null;
+    }[];
+    freq: Frequency;
+  },
+) {
+  const assessmentId = await dbInsertAssessment(db, assessment);
+  await dbInsertAssessmentSchedule(db, assessmentId, schedule);
+}
+
+async function dbGetMeasurments(
+  db: SQLiteDatabase,
+  assessmentScheduleId: number,
+): Promise<MeasurmentRow[]> {
+  return await db.getAllAsync<MeasurmentRow>(
+    `
+    SELECT * FROM measurments WHERE assessment_schedule = ?`,
+    assessmentScheduleId,
+  );
+}
+
+export async function dbGetAssessmentSchedulesWithAssessments(
+  db: SQLiteDatabase,
+): Promise<AssessmentSchedule[]> {
+  const rows = await db.getAllAsync<AssessmentScheduleWithAssessmentRow>(`
+      SELECT
+        s.id,
+        s.assessment, 
+        a.name as assessment_name,
+        a.type as assessment_type,
+        a.value_domain as assessment_value_domain,
+        s.start_date,
+        s.end_date,
+        s.freq
+      FROM assessment_schedules s
+      JOIN assessments a ON s.assessment = a.id
+      ORDER BY s.start_date DESC
+    `);
+  for (const row of rows) {
+    row.measurments = await dbGetMeasurments(db, row.id);
+  }
+  return rows.map(parseAssessmentScheduleWithAssessmentRow);
 }

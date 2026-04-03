@@ -10,7 +10,7 @@ import {
 } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Medicine } from "../../models/Medicine";
+import { Medicine } from "../../models/MedicineSchedule";
 import { dbGetMedicines } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ModalPicker } from "../../components/ModalPicker";
@@ -53,7 +53,7 @@ export function SelectMedicineScreen() {
       return;
     }
     if (mode === "schedule") {
-      navigation.navigate("EditScheduleScreen", {
+      navigation.navigate("EditMedicineScheduleScreen", {
         medicine: medicine,
       });
     } else {

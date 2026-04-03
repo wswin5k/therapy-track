@@ -1,4 +1,10 @@
-import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  View,
+  TextInput,
+} from "react-native";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import RNDateTimePicker, {
   DateTimePickerEvent,
@@ -8,8 +14,8 @@ import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import {
   dbGetGroups,
-  dbInsertMedicine,
-  dbInsertUnscheduledDosageRecord,
+  dbInsertAssessment,
+  dbInsertUnscheduledMeasurmentRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import {
@@ -18,21 +24,18 @@ import {
   useRoute,
   useTheme,
 } from "@react-navigation/native";
-import { MedicineParam, RootStackParamList } from "..";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { AssessmentParam } from "..";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToDoseHeader } from "../enumMappings";
+import { AssessmentType } from "../../models/AssessmentSchedule";
+import { Checkbox } from "react-native-paper";
+import { AssessmentValue } from "../../models/Records";
+import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
-type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "EditSingleDosageScreen"
->;
-
-export function EditSingleDosageScreen() {
+export function EditSingleMeasurmentScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigation = useNavigation<EditSingeDosageScreenNavigationProp>();
+  const navigation = useNavigation();
   const route = useRoute();
   const db = useSQLiteContext();
 
@@ -40,20 +43,23 @@ export function EditSingleDosageScreen() {
   const [dateError, setDateError] = React.useState<boolean>(false);
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
-  const [dose, setDose] = React.useState<number>(1);
+  const [value, setValue] = React.useState<AssessmentValue | null>(null);
+  const [valueError, setValueError] = React.useState<boolean>(false);
   const groupIdxRef = React.useRef<number | null>(null);
 
-  const [medicine, setMedicine] = React.useState<MedicineParam | null>(null);
+  const [assessment, setAssessment] = React.useState<AssessmentParam | null>(
+    null,
+  );
   const [groups, setGroups] = React.useState<Group[]>([]);
 
   useFocusEffect(
     React.useCallback(() => {
       const setData = async () => {
         const params = route.params as {
-          medicine: MedicineParam;
+          assessment: AssessmentParam;
           selectedDate?: string;
         };
-        setMedicine(params.medicine);
+        setAssessment(params.assessment);
         if (params.selectedDate) {
           setDate(new Date(params.selectedDate));
         } else {
@@ -82,14 +88,18 @@ export function EditSingleDosageScreen() {
 
   const validate = (): {
     date: Date;
-    medicine: MedicineParam;
-    doseAmount: number;
+    assessment: AssessmentParam;
+    value: AssessmentValue;
   } | null => {
     if (date) {
-      if (medicine) {
-        return { date: date, medicine: medicine, doseAmount: dose };
+      if (assessment) {
+        if (value) {
+          return { date, assessment, value };
+        } else {
+          setValueError(true);
+        }
       } else {
-        throw Error("Medicine has not been set");
+        throw Error("Assessment has not been set");
       }
     } else {
       setDateError(true);
@@ -99,17 +109,21 @@ export function EditSingleDosageScreen() {
 
   const handleSave = async () => {
     const dataValidated = validate();
+    console.log(dataValidated);
     if (!dataValidated) {
       return;
     }
-    const medicineId =
-      dataValidated.medicine.dbId ??
-      (await dbInsertMedicine(db, dataValidated.medicine));
 
-    await dbInsertUnscheduledDosageRecord(db, {
+    console.log(dataValidated.assessment);
+
+    const assessmentId =
+      dataValidated.assessment.dbId ??
+      (await dbInsertAssessment(db, dataValidated.assessment));
+
+    await dbInsertUnscheduledMeasurmentRecord(db, {
       date: dataValidated.date,
-      medicineId: medicineId,
-      doseAmount: dataValidated.doseAmount,
+      assessmentId: assessmentId,
+      value: dataValidated.value,
       group:
         groupIdxRef.current !== null ? groups[groupIdxRef.current].dbId : null,
     });
@@ -117,30 +131,79 @@ export function EditSingleDosageScreen() {
     navigation.navigate("HomeTabs");
   };
 
-  const handleDoseChange = (value: number) => {
-    setDose(value);
+  const handleValueChange = (value: AssessmentValue) => {
+    setValue(value);
   };
 
   const handleGroupChange = (groupIdx: number) => {
     groupIdxRef.current = groupIdx === -1 ? null : groupIdx;
   };
 
-  const doseHeader = medicine
-    ? baseUnitToDoseHeader(medicine.baseUnit)
-    : "Dose";
+  const renderNumericInput = () => {
+    return (
+      <View style={styles.valueInputContainer}>
+        <SmallNumberStepper onChange={handleValueChange} />
+      </View>
+    );
+  };
+
+  const renderBooleanInput = () => {
+    return (
+      <View style={styles.valueInputContainer}>
+        <Checkbox status="unchecked" onPress={() => {}} />
+      </View>
+    );
+  };
+
+  const renderTextInput = () => {
+    return (
+      <View style={styles.valueInputContainer}>
+        <TextInput
+          onChangeText={handleValueChange}
+          style={[
+            styles.textInput,
+            {
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+            },
+            valueError && {
+              borderColor: theme.colors.error,
+              borderWidth: ERROR_BORDER_WIDTH,
+            },
+          ]}
+        />
+      </View>
+    );
+  };
+
+  let renderInput = () => (
+    <View>
+      <Text>Wrong assessment type</Text>
+    </View>
+  );
+
+  switch (assessment?.type) {
+    case AssessmentType.Numeric:
+      renderInput = renderNumericInput;
+      break;
+    case AssessmentType.Boolean:
+      renderInput = renderBooleanInput;
+      break;
+    case AssessmentType.Text:
+      renderInput = renderTextInput;
+      break;
+  }
 
   return (
     <DefaultMainContainer>
-      <View style={[styles.mainContainer]}>
-        <View style={[styles.rowContainer]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {doseHeader}
-          </Text>
-          <View style={styles.doseContainer}>
-            <SmallNumberStepper onChange={handleDoseChange} />
-          </View>
-        </View>
+      <View style={[styles.rowContainer]}>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {"Value"}
+        </Text>
+        {renderInput()}
+      </View>
 
+      <View style={[styles.mainContainer]}>
         <View style={[styles.rowContainer]}>
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
             {t("Date")}
@@ -221,9 +284,16 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
-  doseContainer: {
+  valueInputContainer: {
     width: "45%",
     height: 52,
+  },
+  textInput: {
+    borderWidth: 1,
+    fontSize: 16,
+    height: 52,
+    borderRadius: 8,
+    paddingHorizontal: 12,
   },
   headerLabel: {
     fontSize: 18,

@@ -31,11 +31,11 @@ const resources = {
 
       pill_one: "pill",
       pill_other: "pills",
-      Dose_ordinal_one: "First dose",
-      Dose_ordinal_two: "Second dose",
-      Dose_ordinal_three: "Thrid dose",
-      Dose_oridinal_four: "Fourth dose",
-      Dose_ordinal_other: "{{count}}th place", // 4th, 5th, 24th, 11th
+
+      number_ordinal_1: "First",
+      number_ordinal_2: "Second",
+      number_ordinal_3: "Third",
+      number_ordinal_other: "{{count}}th",
     },
   },
 };

@@ -18,16 +18,16 @@ import {
   dbDeleteScheduledDosageRecordsForSchedule,
   dbGetSchedulesWithMedicines,
 } from "../../models/dbAccess";
-import { Schedule } from "../../models/Schedule";
+import { Schedule } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { baseUnitToSingularShortForm } from "../baseUnitMappings";
+import { baseUnitToSingularShortForm } from "../enumMappings";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "EditScheduleScreen"
+  "EditMedicineScheduleScreen"
 >;
 
 function ScheduleListItem({
@@ -66,7 +66,7 @@ function ScheduleListItem({
   };
 
   const handleEdit = () => {
-    navigation.navigate("PartiallyEditScheduleScreen", {
+    navigation.navigate("PartiallyEditMedicineScheduleScreen", {
       scheduleId: schedule.dbId,
     });
   };

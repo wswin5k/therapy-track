@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 1;
+  const DATABASE_VERSION = 2;
 
   const pragma_user_version = await db.getFirstAsync<{
     user_version: number;
@@ -17,8 +17,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     return;
   }
   if (currentDbVersion === 0) {
-    db.withTransactionAsync(async () => {
-      await db.execAsync(`
+    await db.execAsync(`
       PRAGMA journal_mode = 'wal';
 
       CREATE TABLE medicines (id INTEGER PRIMARY KEY NOT NULL,
@@ -73,12 +72,52 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       INSERT INTO groups (name, color) VALUES ("Evening", "#2f39c9ff");
 
     `);
-    });
     currentDbVersion = 1;
   }
-  // if (currentDbVersion === 1) {
-  //   Add more migrations
-  // }
+  if (currentDbVersion === 1) {
+    await db.execAsync(`
+      CREATE TABLE assessments (id INTEGER PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      value_domain TEXT );
+
+      CREATE TABLE measurments (id INTEGER PRIMARY KEY NOT NULL,
+      index_ INTEGER NOT NULL,
+      offset INTEGER,
+      group_ INTEGER,
+      assessment_schedule INTEGER,
+      FOREIGN KEY(group_) REFERENCES groups(id),
+      FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
+
+      CREATE TABLE assessment_schedules (
+      id INTEGER PRIMARY KEY NOT NULL,
+      assessment INTEGER,
+      start_date TEXT NOT NULL,
+      end_date TEXT,
+      freq TEXT NOT NULL,
+      FOREIGN KEY(assessment) REFERENCES assessments(id) ON DELETE CASCADE);
+    
+      CREATE TABLE scheduled_measurment_records (
+      id INTEGER PRIMARY KEY NOT NULL,
+      record_date TEXT NOT NULL,
+      date TEXT NOT NULL,
+      assessment_schedule INTEGER,
+      measurment_index INTEGER,
+      value TEXT NOT NULL,
+      FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
+
+      CREATE TABLE unscheduled_measurment_records (
+      id INTEGER PRIMARY KEY NOT NULL,
+      record_date TEXT NOT NULL,
+      date TEXT NOT NULL,
+      assessment INTEGER NOT NULL,
+      value TEXT NOT NULL,
+      group_ INTEGER,
+      FOREIGN KEY(group_) REFERENCES groups(id),
+      FOREIGN KEY(assessment) REFERENCES assessments(id));
+    `);
+    currentDbVersion = 2;
+  }
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 

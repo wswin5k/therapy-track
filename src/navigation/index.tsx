@@ -6,21 +6,40 @@ import { Home } from "./screens/Home";
 import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
 import { SchedulesListScreen } from "./screens/SchedulesListScreen";
-import type { ActiveIngredient, BaseUnit, Medicine } from "../models/Medicine";
-import EditScheduleScreen from "./screens/EditScheduleScreen";
+import type {
+  ActiveIngredient,
+  BaseUnit,
+  Medicine,
+} from "../models/MedicineSchedule";
+import EditMedicineScheduleScreen from "./screens/ScheduleScreens/EditMedicineScheduleScreen";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
 import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
-import PartiallyEditScheduleScreen from "./screens/PartiallyEditScheduleScreen";
+import PartiallyEditMedicineScheduleScreen from "./screens/ScheduleScreens/PartiallyEditMedicineScheduleScreen";
 import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
+import {
+  Assessment,
+  AssessmentType,
+  ValueDomain,
+} from "../models/AssessmentSchedule";
+import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
+import { EditSingleMeasurmentScreen } from "./screens/EditSingleMeasurmentScreen";
+import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
 
 export interface MedicineParam {
   name: string;
   baseUnit: BaseUnit;
   activeIngredients: ActiveIngredient[];
+  dbId?: number;
+}
+
+export interface AssessmentParam {
+  name: string;
+  type: AssessmentType;
+  valueDomain: ValueDomain;
   dbId?: number;
 }
 
@@ -30,13 +49,20 @@ export type RootStackParamList = {
     mode: "save-and-go-back" | "schedule" | "one-time";
     medicine?: Medicine;
   };
+  EditAssessmentScreen: {
+    mode: "save-and-go-back" | "schedule" | "one-time";
+    assessment?: Assessment;
+  };
   SelectMedicineScreen:
     | { mode: "schedule" | "one-time"; selectedDate?: string }
     | undefined;
-  EditScheduleScreen: {
+  EditMedicineScheduleScreen: {
     medicine: MedicineParam;
   };
-  PartiallyEditScheduleScreen: {
+  EditAssessmentScheduleScreen: {
+    assessment: AssessmentParam;
+  };
+  PartiallyEditMedicineScheduleScreen: {
     scheduleId: number;
   };
   EditSingleDosageScreen: {
@@ -44,6 +70,14 @@ export type RootStackParamList = {
       name: string;
       baseUnit: BaseUnit;
       activeIngredients: ActiveIngredient[];
+      dbId?: number;
+    };
+    selectedDate?: string;
+  };
+  EditSingleMeasurmentScreen: {
+    assessment: {
+      name: string;
+      type: AssessmentType;
       dbId?: number;
     };
     selectedDate?: string;
@@ -161,15 +195,29 @@ const RootStack = createNativeStackNavigator({
         title: "Edit medicine",
       },
     },
-    EditScheduleScreen: {
-      screen: EditScheduleScreen,
+    EditAssessmentScreen: {
+      screen: EditAssessmentScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit assessment",
+      },
+    },
+    EditMedicineScheduleScreen: {
+      screen: EditMedicineScheduleScreen,
       options: {
         presentation: "modal",
         title: "Edit schedule",
       },
     },
-    PartiallyEditScheduleScreen: {
-      screen: PartiallyEditScheduleScreen,
+    EditAssessmentScheduleScreen: {
+      screen: EditAssessmentScheduleScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit schedule",
+      },
+    },
+    PartiallyEditMedicineScheduleScreen: {
+      screen: PartiallyEditMedicineScheduleScreen,
       options: {
         presentation: "modal",
         title: "Edit schedule dates",
@@ -180,6 +228,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Add single dosage",
+      },
+    },
+    EditSingleMeasurmentScreen: {
+      screen: EditSingleMeasurmentScreen,
+      options: {
+        presentation: "modal",
+        title: "Add single measurment",
       },
     },
     EditGroupScreen: {
