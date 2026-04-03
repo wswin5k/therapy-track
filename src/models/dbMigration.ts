@@ -121,4 +121,4 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-export const DATABASE_NAME: string = "main5.db";
+export const DATABASE_NAME: string = "main.db";
