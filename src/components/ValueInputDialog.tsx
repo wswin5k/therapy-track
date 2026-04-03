@@ -92,7 +92,6 @@ function AssessmentInput({
 }
 
 interface AssessmentInputDialogProps {
-  visible: boolean;
   title: string;
   initialValue: AssessmentValue | null;
   assessmentType: AssessmentType;
@@ -101,7 +100,6 @@ interface AssessmentInputDialogProps {
 }
 
 export function AssessmentInputDialog({
-  visible,
   title,
   initialValue,
   assessmentType,
