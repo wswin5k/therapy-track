@@ -687,7 +687,7 @@ export async function dbGroupHasDoses(
     "SELECT COUNT(*) as count FROM measurments WHERE group_ = ?",
     groupId,
   );
-  return (resultDoses?.count ?? resultMeasurments?.count ?? 0) > 0;
+  return (resultDoses?.count ?? 0) > 0 || (resultMeasurments?.count ?? 0) > 0;
 }
 
 export async function dbGroupHasUnscheduledRecords(
@@ -702,7 +702,7 @@ export async function dbGroupHasUnscheduledRecords(
     "SELECT COUNT(*) as count FROM unscheduled_measurment_records WHERE group_ = ?",
     groupId,
   );
-  return (resultDosages?.count ?? resultMeasurments?.count ?? 0) > 0;
+  return (resultDosages?.count ?? 0) > 0 || (resultMeasurments?.count ?? 0) > 0;
 }
 
 export async function dbInsertAssessment(
