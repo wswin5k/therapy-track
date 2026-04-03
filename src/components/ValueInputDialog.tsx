@@ -124,12 +124,7 @@ export function AssessmentInputDialog({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal transparent animationType="fade" onRequestClose={onCancel}>
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={1}

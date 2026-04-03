@@ -996,7 +996,6 @@ export function Home() {
       )}
       {clickedScheduledMeasurment && (
         <AssessmentInputDialog
-          visible={clickedScheduledMeasurment !== null}
           title={clickedScheduledMeasurment.assessmentName}
           assessmentType={clickedScheduledMeasurment.assessmentType}
           initialValue={clickedScheduledMeasurment.value}
