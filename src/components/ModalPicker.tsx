@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   defaultPressableStyle: {
     height: 56,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 8,
     paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",

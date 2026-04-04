@@ -437,16 +437,12 @@ const styles = StyleSheet.create({
   },
   fullWidthPickerContainer: {
     height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
     justifyContent: "center",
     width: "100%",
   },
   pickerContainer: {
     height: 52,
-    borderRadius: 8,
     justifyContent: "center",
-    borderWidth: 1,
     width: "45%",
     overflow: "hidden",
   },
