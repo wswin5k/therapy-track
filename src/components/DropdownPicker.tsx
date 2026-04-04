@@ -11,6 +11,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
+import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
 
 interface ModalDropdownPickerProps<T> {
   options: T[];
@@ -21,6 +22,7 @@ interface ModalDropdownPickerProps<T> {
   placeholder?: string;
   pressableStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  error?: boolean;
 }
 
 export function DropdownPicker<T>({
@@ -32,6 +34,7 @@ export function DropdownPicker<T>({
   placeholder = "Select an option",
   pressableStyle,
   disabled = false,
+  error = false,
 }: ModalDropdownPickerProps<T>) {
   const theme = useTheme();
 
@@ -108,6 +111,10 @@ export function DropdownPicker<T>({
           },
           pressableStyle,
           disabled && styles.disabled,
+          error && {
+            borderColor: theme.colors.error,
+            borderWidth: ERROR_BORDER_WIDTH,
+          },
         ]}
         disabled={disabled}
       >

@@ -14,8 +14,8 @@ export function InformationDialog({
   visible,
   title,
   message,
-  closeText: closeText,
-  onClose: onClose,
+  closeText,
+  onClose,
 }: ConfirmationDialogProps) {
   const theme = useTheme();
 
