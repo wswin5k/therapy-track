@@ -24,6 +24,9 @@ import {
   ValueDomain,
 } from "../../models/AssessmentSchedule";
 import { ModalPicker } from "../../components/ModalPicker";
+import { useSQLiteContext } from "expo-sqlite";
+import { dbGetAssessments } from "../../models/dbAccess";
+import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 type EditAssessmentScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -34,6 +37,7 @@ export function EditAssessmentScreen() {
   const route = useRoute();
   const navigation = useNavigation<EditAssessmentScreenNavigationProp>();
   const theme = useTheme();
+  const db = useSQLiteContext();
 
   const [name, setName] = React.useState("");
   const [assessmentType, setAssessmentType] =
@@ -45,6 +49,15 @@ export function EditAssessmentScreen() {
   const [mode, setMode] = React.useState<
     "save-and-go-back" | "schedule" | "one-time"
   >("save-and-go-back");
+
+  const [assessmentsNames, setAssessmentsNames] = React.useState<string[]>([]);
+
+  const loadAssessments = React.useCallback(async () => {
+    const assessments = await dbGetAssessments(db);
+
+    const newAssessmentsNames = assessments.map((a) => a.name);
+    setAssessmentsNames(newAssessmentsNames);
+  }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -58,7 +71,8 @@ export function EditAssessmentScreen() {
         setName(assessmentInit.name);
         setAssessmentType(assessmentInit.type);
       }
-    }, [route.params]),
+      loadAssessments();
+    }, [route.params, loadAssessments]),
   );
 
   const validate = (): {
@@ -68,23 +82,33 @@ export function EditAssessmentScreen() {
   } | null => {
     let medicineValidated = true;
 
-    if (name.trim() && name.length < NAME_MAX_LENGHT) {
-      setNameError(false);
-    } else {
-      setNameError(true);
-      medicineValidated = false;
+    let newNameError = true;
+    let newAssessmentTypeError = true;
+
+    const nameTrimmed = name.trim();
+    if (nameTrimmed && nameTrimmed.length < NAME_MAX_LENGHT) {
+      if (!assessmentsNames.includes(nameTrimmed)) {
+        const validName = /^[\p{L}\p{N} ]+$/u;
+        if (validName.test(nameTrimmed)) {
+          newNameError = false;
+        }
+      }
     }
 
     if (assessmentType) {
-      setAssessmentTypeError(false);
-    } else {
-      setAssessmentTypeError(true);
+      newAssessmentTypeError = false;
+    }
+
+    if (newAssessmentTypeError || newNameError) {
       medicineValidated = false;
     }
 
+    setNameError(newNameError);
+    setAssessmentTypeError(newAssessmentTypeError);
+
     if (medicineValidated && assessmentType) {
       return {
-        name,
+        name: nameTrimmed,
         type: assessmentType,
         valueDomain: null,
       };
@@ -126,7 +150,10 @@ export function EditAssessmentScreen() {
                 backgroundColor: theme.colors.surface,
               },
               nameError
-                ? { borderColor: theme.colors.error, borderWidth: 1 }
+                ? {
+                    borderColor: theme.colors.error,
+                    borderWidth: ERROR_BORDER_WIDTH,
+                  }
                 : {},
             ]}
             onChangeText={(text: string) => {
