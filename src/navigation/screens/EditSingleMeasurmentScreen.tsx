@@ -231,7 +231,6 @@ export function EditSingleMeasurmentScreen() {
               styles.pickerContainer,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
               },
             ]}
           >
@@ -320,9 +319,7 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     height: 52,
-    borderRadius: 8,
     justifyContent: "center",
-    borderWidth: 1,
     width: "45%",
     overflow: "hidden",
   },
