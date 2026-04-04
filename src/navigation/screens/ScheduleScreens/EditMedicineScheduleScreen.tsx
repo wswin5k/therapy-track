@@ -101,19 +101,16 @@ export default function EditMedicineScheduleScreen() {
     new Map(),
   );
 
-  const updateGroupsRefWithDefaults = React.useCallback(
-    (nDoses: number) => {
-      const defaultGroups = assingDefaultGroups(groups);
-      for (let i = 0; i < nDoses; i++) {
-        groupsRef.current[i] = defaultGroups.get(i) ?? null;
-      }
-    },
-    [groups],
-  );
+  const updateGroupsRefWithDefaults = React.useCallback(() => {
+    const defaultGroups = assingDefaultGroups(groups);
+    for (let i = 0; i < nDoses; i++) {
+      groupsRef.current[i] = defaultGroups.get(i) ?? null;
+    }
+  }, [groups, nDoses]);
 
   useFocusEffect(
     React.useCallback(
-      () => updateGroupsRefWithDefaults(nDoses),
+      () => updateGroupsRefWithDefaults(),
       [updateGroupsRefWithDefaults],
     ),
   );
@@ -249,7 +246,7 @@ export default function EditMedicineScheduleScreen() {
     freqRef.current = freq;
     if (freq.numberOfDoses !== nDoses) {
       setNDoses(freq.numberOfDoses);
-      updateGroupsRefWithDefaults(freq.numberOfDoses);
+      updateGroupsRefWithDefaults();
     }
   };
 

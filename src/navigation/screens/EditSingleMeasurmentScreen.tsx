@@ -109,12 +109,9 @@ export function EditSingleMeasurmentScreen() {
 
   const handleSave = async () => {
     const dataValidated = validate();
-    console.log(dataValidated);
     if (!dataValidated) {
       return;
     }
-
-    console.log(dataValidated.assessment);
 
     const assessmentId =
       dataValidated.assessment.dbId ??
