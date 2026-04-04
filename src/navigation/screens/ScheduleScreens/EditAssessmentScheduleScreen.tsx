@@ -63,19 +63,16 @@ export default function EditAssessmentScheduleScreen() {
     new Map(),
   );
 
-  const updateGroupsRefWithDefaults = React.useCallback(
-    (nDoses: number) => {
-      const defaultGroups = assingDefaultGroups(groups);
-      for (let i = 0; i < nDoses; i++) {
-        groupsRef.current[i] = defaultGroups.get(i) ?? null;
-      }
-    },
-    [groups],
-  );
+  const updateGroupsRefWithDefaults = React.useCallback(() => {
+    const defaultGroups = assingDefaultGroups(groups);
+    for (let i = 0; i < nMeasurments; i++) {
+      groupsRef.current[i] = defaultGroups.get(i) ?? null;
+    }
+  }, [groups, nMeasurments]);
 
   useFocusEffect(
     React.useCallback(
-      () => updateGroupsRefWithDefaults(nMeasurments),
+      () => updateGroupsRefWithDefaults(),
       [updateGroupsRefWithDefaults],
     ),
   );
@@ -208,7 +205,7 @@ export default function EditAssessmentScheduleScreen() {
     freqRef.current = freq;
     if (freq.numberOfDoses !== nMeasurments) {
       setNMeasurments(freq.numberOfDoses);
-      updateGroupsRefWithDefaults(freq.numberOfDoses);
+      updateGroupsRefWithDefaults();
     }
   };
 
