@@ -2,7 +2,17 @@
 <img src="assets/icon.png" alt="App icon — a tablet on a blue screen with checkmark" width="200"/>
 </p>
 
-# Therapy Track – simple pills tracker and reminder
+# Therapy Track – medicine and assessments tracker
+
+* Track your medicine use, both with schedules and one-time entries.
+* Get notified when it's time to take your medicines or enter an assessment.
+* View your past use and export it to CSV.
+
+<p align="center">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="Home screenshot" width="200"/>
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="Home screenshot" width="200"/>
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="Home screenshot" width="200"/>
+</p>
 
 ## Running the development build
 
