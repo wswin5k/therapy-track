@@ -8,6 +8,7 @@
 * Receive notifications when it is time to take your medication or complete an assessment.
 * View your usage history and export it to a CSV file.
 
+
 <p align="center">
 <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="Home screenshot" width="200"/>
 <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="Home screenshot" width="200"/>
