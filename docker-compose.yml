@@ -6,7 +6,7 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - .:/app
+      - .:/app:z
       - /app/node_modules
       - /app/.expo
       - gradle-cache:/home/node/.gradle
