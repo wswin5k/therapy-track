@@ -1,3 +1,14 @@
+dev-generate-keystore:
+	docker compose run --rm expo keytool -genkey -v \
+	-keystore android/app/debug.keystore \
+	-storepass android \
+	-alias androiddebugkey \
+	-keypass android \
+	-keyalg RSA \
+	-keysize 2048 \
+	-validity 10000 \
+	-dname "CN=Android Debug,O=Android,C=US"
+
 dev-build:
 	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
 

@@ -27,33 +27,53 @@ The following instructions require only adb (from Android platfrom-tools) and do
 This setup requires constant connection with the host and allows hot reloading of javascript code.
 
 > [!TIP]
->  Once the app is installed steps 1 and 2 can be omitted for future connections.
->  It will require reinstall after changes in native code or dependencies.
+>  Generating keystore in step one needs to be done only once.
+>  Once the app is installed steps 2,3,4 can be omitted unless there are changes in native code or dependencies.
 
-1. Build a debug APK.
+1. Generate a keystore for signing the APKs
+
+  ```sh
+  docker compose run --rm expo keytool -genkey -v \
+    -keystore android/app/debug.keystore \
+    -storepass android \
+    -alias androiddebugkey \
+    -keypass android \
+    -keyalg RSA \
+    -keysize 2048 \
+    -validity 10000 \
+    -dname "CN=Android Debug,O=Android,C=US"
+  ```
+
+2. Build the development docker image
+
+  ``sh
+  docker compose build expo
+  ``
+
+3. Build a debug APK.
   ```sh
   docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
   ```
 
-2. Connect your device and install the development application
+4. Connect your device and install the development application
 
   ```sh
   adb install android/app/build/outputs/apk/debug/app-debug.apk
   ```
 
-3. Start the development server:
-
-  ```sh
-  docker compose up expo
-  ```
-
-4. Enable port forwarding
+5. Enable port forwarding
 
   ```sh
   adb reverse tcp:8081 tcp:8081
   ```
 
-5. Open the application on the Android device. Now whenever you make code changes the application should reload.
+6. Start the development server
+
+  ```sh
+  docker compose up expo
+  ```
+
+7. Open the application on the Android device. Now whenever you make code changes the application should reload.
 
 
 ## Release build
