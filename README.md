@@ -17,7 +17,7 @@
 
 # Installation on Android
 
-The following instructions require only adb (from Android platfrom-tools) and docker installed, and an Android phone. The building processs takes place inside of a docker container. 
+The following instructions require only adb (from Android platfrom-tools) and docker installed. The building processs takes place inside of a docker container. The instructions assume physical Android device, although it will work similar for an emulator.
 
 > [!TIP]
 > The commands below have shortcuts in Makefile.
@@ -30,7 +30,7 @@ This setup requires constant connection with the host and allows hot reloading o
 >  Once the app is installed steps 1 and 2 can be omitted for future connections.
 >  It will require reinstall after changes in native code or dependencies.
 
-1. Build a development build APK.
+1. Build a debug APK.
   ```sh
   docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
   ```
@@ -58,12 +58,12 @@ This setup requires constant connection with the host and allows hot reloading o
 
 ## Release build
 
-1. Build a development build APK.
+1. Build a release APK.
   ```sh
 	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
   ```
 
-2. Connect your device and install the development application
+2. Connect your device and install the release application.
 
   ```sh
   adb install android/app/build/outputs/apk/release/app-release.apk
