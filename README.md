@@ -15,55 +15,56 @@
 <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="Home screenshot" width="200"/>
 </p>
 
-## Running the development build
+# Installation on Android
 
-- Install the dependencies:
+The following instructions require only adb (from Android platfrom-tools) and docker installed, and an Android phone. The building processs takes place inside of a docker container. 
 
+> [!TIP]
+> The commands below have shortcuts in Makefile.
+
+## Development set-up
+
+This setup requires constant connection with the host and allows hot reloading of javascript code.
+
+> [!TIP]
+>  Once the app is installed steps 1 and 2 can be omitted for future connections.
+>  It will require reinstall after changes in native code or dependencies.
+
+1. Build a development build APK.
   ```sh
-  npm install
+  docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
   ```
 
-- Start the development server:
+2. Connect your device and install the development application
 
   ```sh
-  npm start
+  adb install android/app/build/outputs/apk/debug/app-debug.apk
   ```
 
-- Build and run iOS and Android development builds:
+3. Start the development server:
 
   ```sh
-  npm run ios
-  # or
-  npm run android
+  docker compose up expo
   ```
 
-## Release build for android
+4. Enable port forwarding
 
-Install dependencies
+  ```sh
+  adb reverse tcp:8081 tcp:8081
+  ```
 
-```sh
-npm install
-```
+5. Open the application on the Android device. Now whenever you make code changes the application should reload.
 
-### Install with adb
 
-```sh
-npx expo run:android --variant release
-```
+## Release build
 
-### Build apk file
+1. Build a development build APK.
+  ```sh
+	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
+  ```
 
-- Prebuild the app
+2. Connect your device and install the development application
 
-```sh
-npx expo prebuild
-```
-
-- Build apk
-
-```sh
-cd android
-./gradlew assembleRelease
-```
-
-The apk will be in `app/build/outputs/apk/release/app-release.apk`
+  ```sh
+  adb install android/app/build/outputs/apk/release/app-release.apk
+  ```
