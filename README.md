@@ -15,55 +15,76 @@
 <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="Home screenshot" width="200"/>
 </p>
 
-## Running the development build
+# Installation on Android
 
-- Install the dependencies:
+The following instructions require only adb (from Android platfrom-tools) and docker installed. The building processs takes place inside of a docker container. The instructions assume physical Android device, although it will work similar for an emulator.
+
+> [!TIP]
+> The commands below have shortcuts in Makefile.
+
+## Development set-up
+
+This setup requires constant connection with the host and allows hot reloading of javascript code.
+
+> [!TIP]
+>  Generating keystore in step one needs to be done only once.
+>  Once the app is installed steps 2, 3 and 4 can be omitted unless there are changes in native code or dependencies.
+
+1. Generate a keystore for signing the APKs
 
   ```sh
-  npm install
+  docker compose run --rm expo keytool -genkey -v \
+    -keystore android/app/debug.keystore \
+    -storepass android \
+    -alias androiddebugkey \
+    -keypass android \
+    -keyalg RSA \
+    -keysize 2048 \
+    -validity 10000 \
+    -dname "CN=Android Debug,O=Android,C=US"
   ```
 
-- Start the development server:
+2. Build the development docker image
 
   ```sh
-  npm start
+  docker compose build expo
   ```
 
-- Build and run iOS and Android development builds:
+3. Build a debug APK.
+  ```sh
+  docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
+  ```
+
+4. Connect your device and install the development application
 
   ```sh
-  npm run ios
-  # or
-  npm run android
+  adb install android/app/build/outputs/apk/debug/app-debug.apk
   ```
 
-## Release build for android
+5. Enable port forwarding
 
-Install dependencies
+  ```sh
+  adb reverse tcp:8081 tcp:8081
+  ```
 
-```sh
-npm install
-```
+6. Start the development server
 
-### Install with adb
+  ```sh
+  docker compose up expo
+  ```
 
-```sh
-npx expo run:android --variant release
-```
+7. Open the application on the Android device. Now whenever you make code changes the application should reload.
 
-### Build apk file
 
-- Prebuild the app
+## Release build
 
-```sh
-npx expo prebuild
-```
+1. Build a release APK.
+  ```sh
+	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
+  ```
 
-- Build apk
+2. Connect your device and install the release application.
 
-```sh
-cd android
-./gradlew assembleRelease
-```
-
-The apk will be in `app/build/outputs/apk/release/app-release.apk`
+  ```sh
+  adb install android/app/build/outputs/apk/release/app-release.apk
+  ```

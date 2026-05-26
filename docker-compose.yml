@@ -1,0 +1,23 @@
+services:
+  expo:
+    build: .
+    container_name: expo_android_dev
+    user: "1000:1000"
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/app:z
+      - /app/node_modules
+      - /app/.expo
+      - gradle-cache:/home/node/.gradle
+      - android-cache:/home/node/.android
+    environment:
+      - REACT_NATIVE_PACKAGER_HOSTNAME=${HOST_IP:-127.0.0.1}
+      - FORCE_COLOR=1
+      - ELECTRON_DISABLE_SANDBOX=1
+    stdin_open: true
+    tty: true
+
+volumes:
+  gradle-cache:
+  android-cache:

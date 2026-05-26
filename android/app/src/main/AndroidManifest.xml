@@ -30,6 +30,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="therapytrack"/>
+        <data android:scheme="exp+therapy-track"/>
       </intent-filter>
     </activity>
   </application>
