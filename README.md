@@ -28,7 +28,7 @@ This setup requires constant connection with the host and allows hot reloading o
 
 > [!TIP]
 >  Generating keystore in step one needs to be done only once.
->  Once the app is installed steps 2,3,4 can be omitted unless there are changes in native code or dependencies.
+>  Once the app is installed steps 2, 3 and 4 can be omitted unless there are changes in native code or dependencies.
 
 1. Generate a keystore for signing the APKs
 
@@ -46,9 +46,9 @@ This setup requires constant connection with the host and allows hot reloading o
 
 2. Build the development docker image
 
-  ``sh
+  ```sh
   docker compose build expo
-  ``
+  ```
 
 3. Build a debug APK.
   ```sh
