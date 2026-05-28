@@ -47,6 +47,12 @@ export function baseUnitToDoseHeader(key: BaseUnit): string {
   );
 }
 
+export function baseUnitShorFormPlural(key: BaseUnit): string {
+  return capitalizeFirstLetter(
+    i18next.t(baseUnitToSingularShortForm[key], { count: 2 }),
+  );
+}
+
 export function frequencySelectionToDisplayForm(key: FrequencySelection) {
   const mapping = {
     OnceDaily: "Once daily",
