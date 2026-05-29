@@ -1,4 +1,4 @@
-FROM node:24-trixie
+FROM node:24-trixie AS base
 
 # Set environment variables for Android SDK
 ENV ANDROID_HOME=/opt/android-sdk
@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     unzip \
+    # needed so editor can connect to the container environment
+    openssh-server \
     # needed to install openjdk 17 TODO update JDK, when possible
     gpg \
     apt-transport-https \
@@ -81,6 +83,36 @@ RUN npm install
 
 COPY --chown=node:node . .
 
+FROM base AS expo-server
+
 EXPOSE 8081
 
 CMD ["npx", "expo", "start"]
+
+# this stage purpose is to enable code editor use container environment
+FROM base AS expo-sshd
+
+RUN ssh-keygen -t ed25519 -f $HOME/ssh_host_ed25519_key
+
+RUN mkdir -p $HOME/.ssh && cat ssh/expo-container.pub > $HOME/.ssh/authorized_keys
+
+COPY <<EOF $HOME/sshd_config
+Port 50022
+ListenAddress 0.0.0.0
+
+HostKey /home/node/ssh_host_ed25519_key
+
+PidFile /home/node/sshd-run/sshd.pid
+
+UsePAM no
+PasswordAuthentication no
+PubkeyAuthentication yes
+
+AuthorizedKeysFile /home/node/.ssh/authorized_keys
+
+Subsystem sftp internal-sftp
+EOF
+
+EXPOSE 50022
+
+CMD ["/usr/sbin/sshd", "-D", "-f", "$HOME/sshd_config"]

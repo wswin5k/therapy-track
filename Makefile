@@ -26,3 +26,6 @@ release-install:
 
 npm-update:
 	docker compose run --rm expo npm update --save
+
+ssh-generate-key:
+	ssh-keygen -t ed25519 -N "" -f ~/.ssh/expo-container && mkdir -p ssh && cp ~/.ssh/expo-container.pub ssh/
