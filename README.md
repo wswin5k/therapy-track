@@ -88,3 +88,23 @@ This setup requires constant connection with the host and allows hot reloading o
   ```sh
   adb install android/app/build/outputs/apk/release/app-release.apk
   ```
+
+# Development with VSCodium and container environment
+
+VSCodium doesn't have proprietary Dev Containers VSCode extension. Instead it can be connected to the container with Open Remote - SSH extension.
+
+1. Generate new ssh key and copy the public key to the project directory
+
+```sh
+  ssh-keygen -t ed25519 -N "" -f ~/.ssh/expo-container && mkdir -p ssh && cp ~/.ssh/expo-container.pub ssh/
+```
+
+2. Build and start the container with ssh server.
+
+```sh
+  docker compose up --build expo-sshd
+```
+
+The ssh server will be available on localhost on 50022 port.
+
+3. In VSCodium "Run a Command": "Remote-SSH: Connect Current Window to Host" and enter the connection string `node@localhost:50022`
