@@ -16,10 +16,15 @@ import {
 import { DataTable } from "react-native-paper";
 import React from "react";
 import {
+  dbGetAssessments,
+  dbGetAssessmentSchedulesWithAssessments,
+  dbGetGroups,
   dbGetMedicines,
   dbGetScheduledDosageRecords,
+  dbGetScheduledMeasurmentRecords,
   dbGetSchedulesWithMedicines,
   dbGetUnscheduledDosageRecords,
+  dbGetUnscheduledMeasurmentRecords,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { Schedule } from "../../models/MedicineSchedule";
@@ -28,6 +33,12 @@ import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
 import { Medicine } from "../../models/MedicineSchedule";
 import { useTranslation } from "react-i18next";
+import {
+  Assessment,
+  AssessmentSchedule,
+} from "../../models/AssessmentSchedule";
+import { Group } from "../../models/Frequency";
+import { baseUnitShorFormPlural } from "../enumMappings";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -104,96 +115,299 @@ export function RecordHistoryScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
 
-  const [dailyRecords, setDailyRecords] = React.useState<string[][]>([]);
   const [tableHeaders, setTableHeaders] = React.useState<string[]>([]);
+  const [tableRows, setTableRows] = React.useState<string[][]>([]);
+
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
 
-  const loadData = React.useCallback(async () => {
-    const scheduledRecords = await dbGetScheduledDosageRecords(db);
+  function calculateHeaders<T>(
+    fullHeaderToShortHeader: Map<string, string>,
+    shortHeaderCounts: Map<string, number>,
+    dayToHeaderToValues: Map<string, Map<string, T>>,
+  ): string[] {
+    const headers = [];
+    for (const [fullHeader, shortHeader] of fullHeaderToShortHeader) {
+      if (shortHeaderCounts.get(shortHeader) === 1) {
+        headers.push(shortHeader);
 
-    const schedules = await dbGetSchedulesWithMedicines(db);
-    const schedulesMap = new Map<number, Schedule>();
+        for (const headerToValues of dayToHeaderToValues.values()) {
+          const values = headerToValues.get(fullHeader);
+          if (!values) {
+            continue;
+          }
+          headerToValues.set(shortHeader, values);
+          headerToValues.delete(fullHeader);
+        }
+      } else {
+        headers.push(fullHeader);
+      }
+    }
+    headers.sort();
+    return headers;
+  }
 
-    schedules.forEach((s) => {
-      schedulesMap.set(s.dbId, s);
+  function updateHeaderCounter(
+    fullHeaderToShortHeader: Map<string, string>,
+    shortHeaderCounts: Map<string, number>,
+    fullHeader: string,
+    shortHeader: string,
+  ) {
+    if (!fullHeaderToShortHeader.has(fullHeader)) {
+      fullHeaderToShortHeader.set(fullHeader, shortHeader);
+      shortHeaderCounts.set(
+        shortHeader,
+        (shortHeaderCounts.get(shortHeader) || 0) + 1,
+      );
+    } else {
+      shortHeaderCounts.set(shortHeader, 1);
+    }
+  }
+
+  const getAssessmentData = React.useCallback(async (): Promise<
+    [string[], Map<string, Map<string, string>>]
+  > => {
+    const scheuledMeasurmentRecrods = await dbGetScheduledMeasurmentRecords(db);
+    const unscheduledMeasurmentRecords =
+      await dbGetUnscheduledMeasurmentRecords(db);
+
+    const assessmentSchedules =
+      await dbGetAssessmentSchedulesWithAssessments(db);
+    const idToAssessmentSchedule = new Map<number, AssessmentSchedule>();
+    assessmentSchedules.forEach((a) => {
+      idToAssessmentSchedule.set(a.dbId, a);
     });
 
-    const dayToHeaderValues = new Map<string, Map<string, number>>();
-    const headersSet = new Set<string>();
+    const groups = await dbGetGroups(db);
+    const idToGroup = new Map<number, Group>();
+    groups.forEach((g) => {
+      idToGroup.set(g.dbId, g);
+    });
 
-    for (const r of scheduledRecords) {
-      const dRecrod =
-        dayToHeaderValues.get(extractDate(r.date)) || new Map<string, number>();
+    const assessments = await dbGetAssessments(db);
+    const idToAssessment = new Map<number, Assessment>();
+    assessments.forEach((a) => {
+      idToAssessment.set(a.dbId, a);
+    });
 
-      const schedule = schedulesMap.get(r.scheduleId);
-      if (!schedule) {
-        throw Error("Record not connected to schedule");
+    const dayToHeaderToValues = new Map<string, Map<string, string>>();
+
+    /* to handle shortening of header labels*/
+    const fullHeaderToShortHeader = new Map<string, string>();
+    const shortHeaderCounts = new Map<string, number>();
+
+    const getGroupLabel = (groupId: number | null): string => {
+      const group = groupId === null ? null : idToGroup.get(groupId);
+      let groupLabel = "";
+      if (group === undefined) {
+        throw Error("Measurment record has invalid group.");
+      } else if (group === null) {
+        groupLabel = "ungrouped";
+      } else {
+        groupLabel = group?.name;
       }
-      const medicine = schedule.medicine;
+      return groupLabel;
+    };
 
-      for (const ai of medicine.activeIngredients) {
-        const label = `${ai.name} [${ai.unit}]`;
-        headersSet.add(label.slice(0, 200));
-        let amountTotal = dRecrod.get(label) || 0;
-        amountTotal += ai.amount * schedule.doses[r.doseIndex].amount;
-        dRecrod.set(label, amountTotal);
+    for (const r of unscheduledMeasurmentRecords) {
+      const dateStr = extractDate(r.date);
+      const dailyRow =
+        dayToHeaderToValues.get(extractDate(r.date)) ||
+        new Map<string, string>();
+
+      const assessment = idToAssessment.get(r.assessmentId);
+      if (!assessment) {
+        throw Error("Record not connected to assessment.");
       }
-      dayToHeaderValues.set(extractDate(r.date), dRecrod);
+
+      const groupLabel = getGroupLabel(r.groupId);
+      const fullHeader = `${assessment.name} ${groupLabel}`;
+      const shortHeader = assessment.name;
+
+      updateHeaderCounter(
+        fullHeaderToShortHeader,
+        shortHeaderCounts,
+        fullHeader,
+        shortHeader,
+      );
+
+      dailyRow.set(fullHeader, r.value.toString());
+      dayToHeaderToValues.set(dateStr, dailyRow);
     }
 
-    const unscheduledRecords = await dbGetUnscheduledDosageRecords(db);
-    const medicine = await dbGetMedicines(db);
-    const medicineMap = new Map<number, Medicine>();
-    for (const m of medicine) {
-      medicineMap.set(m.dbId, m);
+    for (const r of scheuledMeasurmentRecrods) {
+      const dateStr = extractDate(r.date);
+      const dailyRow =
+        dayToHeaderToValues.get(dateStr) || new Map<string, string>();
+
+      const assessmentSchedule = idToAssessmentSchedule.get(
+        r.assessmentScheduleId,
+      );
+      if (!assessmentSchedule) {
+        throw Error("Record not connected to assessment schedule.");
+      }
+      const measurment = assessmentSchedule.measurments[r.measurmentIndex];
+
+      const groupLabel = getGroupLabel(measurment.groupId);
+      const fullHeader = `${assessmentSchedule.assessment.name} ${groupLabel}`;
+      const shortHeader = assessmentSchedule.assessment.name;
+
+      updateHeaderCounter(
+        fullHeaderToShortHeader,
+        shortHeaderCounts,
+        fullHeader,
+        shortHeader,
+      );
+
+      dailyRow.set(fullHeader, r.value.toString());
+      dayToHeaderToValues.set(dateStr, dailyRow);
     }
 
-    for (const r of unscheduledRecords) {
-      const dRecrod =
-        dayToHeaderValues.get(extractDate(r.date)) || new Map<string, number>();
+    const headers = calculateHeaders(
+      fullHeaderToShortHeader,
+      shortHeaderCounts,
+      dayToHeaderToValues,
+    );
 
-      const medicine = medicineMap.get(r.medicineId);
+    return [headers, dayToHeaderToValues];
+  }, [db]);
 
+  const getMedicineData = React.useCallback(async (): Promise<
+    [string[], Map<string, Map<string, number>>]
+  > => {
+    const scheduledDosageRecords = await dbGetScheduledDosageRecords(db);
+    const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
+
+    const schedules = await dbGetSchedulesWithMedicines(db);
+    const idToSchedule = new Map<number, Schedule>();
+    schedules.forEach((s) => {
+      idToSchedule.set(s.dbId, s);
+    });
+
+    const medicines = await dbGetMedicines(db);
+    const idToMedicine = new Map<number, Medicine>();
+    medicines.forEach((m) => {
+      idToMedicine.set(m.dbId, m);
+    });
+
+    const dayToHeaderToValues = new Map<string, Map<string, number>>();
+
+    /* to handle shortening of header labels*/
+    const fullHeaderToShortHeader = new Map<string, string>();
+    const shortHeaderCounts = new Map<string, number>();
+
+    for (const r of unscheduledDosageRecords) {
+      const dateStr = extractDate(r.date);
+      const dailyRow =
+        dayToHeaderToValues.get(dateStr) || new Map<string, number>();
+
+      const medicine = idToMedicine.get(r.medicineId);
       if (!medicine) {
-        throw Error("Record not connected to medicine");
+        throw Error("Record not connected to medicine.");
       }
 
       for (const ai of medicine.activeIngredients) {
-        const label = `${ai.name} [${ai.unit}]`;
-        headersSet.add(label.slice(0, 200));
-        let amountTotal = dRecrod.get(label) || 0;
+        const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
+        const fullHeader = `${ai.name} ${baseUnitLabel} [${ai.unit}]`;
+        const shortHeader = `${ai.name} [${ai.unit}]`;
+
+        updateHeaderCounter(
+          fullHeaderToShortHeader,
+          shortHeaderCounts,
+          fullHeader,
+          shortHeader,
+        );
+
+        let amountTotal = dailyRow.get(fullHeader) || 0;
         amountTotal += ai.amount * r.amount;
-        dRecrod.set(label, amountTotal);
+        dailyRow.set(fullHeader, amountTotal);
       }
-      dayToHeaderValues.set(extractDate(r.date), dRecrod);
+      dayToHeaderToValues.set(dateStr, dailyRow);
     }
 
-    const newDailyRecords = new Array();
+    for (const r of scheduledDosageRecords) {
+      const dateStr = extractDate(r.date);
+      const dailyRow =
+        dayToHeaderToValues.get(dateStr) || new Map<string, number>();
 
-    const days = Array.from(dayToHeaderValues.keys()).sort().reverse();
+      const schedule = idToSchedule.get(r.scheduleId);
+      if (!schedule) {
+        throw Error("Record not connected to medicine schedule.");
+      }
+
+      const medicine = schedule.medicine;
+      for (const ai of medicine.activeIngredients) {
+        const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
+        const fullHeader = `${ai.name} ${baseUnitLabel} [${ai.unit}]`;
+        const shortHeader = `${ai.name} [${ai.unit}]`;
+
+        updateHeaderCounter(
+          fullHeaderToShortHeader,
+          shortHeaderCounts,
+          fullHeader,
+          shortHeader,
+        );
+
+        let amountTotal = dailyRow.get(fullHeader) || 0;
+        amountTotal += ai.amount * schedule.doses[r.doseIndex].amount;
+        dailyRow.set(fullHeader, amountTotal);
+      }
+      dayToHeaderToValues.set(dateStr, dailyRow);
+    }
+
+    const headers = calculateHeaders(
+      fullHeaderToShortHeader,
+      shortHeaderCounts,
+      dayToHeaderToValues,
+    );
+
+    return [headers, dayToHeaderToValues];
+  }, [db]);
+
+  const loadAndCombineDataForTable = React.useCallback(async () => {
+    const [medicinesHeaders, medicinesHistory] = await getMedicineData();
+    const [assessmentsHeaders, assessmentsHistory] = await getAssessmentData();
+
+    const newTableRows = new Array();
+
+    const daysSet = new Set([
+      ...medicinesHistory.keys(),
+      ...assessmentsHistory.keys(),
+    ]);
+    const days = Array.from(daysSet).sort().reverse();
 
     for (const day of days) {
       const record = [day];
-      for (const header of headersSet) {
-        const value = dayToHeaderValues.get(day)?.get(header);
+      for (const header of medicinesHeaders) {
+        const value = medicinesHistory.get(day)?.get(header);
         if (value) {
           record.push(value.toString());
         } else {
           record.push("");
         }
       }
-      newDailyRecords.push(record);
+      for (const header of assessmentsHeaders) {
+        const value = assessmentsHistory.get(day)?.get(header);
+        if (value) {
+          record.push(value.toString());
+        } else {
+          record.push("");
+        }
+      }
+      newTableRows.push(record);
     }
-    setDailyRecords(newDailyRecords);
-    const newTableHeaders = Array.from(headersSet);
-    newTableHeaders.unshift("Date");
-    setTableHeaders(newTableHeaders);
-  }, [db]);
+
+    const headers = medicinesHeaders.concat(assessmentsHeaders);
+    headers.unshift("Date");
+
+    setTableHeaders(headers);
+
+    setTableRows(newTableRows);
+  }, [getAssessmentData, getMedicineData]);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadData();
-    }, [loadData]),
+      loadAndCombineDataForTable();
+    }, [loadAndCombineDataForTable]),
   );
 
   const handleMenuToggle = React.useCallback(() => {
@@ -202,7 +416,7 @@ export function RecordHistoryScreen() {
 
   const handleSaveToCSV = React.useCallback(async () => {
     try {
-      const csvContent = generateCSV(tableHeaders, dailyRecords);
+      const csvContent = generateCSV(tableHeaders, tableRows);
 
       const today = new Date().toISOString().split("T")[0];
       const fileName = `dosage-history-${today}.csv`;
@@ -228,7 +442,8 @@ export function RecordHistoryScreen() {
             encoding: FileSystem.EncodingType.UTF8,
           });
         }
-        /*         else {
+        /*
+        else {
           await shareAsync(tempFileUri, {
             mimeType: "text/csv",
             dialogTitle: "Share CSV File",
@@ -244,7 +459,7 @@ export function RecordHistoryScreen() {
       Alert.alert("Error", `Failed to save the file ${error}`);
     }
     setIsMenuOpen(false);
-  }, [dailyRecords, tableHeaders]);
+  }, [tableRows, tableHeaders]);
 
   React.useEffect(() => {
     navigation.setOptions({
@@ -278,7 +493,7 @@ export function RecordHistoryScreen() {
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
       ></MenuModal>
-      {dailyRecords.length === 0 ? (
+      {tableRows.length === 0 ? (
         renderEmptyState()
       ) : (
         <ScrollView
@@ -316,7 +531,7 @@ export function RecordHistoryScreen() {
               })}
             </DataTable.Row>
 
-            {dailyRecords.map((values, index) => (
+            {tableRows.map((values, index) => (
               <DataTable.Row
                 key={index}
                 style={[
