@@ -120,11 +120,11 @@ export function RecordHistoryScreen() {
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
 
-  function shortenHeaders<T>(
+  function calculateHeaders<T>(
     fullHeaderToShortHeader: Map<string, string>,
     shortHeaderCounts: Map<string, number>,
     dayToHeaderToValues: Map<string, Map<string, T>>,
-  ) {
+  ): string[] {
     const headers = [];
     for (const [fullHeader, shortHeader] of fullHeaderToShortHeader) {
       if (shortHeaderCounts.get(shortHeader) === 1) {
@@ -262,7 +262,7 @@ export function RecordHistoryScreen() {
       dayToHeaderToValues.set(dateStr, dailyRow);
     }
 
-    const headers = shortenHeaders(
+    const headers = calculateHeaders(
       fullHeaderToShortHeader,
       shortHeaderCounts,
       dayToHeaderToValues,
@@ -354,7 +354,7 @@ export function RecordHistoryScreen() {
       dayToHeaderToValues.set(dateStr, dailyRow);
     }
 
-    const headers = shortenHeaders(
+    const headers = calculateHeaders(
       fullHeaderToShortHeader,
       shortHeaderCounts,
       dayToHeaderToValues,
