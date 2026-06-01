@@ -1,12 +1,5 @@
 import React from "react";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from "react-native-reanimated";
 import { Home } from "./Home";
-import { scheduleOnRN } from "react-native-worklets";
 import {
   useFocusEffect,
   useNavigation,
@@ -19,15 +12,27 @@ import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { TouchableOpacity, View } from "react-native";
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  TouchableOpacity,
+  View,
+  VirtualizedList,
+} from "react-native";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { useSQLiteContext } from "expo-sqlite";
 import { dbGetMedicines } from "../../models/dbAccess";
-
+import { Dimensions } from "react-native";
+import { dayDifference } from "../utils";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "HomeTabs"
 >;
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+const INIITIAL_INDEX = 10_000;
+const TOTAL_ITEMS = 20_000;
 
 export function HomeSwipeable() {
   const navigation = useNavigation<HomeNavigationProp>();
@@ -35,13 +40,20 @@ export function HomeSwipeable() {
   const { i18n } = useTranslation();
   const db = useSQLiteContext();
 
-  const offset = useSharedValue(0);
+  const listRef = React.useRef<VirtualizedList<number>>(null);
 
   const [date, setDate] = React.useState<Date>(new Date());
+  const [datePickerDate, setDatePickerDate] = React.useState<Date>(new Date());
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
   const [areMedicinesEmpty, setAreMedicinesEmpty] =
     React.useState<boolean>(false);
+
+  const getDate = (slotValue: number) => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + slotValue);
+    return newDate;
+  };
 
   const formatDate = React.useCallback(
     (date: Date): string => {
@@ -90,41 +102,38 @@ export function HomeSwipeable() {
     }, [loadMedicines]),
   );
 
-  const handleDateSwipe = (daysToAdd: number) => {
-    let newDate = new Date(date);
-    newDate.setDate(date.getDate() + daysToAdd);
-    setDate(newDate);
+  const handleMomentumScrollEnd = (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+  ) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const landedIndex = Math.round(offsetX / SCREEN_WIDTH);
+    const newDate = getDate(landedIndex - INIITIAL_INDEX);
+    setDatePickerDate(newDate);
     navigation.setOptions({ title: formatDate(newDate) });
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
+  const handleDatePick = (event: DateTimePickerEvent, newDate?: Date) => {
     setIsDatePickerOpened(false);
     if (event.type === "dismissed") {
     } else if (newDate) {
-      setDate(newDate);
+      const days = dayDifference(date, newDate);
+      let targetIndex = 0;
+      if (newDate > date) {
+        targetIndex = INIITIAL_INDEX + days;
+      } else if (newDate < date) {
+        targetIndex = INIITIAL_INDEX - days;
+      }
+      if (targetIndex && listRef.current) {
+        listRef.current.scrollToIndex({
+          index: targetIndex,
+          animated: false,
+          viewPosition: 0.5,
+        });
+      }
+      setDatePickerDate(newDate);
       navigation.setOptions({ title: formatDate(newDate) });
     }
   };
-
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-5, 5])
-    .onUpdate((e) => {
-      offset.value = e.translationX;
-    })
-    .onEnd((e) => {
-      if (e.translationX > 100) {
-        scheduleOnRN(handleDateSwipe, -1);
-      } else if (e.translationX < -100) {
-        scheduleOnRN(handleDateSwipe, 1);
-      }
-      offset.value = withSpring(0);
-    });
-
-  const animatedStyles = useAnimatedStyle(() => ({
-    transform: [{ translateX: offset.value }],
-  }));
-
   const fabActions = [
     {
       label: "One-off Medicine",
@@ -157,24 +166,49 @@ export function HomeSwipeable() {
     },
   ];
 
+  const renderHome = ({ item: index }: { item: number }) => {
+    const currentDate = getDate(index - INIITIAL_INDEX);
+    return (
+      <View key={index} style={{ width: SCREEN_WIDTH }}>
+        <Home date={currentDate} />
+      </View>
+    );
+  };
+
   return (
-    <View>
-      <GestureDetector gesture={panGesture}>
-        <Animated.View
-          style={[{ width: "100%", height: "100%" }, animatedStyles]}
-        >
-          {isDatePickerOpened ? (
-            <RNDateTimePicker
-              mode="date"
-              value={date}
-              onChange={handleDateChange}
-            />
-          ) : (
-            ""
-          )}
-          <Home date={date} />
-        </Animated.View>
-      </GestureDetector>
+    <View style={[{ width: "100%", height: "100%" }]}>
+      {isDatePickerOpened ? (
+        <RNDateTimePicker
+          mode="date"
+          value={datePickerDate}
+          onChange={handleDatePick}
+        />
+      ) : (
+        ""
+      )}
+      <VirtualizedList
+        ref={listRef}
+        initialNumToRender={3}
+        getItemCount={() => TOTAL_ITEMS}
+        getItem={(_, index) => index}
+        renderItem={renderHome}
+        keyExtractor={(item) => item.toString()}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={SCREEN_WIDTH}
+        decelerationRate="fast"
+        disableIntervalMomentum={true}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        initialScrollIndex={INIITIAL_INDEX}
+        getItemLayout={(_, index) => ({
+          length: SCREEN_WIDTH,
+          offset: SCREEN_WIDTH * index,
+          index,
+        })}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        removeClippedSubviews={true}
+      />
       <FloatingActionButton actions={fabActions} position="right" />
     </View>
   );

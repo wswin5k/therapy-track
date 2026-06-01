@@ -39,6 +39,7 @@ import { baseUnitToSingularShortForm } from "../enumMappings";
 import { AssessmentValue } from "../../models/Records";
 import { Assessment, AssessmentType } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/ValueInputDialog";
+import { dayDifference } from "../utils";
 
 class DosageInfo {
   medicineName: string;
@@ -110,13 +111,6 @@ class ScheduledMeasurmentInfo {
 const pair = (a: number, b: number): number => {
   return 0.5 * (a + b) * (a + b + 1) + b;
 };
-
-function dayDifference(firstTime: Date, secondDate: Date): number {
-  const oneDay = 24 * 60 * 60 * 1000;
-  return Math.round(
-    Math.abs((firstTime.getTime() - secondDate.getTime()) / oneDay),
-  );
-}
 
 function UnscheduledDosage({
   dosage,
@@ -422,7 +416,6 @@ function ScheduledMeasurment({
 }
 
 export function Home({ date }: { date: Date }) {
-  console.log("render home", date);
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
