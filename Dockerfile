@@ -92,11 +92,13 @@ CMD ["npx", "expo", "start"]
 # this stage purpose is to enable code editor use container environment
 FROM base AS expo-sshd
 
-RUN ssh-keygen -t ed25519 -f $HOME/ssh_host_ed25519_key
+ENV HOME=/home/node
 
-RUN mkdir -p $HOME/.ssh && cat ssh/expo-container.pub > $HOME/.ssh/authorized_keys
+RUN ssh-keygen -t ed25519 -f ${HOME}/ssh_host_ed25519_key
 
-COPY <<EOF $HOME/sshd_config
+RUN mkdir -p ${HOME}/.ssh && cat ssh/expo-container.pub > ${HOME}/.ssh/authorized_keys
+
+COPY <<EOF ${HOME}/sshd_config
 Port 50022
 ListenAddress 0.0.0.0
 
@@ -115,4 +117,4 @@ EOF
 
 EXPOSE 50022
 
-CMD ["/usr/sbin/sshd", "-D", "-f", "$HOME/sshd_config"]
+CMD ["/usr/sbin/sshd", "-D", "-f", "/home/node/sshd_config"]
