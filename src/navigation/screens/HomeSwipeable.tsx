@@ -83,6 +83,13 @@ export function HomeSwipeable() {
     React.useCallback(() => {
       const newDate = new Date();
       setDate(newDate);
+      if (listRef.current) {
+        listRef.current.scrollToIndex({
+          index: INIITIAL_INDEX,
+          animated: false,
+          viewPosition: 0.5,
+        });
+      }
       navigation.setOptions({ title: formatDate(newDate) });
     }, [navigation, formatDate]),
   );
