@@ -5,14 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  useFocusEffect,
-  useNavigation,
-  useTheme,
-} from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../index";
-import { FloatingActionButton } from "../../components/FloatingActionButton";
+import { useFocusEffect, useTheme } from "@react-navigation/native";
 import React from "react";
 import {
   dbDeleteScheduledDosageRecord,
@@ -38,9 +31,6 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Group } from "../../models/Frequency";
-import RNDateTimePicker, {
-  DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import {
   cancelGroupNotification,
   scheduleGroupNotification,
@@ -49,6 +39,7 @@ import { baseUnitToSingularShortForm } from "../enumMappings";
 import { AssessmentValue } from "../../models/Records";
 import { Assessment, AssessmentType } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/ValueInputDialog";
+import { dayDifference } from "../utils";
 
 class DosageInfo {
   medicineName: string;
@@ -120,18 +111,6 @@ class ScheduledMeasurmentInfo {
 const pair = (a: number, b: number): number => {
   return 0.5 * (a + b) * (a + b + 1) + b;
 };
-
-function dayDifference(firstTime: Date, secondDate: Date): number {
-  const oneDay = 24 * 60 * 60 * 1000;
-  return Math.round(
-    Math.abs((firstTime.getTime() - secondDate.getTime()) / oneDay),
-  );
-}
-
-type HomeNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "HomeTabs"
->;
 
 function UnscheduledDosage({
   dosage,
@@ -436,15 +415,10 @@ function ScheduledMeasurment({
   );
 }
 
-export function Home() {
-  const { t, i18n } = useTranslation();
-  const navigation = useNavigation<HomeNavigationProp>();
+export function Home({ date }: { date: Date }) {
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
-
-  const [date, setDate] = React.useState(new Date());
-  const [isDatePickerOpened, setIsDatePickerOpened] =
-    React.useState<boolean>(false);
 
   const [groups, setGroups] = React.useState<Map<number | null, Group>>(
     new Map(),
@@ -474,9 +448,6 @@ export function Home() {
   const [isUnscheduledEmpty, setIsUnscheduledEmpty] =
     React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
-
-  const [areMedicinesEmpty, setAreMedicinesEmpty] =
-    React.useState<boolean>(false);
 
   const loadGroups = React.useCallback(async () => {
     const groups = await dbGetGroups(db);
@@ -636,11 +607,6 @@ export function Home() {
     medicines.forEach((m) => {
       medicinesMap.set(m.dbId, m);
     });
-    if (medicines.length > 0) {
-      setAreMedicinesEmpty(false);
-    } else {
-      setAreMedicinesEmpty(true);
-    }
 
     let newIsEmpty = true;
     let newAreGroupsEmpty = true;
@@ -700,25 +666,6 @@ export function Home() {
     setUnscheduledMeasurments(newUnscheduledMeasurmentInfos);
   }, [date, db]);
 
-  const formatDate = React.useCallback(
-    (date: Date): string => {
-      return date.toLocaleDateString(i18n.language, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    },
-    [i18n.language],
-  );
-
-  useFocusEffect(
-    React.useCallback(() => {
-      const newDate = new Date();
-      setDate(newDate);
-      navigation.setOptions({ title: formatDate(newDate) });
-    }, [navigation, formatDate]),
-  );
-
   useFocusEffect(
     React.useCallback(() => {
       loadGroups();
@@ -734,19 +681,6 @@ export function Home() {
       loadUnscheduledMeasurmentRecords,
     ]),
   );
-
-  React.useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => setIsDatePickerOpened(true)}
-          style={{ marginLeft: 16, marginRight: 20 }}
-        >
-          <Ionicons name="calendar" size={28} color={theme.colors.text} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, theme.colors]);
 
   const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
@@ -834,47 +768,6 @@ export function Home() {
 
     setClickedScheduledMeasurment(null);
   };
-
-  const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
-    setIsDatePickerOpened(false);
-    if (event.type === "dismissed") {
-    } else if (newDate) {
-      setDate(newDate);
-      navigation.setOptions({ title: formatDate(newDate) });
-    }
-  };
-
-  const fabActions = [
-    {
-      label: "One-off Medicine",
-      onPress: () =>
-        areMedicinesEmpty
-          ? navigation.navigate("EditMedicineScreen", { mode: "one-time" })
-          : navigation.navigate("SelectMedicineScreen", {
-              mode: "one-time",
-              selectedDate: date.toISOString(),
-            }),
-    },
-    {
-      label: "Schedule Medicine",
-      onPress: () =>
-        areMedicinesEmpty
-          ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
-          : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
-    },
-    {
-      label: "Schedule Assessment",
-      onPress: () => {
-        navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
-      },
-    },
-    {
-      label: "One-off Assessment",
-      onPress: () => {
-        navigation.navigate("EditAssessmentScreen", { mode: "one-time" });
-      },
-    },
-  ];
 
   const getScheduledDosages = (groupId?: number) =>
     scheduledDosages.get(groupId ?? null);
@@ -985,15 +878,6 @@ export function Home() {
 
   return (
     <DefaultMainContainer>
-      {isDatePickerOpened ? (
-        <RNDateTimePicker
-          mode="date"
-          value={date}
-          onChange={handleDateChange}
-        />
-      ) : (
-        ""
-      )}
       {clickedScheduledMeasurment && (
         <AssessmentInputDialog
           title={clickedScheduledMeasurment.assessmentName}
@@ -1056,8 +940,6 @@ export function Home() {
         )}
         {isScheduledEmpty && isUnscheduledEmpty && renderEmptyState()}
       </ScrollView>
-
-      <FloatingActionButton actions={fabActions} position="right" />
     </DefaultMainContainer>
   );
 }

@@ -2,7 +2,6 @@ import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { TouchableOpacity } from "react-native";
-import { Home } from "./screens/Home";
 import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
 import { SchedulesListScreen } from "./screens/SchedulesListScreen";
@@ -28,6 +27,7 @@ import {
 import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
 import { EditSingleMeasurmentScreen } from "./screens/EditSingleMeasurmentScreen";
 import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
+import { HomeSwipeable } from "./screens/HomeSwipeable";
 
 export interface MedicineParam {
   name: string;
@@ -116,7 +116,7 @@ const HomeTabs = createDrawerNavigator({
   }),
   screens: {
     Home: {
-      screen: Home,
+      screen: HomeSwipeable,
       options: {
         drawerLabel: "Home",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
