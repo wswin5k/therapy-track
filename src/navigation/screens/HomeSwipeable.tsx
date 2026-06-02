@@ -21,7 +21,7 @@ import {
 } from "react-native";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { useSQLiteContext } from "expo-sqlite";
-import { dbGetMedicines } from "../../models/dbAccess";
+import { dbGetAssessments, dbGetMedicines } from "../../models/dbAccess";
 import { Dimensions } from "react-native";
 import { dayDifference } from "../utils";
 type HomeNavigationProp = NativeStackNavigationProp<
@@ -53,6 +53,8 @@ export function HomeSwipeable() {
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
   const [areMedicinesEmpty, setAreMedicinesEmpty] =
+    React.useState<boolean>(false);
+  const [areAssessmentsEmpty, setAreAssessmentsEmpty] =
     React.useState<boolean>(false);
 
   const getDate = (slotValue: number) => {
@@ -100,19 +102,25 @@ export function HomeSwipeable() {
     }, [navigation, formatDate]),
   );
 
-  const loadMedicines = React.useCallback(async () => {
+  const loadMedicinesAndAssessments = React.useCallback(async () => {
     const medicines = await dbGetMedicines(db);
     if (medicines.length > 0) {
       setAreMedicinesEmpty(false);
     } else {
       setAreMedicinesEmpty(true);
     }
+    const assessments = await dbGetAssessments(db);
+    if (assessments.length > 0) {
+      setAreAssessmentsEmpty(false);
+    } else {
+      setAreAssessmentsEmpty(true);
+    }
   }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadMedicines();
-    }, [loadMedicines]),
+      loadMedicinesAndAssessments();
+    }, [loadMedicinesAndAssessments]),
   );
 
   const handleMomentumScrollEnd = (
@@ -167,15 +175,20 @@ export function HomeSwipeable() {
     },
     {
       label: "Schedule Assessment",
-      onPress: () => {
-        navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
-      },
+      onPress: () =>
+        areAssessmentsEmpty
+          ? navigation.navigate("EditAssessmentScreen", { mode: "schedule" })
+          : navigation.navigate("SelectAssessmentScreen", { mode: "schedule" }),
     },
     {
       label: "One-off Assessment",
-      onPress: () => {
-        navigation.navigate("EditAssessmentScreen", { mode: "one-time" });
-      },
+      onPress: () =>
+        areMedicinesEmpty
+          ? navigation.navigate("EditAssessmentScreen", { mode: "one-time" })
+          : navigation.navigate("SelectAssessmentScreen", {
+              mode: "one-time",
+              selectedDate: date.toISOString(),
+            }),
     },
   ];
 

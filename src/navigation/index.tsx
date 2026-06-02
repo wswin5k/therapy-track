@@ -28,6 +28,7 @@ import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
 import { EditSingleMeasurmentScreen } from "./screens/EditSingleMeasurmentScreen";
 import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
 import { HomeSwipeable } from "./screens/HomeSwipeable";
+import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
 
 export interface MedicineParam {
   name: string;
@@ -54,6 +55,9 @@ export type RootStackParamList = {
     assessment?: Assessment;
   };
   SelectMedicineScreen:
+    | { mode: "schedule" | "one-time"; selectedDate?: string }
+    | undefined;
+  SelectAssessmentScreen:
     | { mode: "schedule" | "one-time"; selectedDate?: string }
     | undefined;
   EditMedicineScheduleScreen: {
@@ -186,6 +190,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Select medicine",
+      },
+    },
+    SelectAssessmentScreen: {
+      screen: SelectAssessmentScreen,
+      options: {
+        presentation: "modal",
+        title: "Select assessment",
       },
     },
     EditMedicineScreen: {
