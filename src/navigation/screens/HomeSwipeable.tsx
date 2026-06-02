@@ -196,7 +196,7 @@ export function HomeSwipeable() {
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={SCREEN_WIDTH}
-        decelerationRate="fast"
+        decelerationRate={0.9}
         disableIntervalMomentum={true}
         onMomentumScrollEnd={handleMomentumScrollEnd}
         initialScrollIndex={INIITIAL_INDEX}
