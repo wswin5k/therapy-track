@@ -462,9 +462,13 @@ export function Home({ date }: { date: Date }) {
     const result = await dbGetSchedulesWithMedicines(db);
     const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
+      const startTime = new Date(s.startDate.toDateString()).getTime();
+      const endTime = s.endDate
+        ? new Date(s.endDate.toDateString()).getTime()
+        : null;
       const timeMatch =
-        s.startDate.getTime() <= selectedTime &&
-        (!s.endDate || (s.endDate && selectedTime <= s.endDate.getTime()));
+        startTime <= selectedTime &&
+        (!endTime || (endTime && selectedTime <= endTime));
 
       let dayFreqMatch = true;
       if (s.freq.intervalUnit === "week") {
@@ -525,9 +529,13 @@ export function Home({ date }: { date: Date }) {
     const result = await dbGetAssessmentSchedulesWithAssessments(db);
     const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
+      const startTime = new Date(s.startDate.toDateString()).getTime();
+      const endTime = s.endDate
+        ? new Date(s.endDate.toDateString()).getTime()
+        : null;
       const timeMatch =
-        s.startDate.getTime() <= selectedTime &&
-        (!s.endDate || (s.endDate && selectedTime <= s.endDate.getTime()));
+        startTime <= selectedTime &&
+        (!endTime || (endTime && selectedTime <= endTime));
 
       let dayFreqMatch = true;
       if (s.freq.intervalUnit === "week") {

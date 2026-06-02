@@ -34,6 +34,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const INIITIAL_INDEX = 10_000;
 const TOTAL_ITEMS = 20_000;
 
+function getToday(): Date {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  return today;
+}
+
 export function HomeSwipeable() {
   const navigation = useNavigation<HomeNavigationProp>();
   const theme = useTheme();
@@ -42,8 +48,8 @@ export function HomeSwipeable() {
 
   const listRef = React.useRef<VirtualizedList<number>>(null);
 
-  const [date, setDate] = React.useState<Date>(new Date());
-  const [datePickerDate, setDatePickerDate] = React.useState<Date>(new Date());
+  const [date, setDate] = React.useState<Date>(getToday());
+  const [datePickerDate, setDatePickerDate] = React.useState<Date>(getToday());
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
   const [areMedicinesEmpty, setAreMedicinesEmpty] =
@@ -81,7 +87,7 @@ export function HomeSwipeable() {
 
   useFocusEffect(
     React.useCallback(() => {
-      const newDate = new Date();
+      const newDate = getToday();
       setDate(newDate);
       if (listRef.current) {
         listRef.current.scrollToIndex({
