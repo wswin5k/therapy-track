@@ -8,6 +8,8 @@ import {
   ScrollView,
   ViewStyle,
   StyleProp,
+  ToastAndroid,
+  Platform,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import Ionicons from "@react-native-vector-icons/ionicons";
@@ -22,6 +24,7 @@ interface ModalPickerProps<T> {
   pressableStyle?: StyleProp<ViewStyle>;
   showTitle?: boolean;
   error?: boolean;
+  disabled?: boolean;
 }
 
 export function ModalPicker<T>({
@@ -33,17 +36,38 @@ export function ModalPicker<T>({
   pressableStyle,
   showTitle = false,
   error = false,
+  disabled = false,
 }: ModalPickerProps<T>) {
   const [modalVisible, setModalVisible] = React.useState(false);
   const theme = useTheme();
+  const [numberOfPresses, setNumberOfPresses] = React.useState(0);
 
   const handleSelect = (value: T) => {
+    if (disabled) {
+      return;
+    }
     onValueChange(value);
     setModalVisible(false);
   };
 
   const handleModalClose = () => {
     setModalVisible(false);
+  };
+
+  const handlePress = () => {
+    if (disabled) {
+      if (Platform.OS === "android") {
+        setNumberOfPresses((prev) => prev + 1);
+        if (numberOfPresses > 2) {
+          ToastAndroid.show(
+            "Exising assessment's type cannot be modified.",
+            ToastAndroid.SHORT,
+          );
+        }
+      }
+    } else {
+      setModalVisible(true);
+    }
   };
 
   const getLabelSafe = (value: T | null): string => {
@@ -83,7 +107,7 @@ export function ModalPicker<T>({
   return (
     <>
       <TouchableOpacity
-        onPress={() => setModalVisible(true)}
+        onPress={handlePress}
         style={[
           styles.defaultPressableStyle,
           {
@@ -91,6 +115,9 @@ export function ModalPicker<T>({
             backgroundColor: theme.colors.surface,
           },
           pressableStyle,
+          disabled && {
+            opacity: 0.6,
+          },
           error && {
             borderColor: theme.colors.error,
             borderWidth: ERROR_BORDER_WIDTH,
@@ -101,13 +128,24 @@ export function ModalPicker<T>({
           style={[
             styles.defaultPressableText,
             { color: theme.colors.text },
-            !selectedValue && { color: theme.colors.textTertiary },
+            (!selectedValue || disabled) && {
+              color: theme.colors.textTertiary,
+            },
           ]}
           numberOfLines={1}
         >
           {selectedLabel}
         </Text>
-        <Text style={[styles.chevron, { color: theme.colors.text }]}>▼</Text>
+        <Text
+          style={[
+            styles.chevron,
+            disabled
+              ? { color: theme.colors.textTertiary }
+              : { color: theme.colors.text },
+          ]}
+        >
+          ▼
+        </Text>
       </TouchableOpacity>
 
       <Modal

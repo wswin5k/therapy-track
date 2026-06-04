@@ -25,7 +25,7 @@ import {
 } from "../../models/AssessmentSchedule";
 import { ModalPicker } from "../../components/ModalPicker";
 import { useSQLiteContext } from "expo-sqlite";
-import { dbGetAssessments } from "../../models/dbAccess";
+import { dbGetAssessments, dbUpdateAssessment } from "../../models/dbAccess";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 type EditAssessmentScreenNavigationProp = NativeStackNavigationProp<
@@ -42,6 +42,9 @@ export function EditAssessmentScreen() {
   const [name, setName] = React.useState("");
   const [assessmentType, setAssessmentType] =
     React.useState<AssessmentType | null>(null);
+
+  const [nameChanged, setNameChanged] = React.useState(false);
+  const [typeInputDisabled, setTypeInputDisabled] = React.useState(false);
 
   const [nameError, setNameError] = React.useState(false);
   const [assessmentTypeError, setAssessmentTypeError] = React.useState(false);
@@ -66,6 +69,10 @@ export function EditAssessmentScreen() {
         assessment: Assessment;
       };
       setMode(params.mode);
+      if (params.mode === "save-and-go-back") {
+        setTypeInputDisabled(true);
+      }
+
       const assessmentInit = params.assessment;
       if (assessmentInit) {
         setName(assessmentInit.name);
@@ -75,22 +82,29 @@ export function EditAssessmentScreen() {
     }, [route.params, loadAssessments]),
   );
 
-  const validate = (): {
+  const validate = (
+    nameIsOkWhenNotChanged: boolean,
+  ): {
     name: string;
     type: AssessmentType;
     valueDomain: ValueDomain;
   } | null => {
-    let medicineValidated = true;
+    let asssessmentValidated = true;
 
     let newNameError = true;
     let newAssessmentTypeError = true;
 
-    const nameTrimmed = name.trim();
-    if (nameTrimmed && nameTrimmed.length < NAME_MAX_LENGHT) {
-      if (!assessmentsNames.includes(nameTrimmed)) {
-        const validName = /^[\p{L}\p{N} ]+$/u;
-        if (validName.test(nameTrimmed)) {
-          newNameError = false;
+    let nameValidated = name;
+    if (nameIsOkWhenNotChanged && !nameChanged) {
+      newNameError = false;
+    } else {
+      const nameValidated = name.trim();
+      if (nameValidated && nameValidated.length < NAME_MAX_LENGHT) {
+        if (!assessmentsNames.includes(nameValidated)) {
+          const validName = /^[\p{L}\p{N} ]+$/u;
+          if (validName.test(nameValidated)) {
+            newNameError = false;
+          }
         }
       }
     }
@@ -100,15 +114,15 @@ export function EditAssessmentScreen() {
     }
 
     if (newAssessmentTypeError || newNameError) {
-      medicineValidated = false;
+      asssessmentValidated = false;
     }
 
     setNameError(newNameError);
     setAssessmentTypeError(newAssessmentTypeError);
 
-    if (medicineValidated && assessmentType) {
+    if (asssessmentValidated && assessmentType) {
       return {
-        name: nameTrimmed,
+        name: nameValidated,
         type: assessmentType,
         valueDomain: null,
       };
@@ -117,18 +131,27 @@ export function EditAssessmentScreen() {
   };
 
   const handleSave = async () => {
-    const assessmentValidated = validate();
-    if (!assessmentValidated) {
-      return;
-    }
     if (mode === "schedule") {
+      const assessmentValidated = validate(false);
+      if (!assessmentValidated) {
+        return;
+      }
       navigation.navigate("EditAssessmentScheduleScreen", {
         assessment: assessmentValidated,
       });
     } else if (mode === "save-and-go-back") {
+      const assessmentValidated = validate(true);
+      if (!assessmentValidated) {
+        return;
+      }
+      dbUpdateAssessment(db, { dbId: 1, ...assessmentValidated });
       navigation.goBack();
     } else {
       // mode === "one-time"
+      const assessmentValidated = validate(false);
+      if (!assessmentValidated) {
+        return;
+      }
       navigation.navigate("EditSingleMeasurmentScreen", {
         assessment: assessmentValidated,
       });
@@ -157,6 +180,7 @@ export function EditAssessmentScreen() {
                 : {},
             ]}
             onChangeText={(text: string) => {
+              setNameChanged(true);
               setName(text);
             }}
             value={name}
@@ -171,6 +195,7 @@ export function EditAssessmentScreen() {
           getLabel={assessmentTypeToDisplayForm}
           pressableStyle={styles.fullWidthPickerContainer}
           error={assessmentTypeError}
+          disabled={typeInputDisabled}
         />
       </ScrollView>
 

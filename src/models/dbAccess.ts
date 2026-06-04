@@ -723,6 +723,10 @@ export async function dbInsertAssessment(
   return db_insert.lastInsertRowId;
 }
 
+export async function dbDeleteAssessment(db: SQLiteDatabase, id: number) {
+  await db.runAsync("DELETE FROM assessments WHERE id = ?", id);
+}
+
 export async function dbInsertUnscheduledMeasurmentRecord(
   db: SQLiteDatabase,
   record: {
@@ -802,6 +806,29 @@ export async function dbDeleteScheduledMeasurmentRecord(
     "DELETE FROM scheduled_measurment_records WHERE id = ?",
     id,
   );
+}
+
+export async function dbUpdateAssessment(
+  db: SQLiteDatabase,
+  assessment: {
+    name: string;
+    type: AssessmentType;
+    valueDomain: ValueDomain;
+    dbId: number;
+  },
+) {
+  const valueDomainStr = JSON.stringify(assessment.valueDomain);
+
+  const db_insert = await db.runAsync(
+    `UPDATE assessments
+    SET name = ?, type = ?, value_domain = ?
+    WHERE id = ?`,
+    assessment.name,
+    assessment.type,
+    valueDomainStr,
+    assessment.dbId,
+  );
+  return db_insert.lastInsertRowId;
 }
 
 export async function dbGetAssessments(

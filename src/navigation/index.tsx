@@ -29,6 +29,7 @@ import { EditSingleMeasurmentScreen } from "./screens/EditSingleMeasurmentScreen
 import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
 import { HomeSwipeable } from "./screens/HomeSwipeable";
 import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
+import { AssessmentListScreen } from "./screens/AssessmentListScreen";
 
 export interface MedicineParam {
   name: string;
@@ -134,6 +135,15 @@ const HomeTabs = createDrawerNavigator({
         title: "Medicines",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
           <Ionicons name="server" size={size} color={color} />
+        ),
+      },
+    },
+    AssessmentsList: {
+      screen: AssessmentListScreen,
+      options: {
+        title: "Assessments",
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Ionicons name="podium" size={size} color={color} />
         ),
       },
     },
