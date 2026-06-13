@@ -29,6 +29,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { baseUnitToUnitSelectionLabel } from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
+import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -87,7 +88,10 @@ function ActiveIngredientRow({
               backgroundColor: theme.colors.surface,
             },
             errors?.name
-              ? { borderColor: theme.colors.error, borderWidth: 1 }
+              ? {
+                  borderColor: theme.colors.error,
+                  borderWidth: ERROR_BORDER_WIDTH,
+                }
               : {},
           ]}
           placeholder="Name"
@@ -109,7 +113,10 @@ function ActiveIngredientRow({
               backgroundColor: theme.colors.surface,
             },
             errors?.weight
-              ? { borderColor: theme.colors.error, borderWidth: 1 }
+              ? {
+                  borderColor: theme.colors.error,
+                  borderWidth: ERROR_BORDER_WIDTH,
+                }
               : {},
           ]}
           placeholder="Amount"
@@ -142,9 +149,7 @@ function ActiveIngredientRow({
       </View>
       {removeButton ? (
         <TouchableOpacity onPress={handleRemove} style={styles.removeButton}>
-          <Text
-            style={[styles.removeButtonText, { color: theme.colors.error }]}
-          >
+          <Text style={[styles.removeButtonText, { color: theme.colors.text }]}>
             ✕
           </Text>
         </TouchableOpacity>
@@ -325,7 +330,10 @@ export function EditMedicineScreen() {
                 backgroundColor: theme.colors.surface,
               },
               nameError
-                ? { borderColor: theme.colors.error, borderWidth: 1 }
+                ? {
+                    borderColor: theme.colors.error,
+                    borderWidth: ERROR_BORDER_WIDTH,
+                  }
                 : {},
             ]}
             onChangeText={(text: string) => {
@@ -345,12 +353,7 @@ export function EditMedicineScreen() {
           pressableStyle={styles.fullWidthPickerContainer}
           error={baseUnitError}
         />
-        <Text
-          style={[
-            styles.headerLabel,
-            { marginTop: 20, color: theme.colors.text },
-          ]}
-        >
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
           {t("Active ingredients per base unit")}
         </Text>
 
@@ -401,6 +404,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     marginBottom: 8,
+    marginTop: 20,
+    marginLeft: 5,
   },
   rowContainer: {
     flexDirection: "row",
@@ -489,11 +494,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginTop: 2,
-    marginBottom: 10,
   },
 });

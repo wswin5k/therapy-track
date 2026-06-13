@@ -911,7 +911,7 @@ export async function dbInsertAssessmentSchedule(
   await dbInsertMeasurments(db, assessmentScheduleId, schedule.measurments);
 }
 
-export async function dbInsertAssessmentScheduleWithMedicine(
+export async function dbInsertAssessmentScheduleWithAssessment(
   db: SQLiteDatabase,
   assessment: {
     name: string;

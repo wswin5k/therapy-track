@@ -6,6 +6,8 @@ export enum AssessmentType {
   Numeric = "Numeric",
   Boolean = "Boolean",
   Text = "Text",
+  SingleSelect = "SingleSelect",
+  MultiSelect = "MultiSelect",
 }
 
 export class NumericValueDomain {
@@ -37,6 +39,8 @@ export function getDefaultValueDomain(
       return new TextValueDomain(TEXT_MAX_LENGTH);
     case AssessmentType.Numeric:
       return new NumericValueDomain(-Infinity, +Infinity);
+    case AssessmentType.SingleSelect:
+      return new SelectValueDomain(["", ""]);
     default:
       return null;
   }
