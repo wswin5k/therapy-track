@@ -39,8 +39,6 @@ export function getDefaultValueDomain(
       return new TextValueDomain(TEXT_MAX_LENGTH);
     case AssessmentType.Numeric:
       return new NumericValueDomain(-Infinity, +Infinity);
-    case AssessmentType.SingleSelect:
-      return new SelectValueDomain(["", ""]);
     default:
       return null;
   }
