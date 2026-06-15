@@ -37,8 +37,12 @@ import {
 } from "../../services/notificationService";
 import { baseUnitToSingularShortForm } from "../enumMappings";
 import { AssessmentValue } from "../../models/Records";
-import { Assessment, AssessmentType } from "../../models/AssessmentSchedule";
-import { AssessmentInputDialog } from "../../components/ValueInputDialog";
+import {
+  Assessment,
+  AssessmentType,
+  ValueDomain,
+} from "../../models/AssessmentSchedule";
+import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
 import { dayDifference } from "../utils";
 
 class DosageInfo {
@@ -92,6 +96,7 @@ class UnscheduledMeasurmentInfo {
   constructor(
     public assessmentName: string,
     public value: AssessmentValue,
+    public valueDomain: ValueDomain,
     public measurmentRecordId: number,
   ) {}
 }
@@ -101,6 +106,7 @@ class ScheduledMeasurmentInfo {
     public assessmentName: string,
     public assessmentType: AssessmentType,
     public value: AssessmentValue | null,
+    public valueDomain: ValueDomain,
     public index: number,
     public assessmentScheduleId: number,
     public measurmentRecordId: number | null,
@@ -578,6 +584,7 @@ export function Home({ date }: { date: Date }) {
             s.assessment.name,
             s.assessment.type,
             measurmentRecord ? measurmentRecord.value : null,
+            s.assessment.valueDomain,
             measurment.index,
             s.dbId,
             measurmentRecordId,
@@ -658,7 +665,12 @@ export function Home({ date }: { date: Date }) {
       const a = assessmentsMap.get(mr.assessmentId);
       if (a) {
         groupDosages.push(
-          new UnscheduledMeasurmentInfo(a?.name, mr.value, mr.dbId),
+          new UnscheduledMeasurmentInfo(
+            a?.name,
+            mr.value,
+            a.valueDomain,
+            mr.dbId,
+          ),
         );
         newIsEmpty = false;
         if (mr.groupId !== null) {
@@ -890,6 +902,7 @@ export function Home({ date }: { date: Date }) {
         <AssessmentInputDialog
           title={clickedScheduledMeasurment.assessmentName}
           assessmentType={clickedScheduledMeasurment.assessmentType}
+          valueDomain={clickedScheduledMeasurment.valueDomain}
           initialValue={clickedScheduledMeasurment.value}
           onCancel={handleMeasurmentInputCancel}
           onSave={handleMeasurmentInputSave}

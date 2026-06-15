@@ -234,7 +234,7 @@ export function EditAssessmentScreen() {
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
             {t("Select options")}
           </Text>
-          <View style={styles.selectList}>
+          <View>
             {valueDomain.values.map((v, idx) => (
               <View key={idx} style={styles.selectRow}>
                 <View style={{ flex: 1 }}>
@@ -414,9 +414,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginLeft: 20,
     fontSize: 16,
-  },
-  selectList: {
-    marginBottom: 0,
   },
   fullWidthPickerContainer: {
     height: 55,

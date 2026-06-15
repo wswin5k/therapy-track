@@ -4,3 +4,8 @@ export function dayDifference(firstTime: Date, secondDate: Date): number {
     Math.abs((firstTime.getTime() - secondDate.getTime()) / oneDay),
   );
 }
+export function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
+}

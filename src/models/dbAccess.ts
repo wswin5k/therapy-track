@@ -22,6 +22,7 @@ import {
   AssessmentType,
   Measurment,
   NumericValueDomain,
+  SelectValueDomain,
   TextValueDomain,
   ValueDomain,
 } from "./AssessmentSchedule";
@@ -141,13 +142,27 @@ function parseValueDomain(json: string | null, assessmentType: AssessmentType) {
     return null;
   }
   const vdData = JSON.parse(json);
+  if (vdData === null) {
+    return null;
+  }
   switch (assessmentType) {
     case AssessmentType.Numeric:
       return new NumericValueDomain(vdData.min, vdData.max);
     case AssessmentType.Text:
       return new TextValueDomain(vdData.max_characters);
+    case AssessmentType.SingleSelect:
+    case AssessmentType.MultiSelect:
+      return new SelectValueDomain(vdData.values);
     default:
       return null;
+  }
+}
+
+function strigifyAssessmentValue(value: AssessmentValue): string {
+  if (typeof value === "string") {
+    return value;
+  } else {
+    return JSON.stringify(value);
   }
 }
 
@@ -160,6 +175,9 @@ function parseAssessmentValue(
       return Number.parseFloat(value);
     case AssessmentType.Boolean:
       return value === "true";
+    case AssessmentType.SingleSelect:
+    case AssessmentType.MultiSelect:
+      return JSON.parse(value);
     default:
       return value;
   }
@@ -281,8 +299,8 @@ function parseAssessmentScheduleWithAssessmentRow(
   row: AssessmentScheduleWithAssessmentRow,
 ): AssessmentSchedule {
   const assessmentValueDomain = row.assessment_value_domain
-    ? null
-    : parseValueDomain(row.assessment_value_domain, row.assessment_type);
+    ? parseValueDomain(row.assessment_value_domain, row.assessment_type)
+    : null;
   const assessment = new Assessment(
     row.assessment_name,
     row.assessment_type,
@@ -736,13 +754,14 @@ export async function dbInsertUnscheduledMeasurmentRecord(
     group: number | null;
   },
 ): Promise<number> {
+  const valueStr = strigifyAssessmentValue(record.value);
   const result = await db.runAsync(
     `INSERT INTO unscheduled_measurment_records 
     (record_date, date, assessment, value, group_) VALUES (?, ?, ?, ?, ?)`,
     new Date().toISOString(),
     extractDate(record.date),
     record.assessmentId,
-    record.value.toString(),
+    valueStr,
     record.group,
   );
   return result.lastInsertRowId;
@@ -785,6 +804,8 @@ export async function dbInsertScheduledMeasurmentRecord(
     value: AssessmentValue;
   },
 ): Promise<number> {
+  const valueStr = strigifyAssessmentValue(record.value);
+
   const result = await db.runAsync(
     `INSERT INTO scheduled_measurment_records 
     (record_date, date, assessment_schedule, measurment_index, value) 
@@ -793,7 +814,7 @@ export async function dbInsertScheduledMeasurmentRecord(
     extractDate(record.date),
     record.assessmentScheduleId,
     record.measurmentIndex,
-    record.value,
+    valueStr,
   );
   return result.lastInsertRowId;
 }
@@ -838,12 +859,11 @@ export async function dbGetAssessments(
       SELECT id, name, type, value_domain
       FROM assessments
     `);
-
   return rows.map((row) => {
     const assessmentType = AssessmentType[row.type];
     const valueDomain = row.value_domain
-      ? null
-      : parseValueDomain(row.value_domain, assessmentType);
+      ? parseValueDomain(row.value_domain, assessmentType)
+      : null;
     return new Assessment(row.name, assessmentType, valueDomain, row.id);
   });
 }
