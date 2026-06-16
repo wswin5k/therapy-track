@@ -1,6 +1,6 @@
 import { Frequency } from "./Frequency";
 
-const TEXT_MAX_LENGTH = 1000;
+const TEXT_MAX_LENGTH = 200;
 
 export enum AssessmentType {
   Numeric = "Numeric",

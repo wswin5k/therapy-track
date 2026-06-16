@@ -1,6 +1,7 @@
 import {
   AssessmentType,
   SelectValueDomain,
+  TextValueDomain,
   ValueDomain,
 } from "../models/AssessmentSchedule";
 import { AssessmentValue } from "../models/Records";
@@ -65,11 +66,17 @@ export function AssessmentInput({
     );
   };
 
-  const renderTextInput = () => {
+  const renderTextInput = (valueDomain: TextValueDomain) => {
+    const handleChangeText = (text: string) => {
+      if (text.length <= valueDomain.max_characters) {
+        handleValueChange(text);
+      }
+    };
+
     return (
       <TextInput
         value={value as string}
-        onChangeText={handleValueChange}
+        onChangeText={handleChangeText}
         multiline={true}
         style={[
           styles.textInput,
@@ -99,7 +106,6 @@ export function AssessmentInput({
           styles.selectInputContainer,
           {
             borderColor: theme.colors.border,
-            //backgroundColor: theme.colors.surface,
           },
         ]}
       >
@@ -169,7 +175,10 @@ export function AssessmentInput({
       renderInput = renderBooleanInput;
       break;
     case AssessmentType.Text:
-      renderInput = renderTextInput;
+      if (valueDomain && valueDomain instanceof TextValueDomain) {
+        renderInput = () => renderTextInput(valueDomain);
+      }
+
       break;
     case AssessmentType.SingleSelect:
     case AssessmentType.MultiSelect:
