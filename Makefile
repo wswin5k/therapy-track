@@ -10,7 +10,7 @@ dev-generate-keystore:
 	-dname "CN=Android Debug,O=Android,C=US"
 
 dev-build:
-	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
+	docker compose run --rm expo bash -c "npx expo prebuild --platform android --clean && cd android && ./gradlew assembleDebug"
 
 dev-install:
 	adb install android/app/build/outputs/apk/debug/app-debug.apk
@@ -19,7 +19,7 @@ dev-port-forward:
 	adb reverse tcp:8081 tcp:8081
 
 release-build:
-	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
+	docker compose run --rm expo bash -c "npx expo prebuild --platform android --clean && cd android && ./gradlew assembleRelease"
 
 release-install:
 	adb install android/app/build/outputs/apk/release/app-release.apk

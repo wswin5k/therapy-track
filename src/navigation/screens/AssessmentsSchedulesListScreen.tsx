@@ -14,55 +14,56 @@ import {
   useTheme,
 } from "@react-navigation/native";
 import {
-  dbDeleteAssessment,
-  dbGetAssessments,
+  dbDeleteAssessmentSchedule,
+  dbDeleteScheduledMeasurmentRecordsForAssessmentSchedule,
   dbGetAssessmentSchedules,
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
-import { InformationDialog } from "../../components/InformationDialog";
-import { Assessment } from "../../models/AssessmentSchedule";
+import { RootStackParamList } from "..";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {
+  assessmentTypeToDisplayForm,
+  frequencySelectionToDisplayForm,
+} from "../enumMappings";
+import { AssessmentSchedule } from "../../models/AssessmentSchedule";
 
-function AssessmentListItem({
-  assessment,
-  hasSchedules,
-  loadData,
+type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "EditMedicineScheduleScreen"
+>;
+
+function ScheduleListItem({
+  schedule,
+  loadSchedules,
   optionsOpened,
   handleOptionsToggle,
   onPress,
 }: {
-  assessment: Assessment;
-  hasSchedules: boolean;
-  loadData: () => Promise<void>;
+  schedule: AssessmentSchedule;
+  loadSchedules: () => Promise<void>;
   optionsOpened: boolean;
   handleOptionsToggle: () => void;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const db = useSQLiteContext();
-  const navigation = useNavigation();
+  const navigation = useNavigation<EditMedicineScreenNavigationProp>();
   const theme = useTheme();
   const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
-  const [deleteRefusalDialogVisible, setDeleteRefusalDialogVisible] =
-    React.useState(false);
 
   const handleDelete = () => {
-    if (hasSchedules) {
-      setDeleteRefusalDialogVisible(true);
-    } else {
-      setDeleteDialogVisible(true);
-    }
+    setDeleteDialogVisible(true);
   };
 
   const confirmDelete = async () => {
-    await dbDeleteAssessment(db, assessment.dbId);
+    await dbDeleteScheduledMeasurmentRecordsForAssessmentSchedule(
+      db,
+      schedule.dbId,
+    );
+    await dbDeleteAssessmentSchedule(db, schedule.dbId);
     setDeleteDialogVisible(false);
-    await loadData();
-  };
-
-  const closeDeleteRefusal = () => {
-    setDeleteRefusalDialogVisible(false);
-    handleOptionsToggle();
+    await loadSchedules();
   };
 
   const cancelDelete = () => {
@@ -71,11 +72,26 @@ function AssessmentListItem({
   };
 
   const handleEdit = () => {
-    navigation.navigate("EditAssessmentScreen", {
-      assessment: assessment,
-      mode: "save-and-go-back",
+    navigation.navigate("PartiallyEditAnyScheduleScreen", {
+      scheduleId: schedule.dbId,
+      scheduleType: "assessment",
     });
   };
+
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString(i18n.language, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const frequencyLabel = frequencySelectionToDisplayForm(
+    schedule.freq.getFrequencyLabel(),
+  );
+  const dateRange = schedule.endDate
+    ? `${formatDate(schedule.startDate)} - ${formatDate(schedule.endDate)}`
+    : `${formatDate(schedule.startDate)} - ${t("No end date")}`;
 
   const renderOptions = () => (
     <TouchableOpacity
@@ -89,7 +105,7 @@ function AssessmentListItem({
         ]}
         onPress={handleEdit}
       >
-        <Text style={styles.optionsButtonText}>{t("Edit")}</Text>
+        <Text style={styles.optionsButtonText}>{t("Edit dates")}</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -117,32 +133,22 @@ function AssessmentListItem({
       <ConfirmationDialog
         visible={deleteDialogVisible}
         title={t("Delete confirmation")}
-        message={t("Do you want to remove ") + assessment.name + "?"}
+        message={t(
+          "This action is going to pernamently delete the schedule and " +
+            "all of its associated measurment records. Do you want to proceed?",
+        )}
         confirmText={t("Delete")}
         cancelText={t("Cancel")}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />
-
-      <InformationDialog
-        visible={deleteRefusalDialogVisible}
-        title={t("Assessment has schedules")}
-        message={t(
-          "Deletetion of the assessment has been refused, because " +
-            "it has connected schedules. " +
-            "They need to be deleted before the assessment.",
-        )}
-        closeText={t("Close")}
-        onClose={closeDeleteRefusal}
-      />
-
       {optionsOpened && renderOptions()}
 
       <TouchableOpacity
         onPress={onPress}
         onLongPress={handleOptionsToggle}
         style={[
-          styles.itemContainer,
+          styles.scheduleItem,
           {
             backgroundColor: theme.colors.card,
             borderColor: theme.colors.border,
@@ -150,14 +156,25 @@ function AssessmentListItem({
           },
         ]}
       >
-        <View style={styles.itemContent}>
+        <View style={styles.scheduleContent}>
           <Text style={[styles.itemTitle, { color: theme.colors.text }]}>
-            {assessment.name}
+            {schedule.assessment.name}
           </Text>
           <Text
             style={[styles.itemText, { color: theme.colors.textSecondary }]}
           >
-            {assessment.type}
+            {t(assessmentTypeToDisplayForm(schedule.assessment.type))}
+          </Text>
+          <Text
+            style={[styles.itemText, { color: theme.colors.textSecondary }]}
+          >
+            {frequencyLabel}
+          </Text>
+
+          <Text
+            style={[styles.itemText, { color: theme.colors.textSecondary }]}
+          >
+            {dateRange}
           </Text>
         </View>
       </TouchableOpacity>
@@ -165,43 +182,33 @@ function AssessmentListItem({
   );
 }
 
-export function AssessmentListScreen() {
-  const { t } = useTranslation();
+export function AssessmentSchedulesListScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
+  const { t } = useTranslation();
 
-  const [assessements, setAssessments] = React.useState<Assessment[]>([]);
-  const [assessmentsWithSchedules, setAssessmentsWithSchedules] =
-    React.useState<Set<number>>(new Set());
+  const [schedules, setSchedules] = React.useState<AssessmentSchedule[]>([]);
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
 
-  const loadData = React.useCallback(async () => {
-    const assessments = await dbGetAssessments(db);
-    setAssessments(assessments);
-
-    const schedulesWitAssessments = await dbGetAssessmentSchedules(db);
-    const newAssessmentsWithSchedules = new Set<number>();
-    schedulesWitAssessments.forEach((s) => {
-      newAssessmentsWithSchedules.add(s.assessment.dbId);
-    });
-    setAssessmentsWithSchedules(newAssessmentsWithSchedules);
-
-    setOptionsOpened(Array.from({ length: assessments.length }, () => false));
+  const loadSchedules = React.useCallback(async () => {
+    const result = await dbGetAssessmentSchedules(db);
+    setSchedules(result);
+    setOptionsOpened(Array.from({ length: result.length }, () => false));
   }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadData();
-    }, [loadData]),
+      loadSchedules();
+    }, [loadSchedules]),
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No assessments added yet.")}
+        {t("No assessments schedules added yet.")}
       </Text>
       <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Add an assessment from the Home screen.")}
+        {t("Add an assessment schedule from the Home screen.")}
       </Text>
     </View>
   );
@@ -228,20 +235,19 @@ export function AssessmentListScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView style={styles.list}>
-        {assessements.map((a, idx) => {
+        {schedules.map((s, idx) => {
           return (
-            <AssessmentListItem
+            <ScheduleListItem
               key={idx}
-              assessment={a}
-              hasSchedules={assessmentsWithSchedules.has(a.dbId)}
+              schedule={s}
               optionsOpened={optionsOpened[idx]}
-              loadData={loadData}
+              loadSchedules={loadSchedules}
               onPress={handleOptionsOff}
               handleOptionsToggle={createHandleOptionsToggle(idx)}
             />
           );
         })}
-        {assessements.length === 0 && renderEmptyState()}
+        {schedules.length === 0 && renderEmptyState()}
       </ScrollView>
     </DefaultMainContainer>
   );
@@ -256,7 +262,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  itemContainer: {
+  scheduleItem: {
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,
@@ -264,7 +270,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
   },
-  itemContent: {
+  optionsOverlay: {
+    ...StyleSheet.absoluteFill,
+    flexDirection: "row",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: "rgba(255, 0, 0, 0.0)",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  scheduleContent: {
     flex: 1,
   },
   itemTitle: {
@@ -276,29 +292,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 2,
   },
-  emptyContainer: {
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
-  },
-  optionsOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: "row",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: "rgba(255, 0, 0, 0.0)",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
   optionsButton: {
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -309,6 +302,20 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 15,
     fontWeight: "500",
+    textAlign: "center",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "500",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptySubtext: {
+    fontSize: 14,
     textAlign: "center",
   },
 });
