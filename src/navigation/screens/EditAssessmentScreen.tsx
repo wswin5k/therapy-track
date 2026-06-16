@@ -43,6 +43,7 @@ export function EditAssessmentScreen() {
   const theme = useTheme();
   const db = useSQLiteContext();
 
+  const [assessmentId, setAssessmentId] = React.useState<number | null>(null);
   const [name, setName] = React.useState("");
   const [assessmentType, setAssessmentType] =
     React.useState<AssessmentType | null>(null);
@@ -83,6 +84,7 @@ export function EditAssessmentScreen() {
 
       const assessmentInit = params.assessment;
       if (assessmentInit) {
+        setAssessmentId(assessmentInit.dbId);
         setName(assessmentInit.name);
         setAssessmentType(assessmentInit.type);
       }
@@ -108,6 +110,7 @@ export function EditAssessmentScreen() {
     ).fill(true);
 
     let nameValidated = name;
+    // todo: document use case does it fullfill
     if (nameIsOkWhenNotChanged && !nameChanged) {
       newNameError = false;
     } else {
@@ -208,7 +211,11 @@ export function EditAssessmentScreen() {
       if (!assessmentValidated) {
         return;
       }
-      dbUpdateAssessment(db, { dbId: 1, ...assessmentValidated });
+      if (assessmentId !== null) {
+        dbUpdateAssessment(db, { dbId: assessmentId, ...assessmentValidated });
+      } else {
+        throw Error("Assessment ID has not been set.");
+      }
       navigation.goBack();
     } else {
       // mode === "one-time"
