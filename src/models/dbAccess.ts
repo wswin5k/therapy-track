@@ -345,7 +345,6 @@ export async function dbGetMedicineSchedule(
       FROM schedules s
       JOIN medicines m ON s.medicine = m.id
       WHERE s.id = ${scheduleId}
-      ORDER BY s.start_date DESC
     `);
 
   const dosesRows = await dbGetDoses(db, scheduleId);
@@ -1050,7 +1049,6 @@ export async function dbGetAssessmentSchedule(
       FROM assessment_schedules s
       JOIN assessments a ON s.assessment = a.id
       WHERE s.id = ${assessmentScheduleId}
-      ORDER BY s.start_date DESC
     `);
 
   const measurmentsRows = await dbGetMeasurments(db, assessmentScheduleId);
