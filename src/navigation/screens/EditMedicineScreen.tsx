@@ -178,6 +178,7 @@ export function EditMedicineScreen() {
   const navigation = useNavigation<EditMedicineScreenNavigationProp>();
   const theme = useTheme();
 
+  const [medicineId, setMedicineId] = React.useState<number | null>(null);
   const [name, setName] = React.useState("");
   const [baseUnit, setBaseUnit] = React.useState<BaseUnit | null>(null);
 
@@ -207,17 +208,17 @@ export function EditMedicineScreen() {
         medicine: Medicine;
       };
       setMode(params.mode);
-      const mInit = params.medicine;
-      if (mInit) {
-        setName(mInit.name);
+      const medicineInit = params.medicine;
+      if (medicineInit) {
+        setMedicineId(medicineInit.dbId);
+        setName(medicineInit.name);
+        setBaseUnit(medicineInit.baseUnit);
 
-        setBaseUnit(mInit.baseUnit);
-
-        activeIngredientsRefs.current = mInit.activeIngredients.map(
+        activeIngredientsRefs.current = medicineInit.activeIngredients.map(
           (ai, idx) =>
             new ActiveIngredientInfo(idx, ai.name, ai.amount, ai.unit),
         );
-        setNActiveIngredients(mInit.activeIngredients.length);
+        setNActiveIngredients(medicineInit.activeIngredients.length);
       }
     }, [route.params]),
   );
@@ -290,7 +291,11 @@ export function EditMedicineScreen() {
         medicine: medicineValidated,
       });
     } else if (mode === "save-and-go-back") {
-      dbUpdateMedicine(db, { dbId: 1, ...medicineValidated });
+      if (medicineId !== null) {
+        dbUpdateMedicine(db, { dbId: medicineId, ...medicineValidated });
+      } else {
+        throw Error("Medicine ID has not been set.");
+      }
       navigation.goBack();
     } else {
       // mode === "one-time"
