@@ -1,10 +1,11 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { TouchableOpacity } from "react-native";
 import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
-import { SchedulesListScreen } from "./screens/SchedulesListScreen";
+import { MedicineSchedulesListScreen } from "./screens/MedicineSchedulesListScreen";
 import type {
   ActiveIngredient,
   BaseUnit,
@@ -16,7 +17,7 @@ import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
 import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
-import PartiallyEditMedicineScheduleScreen from "./screens/ScheduleScreens/PartiallyEditMedicineScheduleScreen";
+import PartiallyEditAnyScheduleScreen from "./screens/ScheduleScreens/PartiallyEditAnyScheduleScreen";
 import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
 import {
@@ -30,6 +31,24 @@ import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessme
 import { HomeSwipeable } from "./screens/HomeSwipeable";
 import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
 import { AssessmentListScreen } from "./screens/AssessmentListScreen";
+import { AssessmentSchedulesListScreen } from "./screens/AssessmentsSchedulesListScreen";
+
+const SchedulesTabs = createMaterialTopTabNavigator({
+  screens: {
+    SchedulesTabsMedicine: {
+      screen: MedicineSchedulesListScreen,
+      options: {
+        title: "Medicines",
+      },
+    },
+    AssessmentSchedulesTabsMedicine: {
+      screen: AssessmentSchedulesListScreen,
+      options: {
+        title: "Assessments",
+      },
+    },
+  },
+});
 
 export interface MedicineParam {
   name: string;
@@ -67,8 +86,9 @@ export type RootStackParamList = {
   EditAssessmentScheduleScreen: {
     assessment: AssessmentParam;
   };
-  PartiallyEditMedicineScheduleScreen: {
+  PartiallyEditAnyScheduleScreen: {
     scheduleId: number;
+    scheduleType: "assessment" | "medicine";
   };
   EditSingleDosageScreen: {
     medicine: {
@@ -99,7 +119,7 @@ export type RootStackParamList = {
   NotFound: undefined;
 };
 
-const HomeTabs = createDrawerNavigator({
+const DrawerTabs = createDrawerNavigator({
   screenOptions: ({ theme, navigation }) => ({
     drawerActiveTintColor: theme.colors.primary,
     drawerInactiveTintColor: theme.colors.text,
@@ -148,7 +168,7 @@ const HomeTabs = createDrawerNavigator({
       },
     },
     SchedulesList: {
-      screen: SchedulesListScreen,
+      screen: SchedulesTabs,
       options: {
         title: "Schedules",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
@@ -189,7 +209,7 @@ const RootStack = createNativeStackNavigator({
   }),
   screens: {
     HomeTabs: {
-      screen: HomeTabs,
+      screen: DrawerTabs,
       options: {
         title: "Home",
         headerShown: false,
@@ -237,8 +257,8 @@ const RootStack = createNativeStackNavigator({
         title: "Edit schedule",
       },
     },
-    PartiallyEditMedicineScheduleScreen: {
-      screen: PartiallyEditMedicineScheduleScreen,
+    PartiallyEditAnyScheduleScreen: {
+      screen: PartiallyEditAnyScheduleScreen,
       options: {
         presentation: "modal",
         title: "Edit schedule dates",

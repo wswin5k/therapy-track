@@ -328,7 +328,7 @@ function parseAssessmentScheduleWithAssessmentRow(
   );
 }
 
-export async function dbGetSchedule(
+export async function dbGetMedicineSchedule(
   db: SQLiteDatabase,
   scheduleId: number,
 ): Promise<Schedule> {
@@ -345,7 +345,6 @@ export async function dbGetSchedule(
       FROM schedules s
       JOIN medicines m ON s.medicine = m.id
       WHERE s.id = ${scheduleId}
-      ORDER BY s.start_date DESC
     `);
 
   const dosesRows = await dbGetDoses(db, scheduleId);
@@ -357,7 +356,7 @@ export async function dbGetSchedule(
   return parseScheduleWithMedicineRow(row);
 }
 
-export async function dbGetSchedulesWithMedicines(
+export async function dbGetMedicineSchedules(
   db: SQLiteDatabase,
 ): Promise<Schedule[]> {
   const rows = await db.getAllAsync<ScheduleWithMedicineRow>(`
@@ -412,16 +411,18 @@ export async function dbInsertSchedule(
   await dbInsertDoses(db, scheduleId, schedule.doses);
 }
 
-export async function dbUpdateSchedule(
+export async function dbUpdateMedicineSchedule(
   db: SQLiteDatabase,
-  schedule: {
+  medicineSchedule: {
     dbId: number;
     startDate: Date;
     endDate: Date | null;
   },
 ) {
-  const startDateStr = schedule.startDate.toISOString();
-  const endDateStr = schedule.endDate ? schedule.endDate.toISOString() : null;
+  const startDateStr = medicineSchedule.startDate.toISOString();
+  const endDateStr = medicineSchedule.endDate
+    ? medicineSchedule.endDate.toISOString()
+    : null;
 
   await db.runAsync(
     `UPDATE schedules
@@ -429,7 +430,30 @@ export async function dbUpdateSchedule(
     WHERE id = ?`,
     startDateStr,
     endDateStr,
-    schedule.dbId,
+    medicineSchedule.dbId,
+  );
+}
+
+export async function dbUpdateAssessmentSchedule(
+  db: SQLiteDatabase,
+  assessmentSchedule: {
+    dbId: number;
+    startDate: Date;
+    endDate: Date | null;
+  },
+) {
+  const startDateStr = assessmentSchedule.startDate.toISOString();
+  const endDateStr = assessmentSchedule.endDate
+    ? assessmentSchedule.endDate.toISOString()
+    : null;
+
+  await db.runAsync(
+    `UPDATE assessment_schedules
+    SET start_date = ?, end_date = ?
+    WHERE id = ?`,
+    startDateStr,
+    endDateStr,
+    assessmentSchedule.dbId,
   );
 }
 
@@ -592,6 +616,27 @@ export async function dbGetUnscheduledDosageRecords(
         row.group_,
       ),
   );
+}
+
+export async function dbDeleteScheduledMeasurmentRecordsForAssessmentSchedule(
+  db: SQLiteDatabase,
+  assessmentScheduleId: number,
+) {
+  await db.runAsync(
+    "DELETE FROM scheduled_measurment_records WHERE assessment_schedule = ?",
+    assessmentScheduleId,
+  );
+}
+
+export async function dbDeleteAssessmentSchedule(
+  db: SQLiteDatabase,
+  id: number,
+) {
+  await db.runAsync(
+    "DELETE FROM measurments WHERE assessment_schedule = ?",
+    id,
+  );
+  await db.runAsync("DELETE FROM assessment_schedules WHERE id = ?", id);
 }
 
 export async function dbGetGroups(db: SQLiteDatabase): Promise<Group[]> {
@@ -964,13 +1009,13 @@ async function dbGetMeasurments(
   );
 }
 
-export async function dbGetAssessmentSchedulesWithAssessments(
+export async function dbGetAssessmentSchedules(
   db: SQLiteDatabase,
 ): Promise<AssessmentSchedule[]> {
   const rows = await db.getAllAsync<AssessmentScheduleWithAssessmentRow>(`
       SELECT
         s.id,
-        s.assessment, 
+        s.assessment,
         a.name as assessment_name,
         a.type as assessment_type,
         a.value_domain as assessment_value_domain,
@@ -985,4 +1030,32 @@ export async function dbGetAssessmentSchedulesWithAssessments(
     row.measurments = await dbGetMeasurments(db, row.id);
   }
   return rows.map(parseAssessmentScheduleWithAssessmentRow);
+}
+
+export async function dbGetAssessmentSchedule(
+  db: SQLiteDatabase,
+  assessmentScheduleId: number,
+): Promise<AssessmentSchedule> {
+  const row = await db.getFirstAsync<AssessmentScheduleWithAssessmentRow>(`
+      SELECT
+        s.id,
+        s.assessment,
+        a.name as assessment_name,
+        a.type as assessment_type,
+        a.value_domain as assessment_value_domain,
+        s.start_date,
+        s.end_date,
+        s.freq
+      FROM assessment_schedules s
+      JOIN assessments a ON s.assessment = a.id
+      WHERE s.id = ${assessmentScheduleId}
+    `);
+
+  const measurmentsRows = await dbGetMeasurments(db, assessmentScheduleId);
+
+  if (row === null) {
+    throw Error("No schedule with given id.");
+  }
+  row.measurments = measurmentsRows;
+  return parseAssessmentScheduleWithAssessmentRow(row);
 }

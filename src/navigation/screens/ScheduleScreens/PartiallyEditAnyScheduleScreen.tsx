@@ -18,10 +18,16 @@ import {
   useTheme,
 } from "@react-navigation/native";
 import { useSQLiteContext } from "expo-sqlite";
-import { dbGetSchedule, dbUpdateSchedule } from "../../../models/dbAccess";
+import {
+  dbGetAssessmentSchedule,
+  dbGetMedicineSchedule,
+  dbUpdateAssessmentSchedule,
+  dbUpdateMedicineSchedule,
+} from "../../../models/dbAccess";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
+import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 
-export default function PartiallyEditMedicineScheduleScreen() {
+export default function PartiallyEditAnyScheduleScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation();
@@ -36,15 +42,21 @@ export default function PartiallyEditMedicineScheduleScreen() {
     React.useState<boolean>(false);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
 
-  const [schedule, setSchedule] = React.useState<Schedule | null>(null);
+  const [schedule, setSchedule] = React.useState<
+    Schedule | AssessmentSchedule | null
+  >(null);
 
   useFocusEffect(
     React.useCallback(() => {
       const setData = async () => {
         const params = route.params as {
           scheduleId: number;
+          scheduleType: "assessment" | "medicine";
         };
-        const schedule = await dbGetSchedule(db, params.scheduleId);
+        const schedule =
+          params.scheduleType === "medicine"
+            ? await dbGetMedicineSchedule(db, params.scheduleId)
+            : await dbGetAssessmentSchedule(db, params.scheduleId);
 
         setSchedule(schedule);
         if (schedule) {
@@ -95,26 +107,26 @@ export default function PartiallyEditMedicineScheduleScreen() {
     }
     if (schedule) {
       if (startDate !== schedule.startDate || endDate !== schedule.endDate) {
-        await dbUpdateSchedule(db, {
-          dbId: schedule.dbId,
-          startDate,
-          endDate,
-        });
+        if (schedule instanceof Schedule) {
+          await dbUpdateMedicineSchedule(db, {
+            dbId: schedule.dbId,
+            startDate,
+            endDate,
+          });
+        } else {
+          //schedule instanceof AssessmentSchdule
+          await dbUpdateAssessmentSchedule(db, {
+            dbId: schedule.dbId,
+            startDate,
+            endDate,
+          });
+        }
       }
     } else {
       throw Error("Reference schedule has not been set.");
     }
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: "HomeTabs",
-          state: {
-            routes: [{ name: "SchedulesList" }],
-          },
-        },
-      ],
-    });
+
+    navigation.goBack();
   };
 
   return (
@@ -182,10 +194,6 @@ export default function PartiallyEditMedicineScheduleScreen() {
         ) : (
           ""
         )}
-        {/* 
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("That's 2 weeks")}
-        </Text> */}
       </ScrollView>
 
       <View

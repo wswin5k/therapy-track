@@ -16,14 +16,17 @@ import {
 import {
   dbDeleteSchedule,
   dbDeleteScheduledDosageRecordsForSchedule,
-  dbGetSchedulesWithMedicines,
+  dbGetMedicineSchedules,
 } from "../../models/dbAccess";
 import { Schedule } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { baseUnitToSingularShortForm } from "../enumMappings";
+import {
+  baseUnitToSingularShortForm,
+  frequencySelectionToDisplayForm,
+} from "../enumMappings";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -66,8 +69,9 @@ function ScheduleListItem({
   };
 
   const handleEdit = () => {
-    navigation.navigate("PartiallyEditMedicineScheduleScreen", {
+    navigation.navigate("PartiallyEditAnyScheduleScreen", {
       scheduleId: schedule.dbId,
+      scheduleType: "medicine",
     });
   };
 
@@ -79,7 +83,9 @@ function ScheduleListItem({
     });
   };
 
-  const frequencyLabel = schedule.freq.getFrequencyLabel();
+  const frequencyLabel = frequencySelectionToDisplayForm(
+    schedule.freq.getFrequencyLabel(),
+  );
   const dateRange = schedule.endDate
     ? `${formatDate(schedule.startDate)} - ${formatDate(schedule.endDate)}`
     : `${formatDate(schedule.startDate)} - ${t("No end date")}`;
@@ -175,7 +181,7 @@ function ScheduleListItem({
   );
 }
 
-export function SchedulesListScreen() {
+export function MedicineSchedulesListScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
   const { t } = useTranslation();
@@ -184,7 +190,7 @@ export function SchedulesListScreen() {
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
 
   const loadSchedules = React.useCallback(async () => {
-    const result = await dbGetSchedulesWithMedicines(db);
+    const result = await dbGetMedicineSchedules(db);
     setSchedules(result);
     setOptionsOpened(Array.from({ length: result.length }, () => false));
   }, [db]);
@@ -198,10 +204,10 @@ export function SchedulesListScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No schedules added yet.")}
+        {t("No medicine schedules added yet.")}
       </Text>
       <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Add a schedule from the Home screen.")}
+        {t("Add a medicine schedule from the Home screen.")}
       </Text>
     </View>
   );
@@ -264,7 +270,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   optionsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,
@@ -305,6 +311,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
     marginBottom: 8,
+    textAlign: "center",
   },
   emptySubtext: {
     fontSize: 14,

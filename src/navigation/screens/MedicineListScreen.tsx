@@ -16,7 +16,7 @@ import {
 import {
   dbDeleteMedicine,
   dbGetMedicines,
-  dbGetSchedulesWithMedicines,
+  dbGetMedicineSchedules,
 } from "../../models/dbAccess";
 import { Medicine } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
@@ -186,7 +186,7 @@ export function MedicineListScreen() {
     const medicines = await dbGetMedicines(db);
     setMedicines(medicines);
 
-    const schedulesWithMedicines = await dbGetSchedulesWithMedicines(db);
+    const schedulesWithMedicines = await dbGetMedicineSchedules(db);
     const newMedicinesWithSchedules = new Set<number>();
     schedulesWithMedicines.forEach((s) => {
       newMedicinesWithSchedules.add(s.medicine.dbId);

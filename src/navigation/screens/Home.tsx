@@ -11,7 +11,7 @@ import {
   dbDeleteScheduledDosageRecord,
   dbGetScheduledDosageRecords,
   dbGetMedicines,
-  dbGetSchedulesWithMedicines,
+  dbGetMedicineSchedules,
   dbGetUnscheduledDosageRecords,
   dbInsertScheduledDosageRecord,
   dbGetGroups,
@@ -19,7 +19,7 @@ import {
   dbGetUnscheduledMeasurmentRecords,
   dbGetAssessments,
   dbDeleteUnscheduledMeasurmentRecord,
-  dbGetAssessmentSchedulesWithAssessments,
+  dbGetAssessmentSchedules,
   dbGetScheduledMeasurmentRecords,
   dbInsertScheduledMeasurmentRecord,
   dbDeleteScheduledMeasurmentRecord,
@@ -465,7 +465,7 @@ export function Home({ date }: { date: Date }) {
   }, [db]);
 
   const loadScheduledDosages = React.useCallback(async () => {
-    const result = await dbGetSchedulesWithMedicines(db);
+    const result = await dbGetMedicineSchedules(db);
     const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
       const startTime = new Date(s.startDate.toDateString()).getTime();
@@ -532,7 +532,7 @@ export function Home({ date }: { date: Date }) {
   }, [date, db]);
 
   const loadScheduledMeasurments = React.useCallback(async () => {
-    const result = await dbGetAssessmentSchedulesWithAssessments(db);
+    const result = await dbGetAssessmentSchedules(db);
     const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
       const startTime = new Date(s.startDate.toDateString()).getTime();

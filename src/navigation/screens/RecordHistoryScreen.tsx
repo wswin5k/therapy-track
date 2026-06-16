@@ -17,12 +17,12 @@ import { DataTable } from "react-native-paper";
 import React from "react";
 import {
   dbGetAssessments,
-  dbGetAssessmentSchedulesWithAssessments,
+  dbGetAssessmentSchedules,
   dbGetGroups,
   dbGetMedicines,
   dbGetScheduledDosageRecords,
   dbGetScheduledMeasurmentRecords,
-  dbGetSchedulesWithMedicines,
+  dbGetMedicineSchedules,
   dbGetUnscheduledDosageRecords,
   dbGetUnscheduledMeasurmentRecords,
 } from "../../models/dbAccess";
@@ -170,8 +170,7 @@ export function RecordHistoryScreen() {
     const unscheduledMeasurmentRecords =
       await dbGetUnscheduledMeasurmentRecords(db);
 
-    const assessmentSchedules =
-      await dbGetAssessmentSchedulesWithAssessments(db);
+    const assessmentSchedules = await dbGetAssessmentSchedules(db);
     const idToAssessmentSchedule = new Map<number, AssessmentSchedule>();
     assessmentSchedules.forEach((a) => {
       idToAssessmentSchedule.set(a.dbId, a);
@@ -277,7 +276,7 @@ export function RecordHistoryScreen() {
     const scheduledDosageRecords = await dbGetScheduledDosageRecords(db);
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
 
-    const schedules = await dbGetSchedulesWithMedicines(db);
+    const schedules = await dbGetMedicineSchedules(db);
     const idToSchedule = new Map<number, Schedule>();
     schedules.forEach((s) => {
       idToSchedule.set(s.dbId, s);
