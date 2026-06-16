@@ -16,8 +16,13 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
-import { isStringArray } from "../utils";
 import Ionicons from "@react-native-vector-icons/ionicons";
+
+export function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
+}
 
 export function AssessmentInput({
   type,
