@@ -21,12 +21,15 @@ import { assessmentTypeToDisplayForm } from "../enumMappings";
 import {
   Assessment,
   AssessmentType,
+  getDefaultValueDomain,
+  SelectValueDomain,
   ValueDomain,
 } from "../../models/AssessmentSchedule";
 import { ModalPicker } from "../../components/ModalPicker";
 import { useSQLiteContext } from "expo-sqlite";
 import { dbGetAssessments, dbUpdateAssessment } from "../../models/dbAccess";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { useTranslation } from "react-i18next";
 
 type EditAssessmentScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -34,6 +37,7 @@ type EditAssessmentScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export function EditAssessmentScreen() {
+  const { t } = useTranslation();
   const route = useRoute();
   const navigation = useNavigation<EditAssessmentScreenNavigationProp>();
   const theme = useTheme();
@@ -42,6 +46,10 @@ export function EditAssessmentScreen() {
   const [name, setName] = React.useState("");
   const [assessmentType, setAssessmentType] =
     React.useState<AssessmentType | null>(null);
+  const [valueDomain, setValueDomain] = React.useState<ValueDomain>(null);
+  const [selectValueDomainErrors, setSelectValueDomainErrors] = React.useState([
+    false,
+  ]);
 
   const [nameChanged, setNameChanged] = React.useState(false);
   const [typeInputDisabled, setTypeInputDisabled] = React.useState(false);
@@ -89,10 +97,15 @@ export function EditAssessmentScreen() {
     type: AssessmentType;
     valueDomain: ValueDomain;
   } | null => {
+    const validName = /^[\p{L}\p{N} ]+$/u;
+
     let asssessmentValidated = true;
 
     let newNameError = true;
     let newAssessmentTypeError = true;
+    let newSelectValueDomainErrors = new Array(
+      selectValueDomainErrors.length,
+    ).fill(true);
 
     let nameValidated = name;
     if (nameIsOkWhenNotChanged && !nameChanged) {
@@ -101,7 +114,6 @@ export function EditAssessmentScreen() {
       const nameValidated = name.trim();
       if (nameValidated && nameValidated.length < NAME_MAX_LENGHT) {
         if (!assessmentsNames.includes(nameValidated)) {
-          const validName = /^[\p{L}\p{N} ]+$/u;
           if (validName.test(nameValidated)) {
             newNameError = false;
           }
@@ -113,21 +125,73 @@ export function EditAssessmentScreen() {
       newAssessmentTypeError = false;
     }
 
-    if (newAssessmentTypeError || newNameError) {
-      asssessmentValidated = false;
+    let valueDomainValidated = null;
+    if (
+      assessmentType === AssessmentType.SingleSelect ||
+      assessmentType === AssessmentType.MultiSelect
+    ) {
+      if (valueDomain && valueDomain instanceof SelectValueDomain) {
+        newSelectValueDomainErrors = valueDomain.values.map(
+          (v) => !v && validName.test(v),
+        );
+
+        let valuesValidated = [];
+        for (let i = 0; i < valueDomain.values.length; i++) {
+          const value = valueDomain.values[i].trim();
+          valuesValidated.push(value);
+          if (valueDomain.values.slice(0, i).indexOf(value) > -1) {
+            newSelectValueDomainErrors[i] = true;
+          }
+          if (!value) {
+            newSelectValueDomainErrors[i] = true;
+          }
+          if (value.length > NAME_MAX_LENGHT) {
+            newSelectValueDomainErrors[i] = true;
+          }
+          if (!validName.test(value)) {
+            newSelectValueDomainErrors[i] = true;
+          }
+        }
+        valueDomainValidated = new SelectValueDomain(valuesValidated);
+      }
+    } else {
+      valueDomainValidated = valueDomain;
+
+      newSelectValueDomainErrors = new Array(
+        selectValueDomainErrors.length,
+      ).fill(false);
     }
 
     setNameError(newNameError);
     setAssessmentTypeError(newAssessmentTypeError);
+    setSelectValueDomainErrors(newSelectValueDomainErrors);
+
+    if (
+      newAssessmentTypeError ||
+      newNameError ||
+      newSelectValueDomainErrors.some((v) => v)
+    ) {
+      asssessmentValidated = false;
+    }
 
     if (asssessmentValidated && assessmentType) {
       return {
         name: nameValidated,
         type: assessmentType,
-        valueDomain: null,
+        valueDomain: valueDomainValidated,
       };
     }
     return null;
+  };
+
+  const handleAssessmentTypePick = (itemValue: AssessmentType) => {
+    setAssessmentType(itemValue);
+    const newValueDomain =
+      itemValue === AssessmentType.SingleSelect ||
+      itemValue === AssessmentType.MultiSelect
+        ? new SelectValueDomain(["", ""])
+        : getDefaultValueDomain(itemValue);
+    setValueDomain(newValueDomain);
   };
 
   const handleSave = async () => {
@@ -155,6 +219,102 @@ export function EditAssessmentScreen() {
       navigation.navigate("EditSingleMeasurmentScreen", {
         assessment: assessmentValidated,
       });
+    }
+  };
+
+  const renderValueDomain = () => {
+    if (
+      (assessmentType === AssessmentType.SingleSelect ||
+        assessmentType === AssessmentType.MultiSelect) &&
+      valueDomain &&
+      valueDomain instanceof SelectValueDomain
+    ) {
+      return (
+        <>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Select options")}
+          </Text>
+          <View>
+            {valueDomain.values.map((v, idx) => (
+              <View key={idx} style={styles.selectRow}>
+                <View style={{ flex: 1 }}>
+                  <TextInput
+                    style={[
+                      styles.selectInput,
+                      {
+                        borderColor: theme.colors.border,
+                        color: theme.colors.text,
+                        backgroundColor: theme.colors.surface,
+                      },
+                      selectValueDomainErrors[idx]
+                        ? {
+                            borderColor: theme.colors.error,
+                            borderWidth: ERROR_BORDER_WIDTH,
+                          }
+                        : {},
+                    ]}
+                    onChangeText={(text: string) => {
+                      setValueDomain(
+                        new SelectValueDomain(
+                          valueDomain.values.map((v, i) =>
+                            i === idx ? text : v,
+                          ),
+                        ),
+                      );
+                    }}
+                    defaultValue={v}
+                    autoCapitalize="none"
+                  />
+                </View>
+                {valueDomain.values.length > 1 ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setValueDomain(
+                        new SelectValueDomain(
+                          valueDomain.values.filter((_, i) => i !== idx),
+                        ),
+                      );
+                      setSelectValueDomainErrors(
+                        selectValueDomainErrors.filter((_, i) => i !== idx),
+                      );
+                    }}
+                    style={styles.removeButton}
+                  >
+                    <Text
+                      style={[
+                        styles.removeButtonText,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      ✕
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.removeButtonPlaceholder} />
+                )}
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.selectRow}>
+            <TouchableOpacity
+              onPress={() => {
+                setValueDomain(
+                  new SelectValueDomain([...valueDomain.values, ""]),
+                );
+                setSelectValueDomainErrors([...selectValueDomainErrors, false]);
+              }}
+              style={[styles.addButton, { borderColor: theme.colors.primary }]}
+            >
+              <Text
+                style={[styles.addButtonText, { color: theme.colors.primary }]}
+              >
+                + Add Value
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      );
     }
   };
 
@@ -189,14 +349,13 @@ export function EditAssessmentScreen() {
         <ModalPicker
           values={Object.values(AssessmentType)}
           selectedValue={assessmentType}
-          onValueChange={(itemValue) => {
-            setAssessmentType(itemValue);
-          }}
+          onValueChange={handleAssessmentTypePick}
           getLabel={assessmentTypeToDisplayForm}
           pressableStyle={styles.fullWidthPickerContainer}
           error={assessmentTypeError}
           disabled={typeInputDisabled}
         />
+        {renderValueDomain()}
       </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
@@ -216,11 +375,14 @@ export function EditAssessmentScreen() {
 const styles = StyleSheet.create({
   scrollContainer: {
     padding: 16,
+    paddingBottom: 110,
   },
   headerLabel: {
     fontSize: 16,
     fontWeight: "500",
     marginBottom: 8,
+    marginTop: 20,
+    marginLeft: 5,
   },
   rowContainer: {
     flexDirection: "row",
@@ -237,42 +399,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     width: "100%",
   },
-  ingredientInput: {
-    height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 15,
-    width: "100%",
-  },
-  ingredientRow: {
+  selectRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
+    marginLeft: 20,
+    marginHorizontal: 20,
     gap: 10,
   },
-  ingredientsList: {
-    marginBottom: 15,
-  },
-  pickerContainer: {
-    height: 55,
+  selectInput: {
+    height: 50,
     borderWidth: 1,
     borderRadius: 8,
-    justifyContent: "center",
+    paddingHorizontal: 15,
+    marginLeft: 20,
+    fontSize: 16,
   },
   fullWidthPickerContainer: {
     height: 55,
     borderWidth: 1,
     borderRadius: 8,
     justifyContent: "center",
+    gap: 10,
     marginBottom: 5,
-  },
-  picker: {
-    width: "100%",
-    height: 60,
-  },
-  pickerItem: {
-    fontSize: 16,
   },
   removeButton: {
     width: 20,
@@ -288,24 +437,25 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   addButton: {
+    flex: 1,
     padding: 12,
     borderWidth: 1,
     borderRadius: 8,
     borderStyle: "dashed",
     alignItems: "center",
+    height: 50,
+    paddingHorizontal: 15,
+    marginLeft: 20,
+    marginRight: 30,
+    fontSize: 16,
   },
   addButtonText: {
     fontSize: 17,
     fontWeight: "600",
   },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 20,
     borderTopWidth: 1,
-    zIndex: 1,
   },
   nextButton: {
     paddingVertical: 15,
@@ -316,11 +466,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginTop: 2,
-    marginBottom: 10,
   },
 });

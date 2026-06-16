@@ -1,17 +1,10 @@
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  View,
-  TextInput,
-} from "react-native";
+import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import RNDateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import SmallNumberStepper from "../../components/SmallNumberStepper";
 import {
   dbGetGroups,
   dbInsertAssessment,
@@ -27,10 +20,9 @@ import {
 import { AssessmentParam } from "..";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { AssessmentType } from "../../models/AssessmentSchedule";
-import { Checkbox } from "react-native-paper";
 import { AssessmentValue } from "../../models/Records";
-import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { AssessmentInput } from "../../components/AssessmentInput";
+import { AssessmentType } from "../../models/AssessmentSchedule";
 
 export function EditSingleMeasurmentScreen() {
   const { t } = useTranslation();
@@ -128,79 +120,51 @@ export function EditSingleMeasurmentScreen() {
     navigation.navigate("HomeTabs");
   };
 
-  const handleValueChange = (value: AssessmentValue) => {
-    setValue(value);
-  };
-
   const handleGroupChange = (groupIdx: number) => {
     groupIdxRef.current = groupIdx === -1 ? null : groupIdx;
   };
 
-  const renderNumericInput = () => {
-    return (
-      <View style={styles.valueInputContainer}>
-        <SmallNumberStepper onChange={handleValueChange} />
-      </View>
-    );
-  };
-
-  const renderBooleanInput = () => {
-    return (
-      <View style={styles.valueInputContainer}>
-        <Checkbox status="unchecked" onPress={() => {}} />
-      </View>
-    );
-  };
-
-  const renderTextInput = () => {
-    return (
-      <View style={styles.valueInputContainer}>
-        <TextInput
-          onChangeText={handleValueChange}
-          style={[
-            styles.textInput,
-            {
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-            },
-            valueError && {
-              borderColor: theme.colors.error,
-              borderWidth: ERROR_BORDER_WIDTH,
-            },
-          ]}
-        />
-      </View>
-    );
-  };
-
-  let renderInput = () => (
-    <View>
-      <Text>Wrong assessment type</Text>
-    </View>
-  );
-
-  switch (assessment?.type) {
-    case AssessmentType.Numeric:
-      renderInput = renderNumericInput;
-      break;
-    case AssessmentType.Boolean:
-      renderInput = renderBooleanInput;
-      break;
-    case AssessmentType.Text:
-      renderInput = renderTextInput;
-      break;
-  }
-
   return (
     <DefaultMainContainer>
-      <View style={[styles.rowContainer]}>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {"Value"}
-        </Text>
-        {renderInput()}
-      </View>
+      <View style={styles.scrollContainer}>
+        {assessment ? (
+          [AssessmentType.Boolean, AssessmentType.Numeric].includes(
+            assessment.type,
+          ) ? (
+            <View style={[styles.rowContainer]}>
+              <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+                {"Value"}
+              </Text>
+              <AssessmentInput
+                type={assessment?.type}
+                valueDomain={assessment?.valueDomain}
+                value={value}
+                handleValueChange={setValue}
+                valueError={valueError}
+              />
+            </View>
+          ) : (
+            <>
+              <Text
+                style={[styles.soleHeaderLabel, { color: theme.colors.text }]}
+              >
+                {"Value"}
+              </Text>
+              <View style={[styles.soleAssessmentInputContainer]}>
+                <AssessmentInput
+                  type={assessment?.type}
+                  valueDomain={assessment?.valueDomain}
+                  value={value}
+                  handleValueChange={setValue}
+                  valueError={valueError}
+                />
+              </View>
+            </>
+          )
+        ) : (
+          <Text>Assessment not set</Text>
+        )}
 
-      <View style={[styles.mainContainer]}>
         <View style={[styles.rowContainer]}>
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
             {t("Date")}
@@ -260,25 +224,23 @@ export function EditSingleMeasurmentScreen() {
         ) : (
           ""
         )}
-        <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
-          <TouchableOpacity
-            onPress={handleSave}
-            style={[
-              styles.nextButton,
-              { backgroundColor: theme.colors.primary },
-            ]}
-          >
-            <Text style={styles.nextButtonText}>{t("Save")}</Text>
-          </TouchableOpacity>
-        </View>
+      </View>
+      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+        >
+          <Text style={styles.nextButtonText}>{t("Save")}</Text>
+        </TouchableOpacity>
       </View>
     </DefaultMainContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  mainContainer: {
+  scrollContainer: {
     flex: 1,
+    paddingBottom: 110,
   },
   valueInputContainer: {
     width: "45%",
@@ -295,11 +257,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "400",
   },
+  soleHeaderLabel: {
+    fontSize: 18,
+    fontWeight: "400",
+    width: "100%",
+    textAlign: "left",
+    paddingLeft: 10,
+    marginTop: 15,
+    marginLeft: 15,
+  },
   rowContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     height: 60,
+    margin: 15,
+    paddingLeft: 10,
+  },
+  soleAssessmentInputContainer: {
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "center",
+    maxHeight: "50%",
     margin: 15,
     paddingLeft: 10,
   },
@@ -332,13 +311,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 20,
     borderTopWidth: 1,
-    zIndex: 1,
   },
   nextButton: {
     paddingVertical: 15,

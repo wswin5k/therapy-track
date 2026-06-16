@@ -1,108 +1,25 @@
 import React from "react";
-import {
-  StyleSheet,
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  Switch,
-  TextInput,
-} from "react-native";
+import { StyleSheet, Modal, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { AssessmentType } from "../models/AssessmentSchedule";
+import { AssessmentType, ValueDomain } from "../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
-import SmallNumberStepper from "./SmallNumberStepper";
 import { AssessmentValue } from "../models/Records";
-import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
-
-function AssessmentInput({
-  value,
-  type,
-  handleValueChange,
-  valueError,
-}: {
-  value: AssessmentValue | null;
-  type: AssessmentType;
-  handleValueChange: (value: AssessmentValue) => void;
-  valueError: boolean;
-}) {
-  const theme = useTheme();
-
-  const renderNumericInput = () => {
-    return (
-      <SmallNumberStepper
-        defaultValue={value ? (value as number) : undefined}
-        onChange={handleValueChange}
-      />
-    );
-  };
-
-  const renderBooleanInput = () => {
-    return (
-      <Switch
-        value={value === true}
-        onValueChange={handleValueChange}
-        trackColor={{
-          false: theme.colors.border,
-          true: theme.colors.primary,
-        }}
-        thumbColor={theme.colors.surface}
-      />
-    );
-  };
-
-  const renderTextInput = () => {
-    return (
-      <TextInput
-        value={value as string}
-        onChangeText={handleValueChange}
-        style={[
-          styles.textInput,
-          {
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface,
-          },
-          valueError && {
-            borderColor: theme.colors.error,
-            borderWidth: ERROR_BORDER_WIDTH,
-          },
-        ]}
-      />
-    );
-  };
-
-  let renderInput = () => (
-    <View>
-      <Text>Wrong assessment type</Text>
-    </View>
-  );
-
-  switch (type) {
-    case AssessmentType.Numeric:
-      renderInput = renderNumericInput;
-      break;
-    case AssessmentType.Boolean:
-      renderInput = renderBooleanInput;
-      break;
-    case AssessmentType.Text:
-      renderInput = renderTextInput;
-      break;
-  }
-  return renderInput();
-}
+import { AssessmentInput } from "./AssessmentInput";
 
 interface AssessmentInputDialogProps {
   title: string;
-  initialValue: AssessmentValue | null;
   assessmentType: AssessmentType;
+  initialValue: AssessmentValue | null;
+  valueDomain: ValueDomain;
   onSave: (value: AssessmentValue) => void;
   onCancel: () => void;
 }
 
 export function AssessmentInputDialog({
   title,
-  initialValue,
   assessmentType,
+  initialValue,
+  valueDomain,
   onSave,
   onCancel,
 }: AssessmentInputDialogProps) {
@@ -131,6 +48,7 @@ export function AssessmentInputDialog({
         <TouchableOpacity
           activeOpacity={1}
           onPress={(e) => e.stopPropagation()}
+          style={styles.modal}
         >
           <View
             style={[
@@ -141,18 +59,15 @@ export function AssessmentInputDialog({
             <Text style={[styles.title, { color: theme.colors.text }]}>
               {title}
             </Text>
-            <Text
-              style={[styles.message, { color: theme.colors.textSecondary }]}
-            >
-              <View style={styles.valueInputContainer}>
-                <AssessmentInput
-                  value={value}
-                  type={assessmentType}
-                  handleValueChange={setValue}
-                  valueError={valueError}
-                />
-              </View>
-            </Text>
+            <View style={styles.content}>
+              <AssessmentInput
+                value={value}
+                type={assessmentType}
+                handleValueChange={setValue}
+                valueDomain={valueDomain}
+                valueError={valueError}
+              />
+            </View>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -195,12 +110,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  dialog: {
-    maxWidth: "85%",
+  modal: {
     width: 400,
+    maxWidth: "85%",
+    maxHeight: "70%",
+  },
+  dialog: {
     borderRadius: 12,
     paddingHorizontal: 20,
-    paddingVertical: 30,
+    paddingVertical: 20,
     alignItems: "center",
   },
   title: {
@@ -208,17 +126,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 12,
     textAlign: "center",
+    height: 40,
+    textAlignVertical: "center",
   },
-  message: {
+  content: {
     fontSize: 15,
     marginBottom: 20,
     textAlign: "left",
     lineHeight: 21,
+    width: "100%",
   },
   buttonContainer: {
     flexDirection: "row",
     width: "100%",
     gap: 12,
+    height: 48,
   },
   button: {
     flex: 1,
@@ -234,15 +156,5 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontWeight: "500",
-  },
-  textInput: {
-    borderWidth: 1,
-    fontSize: 16,
-    height: 52,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  valueInputContainer: {
-    height: 52,
   },
 });

@@ -183,7 +183,7 @@ export function HomeSwipeable() {
     {
       label: "One-off Assessment",
       onPress: () =>
-        areMedicinesEmpty
+        areAssessmentsEmpty
           ? navigation.navigate("EditAssessmentScreen", { mode: "one-time" })
           : navigation.navigate("SelectAssessmentScreen", {
               mode: "one-time",

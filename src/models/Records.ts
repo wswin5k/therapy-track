@@ -19,7 +19,7 @@ export class UnscheduledDosageRecord {
   ) {}
 }
 
-export type AssessmentValue = number | string | boolean;
+export type AssessmentValue = number | string | boolean | string[];
 
 export class ScheduledMeasurmentRecord {
   constructor(

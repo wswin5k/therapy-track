@@ -23,7 +23,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import {
   dbGetGroups,
   dbInsertAssessmentSchedule,
-  dbInsertAssessmentScheduleWithMedicine,
+  dbInsertAssessmentScheduleWithAssessment,
 } from "../../../models/dbAccess";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../../components/DropdownPicker";
@@ -182,7 +182,7 @@ export default function EditAssessmentScheduleScreen() {
       });
       navigation.navigate("HomeTabs");
     } else if (assessment) {
-      await dbInsertAssessmentScheduleWithMedicine(db, assessment, {
+      await dbInsertAssessmentScheduleWithAssessment(db, assessment, {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
