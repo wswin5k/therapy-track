@@ -178,7 +178,6 @@ export function AssessmentInput({
       if (valueDomain && valueDomain instanceof TextValueDomain) {
         renderInput = () => renderTextInput(valueDomain);
       }
-
       break;
     case AssessmentType.SingleSelect:
     case AssessmentType.MultiSelect:
