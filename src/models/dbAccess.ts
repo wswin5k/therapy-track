@@ -174,6 +174,7 @@ function parseAssessmentValue(
     case AssessmentType.Numeric:
       return Number.parseFloat(value);
     case AssessmentType.Boolean:
+      console.log("parseAssessmentValue", value, typeof value);
       return value === "true";
     case AssessmentType.SingleSelect:
     case AssessmentType.MultiSelect:

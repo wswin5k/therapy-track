@@ -1,6 +1,6 @@
 import { Frequency } from "./Frequency";
 
-export const NAME_MAX_LENGHT: number = 100;
+export const NAME_MAX_LENGTH: number = 100;
 
 export enum BaseUnit {
   Tablet = "Tablet",
