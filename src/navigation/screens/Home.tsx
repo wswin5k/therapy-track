@@ -759,7 +759,6 @@ export function Home({ date }: { date: Date }) {
 
   const handleMeasurmentInputSave = async (value: AssessmentValue) => {
     if (clickedScheduledMeasurment) {
-      console.log("handleMeasurmentInputSave", value, typeof value);
       if (clickedScheduledMeasurment.measurmentRecordId) {
         await dbDeleteScheduledMeasurmentRecord(
           db,
