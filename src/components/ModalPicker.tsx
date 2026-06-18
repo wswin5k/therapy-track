@@ -13,7 +13,10 @@ import {
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
+import {
+  DISABLED_OPACITY,
+  ERROR_BORDER_WIDTH,
+} from "../navigation/commonConsts";
 
 interface ModalPickerProps<T> {
   values: T[];
@@ -116,7 +119,7 @@ export function ModalPicker<T>({
           },
           pressableStyle,
           disabled && {
-            opacity: 0.6,
+            opacity: DISABLED_OPACITY,
           },
           error && {
             borderColor: theme.colors.error,

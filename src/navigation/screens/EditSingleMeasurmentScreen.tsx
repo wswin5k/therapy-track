@@ -21,7 +21,11 @@ import { AssessmentParam } from "..";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { AssessmentValue } from "../../models/Records";
-import { AssessmentInput } from "../../components/AssessmentInput";
+import {
+  AssessmentInput,
+  getDefaultValue,
+  isTextValueValid,
+} from "../../components/AssessmentInput";
 import { AssessmentType } from "../../models/AssessmentSchedule";
 
 export function EditSingleMeasurmentScreen() {
@@ -43,6 +47,12 @@ export function EditSingleMeasurmentScreen() {
     null,
   );
   const [groups, setGroups] = React.useState<Group[]>([]);
+
+  React.useEffect(() => {
+    if (assessment) {
+      setValue(getDefaultValue(assessment.type));
+    }
+  }, [assessment]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -86,7 +96,11 @@ export function EditSingleMeasurmentScreen() {
     if (date) {
       if (assessment) {
         if (value) {
-          return { date, assessment, value };
+          if (!isTextValueValid(value, assessment.valueDomain)) {
+            return { date, assessment, value };
+          } else {
+            setValueError(true);
+          }
         } else {
           setValueError(true);
         }

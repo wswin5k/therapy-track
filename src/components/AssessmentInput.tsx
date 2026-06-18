@@ -1,5 +1,6 @@
 import {
   AssessmentType,
+  NumericValueDomain,
   SelectValueDomain,
   TextValueDomain,
   ValueDomain,
@@ -18,11 +19,42 @@ import {
   ScrollView,
 } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
+import React from "react";
+import { TEXT_MAX_LENGTH } from "../navigation/screens/EditAssessmentScreen";
 
 export function isStringArray(value: unknown): value is string[] {
   return (
     Array.isArray(value) && value.every((item) => typeof item === "string")
   );
+}
+
+export function isTextValueValid(
+  value: AssessmentValue,
+  valueDomain: ValueDomain,
+): boolean {
+  return (
+    valueDomain !== null &&
+    valueDomain instanceof TextValueDomain &&
+    value !== null &&
+    typeof value === "string" &&
+    value.length > valueDomain.max_characters
+  );
+}
+
+export function getDefaultValue(
+  assessementType: AssessmentType,
+): AssessmentValue {
+  switch (assessementType) {
+    case AssessmentType.Numeric:
+      return 0;
+    case AssessmentType.Boolean:
+      return false;
+    case AssessmentType.Text:
+      return "";
+    case AssessmentType.SingleSelect:
+    case AssessmentType.MultiSelect:
+      return [];
+  }
 }
 
 export function AssessmentInput({
@@ -40,22 +72,41 @@ export function AssessmentInput({
 }) {
   const theme = useTheme();
 
-  const renderNumericInput = () => {
+  const [textInputLength, setTextInputLegth] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    if (
+      valueDomain &&
+      valueDomain instanceof TextValueDomain &&
+      value !== null &&
+      typeof value === "string"
+    ) {
+      setTextInputLegth(value.length);
+    }
+  }, [value, valueDomain]);
+
+  const renderNumericInput = (
+    value: number,
+    valueDomain: NumericValueDomain,
+  ) => {
     return (
       <View style={styles.numberStepperInput}>
         <SmallNumberStepper
-          defaultValue={value ? (value as number) : undefined}
+          defaultValue={value}
+          min={valueDomain.min}
+          max={valueDomain.max}
+          fractionalStepsBelowZero={false}
           onChange={handleValueChange}
         />
       </View>
     );
   };
 
-  const renderBooleanInput = () => {
+  const renderBooleanInput = (value: boolean) => {
     return (
       <Switch
         style={[styles.switchInput]}
-        value={value === true}
+        value={value}
         onValueChange={handleValueChange}
         trackColor={{
           false: theme.colors.border,
@@ -66,34 +117,46 @@ export function AssessmentInput({
     );
   };
 
-  const renderTextInput = (valueDomain: TextValueDomain) => {
+  const renderTextInput = (value: string, valueDomain: TextValueDomain) => {
     const handleChangeText = (text: string) => {
-      if (text.length <= valueDomain.max_characters) {
+      {
+        setTextInputLegth(text.length);
         handleValueChange(text);
       }
     };
 
     return (
-      <TextInput
-        value={value as string}
-        onChangeText={handleChangeText}
-        multiline={true}
-        style={[
-          styles.textInput,
-          {
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface,
-          },
-          valueError && {
-            borderColor: theme.colors.error,
-            borderWidth: ERROR_BORDER_WIDTH,
-          },
-        ]}
-      />
+      <View style={styles.textInputContainer}>
+        <TextInput
+          value={value}
+          onChangeText={handleChangeText}
+          multiline={true}
+          style={[
+            styles.textInput,
+            {
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+            },
+            valueError && {
+              borderColor: theme.colors.error,
+              borderWidth: ERROR_BORDER_WIDTH,
+            },
+          ]}
+        />
+
+        <Text style={styles.textInputLenght}>
+          {textInputLength > 0.875 * TEXT_MAX_LENGTH
+            ? `${textInputLength}/${TEXT_MAX_LENGTH}`
+            : " "}
+        </Text>
+      </View>
     );
   };
 
-  const renderSelectInput = (valueDomain: SelectValueDomain) => {
+  const renderSelectInput = (
+    value: string[],
+    valueDomain: SelectValueDomain,
+  ) => {
     let options: string[] = [];
     if (value && isStringArray(value)) {
       options = value;
@@ -169,20 +232,39 @@ export function AssessmentInput({
 
   switch (type) {
     case AssessmentType.Numeric:
-      renderInput = renderNumericInput;
+      if (
+        valueDomain &&
+        valueDomain instanceof NumericValueDomain &&
+        value !== null &&
+        typeof value === "number"
+      ) {
+        renderInput = () => renderNumericInput(value, valueDomain);
+      }
       break;
     case AssessmentType.Boolean:
-      renderInput = renderBooleanInput;
+      if (value !== null && typeof value === "boolean") {
+        renderInput = () => renderBooleanInput(value);
+      }
       break;
     case AssessmentType.Text:
-      if (valueDomain && valueDomain instanceof TextValueDomain) {
-        renderInput = () => renderTextInput(valueDomain);
+      if (
+        valueDomain &&
+        valueDomain instanceof TextValueDomain &&
+        value !== null &&
+        typeof value === "string"
+      ) {
+        renderInput = () => renderTextInput(value, valueDomain);
       }
       break;
     case AssessmentType.SingleSelect:
     case AssessmentType.MultiSelect:
-      if (valueDomain && valueDomain instanceof SelectValueDomain) {
-        renderInput = () => renderSelectInput(valueDomain);
+      if (
+        valueDomain &&
+        valueDomain instanceof SelectValueDomain &&
+        value !== null &&
+        isStringArray(value)
+      ) {
+        renderInput = () => renderSelectInput(value, valueDomain);
       }
   }
   return renderInput();
@@ -226,18 +308,30 @@ const styles = StyleSheet.create({
     width: 150,
     alignSelf: "center",
   },
+  textInputContainer: {
+    padding: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
+    width: "100%",
+    justifyContent: "center",
+    alignSelf: "center",
+    flexDirection: "column",
+  },
   textInput: {
     textAlignVertical: "top",
     borderWidth: 1,
     fontSize: 16,
-    height: 100,
+    height: 130,
     borderRadius: 8,
-    padding: 8,
-    paddingTop: 8,
-    paddingBottom: 8,
-    width: "90%",
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    width: "100%",
     justifyContent: "center",
     alignSelf: "center",
     flexDirection: "row",
+  },
+  textInputLenght: {
+    alignSelf: "flex-end",
+    margin: 4,
   },
 });

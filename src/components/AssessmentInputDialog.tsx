@@ -4,7 +4,11 @@ import { useTheme } from "@react-navigation/native";
 import { AssessmentType, ValueDomain } from "../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
 import { AssessmentValue } from "../models/Records";
-import { AssessmentInput } from "./AssessmentInput";
+import {
+  AssessmentInput,
+  getDefaultValue,
+  isTextValueValid,
+} from "./AssessmentInput";
 
 interface AssessmentInputDialogProps {
   title: string;
@@ -32,11 +36,21 @@ export function AssessmentInputDialog({
 
   const handleSave = () => {
     if (value !== null) {
-      onSave(value);
+      if (isTextValueValid(value, valueDomain)) {
+        setValueError(true);
+      } else {
+        onSave(value);
+      }
     } else {
       setValueError(true);
     }
   };
+
+  React.useEffect(() => {
+    if (initialValue === null) {
+      setValue(getDefaultValue(assessmentType));
+    }
+  }, [assessmentType, initialValue]);
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onCancel}>

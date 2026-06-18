@@ -20,7 +20,7 @@ import {
   BaseUnit,
   IngredientAmountUnit,
   ActiveIngredient,
-  NAME_MAX_LENGHT,
+  NAME_MAX_LENGTH,
   Medicine,
 } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
@@ -226,7 +226,7 @@ export function EditMedicineScreen() {
   const validate = (): MedicineValidated | null => {
     let medicineValidated = true;
 
-    if (name.trim() && name.length < NAME_MAX_LENGHT) {
+    if (name.trim() && name.length < NAME_MAX_LENGTH) {
       setNameError(false);
     } else {
       setNameError(true);

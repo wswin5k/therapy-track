@@ -22,6 +22,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
 import { Assessment } from "../../models/AssessmentSchedule";
+import { assessmentTypeToDisplayForm } from "../enumMappings";
 
 function AssessmentListItem({
   assessment,
@@ -157,7 +158,7 @@ function AssessmentListItem({
           <Text
             style={[styles.itemText, { color: theme.colors.textSecondary }]}
           >
-            {assessment.type}
+            {t(assessmentTypeToDisplayForm(assessment.type))}
           </Text>
         </View>
       </TouchableOpacity>

@@ -15,21 +15,45 @@ import {
 } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { NAME_MAX_LENGHT } from "../../models/MedicineSchedule";
+import { NAME_MAX_LENGTH } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import {
   Assessment,
   AssessmentType,
-  getDefaultValueDomain,
+  NumericValueDomain,
   SelectValueDomain,
+  TextValueDomain,
   ValueDomain,
 } from "../../models/AssessmentSchedule";
 import { ModalPicker } from "../../components/ModalPicker";
 import { useSQLiteContext } from "expo-sqlite";
 import { dbGetAssessments, dbUpdateAssessment } from "../../models/dbAccess";
-import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonConsts";
 import { useTranslation } from "react-i18next";
+import SmallNumberStepper from "../../components/SmallNumberStepper";
+
+export const TEXT_MAX_LENGTH = 200;
+const DEFAULT_NUMERIC_MAX = 10;
+const DEFAULT_NUMERIC_MIN = 0;
+const NUMERIC_MAX = 1_000_000;
+const NUMERIC_MIN = -1_000_000;
+
+export function getDefaultValueDomain(
+  type: AssessmentType,
+): ValueDomain | null {
+  switch (type) {
+    case AssessmentType.Text:
+      return new TextValueDomain(TEXT_MAX_LENGTH);
+    case AssessmentType.Numeric:
+      return new NumericValueDomain(DEFAULT_NUMERIC_MIN, DEFAULT_NUMERIC_MAX);
+    case AssessmentType.SingleSelect:
+    case AssessmentType.MultiSelect:
+      return new SelectValueDomain(["", ""]);
+    default:
+      return null;
+  }
+}
 
 type EditAssessmentScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -47,6 +71,8 @@ export function EditAssessmentScreen() {
   const [name, setName] = React.useState("");
   const [assessmentType, setAssessmentType] =
     React.useState<AssessmentType | null>(null);
+  const [referenceValueDomain, setReferenceValueDomain] =
+    React.useState<ValueDomain | null>(null);
   const [valueDomain, setValueDomain] = React.useState<ValueDomain>(null);
   const [selectValueDomainErrors, setSelectValueDomainErrors] = React.useState([
     false,
@@ -87,6 +113,8 @@ export function EditAssessmentScreen() {
         setAssessmentId(assessmentInit.dbId);
         setName(assessmentInit.name);
         setAssessmentType(assessmentInit.type);
+        setReferenceValueDomain(assessmentInit.valueDomain);
+        setValueDomain(assessmentInit.valueDomain);
       }
       loadAssessments();
     }, [route.params, loadAssessments]),
@@ -115,7 +143,7 @@ export function EditAssessmentScreen() {
       newNameError = false;
     } else {
       const nameValidated = name.trim();
-      if (nameValidated && nameValidated.length < NAME_MAX_LENGHT) {
+      if (nameValidated && nameValidated.length < NAME_MAX_LENGTH) {
         if (!assessmentsNames.includes(nameValidated)) {
           if (validName.test(nameValidated)) {
             newNameError = false;
@@ -148,7 +176,7 @@ export function EditAssessmentScreen() {
           if (!value) {
             newSelectValueDomainErrors[i] = true;
           }
-          if (value.length > NAME_MAX_LENGHT) {
+          if (value.length > NAME_MAX_LENGTH) {
             newSelectValueDomainErrors[i] = true;
           }
           if (!validName.test(value)) {
@@ -189,11 +217,7 @@ export function EditAssessmentScreen() {
 
   const handleAssessmentTypePick = (itemValue: AssessmentType) => {
     setAssessmentType(itemValue);
-    const newValueDomain =
-      itemValue === AssessmentType.SingleSelect ||
-      itemValue === AssessmentType.MultiSelect
-        ? new SelectValueDomain(["", ""])
-        : getDefaultValueDomain(itemValue);
+    const newValueDomain = getDefaultValueDomain(itemValue);
     setValueDomain(newValueDomain);
   };
 
@@ -229,20 +253,24 @@ export function EditAssessmentScreen() {
     }
   };
 
-  const renderValueDomain = () => {
+  const renderSelectValueDomain = (valueDomain: SelectValueDomain) => {
+    let notRemovableOptions: string[] = [];
     if (
-      (assessmentType === AssessmentType.SingleSelect ||
-        assessmentType === AssessmentType.MultiSelect) &&
-      valueDomain &&
-      valueDomain instanceof SelectValueDomain
+      referenceValueDomain &&
+      referenceValueDomain instanceof SelectValueDomain
     ) {
-      return (
-        <>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t("Select options")}
-          </Text>
-          <View>
-            {valueDomain.values.map((v, idx) => (
+      notRemovableOptions = referenceValueDomain.values;
+    }
+
+    return (
+      <>
+        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          {t("Select options")}
+        </Text>
+        <View>
+          {valueDomain.values.map((v, idx) => {
+            const editable = !notRemovableOptions.includes(v);
+            return (
               <View key={idx} style={styles.selectRow}>
                 <View style={{ flex: 1 }}>
                   <TextInput
@@ -250,9 +278,16 @@ export function EditAssessmentScreen() {
                       styles.selectInput,
                       {
                         borderColor: theme.colors.border,
-                        color: theme.colors.text,
                         backgroundColor: theme.colors.surface,
                       },
+                      editable
+                        ? {
+                            color: theme.colors.text,
+                          }
+                        : {
+                            color: theme.colors.textTertiary,
+                            opacity: DISABLED_OPACITY,
+                          },
                       selectValueDomainErrors[idx]
                         ? {
                             borderColor: theme.colors.error,
@@ -271,9 +306,11 @@ export function EditAssessmentScreen() {
                     }}
                     defaultValue={v}
                     autoCapitalize="none"
+                    editable={editable}
                   />
                 </View>
-                {valueDomain.values.length > 1 ? (
+                {valueDomain.values.length > 1 &&
+                !notRemovableOptions.includes(v) ? (
                   <TouchableOpacity
                     onPress={() => {
                       setValueDomain(
@@ -300,35 +337,119 @@ export function EditAssessmentScreen() {
                   <View style={styles.removeButtonPlaceholder} />
                 )}
               </View>
-            ))}
-          </View>
+            );
+          })}
+        </View>
 
-          <View style={styles.selectRow}>
-            <TouchableOpacity
-              onPress={() => {
-                setValueDomain(
-                  new SelectValueDomain([...valueDomain.values, ""]),
-                );
-                setSelectValueDomainErrors([...selectValueDomainErrors, false]);
-              }}
-              style={[styles.addButton, { borderColor: theme.colors.primary }]}
+        <View style={styles.selectRow}>
+          <TouchableOpacity
+            onPress={() => {
+              setValueDomain(
+                new SelectValueDomain([...valueDomain.values, ""]),
+              );
+              setSelectValueDomainErrors([...selectValueDomainErrors, false]);
+            }}
+            style={[styles.addButton, { borderColor: theme.colors.primary }]}
+          >
+            <Text
+              style={[styles.addButtonText, { color: theme.colors.primary }]}
             >
-              <Text
-                style={[styles.addButtonText, { color: theme.colors.primary }]}
-              >
-                + Add Value
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      );
-    }
+              + Add Value
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </>
+    );
   };
+
+  const renderNumericValueDomain = () => {
+    const handleUpdateMaximum = (value: number) => {
+      setValueDomain((oldValueDomain) => {
+        if (oldValueDomain && oldValueDomain instanceof NumericValueDomain) {
+          return new NumericValueDomain(oldValueDomain.min, value);
+        } else {
+          return new NumericValueDomain(DEFAULT_NUMERIC_MIN, value);
+        }
+      });
+    };
+    const handleUpdateMinimum = (value: number) => {
+      setValueDomain((oldValueDomain) => {
+        if (oldValueDomain && oldValueDomain instanceof NumericValueDomain) {
+          return new NumericValueDomain(value, oldValueDomain.max);
+        } else {
+          return new NumericValueDomain(value, DEFAULT_NUMERIC_MAX);
+        }
+      });
+    };
+
+    let minimumMax = NUMERIC_MAX;
+    let maximumMin = -NUMERIC_MIN;
+    if (
+      referenceValueDomain &&
+      referenceValueDomain instanceof NumericValueDomain
+    ) {
+      minimumMax = referenceValueDomain.min;
+      maximumMin = referenceValueDomain.max;
+    }
+    let minimumDefault = DEFAULT_NUMERIC_MIN;
+    let maximumDefault = DEFAULT_NUMERIC_MAX;
+    if (valueDomain && valueDomain instanceof NumericValueDomain) {
+      minimumDefault = valueDomain.min;
+      maximumDefault = valueDomain.max;
+    }
+
+    return (
+      <View>
+        <View style={[styles.rowContainer]}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Minimum")}
+          </Text>
+          <View style={styles.numberStepperInput}>
+            <SmallNumberStepper
+              defaultValue={minimumDefault}
+              min={NUMERIC_MIN}
+              max={minimumMax}
+              fractionalStepsBelowZero={false}
+              onChange={handleUpdateMinimum}
+            />
+          </View>
+        </View>
+        <View style={[styles.rowContainer]}>
+          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+            {t("Maximum")}
+          </Text>
+          <View style={styles.numberStepperInput}>
+            <SmallNumberStepper
+              defaultValue={maximumDefault}
+              min={maximumMin}
+              max={NUMERIC_MAX}
+              fractionalStepsBelowZero={false}
+              onChange={handleUpdateMaximum}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  let renderValueDomain = () => <View></View>;
+
+  switch (assessmentType) {
+    case AssessmentType.Numeric:
+      renderValueDomain = renderNumericValueDomain;
+      break;
+    case AssessmentType.SingleSelect:
+    case AssessmentType.MultiSelect:
+      if (valueDomain && valueDomain instanceof SelectValueDomain) {
+        renderValueDomain = () => renderSelectValueDomain(valueDomain);
+      }
+      break;
+  }
 
   return (
     <DefaultMainContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={[styles.rowContainer]}>
+        <View style={[styles.nameContainer]}>
           <TextInput
             placeholder="Assessment Name"
             placeholderTextColor={theme.colors.textTertiary}
@@ -391,12 +512,24 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginLeft: 5,
   },
-  rowContainer: {
+  nameContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     marginBottom: 30,
     height: 60,
+  },
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 60,
+    margin: 15,
+  },
+  numberStepperInput: {
+    height: 55,
+    width: 150,
+    alignSelf: "center",
   },
   input: {
     height: 55,

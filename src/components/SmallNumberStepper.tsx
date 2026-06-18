@@ -10,6 +10,7 @@ type SmallNumberStepperProps = {
   min?: number;
   max?: number;
   defaultValue?: number;
+  fractionalStepsBelowZero?: boolean;
   onChange: (value: number) => void;
 };
 
@@ -17,6 +18,7 @@ export default function SmallNumberStepper({
   min = 0.25,
   max = 100,
   defaultValue = 1,
+  fractionalStepsBelowZero = true,
   onChange,
 }: SmallNumberStepperProps) {
   const [count, setCount] = React.useState<number>(defaultValue);
@@ -25,7 +27,7 @@ export default function SmallNumberStepper({
   const handlePress = (type: "increment" | "decrement") => {
     let newValue = count;
     if (type === "increment" && count < max) {
-      if (newValue >= 1) {
+      if (newValue >= 1 || !fractionalStepsBelowZero) {
         newValue = Math.floor(count + 1.0);
       } else if (count >= 0.75) {
         newValue = 1;
@@ -37,7 +39,7 @@ export default function SmallNumberStepper({
         newValue = 1;
       }
     } else if (type === "decrement" && count > min) {
-      if (newValue > 1) {
+      if (newValue > 1 || !fractionalStepsBelowZero) {
         newValue = Math.ceil(count - 1.0);
       } else if (count > 0.75) {
         newValue = 0.75;

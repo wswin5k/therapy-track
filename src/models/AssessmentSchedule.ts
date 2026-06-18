@@ -1,7 +1,5 @@
 import { Frequency } from "./Frequency";
 
-const TEXT_MAX_LENGTH = 200;
-
 export enum AssessmentType {
   Numeric = "Numeric",
   Boolean = "Boolean",
@@ -30,19 +28,6 @@ export type ValueDomain =
   | SelectValueDomain
   | TextValueDomain
   | null;
-
-export function getDefaultValueDomain(
-  type: AssessmentType,
-): ValueDomain | null {
-  switch (type) {
-    case AssessmentType.Text:
-      return new TextValueDomain(TEXT_MAX_LENGTH);
-    case AssessmentType.Numeric:
-      return new NumericValueDomain(-Infinity, +Infinity);
-    default:
-      return null;
-  }
-}
 
 export class Assessment {
   constructor(
