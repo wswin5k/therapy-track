@@ -1,14 +1,14 @@
 import React from "react";
 import { StyleSheet, Modal, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import {
-  AssessmentType,
-  TextValueDomain,
-  ValueDomain,
-} from "../models/AssessmentSchedule";
+import { AssessmentType, ValueDomain } from "../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
 import { AssessmentValue } from "../models/Records";
-import { AssessmentInput } from "./AssessmentInput";
+import {
+  AssessmentInput,
+  getDefaultValue,
+  isTextValueValid,
+} from "./AssessmentInput";
 
 interface AssessmentInputDialogProps {
   title: string;
@@ -36,17 +36,8 @@ export function AssessmentInputDialog({
 
   const handleSave = () => {
     if (value !== null) {
-      if (
-        valueDomain &&
-        valueDomain instanceof TextValueDomain &&
-        value !== null &&
-        typeof value === "string"
-      ) {
-        if (value.length > valueDomain.max_characters) {
-          setValueError(true);
-        } else {
-          onSave(value);
-        }
+      if (isTextValueValid(value, valueDomain)) {
+        setValueError(true);
       } else {
         onSave(value);
       }
@@ -57,20 +48,7 @@ export function AssessmentInputDialog({
 
   React.useEffect(() => {
     if (initialValue === null) {
-      switch (assessmentType) {
-        case AssessmentType.Numeric:
-          setValue(0);
-          break;
-        case AssessmentType.Boolean:
-          setValue(false);
-          break;
-        case AssessmentType.Text:
-          setValue("");
-          break;
-        case AssessmentType.SingleSelect:
-        case AssessmentType.MultiSelect:
-          setValue([]);
-      }
+      setValue(getDefaultValue(assessmentType));
     }
   }, [assessmentType, initialValue]);
 

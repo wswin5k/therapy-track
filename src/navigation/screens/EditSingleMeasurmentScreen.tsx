@@ -21,11 +21,12 @@ import { AssessmentParam } from "..";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { AssessmentValue } from "../../models/Records";
-import { AssessmentInput } from "../../components/AssessmentInput";
 import {
-  AssessmentType,
-  TextValueDomain,
-} from "../../models/AssessmentSchedule";
+  AssessmentInput,
+  getDefaultValue,
+  isTextValueValid,
+} from "../../components/AssessmentInput";
+import { AssessmentType } from "../../models/AssessmentSchedule";
 
 export function EditSingleMeasurmentScreen() {
   const { t } = useTranslation();
@@ -48,19 +49,8 @@ export function EditSingleMeasurmentScreen() {
   const [groups, setGroups] = React.useState<Group[]>([]);
 
   React.useEffect(() => {
-    switch (assessment?.type) {
-      case AssessmentType.Numeric:
-        setValue(0);
-        break;
-      case AssessmentType.Boolean:
-        setValue(false);
-        break;
-      case AssessmentType.Text:
-        setValue("");
-        break;
-      case AssessmentType.SingleSelect:
-      case AssessmentType.MultiSelect:
-        setValue([]);
+    if (assessment) {
+      setValue(getDefaultValue(assessment.type));
     }
   }, [assessment]);
 
@@ -106,15 +96,7 @@ export function EditSingleMeasurmentScreen() {
     if (date) {
       if (assessment) {
         if (value) {
-          if (
-            !(
-              assessment.valueDomain &&
-              assessment.valueDomain instanceof TextValueDomain &&
-              value !== null &&
-              typeof value === "string" &&
-              value.length > assessment.valueDomain.max_characters
-            )
-          ) {
+          if (!isTextValueValid(value, assessment.valueDomain)) {
             return { date, assessment, value };
           } else {
             setValueError(true);

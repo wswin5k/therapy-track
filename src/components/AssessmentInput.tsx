@@ -28,6 +28,35 @@ export function isStringArray(value: unknown): value is string[] {
   );
 }
 
+export function isTextValueValid(
+  value: AssessmentValue,
+  valueDomain: ValueDomain,
+): boolean {
+  return (
+    valueDomain !== null &&
+    valueDomain instanceof TextValueDomain &&
+    value !== null &&
+    typeof value === "string" &&
+    value.length > valueDomain.max_characters
+  );
+}
+
+export function getDefaultValue(
+  assessementType: AssessmentType,
+): AssessmentValue {
+  switch (assessementType) {
+    case AssessmentType.Numeric:
+      return 0;
+    case AssessmentType.Boolean:
+      return false;
+    case AssessmentType.Text:
+      return "";
+    case AssessmentType.SingleSelect:
+    case AssessmentType.MultiSelect:
+      return [];
+  }
+}
+
 export function AssessmentInput({
   type,
   value,
