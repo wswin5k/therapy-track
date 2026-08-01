@@ -130,8 +130,6 @@ const styles = StyleSheet.create({
     maxWidth: "85%",
     maxHeight: "70%",
     alignSelf: "center",
-    borderWidth: 2,
-    borderColor: "red",
   },
   dialog: {
     borderRadius: 12,
@@ -139,8 +137,6 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     maxHeight: "100%",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "blue",
   },
   title: {
     fontSize: 18,
@@ -153,10 +149,9 @@ const styles = StyleSheet.create({
   },
   content: {
     fontSize: 15,
-    marginBottom: 20,
+    marginBottom: 15,
     textAlign: "left",
     lineHeight: 21,
-    maxHeight: "40%",
     width: "100%",
   },
   buttonContainer: {
