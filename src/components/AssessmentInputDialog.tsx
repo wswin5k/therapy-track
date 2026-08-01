@@ -123,17 +123,24 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.85)",
     justifyContent: "center",
     alignItems: "center",
+    height: "100%",
   },
   modal: {
     width: 400,
     maxWidth: "85%",
     maxHeight: "70%",
+    alignSelf: "center",
+    borderWidth: 2,
+    borderColor: "red",
   },
   dialog: {
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 20,
+    maxHeight: "100%",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "blue",
   },
   title: {
     fontSize: 18,
@@ -142,12 +149,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     height: 40,
     textAlignVertical: "center",
+    width: "100%",
   },
   content: {
     fontSize: 15,
     marginBottom: 20,
     textAlign: "left",
     lineHeight: 21,
+    maxHeight: "40%",
     width: "100%",
   },
   buttonContainer: {
@@ -170,5 +179,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontWeight: "500",
+    width: "100%",
+    textAlign: "center",
   },
 });
