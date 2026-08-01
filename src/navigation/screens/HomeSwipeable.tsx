@@ -16,20 +16,18 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   TouchableOpacity,
+  useWindowDimensions,
   View,
   VirtualizedList,
 } from "react-native";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { useSQLiteContext } from "expo-sqlite";
 import { dbGetAssessments, dbGetMedicines } from "../../models/dbAccess";
-import { Dimensions } from "react-native";
 import { dayDifference } from "../utils";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "HomeTabs"
 >;
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const INIITIAL_INDEX = 10_000;
 const TOTAL_ITEMS = 20_000;
@@ -47,6 +45,7 @@ export function HomeSwipeable() {
   const db = useSQLiteContext();
 
   const listRef = React.useRef<VirtualizedList<number>>(null);
+  const currentIndexRef = React.useRef<number>(INIITIAL_INDEX);
 
   const [date, setDate] = React.useState<Date>(getToday());
   const [datePickerDate, setDatePickerDate] = React.useState<Date>(getToday());
@@ -93,14 +92,28 @@ export function HomeSwipeable() {
       setDate(newDate);
       if (listRef.current) {
         listRef.current.scrollToIndex({
-          index: INIITIAL_INDEX,
+          index: currentIndexRef.current,
           animated: false,
-          viewPosition: 0.5,
+          viewPosition: 0,
         });
       }
       navigation.setOptions({ title: formatDate(newDate) });
     }, [navigation, formatDate]),
   );
+
+  const { width: screenWidth } = useWindowDimensions();
+  React.useEffect(() => {
+    if (listRef.current) {
+      const timeoutId = setTimeout(() => {
+        listRef.current?.scrollToIndex({
+          index: currentIndexRef.current,
+          animated: false,
+          viewPosition: 0,
+        });
+      }, 30);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [screenWidth]);
 
   const loadMedicinesAndAssessments = React.useCallback(async () => {
     const medicines = await dbGetMedicines(db);
@@ -127,8 +140,11 @@ export function HomeSwipeable() {
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const landedIndex = Math.round(offsetX / SCREEN_WIDTH);
+    const landedIndex = Math.round(offsetX / screenWidth);
+    currentIndexRef.current = landedIndex;
+
     const newDate = getDate(landedIndex - INIITIAL_INDEX);
+
     setDatePickerDate(newDate);
     navigation.setOptions({ title: formatDate(newDate) });
   };
@@ -193,9 +209,10 @@ export function HomeSwipeable() {
   ];
 
   const renderHome = ({ item: index }: { item: number }) => {
+    console.log(index);
     const currentDate = getDate(index - INIITIAL_INDEX);
     return (
-      <View key={index} style={{ width: SCREEN_WIDTH }}>
+      <View key={index} style={{ width: screenWidth }}>
         <Home date={currentDate} />
       </View>
     );
@@ -221,14 +238,14 @@ export function HomeSwipeable() {
         keyExtractor={(item) => item.toString()}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToInterval={SCREEN_WIDTH}
+        snapToInterval={screenWidth}
         decelerationRate={0.9}
         disableIntervalMomentum={true}
         onMomentumScrollEnd={handleMomentumScrollEnd}
         initialScrollIndex={INIITIAL_INDEX}
         getItemLayout={(_, index) => ({
-          length: SCREEN_WIDTH,
-          offset: SCREEN_WIDTH * index,
+          length: screenWidth,
+          offset: screenWidth * index,
           index,
         })}
         maxToRenderPerBatch={3}
