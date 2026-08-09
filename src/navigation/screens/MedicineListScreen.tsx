@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   optionsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,

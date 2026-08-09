@@ -1044,7 +1044,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   optionsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,
