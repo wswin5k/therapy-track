@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   optionsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,

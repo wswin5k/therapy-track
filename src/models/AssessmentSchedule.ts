@@ -24,10 +24,7 @@ export class SelectValueDomain {
 }
 
 export type ValueDomain =
-  | NumericValueDomain
-  | SelectValueDomain
-  | TextValueDomain
-  | null;
+  NumericValueDomain | SelectValueDomain | TextValueDomain | null;
 
 export class Assessment {
   constructor(

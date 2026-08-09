@@ -209,7 +209,6 @@ export function HomeSwipeable() {
   ];
 
   const renderHome = ({ item: index }: { item: number }) => {
-    console.log(index);
     const currentDate = getDate(index - INIITIAL_INDEX);
     return (
       <View key={index} style={{ width: screenWidth }}>

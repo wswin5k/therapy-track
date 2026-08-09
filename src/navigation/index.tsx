@@ -75,11 +75,9 @@ export type RootStackParamList = {
     assessment?: Assessment;
   };
   SelectMedicineScreen:
-    | { mode: "schedule" | "one-time"; selectedDate?: string }
-    | undefined;
+    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
   SelectAssessmentScreen:
-    | { mode: "schedule" | "one-time"; selectedDate?: string }
-    | undefined;
+    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
   EditMedicineScheduleScreen: {
     medicine: MedicineParam;
   };
