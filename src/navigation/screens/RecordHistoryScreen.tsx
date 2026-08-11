@@ -1,7 +1,6 @@
 import {
   Alert,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,7 +12,6 @@ import {
   useNavigation,
   useTheme,
 } from "@react-navigation/native";
-import { DataTable } from "react-native-paper";
 import React from "react";
 import {
   dbGetAssessments,
@@ -39,6 +37,7 @@ import {
 } from "../../models/AssessmentSchedule";
 import { Group } from "../../models/Frequency";
 import { baseUnitShorFormPlural } from "../enumMappings";
+import StickyTable from "../../components/StickyTable";
 
 function extractDate(datetime: Date): string {
   return datetime.toISOString().split("T")[0];
@@ -115,8 +114,9 @@ export function RecordHistoryScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
 
-  const [tableHeaders, setTableHeaders] = React.useState<string[]>([]);
-  const [tableRows, setTableRows] = React.useState<string[][]>([]);
+  const [rowHeaders, setRowHeaders] = React.useState<string[]>([]);
+  const [columnHeaders, setColumnHeaders] = React.useState<string[]>([]);
+  const [cells, setCells] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
 
@@ -375,7 +375,7 @@ export function RecordHistoryScreen() {
     const days = Array.from(daysSet).sort().reverse();
 
     for (const day of days) {
-      const record = [day];
+      const record = [];
       for (const header of medicinesHeaders) {
         const value = medicinesHistory.get(day)?.get(header);
         if (value) {
@@ -398,9 +398,9 @@ export function RecordHistoryScreen() {
     const headers = medicinesHeaders.concat(assessmentsHeaders);
     headers.unshift("Date");
 
-    setTableHeaders(headers);
-
-    setTableRows(newTableRows);
+    setColumnHeaders(headers);
+    setRowHeaders(days);
+    setCells(newTableRows);
   }, [getAssessmentData, getMedicineData]);
 
   useFocusEffect(
@@ -415,7 +415,7 @@ export function RecordHistoryScreen() {
 
   const handleSaveToCSV = React.useCallback(async () => {
     try {
-      const csvContent = generateCSV(tableHeaders, tableRows);
+      const csvContent = generateCSV(columnHeaders, cells);
 
       const today = new Date().toISOString().split("T")[0];
       const fileName = `dosage-history-${today}.csv`;
@@ -458,7 +458,7 @@ export function RecordHistoryScreen() {
       Alert.alert("Error", `Failed to save the file ${error}`);
     }
     setIsMenuOpen(false);
-  }, [tableRows, tableHeaders]);
+  }, [cells, columnHeaders]);
 
   React.useEffect(() => {
     navigation.setOptions({
@@ -492,79 +492,22 @@ export function RecordHistoryScreen() {
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
       ></MenuModal>
-      {tableRows.length === 0 ? (
+      {cells.length === 0 ? (
         renderEmptyState()
       ) : (
-        <ScrollView
-          contentContainerStyle={[styles.scrollContainer]}
-          horizontal={true}
-        >
-          <DataTable>
-            <DataTable.Row
-              style={[
-                styles.tableHeader,
-                {
-                  borderBottomColor: theme.colors.border,
-                },
-              ]}
-            >
-              {Array.from(tableHeaders).map((header, idx) => {
-                return (
-                  <DataTable.Cell
-                    key={idx}
-                    style={[
-                      styles.tableCell,
-                      {
-                        backgroundColor: theme.colors.card,
-                        borderColor: theme.colors.border,
-                      },
-                    ]}
-                    textStyle={[
-                      styles.headerText,
-                      { color: theme.colors.text },
-                    ]}
-                  >
-                    {header}
-                  </DataTable.Cell>
-                );
-              })}
-            </DataTable.Row>
-
-            {tableRows.map((values, index) => (
-              <DataTable.Row
-                key={index}
-                style={[
-                  styles.tableRow,
-                  {
-                    borderBottomColor: theme.colors.border,
-                  },
-                ]}
-              >
-                {values.map((v, idx) => (
-                  <DataTable.Cell
-                    key={idx}
-                    style={[
-                      styles.tableCell,
-
-                      {
-                        borderColor: theme.colors.border,
-
-                        backgroundColor:
-                          index % 2 === 0
-                            ? theme.colors.surface
-                            : theme.colors.card,
-                      },
-                    ]}
-                    textStyle={[styles.cellText, { color: theme.colors.text }]}
-                    numeric={idx === 0 ? false : true}
-                  >
-                    {v}
-                  </DataTable.Cell>
-                ))}
-              </DataTable.Row>
-            ))}
-          </DataTable>
-        </ScrollView>
+        <StickyTable
+          columnHeaders={columnHeaders}
+          rowHeaders={rowHeaders}
+          data={cells}
+          cellWidth={120}
+          cellHeight={50}
+          headerWidth={120}
+          headerHeight={50}
+          columnHeaderStyles={styles.tableCell}
+          rowHeaderStyles={styles.tableCell}
+          cellStyles={styles.tableCell}
+          cornerCellStyles={styles.tableCell}
+        />
       )}
     </DefaultMainContainer>
   );
@@ -593,7 +536,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     minHeight: 48,
     padding: 10,
-    width: 150,
   },
   cellText: {
     fontSize: 14,
