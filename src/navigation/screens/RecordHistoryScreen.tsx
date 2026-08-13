@@ -109,7 +109,7 @@ export function MenuModal({
 }
 
 export function RecordHistoryScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
   const navigation = useNavigation();
@@ -119,6 +119,17 @@ export function RecordHistoryScreen() {
   const [cells, setCells] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
+
+  const formatDate = React.useCallback(
+    (date: Date) => {
+      return new Intl.DateTimeFormat(i18n.resolvedLanguage, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+    },
+    [i18n.resolvedLanguage],
+  );
 
   function calculateHeaders<T>(
     fullHeaderToShortHeader: Map<string, string>,
@@ -374,6 +385,8 @@ export function RecordHistoryScreen() {
     ]);
     const days = Array.from(daysSet).sort().reverse();
 
+    const newRowHeaders = new Array();
+
     for (const day of days) {
       const record = [];
       for (const header of medicinesHeaders) {
@@ -393,15 +406,16 @@ export function RecordHistoryScreen() {
         }
       }
       newTableRows.push(record);
+      newRowHeaders.push(formatDate(new Date(day)));
     }
 
     const headers = medicinesHeaders.concat(assessmentsHeaders);
     headers.unshift("Date");
 
     setColumnHeaders(headers);
-    setRowHeaders(days);
+    setRowHeaders(newRowHeaders);
     setCells(newTableRows);
-  }, [getAssessmentData, getMedicineData]);
+  }, [getAssessmentData, getMedicineData, formatDate]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -486,7 +500,7 @@ export function RecordHistoryScreen() {
   );
 
   return (
-    <DefaultMainContainer>
+    <DefaultMainContainer style={[styles.mainContainer]}>
       <MenuModal
         visible={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
@@ -499,14 +513,6 @@ export function RecordHistoryScreen() {
           columnHeaders={columnHeaders}
           rowHeaders={rowHeaders}
           data={cells}
-          cellWidth={120}
-          cellHeight={50}
-          headerWidth={120}
-          headerHeight={50}
-          columnHeaderStyles={styles.tableCell}
-          rowHeaderStyles={styles.tableCell}
-          cellStyles={styles.tableCell}
-          cornerCellStyles={styles.tableCell}
         />
       )}
     </DefaultMainContainer>
@@ -523,7 +529,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 8,
   },
-  scrollContainer: {},
+  mainContainer: {
+    padding: 6,
+  },
   tableHeader: {
     margin: 0,
   },

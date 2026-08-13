@@ -1,11 +1,5 @@
 import { useTheme } from "@react-navigation/native";
-import {
-  View,
-  Text,
-  StyleSheet,
-  type ViewStyle,
-  type StyleProp,
-} from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import Animated, {
   useSharedValue,
   useDerivedValue,
@@ -16,36 +10,25 @@ import Animated, {
 import type { ReanimatedScrollEvent } from "react-native-reanimated/lib/typescript/hook/commonTypes";
 import { mixColors } from "../navigation/utils";
 
+const TABLE_RADIUS = 10;
+const CELL_WIDTH = 140;
+const CELL_HEIGHT = 50;
+const ROW_HEADER_WIDTH = 120;
+
 type StickyTableProps = {
   columnHeaders: string[];
   rowHeaders: string[];
   data: string[][];
-  cellWidth: number;
-  cellHeight: number;
-  headerWidth: number;
-  headerHeight: number;
   tableVerticalPadding?: number;
   tableHorizontalPadding?: number;
-  columnHeaderStyles?: StyleProp<ViewStyle>;
-  rowHeaderStyles?: StyleProp<ViewStyle>;
-  cellStyles?: StyleProp<ViewStyle>;
-  cornerCellStyles?: StyleProp<ViewStyle>;
 };
 
 export default function StickyTable({
   columnHeaders,
   rowHeaders,
   data,
-  cellWidth,
-  cellHeight,
-  headerWidth,
-  headerHeight,
   tableVerticalPadding = 0,
   tableHorizontalPadding = 0,
-  columnHeaderStyles,
-  rowHeaderStyles,
-  cellStyles,
-  cornerCellStyles,
 }: StickyTableProps) {
   const theme = useTheme();
 
@@ -90,11 +73,12 @@ export default function StickyTable({
       styles.paddingLeft = tableHorizontalPadding;
     }
     if (isInLastColumn) {
+      styles.borderTopRightRadius = TABLE_RADIUS;
       styles.paddingRight = tableHorizontalPadding;
     }
 
-    styles.width = cellWidth;
-    styles.height = headerHeight;
+    styles.width = CELL_WIDTH;
+    styles.height = CELL_HEIGHT;
     if (isInFirstColumn || isInLastColumn) {
       styles.width += tableHorizontalPadding;
     }
@@ -107,18 +91,19 @@ export default function StickyTable({
     const isInFirstRow = rowIndex === 0;
     const isInLastRow = rowIndex === rowsLength;
     if (isInFirstRow) {
+      styles.borderTopLeftRadius = TABLE_RADIUS;
       styles.paddingTop = tableVerticalPadding;
     }
     if (isInLastRow) {
+      styles.borderBottomLeftRadius = TABLE_RADIUS;
       styles.paddingBottom = tableVerticalPadding;
     }
 
-    styles.width = headerWidth;
-    styles.height = cellHeight;
+    styles.width = ROW_HEADER_WIDTH;
+    styles.height = CELL_HEIGHT;
     if (isInFirstRow || isInLastRow) {
       styles.height += tableVerticalPadding;
     }
-
     return styles;
   }
 
@@ -145,10 +130,13 @@ export default function StickyTable({
     }
     if (isInLastColumn) {
       styles.paddingRight = tableHorizontalPadding;
+      if (isInLastRow) {
+        styles.borderBottomRightRadius = TABLE_RADIUS;
+      }
     }
 
-    styles.width = cellWidth;
-    styles.height = cellHeight;
+    styles.width = CELL_WIDTH;
+    styles.height = CELL_HEIGHT;
     if (isInFirstRow || isInLastRow) {
       styles.height += tableVerticalPadding;
     }
@@ -166,15 +154,15 @@ export default function StickyTable({
         <View
           style={[
             styles.cornerCell,
-            { width: headerWidth, height: headerHeight },
-            cornerCellStyles,
+            computeRowHeaderStyles(0, rowHeaders.length - 1),
+            { width: ROW_HEADER_WIDTH, height: CELL_HEIGHT },
             {
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.primary,
             },
           ]}
         >
-          <Text>{columnHeaders[0]}</Text>
+          <Text style={[styles.headerText]}>{columnHeaders[0]}</Text>
         </View>
 
         {/* Top Header */}
@@ -191,15 +179,16 @@ export default function StickyTable({
                 key={index}
                 style={[
                   styles.columnHeaderCell,
-                  computeColumnHeaderStyles(index, columnHeaders.length - 1),
-                  columnHeaderStyles,
+                  computeColumnHeaderStyles(index, columnHeaders.length - 2),
                   {
                     borderColor: theme.colors.border,
                     backgroundColor: theme.colors.primary,
                   },
                 ]}
               >
-                <Text>{columnHeader}</Text>
+                <Text style={[{ color: theme.colors.text }, styles.headerText]}>
+                  {columnHeader}
+                </Text>
               </View>
             ))}
           </Animated.ScrollView>
@@ -207,9 +196,9 @@ export default function StickyTable({
       </View>
 
       {/* Main - vertical sticky header + scrollable body */}
-      <View style={styles.main}>
-        {/* Left Header */}
-        <View style={[styles.rowHeaderClip, { width: headerWidth }]}>
+      <View style={styles.table}>
+        {/* Row Header */}
+        <View style={[styles.rowHeaderClip, { width: ROW_HEADER_WIDTH }]}>
           <Animated.ScrollView
             ref={rowHeaderRef}
             showsVerticalScrollIndicator={false}
@@ -220,8 +209,7 @@ export default function StickyTable({
                 key={index}
                 style={[
                   styles.rowHeaderCell,
-                  computeRowHeaderStyles(index, rowHeaders.length - 1),
-                  rowHeaderStyles,
+                  computeRowHeaderStyles(index + 1, rowHeaders.length),
                   {
                     borderColor: theme.colors.border,
                     backgroundColor: mixColors(
@@ -234,7 +222,9 @@ export default function StickyTable({
                   },
                 ]}
               >
-                <Text>{rowHeader}</Text>
+                <Text style={[{ color: theme.colors.text }, styles.headerText]}>
+                  {rowHeader}
+                </Text>
               </View>
             ))}
           </Animated.ScrollView>
@@ -259,7 +249,6 @@ export default function StickyTable({
                         data.length - 1,
                         row.length - 1,
                       ),
-                      cellStyles,
                       {
                         borderColor: theme.colors.border,
                         backgroundColor:
@@ -269,7 +258,11 @@ export default function StickyTable({
                       },
                     ]}
                   >
-                    <Text>{cell}</Text>
+                    <Text
+                      style={[{ color: theme.colors.text }, styles.cellText]}
+                    >
+                      {cell}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -285,6 +278,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  table: {
+    flexDirection: "row",
+    flex: 1,
+  },
+  row: {
+    flexDirection: "row",
+  },
+  headerText: {
+    fontSize: 15,
+    fontWeight: 500,
+  },
+  cellText: {
+    fontSize: 14,
+  },
+  cornerCell: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  cell: {
+    borderWidth: 1,
+    minHeight: 48,
+    padding: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   columnHeaderClip: {
     overflow: "hidden",
     flex: 1,
@@ -292,29 +311,14 @@ const styles = StyleSheet.create({
   rowHeaderClip: {
     overflow: "hidden",
   },
-  cornerCell: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  main: {
-    flexDirection: "row",
-    flex: 1,
-  },
-  row: {
-    flexDirection: "row",
-  },
   columnHeaderCell: {
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 4,
+    borderWidth: 1,
   },
   rowHeaderCell: {
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 4,
-  },
-  cell: {
-    justifyContent: "center",
-    alignItems: "center",
+    borderWidth: 1,
   },
 });
