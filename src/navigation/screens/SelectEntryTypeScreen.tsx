@@ -101,16 +101,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     margin: 15,
   },
-  fullWidthPickerContainer: {
-    maxWidth: "80%",
-    width: 300,
-    height: 60,
-    borderWidth: 1,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignSelf: "center",
-    padding: 15,
-  },
   nextButton: {
     maxWidth: "80%",
     width: 300,
