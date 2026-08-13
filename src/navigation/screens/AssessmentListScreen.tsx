@@ -80,7 +80,7 @@ function AssessmentListItem({
 
   const renderOptions = () => (
     <TouchableOpacity
-      style={[styles.optionsOverlay, { zIndex: 1, position: "absolute" }]}
+      style={[styles.optionsOverlay]}
       onLongPress={handleOptionsToggle}
     >
       <TouchableOpacity
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   optionsOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,
@@ -299,6 +299,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 0, 0, 0.0)",
     justifyContent: "space-between",
     alignItems: "center",
+    zIndex: 1,
+    position: "absolute",
   },
   optionsButton: {
     paddingHorizontal: 12,
