@@ -32,6 +32,7 @@ import { HomeSwipeable } from "./screens/HomeSwipeable";
 import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
 import { AssessmentListScreen } from "./screens/AssessmentListScreen";
 import { AssessmentSchedulesListScreen } from "./screens/AssessmentsSchedulesListScreen";
+import { SelectEntryTypeScreen } from "./screens/SelectEntryTypeScreen";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
   screens: {
@@ -74,6 +75,8 @@ export type RootStackParamList = {
     mode: "save-and-go-back" | "schedule" | "one-time";
     assessment?: Assessment;
   };
+  SelectEntryTypeScreen:
+    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
   SelectMedicineScreen:
     { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
   SelectAssessmentScreen:
@@ -211,6 +214,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         title: "Home",
         headerShown: false,
+      },
+    },
+    SelectEntryTypeScreen: {
+      screen: SelectEntryTypeScreen,
+      options: {
+        presentation: "modal",
+        title: "Select entry type",
       },
     },
     SelectMedicineScreen: {

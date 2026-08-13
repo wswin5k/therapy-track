@@ -26,7 +26,7 @@ const CustomLightTheme: ReactNavigation.Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "#72b4bc",
+    primary: "#7dc4cb",
     background: "#F9F8F6",
     surface: "#f2f0eb",
     card: "#EFE9E3",
@@ -43,7 +43,7 @@ const CustomDarkTheme: ReactNavigation.Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: "#72b4bc",
+    primary: "#7dc4cb",
     background: "#423f3c",
     surface: "#3b3839",
     card: "#33302e",
