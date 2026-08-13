@@ -967,7 +967,7 @@ export function Home({ date }: { date: Date }) {
 
 const styles = StyleSheet.create({
   list: {
-    padding: 10,
+    padding: 18,
   },
   scheduleItem: {
     flex: 1,

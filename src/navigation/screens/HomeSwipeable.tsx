@@ -21,8 +21,6 @@ import {
   VirtualizedList,
 } from "react-native";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
-import { useSQLiteContext } from "expo-sqlite";
-import { dbGetAssessments, dbGetMedicines } from "../../models/dbAccess";
 import { dayDifference } from "../utils";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -42,7 +40,6 @@ export function HomeSwipeable() {
   const navigation = useNavigation<HomeNavigationProp>();
   const theme = useTheme();
   const { i18n } = useTranslation();
-  const db = useSQLiteContext();
 
   const listRef = React.useRef<VirtualizedList<number>>(null);
   const currentIndexRef = React.useRef<number>(INIITIAL_INDEX);
@@ -50,10 +47,6 @@ export function HomeSwipeable() {
   const [date, setDate] = React.useState<Date>(getToday());
   const [datePickerDate, setDatePickerDate] = React.useState<Date>(getToday());
   const [isDatePickerOpened, setIsDatePickerOpened] =
-    React.useState<boolean>(false);
-  const [areMedicinesEmpty, setAreMedicinesEmpty] =
-    React.useState<boolean>(false);
-  const [areAssessmentsEmpty, setAreAssessmentsEmpty] =
     React.useState<boolean>(false);
 
   const getDate = (slotValue: number) => {
@@ -115,27 +108,6 @@ export function HomeSwipeable() {
     }
   }, [screenWidth]);
 
-  const loadMedicinesAndAssessments = React.useCallback(async () => {
-    const medicines = await dbGetMedicines(db);
-    if (medicines.length > 0) {
-      setAreMedicinesEmpty(false);
-    } else {
-      setAreMedicinesEmpty(true);
-    }
-    const assessments = await dbGetAssessments(db);
-    if (assessments.length > 0) {
-      setAreAssessmentsEmpty(false);
-    } else {
-      setAreAssessmentsEmpty(true);
-    }
-  }, [db]);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadMedicinesAndAssessments();
-    }, [loadMedicinesAndAssessments]),
-  );
-
   const handleMomentumScrollEnd = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
@@ -173,38 +145,20 @@ export function HomeSwipeable() {
   };
   const fabActions = [
     {
-      label: "One-off Medicine",
+      label: "One-time entry",
       onPress: () =>
-        areMedicinesEmpty
-          ? navigation.navigate("EditMedicineScreen", { mode: "one-time" })
-          : navigation.navigate("SelectMedicineScreen", {
-              mode: "one-time",
-              selectedDate: date.toISOString(),
-            }),
+        navigation.navigate("SelectEntryTypeScreen", {
+          mode: "one-time",
+          selectedDate: date.toISOString(),
+        }),
     },
     {
-      label: "Schedule Medicine",
+      label: "Schedule",
       onPress: () =>
-        areMedicinesEmpty
-          ? navigation.navigate("EditMedicineScreen", { mode: "schedule" })
-          : navigation.navigate("SelectMedicineScreen", { mode: "schedule" }),
-    },
-    {
-      label: "Schedule Assessment",
-      onPress: () =>
-        areAssessmentsEmpty
-          ? navigation.navigate("EditAssessmentScreen", { mode: "schedule" })
-          : navigation.navigate("SelectAssessmentScreen", { mode: "schedule" }),
-    },
-    {
-      label: "One-off Assessment",
-      onPress: () =>
-        areAssessmentsEmpty
-          ? navigation.navigate("EditAssessmentScreen", { mode: "one-time" })
-          : navigation.navigate("SelectAssessmentScreen", {
-              mode: "one-time",
-              selectedDate: date.toISOString(),
-            }),
+        navigation.navigate("SelectEntryTypeScreen", {
+          mode: "schedule",
+          selectedDate: date.toISOString(),
+        }),
     },
   ];
 
