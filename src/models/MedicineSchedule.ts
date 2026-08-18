@@ -14,7 +14,9 @@ export enum BaseUnit {
   Vial = "Vial",
   PreFilledSyringe = "PreFilledSyringe",
   Gram = "Gram",
-  Unit = "Unit",
+  Suppository = "suppository",
+  Gummy = "gummy",
+  Dose = "Dose",
 }
 
 export function strKeyOfBaseUnit(x: BaseUnit) {
