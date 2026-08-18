@@ -267,6 +267,7 @@ export function GroupListScreen() {
             {t("+ Add Group")}
           </Text>
         </TouchableOpacity>
+        <View style={styles.bottomMarginContainer}></View>
       </ScrollView>
     </DefaultMainContainer>
   );
@@ -274,15 +275,19 @@ export function GroupListScreen() {
 
 const styles = StyleSheet.create({
   list: {
-    padding: 16,
+    padding: 18,
   },
   itemContainer: {
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
     alignItems: "center",
     borderWidth: 1,
+  },
+  bottomMarginContainer: {
+    height: 18,
+    width: "100%",
   },
   itemContent: {
     flex: 1,
