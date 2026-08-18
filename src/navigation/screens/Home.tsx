@@ -960,6 +960,7 @@ export function Home({ date }: { date: Date }) {
           </LinearGradient>
         )}
         {isScheduledEmpty && isUnscheduledEmpty && renderEmptyState()}
+        <View style={styles.bottomMarginContainer}></View>
       </ScrollView>
     </DefaultMainContainer>
   );
@@ -997,9 +998,15 @@ const styles = StyleSheet.create({
   },
   groupContainer: {
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    marginBottom: 18,
     borderWidth: 0.8,
+  },
+  bottomMarginContainer: {
+    height: 80,
+    width: "100%",
   },
   contentText: {
     fontSize: 15,

@@ -248,6 +248,7 @@ export function AssessmentSchedulesListScreen() {
           );
         })}
         {schedules.length === 0 && renderEmptyState()}
+        <View style={styles.bottomMarginContainer}></View>
       </ScrollView>
     </DefaultMainContainer>
   );
@@ -255,7 +256,7 @@ export function AssessmentSchedulesListScreen() {
 
 const styles = StyleSheet.create({
   list: {
-    padding: 16,
+    padding: 18,
   },
   emptyList: {
     flex: 1,
@@ -266,9 +267,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 14,
     alignItems: "center",
     borderWidth: 1,
+  },
+  bottomMarginContainer: {
+    height: 18,
+    width: "100%",
   },
   optionsOverlay: {
     ...StyleSheet.absoluteFill,
