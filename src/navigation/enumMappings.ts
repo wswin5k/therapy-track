@@ -19,7 +19,9 @@ export const baseUnitToSingularShortForm: { [key: string]: string } = {
   Vial: "vial",
   PreFilledSyringe: "pre-filled syringe",
   Gram: "gram",
-  Unit: "unit",
+  Suppository: "suppository",
+  Gummy: "gummy",
+  Dose: "dose",
 };
 
 export const baseUnitToSingularLongForm: { [key: string]: string } = {
@@ -34,7 +36,9 @@ export const baseUnitToSingularLongForm: { [key: string]: string } = {
   Vial: "vial",
   PreFilledSyringe: "pre-filled syringe",
   Gram: "gram (g)",
-  Unit: "unit",
+  Suppository: "suppository",
+  Gummy: "gummy",
+  Dose: "dose",
 };
 
 export function baseUnitToUnitSelectionLabel(key: BaseUnit) {
