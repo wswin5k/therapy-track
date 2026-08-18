@@ -27,7 +27,9 @@ const resources = {
       vial_other: "vials",
       "pre-filled syringe_other": "pre-filled syringes",
       gram_other: "grams",
-      unit_other: "units",
+      gummy_other: "gummies",
+      suppository_other: "suppositories",
+      dose_other: "doses",
 
       pill_one: "pill",
       pill_other: "pills",

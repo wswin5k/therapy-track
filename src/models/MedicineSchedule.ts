@@ -14,8 +14,8 @@ export enum BaseUnit {
   Vial = "Vial",
   PreFilledSyringe = "PreFilledSyringe",
   Gram = "Gram",
-  Suppository = "suppository",
-  Gummy = "gummy",
+  Suppository = "Suppository",
+  Gummy = "Gummy",
   Dose = "Dose",
 }
 
