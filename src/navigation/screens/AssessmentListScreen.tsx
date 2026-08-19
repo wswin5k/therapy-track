@@ -178,7 +178,6 @@ export function AssessmentListScreen() {
 
   const loadData = React.useCallback(async () => {
     const newAssessments = await dbGetAssessments(db);
-    console.log("loadData", newAssessments);
     setAssessments(newAssessments);
 
     const schedulesWitAssessments = await dbGetAssessmentSchedules(db);
