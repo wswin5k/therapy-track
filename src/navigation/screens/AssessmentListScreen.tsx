@@ -177,8 +177,9 @@ export function AssessmentListScreen() {
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
 
   const loadData = React.useCallback(async () => {
-    const assessments = await dbGetAssessments(db);
-    setAssessments(assessments);
+    const newAssessments = await dbGetAssessments(db);
+    console.log("loadData", newAssessments);
+    setAssessments(newAssessments);
 
     const schedulesWitAssessments = await dbGetAssessmentSchedules(db);
     const newAssessmentsWithSchedules = new Set<number>();
@@ -187,7 +188,9 @@ export function AssessmentListScreen() {
     });
     setAssessmentsWithSchedules(newAssessmentsWithSchedules);
 
-    setOptionsOpened(Array.from({ length: assessments.length }, () => false));
+    setOptionsOpened(
+      Array.from({ length: newAssessments.length }, () => false),
+    );
   }, [db]);
 
   useFocusEffect(
@@ -232,7 +235,7 @@ export function AssessmentListScreen() {
         {assessements.map((a, idx) => {
           return (
             <AssessmentListItem
-              key={idx}
+              key={a.dbId}
               assessment={a}
               hasSchedules={assessmentsWithSchedules.has(a.dbId)}
               optionsOpened={optionsOpened[idx]}
