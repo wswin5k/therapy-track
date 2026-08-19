@@ -144,7 +144,6 @@ const DrawerTabs = createDrawerNavigator({
 });
 
 export type RootStackParamList = {
-  HomeTabs: undefined;
   HomeSwipeable: { selectedDate?: string } | undefined;
   DrawerTabs: { selectedDate?: string } | undefined;
   EditMedicineScreen: {
@@ -211,13 +210,6 @@ const RootStack = createNativeStackNavigator({
     },
   }),
   screens: {
-    /*     HomeTabs: {
-      screen: DrawerTabs,
-      options: {
-        title: "Home",
-        headerShown: false,
-      },
-    }, */
     DrawerTabs: {
       screen: DrawerTabs,
       options: {

@@ -221,7 +221,7 @@ export default function EditMedicineScheduleScreen() {
         freq: validatedData.freq,
         doses,
       });
-      navigation.navigate("HomeTabs");
+      navigation.popToTop();
     } else if (medicine) {
       await dbInsertScheduleWithMedicine(db, medicine, {
         startDate: validatedData.startDate,
@@ -229,7 +229,7 @@ export default function EditMedicineScheduleScreen() {
         freq: validatedData.freq,
         doses,
       });
-      navigation.navigate("HomeTabs");
+      navigation.popToTop();
     } else {
       throw Error("Medicine has not been provided");
     }

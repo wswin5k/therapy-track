@@ -24,7 +24,7 @@ import { dayDifference } from "../utils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "HomeTabs"
+  "HomeSwipeable"
 >;
 
 const INIITIAL_INDEX = 10_000;
