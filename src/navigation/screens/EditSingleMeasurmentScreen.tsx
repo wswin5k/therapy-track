@@ -17,7 +17,7 @@ import {
   useRoute,
   useTheme,
 } from "@react-navigation/native";
-import { AssessmentParam } from "..";
+import { AssessmentParam, RootStackParamList } from "..";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { AssessmentValue } from "../../models/Records";
@@ -27,11 +27,17 @@ import {
   isTextValueValid,
 } from "../../components/AssessmentInput";
 import { AssessmentType } from "../../models/AssessmentSchedule";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+type EditSingleMeasurmentScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "EditSingleMeasurmentScreen"
+>;
 
 export function EditSingleMeasurmentScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<EditSingleMeasurmentScreenNavigationProp>();
   const route = useRoute();
   const db = useSQLiteContext();
 
@@ -131,7 +137,7 @@ export function EditSingleMeasurmentScreen() {
         groupIdxRef.current !== null ? groups[groupIdxRef.current].dbId : null,
     });
 
-    navigation.navigate("HomeTabs");
+    navigation.popToTop();
   };
 
   const handleGroupChange = (groupIdx: number) => {

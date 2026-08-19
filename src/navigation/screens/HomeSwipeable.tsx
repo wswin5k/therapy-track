@@ -20,11 +20,11 @@ import {
   View,
   VirtualizedList,
 } from "react-native";
-import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { dayDifference } from "../utils";
+import { FloatingActionButton } from "../../components/FloatingActionButton";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "HomeTabs"
+  "HomeSwipeable"
 >;
 
 const INIITIAL_INDEX = 10_000;
@@ -42,17 +42,20 @@ export function HomeSwipeable() {
   const { i18n } = useTranslation();
 
   const listRef = React.useRef<VirtualizedList<number>>(null);
-  const currentIndexRef = React.useRef<number>(INIITIAL_INDEX);
+  const [currentIndex, setCurrentIndex] = React.useState(INIITIAL_INDEX);
 
-  const [date, setDate] = React.useState<Date>(getToday());
-  const [datePickerDate, setDatePickerDate] = React.useState<Date>(getToday());
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
 
   const getDate = (slotValue: number) => {
-    const newDate = new Date(date);
+    const newDate = getToday();
     newDate.setDate(newDate.getDate() + slotValue);
     return newDate;
+  };
+  const getSelectedDateCapped = () => {
+    const selectedDate = getDate(currentIndex - INIITIAL_INDEX);
+    const today = getToday();
+    return selectedDate > today ? today : selectedDate;
   };
 
   const formatDate = React.useCallback(
@@ -81,17 +84,16 @@ export function HomeSwipeable() {
 
   useFocusEffect(
     React.useCallback(() => {
-      const newDate = getToday();
-      setDate(newDate);
+      const selectedDate = getDate(currentIndex - INIITIAL_INDEX);
       if (listRef.current) {
         listRef.current.scrollToIndex({
-          index: currentIndexRef.current,
+          index: currentIndex,
           animated: false,
           viewPosition: 0,
         });
       }
-      navigation.setOptions({ title: formatDate(newDate) });
-    }, [navigation, formatDate]),
+      navigation.setOptions({ title: formatDate(selectedDate) });
+    }, [navigation, formatDate, currentIndex]),
   );
 
   const { width: screenWidth } = useWindowDimensions();
@@ -99,47 +101,47 @@ export function HomeSwipeable() {
     if (listRef.current) {
       const timeoutId = setTimeout(() => {
         listRef.current?.scrollToIndex({
-          index: currentIndexRef.current,
+          index: currentIndex,
           animated: false,
           viewPosition: 0,
         });
       }, 30);
       return () => clearTimeout(timeoutId);
     }
-  }, [screenWidth]);
+  }, [screenWidth, currentIndex]);
 
   const handleMomentumScrollEnd = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const landedIndex = Math.round(offsetX / screenWidth);
-    currentIndexRef.current = landedIndex;
+    setCurrentIndex(landedIndex);
 
     const newDate = getDate(landedIndex - INIITIAL_INDEX);
 
-    setDatePickerDate(newDate);
     navigation.setOptions({ title: formatDate(newDate) });
   };
 
   const handleDatePick = (event: DateTimePickerEvent, newDate?: Date) => {
     setIsDatePickerOpened(false);
+    const today = getToday();
     if (event.type === "dismissed") {
     } else if (newDate) {
-      const days = dayDifference(date, newDate);
+      const days = dayDifference(today, newDate);
       let targetIndex = 0;
-      if (newDate > date) {
+      if (newDate > today) {
         targetIndex = INIITIAL_INDEX + days;
-      } else if (newDate < date) {
+      } else if (newDate < today) {
         targetIndex = INIITIAL_INDEX - days;
       }
       if (targetIndex && listRef.current) {
+        setCurrentIndex(targetIndex);
         listRef.current.scrollToIndex({
           index: targetIndex,
           animated: false,
           viewPosition: 0.5,
         });
       }
-      setDatePickerDate(newDate);
       navigation.setOptions({ title: formatDate(newDate) });
     }
   };
@@ -149,7 +151,7 @@ export function HomeSwipeable() {
       onPress: () =>
         navigation.navigate("SelectEntryTypeScreen", {
           mode: "one-time",
-          selectedDate: date.toISOString(),
+          selectedDate: getSelectedDateCapped().toISOString(),
         }),
     },
     {
@@ -157,16 +159,16 @@ export function HomeSwipeable() {
       onPress: () =>
         navigation.navigate("SelectEntryTypeScreen", {
           mode: "schedule",
-          selectedDate: date.toISOString(),
+          selectedDate: getSelectedDateCapped().toISOString(),
         }),
     },
   ];
 
   const renderHome = ({ item: index }: { item: number }) => {
-    const currentDate = getDate(index - INIITIAL_INDEX);
+    const date = getDate(index - INIITIAL_INDEX);
     return (
       <View key={index} style={{ width: screenWidth }}>
-        <Home date={currentDate} />
+        <Home date={date} />
       </View>
     );
   };
@@ -176,7 +178,7 @@ export function HomeSwipeable() {
       {isDatePickerOpened ? (
         <RNDateTimePicker
           mode="date"
-          value={datePickerDate}
+          value={getDate(currentIndex - INIITIAL_INDEX)}
           onChange={handleDatePick}
         />
       ) : (

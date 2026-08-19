@@ -65,61 +65,6 @@ export interface AssessmentParam {
   dbId?: number;
 }
 
-export type RootStackParamList = {
-  HomeTabs: undefined;
-  EditMedicineScreen: {
-    mode: "save-and-go-back" | "schedule" | "one-time";
-    medicine?: Medicine;
-  };
-  EditAssessmentScreen: {
-    mode: "save-and-go-back" | "schedule" | "one-time";
-    assessment?: Assessment;
-  };
-  SelectEntryTypeScreen:
-    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
-  SelectMedicineScreen:
-    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
-  SelectAssessmentScreen:
-    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
-  EditMedicineScheduleScreen: {
-    medicine: MedicineParam;
-  };
-  EditAssessmentScheduleScreen: {
-    assessment: AssessmentParam;
-  };
-  PartiallyEditAnyScheduleScreen: {
-    scheduleId: number;
-    scheduleType: "assessment" | "medicine";
-  };
-  EditSingleDosageScreen: {
-    medicine: {
-      name: string;
-      baseUnit: BaseUnit;
-      activeIngredients: ActiveIngredient[];
-      dbId?: number;
-    };
-    selectedDate?: string;
-  };
-  EditSingleMeasurmentScreen: {
-    assessment: {
-      name: string;
-      type: AssessmentType;
-      dbId?: number;
-    };
-    selectedDate?: string;
-  };
-  EditGroupScreen: {
-    group?: {
-      name: string;
-      color: string;
-      isReminderOn: boolean;
-      reminderTime: string | null;
-      dbId: number;
-    };
-  };
-  NotFound: undefined;
-};
-
 const DrawerTabs = createDrawerNavigator({
   screenOptions: ({ theme, navigation }) => ({
     drawerActiveTintColor: theme.colors.primary,
@@ -198,6 +143,62 @@ const DrawerTabs = createDrawerNavigator({
   },
 });
 
+export type RootStackParamList = {
+  HomeSwipeable: { selectedDate?: string } | undefined;
+  DrawerTabs: { selectedDate?: string } | undefined;
+  EditMedicineScreen: {
+    mode: "save-and-go-back" | "schedule" | "one-time";
+    medicine?: Medicine;
+  };
+  EditAssessmentScreen: {
+    mode: "save-and-go-back" | "schedule" | "one-time";
+    assessment?: Assessment;
+  };
+  SelectEntryTypeScreen:
+    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
+  SelectMedicineScreen:
+    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
+  SelectAssessmentScreen:
+    { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
+  EditMedicineScheduleScreen: {
+    medicine: MedicineParam;
+  };
+  EditAssessmentScheduleScreen: {
+    assessment: AssessmentParam;
+  };
+  PartiallyEditAnyScheduleScreen: {
+    scheduleId: number;
+    scheduleType: "assessment" | "medicine";
+  };
+  EditSingleDosageScreen: {
+    medicine: {
+      name: string;
+      baseUnit: BaseUnit;
+      activeIngredients: ActiveIngredient[];
+      dbId?: number;
+    };
+    selectedDate?: string;
+  };
+  EditSingleMeasurmentScreen: {
+    assessment: {
+      name: string;
+      type: AssessmentType;
+      dbId?: number;
+    };
+    selectedDate?: string;
+  };
+  EditGroupScreen: {
+    group?: {
+      name: string;
+      color: string;
+      isReminderOn: boolean;
+      reminderTime: string | null;
+      dbId: number;
+    };
+  };
+  NotFound: undefined;
+};
+
 const RootStack = createNativeStackNavigator({
   screenOptions: ({ theme }) => ({
     headerStyle: {
@@ -209,7 +210,7 @@ const RootStack = createNativeStackNavigator({
     },
   }),
   screens: {
-    HomeTabs: {
+    DrawerTabs: {
       screen: DrawerTabs,
       options: {
         title: "Home",
@@ -296,7 +297,7 @@ const RootStack = createNativeStackNavigator({
     NotFound: {
       screen: NotFound,
       options: {
-        title: "404",
+        title: "Not Found",
       },
       linking: {
         path: "*",

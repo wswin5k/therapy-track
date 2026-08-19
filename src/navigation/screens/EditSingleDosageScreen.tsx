@@ -114,7 +114,7 @@ export function EditSingleDosageScreen() {
         groupIdxRef.current !== null ? groups[groupIdxRef.current].dbId : null,
     });
 
-    navigation.navigate("HomeTabs");
+    navigation.popToTop();
   };
 
   const handleDoseChange = (value: number) => {

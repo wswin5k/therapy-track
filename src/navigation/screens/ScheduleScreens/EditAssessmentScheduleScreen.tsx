@@ -18,7 +18,7 @@ import {
   useRoute,
   useTheme,
 } from "@react-navigation/native";
-import { AssessmentParam } from "../..";
+import { AssessmentParam, RootStackParamList } from "../..";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   dbGetGroups,
@@ -30,11 +30,18 @@ import { DropdownPicker } from "../../../components/DropdownPicker";
 import { frequencySelectionToDisplayForm } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
 import { assingDefaultGroups, frequencySelectionMap } from "./common";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "EditMedicineScheduleScreen"
+>;
 
 export default function EditAssessmentScheduleScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<EditAssessmentScheduleScreenNavigationProp>();
   const route = useRoute();
   const db = useSQLiteContext();
 
@@ -180,7 +187,7 @@ export default function EditAssessmentScheduleScreen() {
         freq: validatedData.freq,
         measurments,
       });
-      navigation.navigate("HomeTabs");
+      navigation.popToTop();
     } else if (assessment) {
       await dbInsertAssessmentScheduleWithAssessment(db, assessment, {
         startDate: validatedData.startDate,
@@ -188,7 +195,7 @@ export default function EditAssessmentScheduleScreen() {
         freq: validatedData.freq,
         measurments,
       });
-      navigation.navigate("HomeTabs");
+      navigation.popToTop();
     } else {
       throw Error("Medicine has not been provided");
     }
