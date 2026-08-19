@@ -236,7 +236,10 @@ export function EditAssessmentScreen() {
         return;
       }
       if (assessmentId !== null) {
-        dbUpdateAssessment(db, { dbId: assessmentId, ...assessmentValidated });
+        await dbUpdateAssessment(db, {
+          dbId: assessmentId,
+          ...assessmentValidated,
+        });
       } else {
         throw Error("Assessment ID has not been set.");
       }

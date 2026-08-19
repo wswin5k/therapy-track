@@ -292,7 +292,7 @@ export function EditMedicineScreen() {
       });
     } else if (mode === "save-and-go-back") {
       if (medicineId !== null) {
-        dbUpdateMedicine(db, { dbId: medicineId, ...medicineValidated });
+        await dbUpdateMedicine(db, { dbId: medicineId, ...medicineValidated });
       } else {
         throw Error("Medicine ID has not been set.");
       }
