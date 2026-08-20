@@ -30,7 +30,7 @@ type HomeNavigationProp = NativeStackNavigationProp<
 const INIITIAL_INDEX = 10_000;
 const TOTAL_ITEMS = 20_000;
 
-function getToday(): Date {
+export function getToday(): Date {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
   return today;
