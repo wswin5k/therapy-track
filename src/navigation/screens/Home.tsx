@@ -44,6 +44,7 @@ import {
 } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
 import { dayDifference } from "../utils";
+import { getToday } from "./HomeSwipeable";
 
 class DosageInfo {
   medicineName: string;
@@ -122,10 +123,12 @@ function UnscheduledDosage({
   dosage,
   bottomBorder,
   loadUnscheduledRecords,
+  isDisabled,
 }: {
   dosage: UnscheduledDosageInfo;
   bottomBorder: boolean;
   loadUnscheduledRecords: () => void;
+  isDisabled: boolean;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -178,7 +181,13 @@ function UnscheduledDosage({
             borderBottomWidth: bottomBorder ? 2 : 0,
           },
         ]}
-        onLongPress={handleOptionsToggle}
+        onLongPress={(e) => {
+          if (isDisabled) {
+            e.stopPropagation();
+          } else {
+            handleOptionsToggle();
+          }
+        }}
       >
         <View style={[styles.scheduleContent, { flex: 5 }]}>
           <Text
@@ -213,10 +222,12 @@ function UnscheduledMeasurment({
   measurment,
   bottomBorder,
   loadUnscheduledRecords,
+  isDisabled,
 }: {
   measurment: UnscheduledMeasurmentInfo;
   bottomBorder: boolean;
   loadUnscheduledRecords: () => void;
+  isDisabled: boolean;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -272,7 +283,13 @@ function UnscheduledMeasurment({
             borderBottomWidth: bottomBorder ? 2 : 0,
           },
         ]}
-        onLongPress={handleOptionsToggle}
+        onLongPress={(e) => {
+          if (isDisabled) {
+            e.stopPropagation();
+          } else {
+            handleOptionsToggle();
+          }
+        }}
       >
         <View style={[styles.scheduleContent, { flex: 5 }]}>
           <Text
@@ -305,11 +322,13 @@ function ScheduledDosage({
   isDone,
   bottomBorder,
   handleClick,
+  isDisabled,
 }: {
   dosage: DosageInfo;
   isDone: boolean;
   bottomBorder: boolean;
   handleClick: (dosage: DosageInfo) => void;
+  isDisabled: boolean;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -324,7 +343,13 @@ function ScheduledDosage({
           borderBottomWidth: bottomBorder ? 2 : 0,
         },
       ]}
-      onPress={() => handleClick(dosage)}
+      onPress={(e) => {
+        if (isDisabled) {
+          e.stopPropagation();
+        } else {
+          handleClick(dosage);
+        }
+      }}
     >
       <View style={[styles.scheduleContent, { flex: 5 }]}>
         <Text
@@ -367,11 +392,13 @@ function ScheduledMeasurment({
   isDone,
   bottomBorder,
   handleClick,
+  isDisabled,
 }: {
   measurment: ScheduledMeasurmentInfo;
   isDone: boolean;
   bottomBorder: boolean;
   handleClick: (measurment: ScheduledMeasurmentInfo) => void;
+  isDisabled: boolean;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -386,7 +413,13 @@ function ScheduledMeasurment({
           borderBottomWidth: bottomBorder ? 2 : 0,
         },
       ]}
-      onPress={() => handleClick(measurment)}
+      onPress={(e) => {
+        if (isDisabled) {
+          e.stopPropagation();
+        } else {
+          handleClick(measurment);
+        }
+      }}
     >
       <View style={[styles.scheduleContent, { flex: 5 }]}>
         <Text
@@ -425,6 +458,10 @@ export function Home({ date }: { date: Date }) {
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
+
+  const isFuture = React.useMemo(() => {
+    return date > getToday();
+  }, [date]);
 
   const [groups, setGroups] = React.useState<Map<number | null, Group>>(
     new Map(),
@@ -819,6 +856,7 @@ export function Home({ date }: { date: Date }) {
                 }
                 bottomBorder={!(!measurments && idx === lastIdx)}
                 handleClick={handleDosageClick}
+                isDisabled={isFuture}
               />
             </View>
           ))}
@@ -834,6 +872,7 @@ export function Home({ date }: { date: Date }) {
                 }
                 bottomBorder={!(idx === lastIdx)}
                 handleClick={handleMeasurmentClick}
+                isDisabled={isFuture}
               />
             </View>
           ))}
@@ -871,6 +910,7 @@ export function Home({ date }: { date: Date }) {
                 dosage={di}
                 bottomBorder={!(!measurments && idx === lastIdx)}
                 loadUnscheduledRecords={loadUnscheduledDosageRecords}
+                isDisabled={isFuture}
               />
             </View>
           ))}
@@ -881,6 +921,7 @@ export function Home({ date }: { date: Date }) {
                 measurment={di}
                 bottomBorder={!(idx === lastIdx)}
                 loadUnscheduledRecords={loadUnscheduledMeasurmentRecords}
+                isDisabled={isFuture}
               />
             </View>
           ))}
@@ -923,6 +964,7 @@ export function Home({ date }: { date: Date }) {
                 end={{ x: 0.0, y: 10 }}
                 style={[
                   styles.groupContainer,
+                  isFuture ? styles.disabledElement : {},
                   { borderColor: theme.colors.border },
                 ]}
               >
@@ -947,6 +989,7 @@ export function Home({ date }: { date: Date }) {
             end={{ x: 1, y: 1.0 }}
             style={[
               styles.groupContainer,
+              isFuture ? styles.disabledElement : {},
               { borderColor: theme.colors.border },
             ]}
           >
@@ -969,6 +1012,9 @@ export function Home({ date }: { date: Date }) {
 const styles = StyleSheet.create({
   list: {
     padding: 18,
+  },
+  disabledElement: {
+    filter: "opacity(50%)",
   },
   scheduleItem: {
     flex: 1,
