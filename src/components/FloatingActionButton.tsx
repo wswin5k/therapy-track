@@ -6,6 +6,7 @@ import {
   Animated,
   StyleSheet,
   type ViewStyle,
+  useAnimatedValue,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 
@@ -30,8 +31,8 @@ export function FloatingActionButton({
 }: FloatingActionButtonProps) {
   const theme = useTheme();
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const animationValue = React.useRef(new Animated.Value(0)).current;
-  const rotateValue = React.useRef(new Animated.Value(0)).current;
+  const animationValue = useAnimatedValue(0);
+  const rotateValue = useAnimatedValue(0);
 
   const resolvedMainButtonColor = mainButtonColor || theme.colors.primary;
 
