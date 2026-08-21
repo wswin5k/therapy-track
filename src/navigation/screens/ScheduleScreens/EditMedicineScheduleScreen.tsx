@@ -304,7 +304,7 @@ export default function EditMedicineScheduleScreen() {
               <View style={styles.doseAmountContainer}>
                 <SmallNumberStepper
                   onChange={createDoseInputHandler(idx)}
-                  defaultValue={amountsRef.current[idx]}
+                  defaultValue={1}
                 />
               </View>
               <View
