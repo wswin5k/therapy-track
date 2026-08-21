@@ -469,9 +469,6 @@ export function Home({ date }: { date: Date }) {
   const [scheduledDosages, setScheduledDosages] = React.useState<
     Map<number | null, DosageInfo[]>
   >(new Map());
-  const [isDosageDone, setIsDosageDone] = React.useState<Map<number, boolean>>(
-    new Map(),
-  );
   const [unscheduledDosages, setUnscheduledDosages] = React.useState<
     Map<number | null, UnscheduledDosageInfo[]>
   >(new Map());
@@ -481,8 +478,6 @@ export function Home({ date }: { date: Date }) {
   const [scheduledMeasurments, setScheduledMeasurments] = React.useState<
     Map<number | null, ScheduledMeasurmentInfo[]>
   >(new Map());
-  const [scheduledMeasurmentsValues, setScheduledMeasurmentValues] =
-    React.useState<Map<number, AssessmentValue>>(new Map());
 
   const [clickedScheduledMeasurment, setClickedScheduledMeasurment] =
     React.useState<ScheduledMeasurmentInfo | null>(null);
@@ -559,13 +554,6 @@ export function Home({ date }: { date: Date }) {
     setScheduledDosages(newScheduledDosages);
     if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
-
-    const newIsDosageDone = new Map<number, boolean>();
-    dosageRecords.forEach((dr) => {
-      const key = pair(dr.scheduleId, dr.doseIndex);
-      newIsDosageDone.set(key, true);
-    });
-    setIsDosageDone(newIsDosageDone);
   }, [date, db]);
 
   const loadScheduledMeasurments = React.useCallback(async () => {
@@ -638,13 +626,6 @@ export function Home({ date }: { date: Date }) {
     setScheduledMeasurments(newScheduledMeasurments);
     if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
-
-    const newScheduledMeasurmentsValues = new Map<number, AssessmentValue>();
-    measurmentRecords.forEach((mr) => {
-      const key = pair(mr.assessmentScheduleId, mr.measurmentIndex);
-      newScheduledMeasurmentsValues.set(key, mr.value);
-    });
-    setScheduledMeasurmentValues(newScheduledMeasurmentsValues);
   }, [date, db]);
 
   const loadUnscheduledDosageRecords = React.useCallback(async () => {
@@ -742,25 +723,14 @@ export function Home({ date }: { date: Date }) {
   const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
       await dbDeleteScheduledDosageRecord(db, dosage.dosageRecordId);
-
-      dosage.dosageRecordId = null;
-
-      const newIsDosageDone = new Map(isDosageDone);
-      newIsDosageDone.set(pair(dosage.scheduleId, dosage.index), false);
-      setIsDosageDone(newIsDosageDone);
     } else {
-      const id = await dbInsertScheduledDosageRecord(db, {
+      await dbInsertScheduledDosageRecord(db, {
         scheduleId: dosage.scheduleId,
         date,
         doseIndex: dosage.index,
       });
-
-      dosage.dosageRecordId = id;
-
-      const newIsDosageDone = new Map(isDosageDone);
-      newIsDosageDone.set(pair(dosage.scheduleId, dosage.index), true);
-      setIsDosageDone(newIsDosageDone);
     }
+    await loadScheduledDosages();
 
     if (dosage.groupId) {
       let allInGroupDone = true;
@@ -802,28 +772,16 @@ export function Home({ date }: { date: Date }) {
           clickedScheduledMeasurment.measurmentRecordId,
         );
       }
-      const measurmentRecordId = await dbInsertScheduledMeasurmentRecord(db, {
+      await dbInsertScheduledMeasurmentRecord(db, {
         date,
         assessmentScheduleId: clickedScheduledMeasurment.assessmentScheduleId,
         measurmentIndex: clickedScheduledMeasurment.index,
         value,
       });
-
-      clickedScheduledMeasurment.measurmentRecordId = measurmentRecordId;
-      clickedScheduledMeasurment.value = value;
-
-      const newScheduledMeasurmentsValues = new Map(scheduledMeasurmentsValues);
-      newScheduledMeasurmentsValues.set(
-        pair(
-          clickedScheduledMeasurment.assessmentScheduleId,
-          clickedScheduledMeasurment.index,
-        ),
-        value,
-      );
-      setScheduledMeasurmentValues(newScheduledMeasurmentsValues);
     }
 
     setClickedScheduledMeasurment(null);
+    await loadScheduledMeasurments();
   };
 
   const getScheduledDosages = (groupId?: number) =>
@@ -831,7 +789,7 @@ export function Home({ date }: { date: Date }) {
   const getScheduledMeasurments = (groupId?: number) =>
     scheduledMeasurments.get(groupId ?? null);
 
-  const renderScheduledDosages = (group?: Group) => {
+  const renderScheduled = (group?: Group) => {
     const dosages = getScheduledDosages(group?.dbId);
     const measurments = getScheduledMeasurments(group?.dbId);
     const lastIdx = measurments
@@ -851,9 +809,7 @@ export function Home({ date }: { date: Date }) {
             <View key={pair(di.scheduleId, di.index)}>
               <ScheduledDosage
                 dosage={di}
-                isDone={
-                  isDosageDone.get(pair(di.scheduleId, di.index)) ?? false
-                }
+                isDone={di.dosageRecordId !== null}
                 bottomBorder={!(!measurments && idx === lastIdx)}
                 handleClick={handleDosageClick}
                 isDisabled={isFuture}
@@ -865,11 +821,7 @@ export function Home({ date }: { date: Date }) {
             <View key={pair(mi.assessmentScheduleId, mi.index)}>
               <ScheduledMeasurment
                 measurment={mi}
-                isDone={
-                  scheduledMeasurmentsValues.get(
-                    pair(mi.assessmentScheduleId, mi.index),
-                  ) !== undefined
-                }
+                isDone={mi.value !== null}
                 bottomBorder={!(idx === lastIdx)}
                 handleClick={handleMeasurmentClick}
                 isDisabled={isFuture}
@@ -973,7 +925,7 @@ export function Home({ date }: { date: Date }) {
                 >
                   {group.name}
                 </Text>
-                {renderScheduledDosages(group)}
+                {renderScheduled(group)}
                 {renderUnscheduled(group)}
               </LinearGradient>
             ),
@@ -998,7 +950,7 @@ export function Home({ date }: { date: Date }) {
                 Ungrouped
               </Text>
             )}
-            {renderScheduledDosages()}
+            {renderScheduled()}
             {renderUnscheduled()}
           </LinearGradient>
         )}
