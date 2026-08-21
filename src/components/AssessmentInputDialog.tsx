@@ -30,7 +30,7 @@ export function AssessmentInputDialog({
   const theme = useTheme();
   const { t } = useTranslation();
   const [value, setValue] = React.useState<AssessmentValue | null>(
-    initialValue,
+    initialValue !== null ? initialValue : getDefaultValue(assessmentType),
   );
   const [valueError, setValueError] = React.useState<boolean>(false);
 
@@ -45,12 +45,6 @@ export function AssessmentInputDialog({
       setValueError(true);
     }
   };
-
-  React.useEffect(() => {
-    if (initialValue === null) {
-      setValue(getDefaultValue(assessmentType));
-    }
-  }, [assessmentType, initialValue]);
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onCancel}>

@@ -54,12 +54,6 @@ export function EditSingleMeasurmentScreen() {
   );
   const [groups, setGroups] = React.useState<Group[]>([]);
 
-  React.useEffect(() => {
-    if (assessment) {
-      setValue(getDefaultValue(assessment.type));
-    }
-  }, [assessment]);
-
   useFocusEffect(
     React.useCallback(() => {
       const setData = async () => {
@@ -68,6 +62,7 @@ export function EditSingleMeasurmentScreen() {
           selectedDate?: string;
         };
         setAssessment(params.assessment);
+        setValue(getDefaultValue(params.assessment.type));
         if (params.selectedDate) {
           setDate(new Date(params.selectedDate));
         } else {
