@@ -72,18 +72,14 @@ export function AssessmentInput({
 }) {
   const theme = useTheme();
 
-  const [textInputLength, setTextInputLegth] = React.useState<number>(0);
-
-  React.useEffect(() => {
-    if (
-      valueDomain &&
+  const [textInputLength, setTextInputLegth] = React.useState<number>(
+    valueDomain &&
       valueDomain instanceof TextValueDomain &&
       value !== null &&
       typeof value === "string"
-    ) {
-      setTextInputLegth(value.length);
-    }
-  }, [value, valueDomain]);
+      ? value.length
+      : 0,
+  );
 
   const renderNumericInput = (
     value: number,
@@ -117,7 +113,7 @@ export function AssessmentInput({
     );
   };
 
-  const renderTextInput = (value: string, valueDomain: TextValueDomain) => {
+  const renderTextInput = (value: string) => {
     const handleChangeText = (text: string) => {
       {
         setTextInputLegth(text.length);
@@ -253,7 +249,7 @@ export function AssessmentInput({
         value !== null &&
         typeof value === "string"
       ) {
-        renderInput = () => renderTextInput(value, valueDomain);
+        renderInput = () => renderTextInput(value);
       }
       break;
     case AssessmentType.SingleSelect:

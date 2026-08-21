@@ -39,7 +39,7 @@ export function DropdownPicker<T>({
   const theme = useTheme();
 
   const [modalVisible, setModalVisible] = React.useState(false);
-  const [selectedValue, setSelectedValue] = React.useState<T | null>(null);
+  const [selectedValue, setSelectedValue] = React.useState<T>(initialValue);
   const [triggerLayout, setTriggerLayout] = React.useState({
     x: 0,
     y: 0,
@@ -47,10 +47,6 @@ export function DropdownPicker<T>({
     height: 0,
   });
   const triggerRef = React.useRef<View>(null);
-
-  React.useEffect(() => {
-    setSelectedValue(initialValue);
-  }, [initialValue]);
 
   const handleSelect = (value: T) => {
     setSelectedValue(value);
