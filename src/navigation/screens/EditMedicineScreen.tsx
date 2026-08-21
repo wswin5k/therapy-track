@@ -41,7 +41,7 @@ class ActiveIngredientInfo {
     elementKey: number,
     name: string | null = null,
     amount: number | null = null,
-    unit: IngredientAmountUnit | null = null,
+    unit: IngredientAmountUnit = IngredientAmountUnit.Milligram,
   ) {
     this.elementKey = elementKey;
     this.name = name;
@@ -53,6 +53,13 @@ class ActiveIngredientInfo {
 type ActiveIngedientRowProps = {
   activeIngredientInfo: ActiveIngredientInfo;
   removeCallback: () => void;
+  updateCallback: (
+    updates: Partial<{
+      name: string | null;
+      amount: number | null;
+      unit: IngredientAmountUnit | null;
+    }>,
+  ) => void;
   removeButton: boolean;
   errors?: { name?: boolean; weight?: boolean };
   theme: ReactNavigation.Theme;
@@ -60,6 +67,7 @@ type ActiveIngedientRowProps = {
 
 function ActiveIngredientRow({
   activeIngredientInfo,
+  updateCallback,
   removeCallback,
   removeButton,
   errors,
@@ -69,16 +77,12 @@ function ActiveIngredientRow({
     removeCallback();
   };
 
-  React.useEffect(() => {
-    activeIngredientInfo.unit = IngredientAmountUnit.Milligram;
-  }, [activeIngredientInfo]);
-
   return (
     <View style={styles.ingredientRow}>
       <View style={{ flex: 2 }}>
         <TextInput
           onChangeText={(text: string) => {
-            activeIngredientInfo.name = text;
+            updateCallback({ name: text });
           }}
           style={[
             styles.ingredientInput,
@@ -96,14 +100,17 @@ function ActiveIngredientRow({
           ]}
           placeholder="Name"
           placeholderTextColor={theme.colors.textTertiary}
-          defaultValue={activeIngredientInfo.name ?? ""}
+          value={activeIngredientInfo.name ?? ""}
           autoCapitalize="none"
         />
       </View>
       <View style={{ flex: 1.2 }}>
         <TextInput
           onChangeText={(weightStr: string) => {
-            activeIngredientInfo.amount = parseFloat(weightStr);
+            const amount = parseFloat(weightStr);
+            updateCallback({
+              amount: isNaN(amount) ? null : amount,
+            });
           }}
           style={[
             styles.ingredientInput,
@@ -122,7 +129,7 @@ function ActiveIngredientRow({
           placeholder="Amount"
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType="numeric"
-          defaultValue={
+          value={
             activeIngredientInfo.amount
               ? activeIngredientInfo.amount.toString()
               : ""
@@ -136,7 +143,7 @@ function ActiveIngredientRow({
             activeIngredientInfo.unit ?? IngredientAmountUnit.Milligram
           }
           onValueChange={(unit: IngredientAmountUnit) => {
-            activeIngredientInfo.unit = unit;
+            updateCallback({ unit });
           }}
           getLabel={(unit) => unit}
           placeholder="Unit"
@@ -188,14 +195,10 @@ export function EditMedicineScreen() {
     Record<number, { name?: boolean; weight?: boolean }>
   >({});
 
-  const [nActiveIngredients, setNActiveIngredients] = React.useState<number>(1);
-  const elementKeyCounter = React.useRef<number>(nActiveIngredients);
-  const activeIngredientsRefs = React.useRef(
-    Array.from(
-      { length: nActiveIngredients },
-      (_, idx) => new ActiveIngredientInfo(idx),
-    ),
-  );
+  const elementKeyCounter = React.useRef<number>(1);
+  const [activeIngredientInfos, setActiveIngredientInfos] = React.useState<
+    ActiveIngredientInfo[]
+  >([new ActiveIngredientInfo(0)]);
 
   const [mode, setMode] = React.useState<
     "save-and-go-back" | "schedule" | "one-time"
@@ -214,11 +217,14 @@ export function EditMedicineScreen() {
         setName(medicineInit.name);
         setBaseUnit(medicineInit.baseUnit);
 
-        activeIngredientsRefs.current = medicineInit.activeIngredients.map(
-          (ai, idx) =>
-            new ActiveIngredientInfo(idx, ai.name, ai.amount, ai.unit),
+        console.log(medicineInit.activeIngredients);
+
+        setActiveIngredientInfos(
+          medicineInit.activeIngredients.map(
+            (ai, idx) =>
+              new ActiveIngredientInfo(idx, ai.name, ai.amount, ai.unit),
+          ),
         );
-        setNActiveIngredients(medicineInit.activeIngredients.length);
       }
     }, [route.params]),
   );
@@ -246,24 +252,24 @@ export function EditMedicineScreen() {
       number,
       { name?: boolean; weight?: boolean }
     > = {};
-    activeIngredientsRefs.current.forEach((ingredient) => {
+    activeIngredientInfos.forEach((ing) => {
       const errors: { name?: boolean; weight?: boolean } = {};
-      if (!ingredient.name || !ingredient.name.trim()) {
+      if (!ing.name || !ing.name.trim()) {
         errors.name = true;
         medicineValidated = false;
       }
-      if (ingredient.amount === null || isNaN(ingredient.amount)) {
+      if (ing.amount === null || isNaN(ing.amount)) {
         errors.weight = true;
         medicineValidated = false;
       }
 
       if (Object.keys(errors).length > 0) {
-        newIngredientErrors[ingredient.elementKey] = errors;
+        newIngredientErrors[ing.elementKey] = errors;
       }
     });
     setIngredientErrors(newIngredientErrors);
     if (Object.keys(newIngredientErrors).length === 0) {
-      activeIngredients = activeIngredientsRefs.current
+      activeIngredients = activeIngredientInfos
         .filter((ing) => ing.name && ing.amount && ing.unit)
         .map((ing) => new ActiveIngredient(ing.name!, ing.amount!, ing.unit!));
     } else {
@@ -306,18 +312,32 @@ export function EditMedicineScreen() {
   };
 
   const handleAddActiveIngredient = () => {
-    activeIngredientsRefs.current.push(
+    setActiveIngredientInfos((current) => [
+      ...current,
       new ActiveIngredientInfo(elementKeyCounter.current),
-    );
+    ]);
     elementKeyCounter.current += 1;
-    setNActiveIngredients(nActiveIngredients + 1);
   };
 
-  const removeActiveIngredient = (idx: number) => {
+  const handleRemoveActiveIngredient = (idx: number) => {
     return () => {
-      activeIngredientsRefs.current.splice(idx, 1);
-      setNActiveIngredients(nActiveIngredients - 1);
+      setActiveIngredientInfos((current) => current.toSpliced(idx, 1));
     };
+  };
+
+  const updateActiveIngredient = (
+    elementKey: number,
+    updates: Partial<{
+      name: string | null;
+      amount: number | null;
+      unit: IngredientAmountUnit | null;
+    }>,
+  ) => {
+    setActiveIngredientInfos((current) =>
+      current.map((ing) =>
+        ing.elementKey === elementKey ? { ...ing, ...updates } : ing,
+      ),
+    );
   };
 
   return (
@@ -363,15 +383,16 @@ export function EditMedicineScreen() {
         </Text>
 
         <View style={styles.ingredientsList}>
-          {Array.from({ length: nActiveIngredients }, (_, idx) => (
+          {activeIngredientInfos.map((ing) => (
             <ActiveIngredientRow
-              key={activeIngredientsRefs.current[idx].elementKey}
-              activeIngredientInfo={activeIngredientsRefs.current[idx]}
-              removeCallback={removeActiveIngredient(idx)}
-              removeButton={nActiveIngredients === 1 ? false : true}
-              errors={
-                ingredientErrors[activeIngredientsRefs.current[idx].elementKey]
+              key={ing.elementKey}
+              activeIngredientInfo={ing}
+              updateCallback={(updates) =>
+                updateActiveIngredient(ing.elementKey, updates)
               }
+              removeCallback={handleRemoveActiveIngredient(ing.elementKey)}
+              removeButton={activeIngredientInfos.length === 1 ? false : true}
+              errors={ingredientErrors[ing.elementKey]}
               theme={theme}
             />
           ))}
