@@ -15,7 +15,7 @@ import {
 } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { NAME_MAX_LENGTH } from "../../models/MedicineSchedule";
+import { NAME_MAX_LENGTH } from "../../validation_constants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import {
@@ -36,6 +36,8 @@ import {
 import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonConsts";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
+import { isEqualLowerCase } from "../utils";
+import { VALID_NAME } from "../../validation_constants";
 
 export const TEXT_MAX_LENGTH = 200;
 const DEFAULT_NUMERIC_MAX = 10;
@@ -82,7 +84,8 @@ export function EditAssessmentScreen() {
     false,
   ]);
 
-  const [nameChanged, setNameChanged] = React.useState(false);
+  // when modyfing an assessment we don't want to check for duplicate names
+  const [initialName, setInitialName] = React.useState<string | null>(null);
   const [typeInputDisabled, setTypeInputDisabled] = React.useState(false);
 
   const [nameError, setNameError] = React.useState(false);
@@ -97,7 +100,7 @@ export function EditAssessmentScreen() {
   const loadAssessments = React.useCallback(async () => {
     const assessments = await dbGetAssessments(db);
 
-    const newAssessmentsNames = assessments.map((a) => a.name);
+    const newAssessmentsNames = assessments.map((a) => a.name.toLowerCase());
     setAssessmentsNames(newAssessmentsNames);
   }, [db]);
 
@@ -117,6 +120,7 @@ export function EditAssessmentScreen() {
       if (assessmentInit) {
         setAssessmentId(assessmentInit.dbId);
         setName(assessmentInit.name);
+        setInitialName(assessmentInit.name);
         setAssessmentType(assessmentInit.type);
         setReferenceValueDomain(assessmentInit.valueDomain);
         setValueDomain(assessmentInit.valueDomain);
@@ -132,8 +136,6 @@ export function EditAssessmentScreen() {
     type: AssessmentType;
     valueDomain: ValueDomain;
   } | null => {
-    const validName = /^[\p{L}\p{N} ]+$/u;
-
     let asssessmentValidated = true;
 
     let newNameError = true;
@@ -142,19 +144,16 @@ export function EditAssessmentScreen() {
       selectValueDomainErrors.length,
     ).fill(true);
 
-    let nameValidated = name;
-    // todo: document use case does it fullfill
-    if (nameIsOkWhenNotChanged && !nameChanged) {
+    let nameValidated = name.trim();
+    const nameSameAsInitial = isEqualLowerCase(nameValidated, initialName);
+    if (
+      nameValidated &&
+      ((nameValidated.length < NAME_MAX_LENGTH &&
+        !assessmentsNames.includes(nameValidated.toLowerCase()) &&
+        VALID_NAME.test(nameValidated)) ||
+        (nameIsOkWhenNotChanged && nameSameAsInitial))
+    ) {
       newNameError = false;
-    } else {
-      const nameValidated = name.trim();
-      if (nameValidated && nameValidated.length < NAME_MAX_LENGTH) {
-        if (!assessmentsNames.includes(nameValidated)) {
-          if (validName.test(nameValidated)) {
-            newNameError = false;
-          }
-        }
-      }
     }
 
     if (assessmentType) {
@@ -168,7 +167,7 @@ export function EditAssessmentScreen() {
     ) {
       if (valueDomain && valueDomain instanceof SelectValueDomain) {
         newSelectValueDomainErrors = valueDomain.values.map(
-          (v) => !v && validName.test(v),
+          (v) => !v && VALID_NAME.test(v),
         );
 
         let valuesValidated = [];
@@ -184,7 +183,7 @@ export function EditAssessmentScreen() {
           if (value.length > NAME_MAX_LENGTH) {
             newSelectValueDomainErrors[i] = true;
           }
-          if (!validName.test(value)) {
+          if (!VALID_NAME.test(value)) {
             newSelectValueDomainErrors[i] = true;
           }
         }
@@ -483,7 +482,6 @@ export function EditAssessmentScreen() {
                 : {},
             ]}
             onChangeText={(text: string) => {
-              setNameChanged(true);
               setName(text);
             }}
             value={name}
@@ -507,7 +505,9 @@ export function EditAssessmentScreen() {
           style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
         >
           <Text style={styles.nextButtonText}>
-            {["create-and-go-back", "update-and-go-back"].includes(mode) ? "Save" : "Next"}
+            {["create-and-go-back", "update-and-go-back"].includes(mode)
+              ? "Save"
+              : "Next"}
           </Text>
         </TouchableOpacity>
       </View>

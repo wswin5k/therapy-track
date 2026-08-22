@@ -20,16 +20,22 @@ import {
   BaseUnit,
   IngredientAmountUnit,
   ActiveIngredient,
-  NAME_MAX_LENGTH,
   Medicine,
 } from "../../models/MedicineSchedule";
+import { NAME_MAX_LENGTH } from "../../validation_constants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { dbInsertMedicine, dbUpdateMedicine } from "../../models/dbAccess";
+import {
+  dbGetMedicines,
+  dbInsertMedicine,
+  dbUpdateMedicine,
+} from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { baseUnitToUnitSelectionLabel } from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { isEqualLowerCase } from "../utils";
+import { VALID_NAME } from "../../validation_constants";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -189,6 +195,8 @@ export function EditMedicineScreen() {
   const [name, setName] = React.useState("");
   const [baseUnit, setBaseUnit] = React.useState<BaseUnit | null>(null);
 
+  // when modyfing a medicine we don't want to check for duplicate names
+  const [initialName, setInitialName] = React.useState<string | null>(null);
   const [nameError, setNameError] = React.useState(false);
   const [baseUnitError, setBaseUnitError] = React.useState(false);
   const [ingredientErrors, setIngredientErrors] = React.useState<
@@ -199,6 +207,15 @@ export function EditMedicineScreen() {
   const [activeIngredientInfos, setActiveIngredientInfos] = React.useState<
     ActiveIngredientInfo[]
   >([new ActiveIngredientInfo(0)]);
+
+  const [midicinesNames, setMedicinesNames] = React.useState<string[]>([]);
+
+  const loadMedicineNames = React.useCallback(async () => {
+    const medicines = await dbGetMedicines(db);
+
+    const newMedicineNames = medicines.map((a) => a.name.toLowerCase());
+    setMedicinesNames(newMedicineNames);
+  }, [db]);
 
   const [mode, setMode] = React.useState<
     "save-and-go-back" | "schedule" | "one-time"
@@ -215,6 +232,7 @@ export function EditMedicineScreen() {
       if (medicineInit) {
         setMedicineId(medicineInit.dbId);
         setName(medicineInit.name);
+        setInitialName(medicineInit.name);
         setBaseUnit(medicineInit.baseUnit);
 
         setActiveIngredientInfos(
@@ -224,13 +242,24 @@ export function EditMedicineScreen() {
           ),
         );
       }
-    }, [route.params]),
+      loadMedicineNames();
+    }, [route.params, loadMedicineNames]),
   );
 
-  const validate = (): MedicineValidated | null => {
+  const validate = (
+    nameIsOkWhenNotChanged: boolean = false,
+  ): MedicineValidated | null => {
     let medicineValidated = true;
 
-    if (name.trim() && name.length < NAME_MAX_LENGTH) {
+    const nameValidated = name.trim();
+    const nameSameAsInitial = isEqualLowerCase(nameValidated, initialName);
+    if (
+      nameValidated &&
+      ((nameValidated.length < NAME_MAX_LENGTH &&
+        !midicinesNames.includes(nameValidated.toLowerCase()) &&
+        VALID_NAME.test(nameValidated)) ||
+        (nameIsOkWhenNotChanged && nameSameAsInitial))
+    ) {
       setNameError(false);
     } else {
       setNameError(true);
@@ -285,27 +314,34 @@ export function EditMedicineScreen() {
   };
 
   const handleSave = async () => {
-    const medicineValidated = validate();
-    if (!medicineValidated) {
-      return;
-    }
-
     if (mode === "schedule") {
+      const medicineValidated = validate();
+      if (!medicineValidated) {
+        return;
+      }
       navigation.navigate("EditMedicineScheduleScreen", {
         medicine: medicineValidated,
       });
-    } else if (mode === "save-and-go-back") {
+    } else if (mode === "one-time") {
+      const medicineValidated = validate();
+      if (!medicineValidated) {
+        return;
+      }
+      navigation.navigate("EditSingleDosageScreen", {
+        medicine: medicineValidated,
+      });
+    } else {
+      // if (mode === "save-and-go-back") {
+      const medicineValidated = validate(true);
+      if (!medicineValidated) {
+        return;
+      }
       if (medicineId !== null) {
         await dbUpdateMedicine(db, { dbId: medicineId, ...medicineValidated });
       } else {
         await dbInsertMedicine(db, medicineValidated);
       }
       navigation.goBack();
-    } else {
-      // mode === "one-time"
-      navigation.navigate("EditSingleDosageScreen", {
-        medicine: medicineValidated,
-      });
     }
   };
 

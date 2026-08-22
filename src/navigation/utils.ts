@@ -48,3 +48,7 @@ export function getToday(): Date {
   today.setHours(12, 0, 0, 0);
   return today;
 }
+
+export function isEqualLowerCase(a: string | null, b: string | null): boolean {
+  return a?.toLowerCase() === b?.toLowerCase();
+}
