@@ -138,7 +138,6 @@ export function HomeSwipeable() {
       navigation.setOptions({ title: formatDate(newDate) });
     }
   };
-
   const handleDateDismiss = () => {
     setIsDatePickerOpened(false);
   };

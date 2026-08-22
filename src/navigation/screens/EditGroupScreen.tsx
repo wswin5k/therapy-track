@@ -101,8 +101,7 @@ export function EditGroupScreen() {
       if (reminderTimeError) setReminderTimeError(false);
     }
   };
-
-  const handleDateDismiss = () => {
+  const handleTimeDismiss = () => {
     setIsTimePickerOpened(false);
   };
 
@@ -268,7 +267,7 @@ export function EditGroupScreen() {
             mode="time"
             value={getTimePickerValue()}
             onValueChange={handleTimeChange}
-            onDismiss={handleDateDismiss}
+            onDismiss={handleTimeDismiss}
           />
         )}
       </View>
