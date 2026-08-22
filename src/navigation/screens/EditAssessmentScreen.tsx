@@ -259,7 +259,7 @@ export function EditAssessmentScreen() {
       navigation.goBack();
     } else {
       // mode === "create-and-go-back"
-      const assessmentValidated = validate(true);
+      const assessmentValidated = validate(false);
       if (!assessmentValidated) {
         return;
       }
@@ -507,7 +507,7 @@ export function EditAssessmentScreen() {
           style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
         >
           <Text style={styles.nextButtonText}>
-            {mode === "save-and-go-back" ? "Save" : "Next"}
+            {["create-and-go-back", "update-and-go-back"].includes(mode) ? "Save" : "Next"}
           </Text>
         </TouchableOpacity>
       </View>
