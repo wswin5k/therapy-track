@@ -208,7 +208,7 @@ export function EditMedicineScreen() {
     ActiveIngredientInfo[]
   >([new ActiveIngredientInfo(0)]);
 
-  const [midicinesNames, setMedicinesNames] = React.useState<string[]>([]);
+  const [medicinesNames, setMedicinesNames] = React.useState<string[]>([]);
 
   const loadMedicineNames = React.useCallback(async () => {
     const medicines = await dbGetMedicines(db);
@@ -256,7 +256,7 @@ export function EditMedicineScreen() {
     if (
       nameValidated &&
       ((nameValidated.length < NAME_MAX_LENGTH &&
-        !midicinesNames.includes(nameValidated.toLowerCase()) &&
+        !medicinesNames.includes(nameValidated.toLowerCase()) &&
         VALID_NAME.test(nameValidated)) ||
         (nameIsOkWhenNotChanged && nameSameAsInitial))
     ) {
