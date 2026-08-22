@@ -1,7 +1,7 @@
 import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import RNDateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -28,6 +28,7 @@ import {
 } from "../../components/AssessmentInput";
 import { AssessmentType } from "../../models/AssessmentSchedule";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { getToday } from "../utils";
 
 type EditSingleMeasurmentScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -79,14 +80,15 @@ export function EditSingleMeasurmentScreen() {
     setIsDatePickerOpened(true);
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
-    setIsDatePickerOpened(false);
-    if (event.type === "dismissed") {
-      setDate(null);
-    } else if (newDate) {
+  const handleDateChange = (_: DateTimePickerChangeEvent, newDate?: Date) => {
+    if (newDate) {
       setDate(newDate);
       setDateError(false);
     }
+    setIsDatePickerOpened(false);
+  };
+  const handleDateDismiss = () => {
+    setIsDatePickerOpened(false);
   };
 
   const validate = (): {
@@ -234,7 +236,9 @@ export function EditSingleMeasurmentScreen() {
           <RNDateTimePicker
             mode="date"
             value={date ?? new Date()}
-            onChange={handleDateChange}
+            onValueChange={handleDateChange}
+            onDismiss={handleDateDismiss}
+            maximumDate={getToday()}
           />
         ) : (
           ""

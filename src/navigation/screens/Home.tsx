@@ -44,7 +44,7 @@ import {
 } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
 import { dayDifference } from "../utils";
-import { getToday } from "./HomeSwipeable";
+import { getToday } from "../utils";
 
 class DosageInfo {
   medicineName: string;

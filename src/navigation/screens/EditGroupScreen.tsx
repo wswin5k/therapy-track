@@ -9,7 +9,7 @@ import {
   Switch,
 } from "react-native";
 import RNDateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
 import {
   useRoute,
@@ -93,14 +93,16 @@ export function EditGroupScreen() {
     setIsTimePickerOpened(true);
   };
 
-  const handleTimeChange = (event: DateTimePickerEvent, newDate?: Date) => {
+  const handleTimeChange = (_: DateTimePickerChangeEvent, newDate?: Date) => {
     setIsTimePickerOpened(false);
-    if (event.type === "dismissed") {
-    } else if (newDate) {
+    if (newDate) {
       const timeStr = formatTimeToString(newDate);
       setReminderTime(timeStr);
       if (reminderTimeError) setReminderTimeError(false);
     }
+  };
+  const handleTimeDismiss = () => {
+    setIsTimePickerOpened(false);
   };
 
   const validate = (): boolean => {
@@ -264,7 +266,8 @@ export function EditGroupScreen() {
           <RNDateTimePicker
             mode="time"
             value={getTimePickerValue()}
-            onChange={handleTimeChange}
+            onValueChange={handleTimeChange}
+            onDismiss={handleTimeDismiss}
           />
         )}
       </View>

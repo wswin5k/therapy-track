@@ -42,3 +42,9 @@ export function mixColors(
 
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
+
+export function getToday(): Date {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  return today;
+}

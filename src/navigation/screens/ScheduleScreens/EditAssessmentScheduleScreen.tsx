@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import RNDateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
 import { Group } from "../../../models/Frequency";
 import { Frequency, FrequencySelection } from "../../../models/Frequency";
@@ -104,27 +104,35 @@ export default function EditAssessmentScheduleScreen() {
   const handleSelectStartDate = () => {
     setIsStartDatePickerOpened(true);
   };
-
-  const handleStartDateChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (event.type === "dismissed") {
-      setStartDate(null);
-    } else if (date) {
+  const handleStartDateChange = (_: DateTimePickerChangeEvent, date?: Date) => {
+    if (date) {
       setStartDate(date);
       setStartDateError(false);
     }
+    setIsStartDatePickerOpened(false);
+  };
+  const handleStartDateDismiss = () => {
+    setIsStartDatePickerOpened(false);
+  };
+  const handleStartDateClear = () => {
+    setStartDate(null);
     setIsStartDatePickerOpened(false);
   };
 
   const handleSelectEndDate = () => {
     setIsEndDatePickerOpened(true);
   };
-
-  const handleEndDateChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (event.type === "dismissed") {
-      setEndDate(null);
-    } else if (date) {
+  const handleEndDateChange = (_: DateTimePickerChangeEvent, date?: Date) => {
+    if (date) {
       setEndDate(date);
     }
+    setIsEndDatePickerOpened(false);
+  };
+  const handeEndDateDismiss = () => {
+    setIsEndDatePickerOpened(false);
+  };
+  const handeEndDateClear = () => {
+    setEndDate(null);
     setIsEndDatePickerOpened(false);
   };
 
@@ -328,8 +336,11 @@ export default function EditAssessmentScheduleScreen() {
         {isStartDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={new Date()}
-            onChange={handleStartDateChange}
+            value={startDate ?? new Date()}
+            onValueChange={handleStartDateChange}
+            onDismiss={handleStartDateDismiss}
+            neutralButton={{ label: "Clear", textColor: "" }}
+            onNeutralButtonPress={handleStartDateClear}
           />
         ) : (
           ""
@@ -358,9 +369,12 @@ export default function EditAssessmentScheduleScreen() {
         {isEndDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={new Date()}
+            value={endDate ?? new Date()}
             minimumDate={startDate ? startDate : undefined}
-            onChange={handleEndDateChange}
+            onValueChange={handleEndDateChange}
+            onDismiss={handeEndDateDismiss}
+            neutralButton={{ label: "Clear", textColor: "" }}
+            onNeutralButtonPress={handeEndDateClear}
           />
         ) : (
           ""

@@ -1,7 +1,7 @@
 import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import RNDateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -23,6 +23,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { baseUnitToDoseHeader } from "../enumMappings";
+import { getToday } from "../utils";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -70,14 +71,15 @@ export function EditSingleDosageScreen() {
     setIsDatePickerOpened(true);
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
-    setIsDatePickerOpened(false);
-    if (event.type === "dismissed") {
-      setDate(null);
-    } else if (newDate) {
+  const handleDateChange = (_: DateTimePickerChangeEvent, newDate?: Date) => {
+    if (newDate) {
       setDate(newDate);
       setDateError(false);
     }
+    setIsDatePickerOpened(false);
+  };
+  const handleDateDismiss = () => {
+    setIsDatePickerOpened(false);
   };
 
   const validate = (): {
@@ -195,7 +197,9 @@ export function EditSingleDosageScreen() {
           <RNDateTimePicker
             mode="date"
             value={date ?? new Date()}
-            onChange={handleDateChange}
+            onValueChange={handleDateChange}
+            onDismiss={handleDateDismiss}
+            maximumDate={getToday()}
           />
         ) : (
           ""
