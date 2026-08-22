@@ -28,7 +28,11 @@ import {
 } from "../../models/AssessmentSchedule";
 import { ModalPicker } from "../../components/ModalPicker";
 import { useSQLiteContext } from "expo-sqlite";
-import { dbGetAssessments, dbUpdateAssessment } from "../../models/dbAccess";
+import {
+  dbGetAssessments,
+  dbInsertAssessment,
+  dbUpdateAssessment,
+} from "../../models/dbAccess";
 import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonConsts";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
@@ -85,8 +89,8 @@ export function EditAssessmentScreen() {
   const [assessmentTypeError, setAssessmentTypeError] = React.useState(false);
 
   const [mode, setMode] = React.useState<
-    "save-and-go-back" | "schedule" | "one-time"
-  >("save-and-go-back");
+    "create-and-go-back" | "update-and-go-back" | "schedule" | "one-time"
+  >("create-and-go-back");
 
   const [assessmentsNames, setAssessmentsNames] = React.useState<string[]>([]);
 
@@ -100,11 +104,12 @@ export function EditAssessmentScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const params = route.params as {
-        mode: "save-and-go-back" | "schedule" | "one-time";
+        mode:
+          "create-and-go-back" | "update-and-go-back" | "schedule" | "one-time";
         assessment: Assessment;
       };
       setMode(params.mode);
-      if (params.mode === "save-and-go-back") {
+      if (params.mode === "update-and-go-back") {
         setTypeInputDisabled(true);
       }
 
@@ -230,7 +235,15 @@ export function EditAssessmentScreen() {
       navigation.navigate("EditAssessmentScheduleScreen", {
         assessment: assessmentValidated,
       });
-    } else if (mode === "save-and-go-back") {
+    } else if (mode === "one-time") {
+      const assessmentValidated = validate(false);
+      if (!assessmentValidated) {
+        return;
+      }
+      navigation.navigate("EditSingleMeasurmentScreen", {
+        assessment: assessmentValidated,
+      });
+    } else if (mode === "update-and-go-back") {
       const assessmentValidated = validate(true);
       if (!assessmentValidated) {
         return;
@@ -245,14 +258,13 @@ export function EditAssessmentScreen() {
       }
       navigation.goBack();
     } else {
-      // mode === "one-time"
+      // mode === "create-and-go-back"
       const assessmentValidated = validate(false);
       if (!assessmentValidated) {
         return;
       }
-      navigation.navigate("EditSingleMeasurmentScreen", {
-        assessment: assessmentValidated,
-      });
+      await dbInsertAssessment(db, assessmentValidated);
+      navigation.goBack();
     }
   };
 
@@ -495,7 +507,7 @@ export function EditAssessmentScreen() {
           style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
         >
           <Text style={styles.nextButtonText}>
-            {mode === "save-and-go-back" ? "Save" : "Next"}
+            {["create-and-go-back", "update-and-go-back"].includes(mode) ? "Save" : "Next"}
           </Text>
         </TouchableOpacity>
       </View>

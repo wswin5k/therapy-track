@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
-  DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import SmallNumberStepper from "../../../components/SmallNumberStepper";
 import { Group } from "../../../models/Frequency";
