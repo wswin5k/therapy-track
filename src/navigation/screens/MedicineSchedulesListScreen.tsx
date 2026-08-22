@@ -185,6 +185,7 @@ export function MedicineSchedulesListScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
   const { t } = useTranslation();
+  const navigation = useNavigation();
 
   const [schedules, setSchedules] = React.useState<Schedule[]>([]);
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
@@ -200,6 +201,10 @@ export function MedicineSchedulesListScreen() {
       loadSchedules();
     }, [loadSchedules]),
   );
+
+  const handleAddSchedule = () => {
+    navigation.navigate("SelectMedicineScreen", { mode: "schedule" });
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -234,6 +239,7 @@ export function MedicineSchedulesListScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView style={styles.list}>
+        {schedules.length === 0 && renderEmptyState()}
         {schedules.map((s, idx) => {
           return (
             <ScheduleListItem
@@ -246,7 +252,14 @@ export function MedicineSchedulesListScreen() {
             />
           );
         })}
-        {schedules.length === 0 && renderEmptyState()}
+        <TouchableOpacity
+          onPress={handleAddSchedule}
+          style={[styles.addButton, { borderColor: theme.colors.primary }]}
+        >
+          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
+            {t("+ Add Medicine Schedule")}
+          </Text>
+        </TouchableOpacity>
         <View style={styles.bottomMarginContainer}></View>
       </ScrollView>
     </DefaultMainContainer>
@@ -271,7 +284,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   bottomMarginContainer: {
-    height: 18,
+    height: 40,
     width: "100%",
   },
   optionsOverlay: {
@@ -307,6 +320,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     textAlign: "center",
+  },
+  addButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderStyle: "dashed",
+    alignItems: "center",
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   emptyContainer: {
     alignItems: "center",

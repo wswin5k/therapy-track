@@ -175,6 +175,7 @@ export function MedicineListScreen() {
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
+  const navigation = useNavigation();
 
   const [medicines, setMedicines] = React.useState<Medicine[]>([]);
   const [medicinesWithSchedules, setMedicineWithSchedules] = React.useState<
@@ -201,6 +202,10 @@ export function MedicineListScreen() {
       loadData();
     }, [loadData]),
   );
+
+  const handleAddMedicine = () => {
+    navigation.navigate("EditMedicineScreen", { mode: "save-and-go-back" });
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -249,6 +254,14 @@ export function MedicineListScreen() {
           );
         })}
         {medicines.length === 0 && renderEmptyState()}
+        <TouchableOpacity
+          onPress={handleAddMedicine}
+          style={[styles.addButton, { borderColor: theme.colors.primary }]}
+        >
+          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
+            {t("+ Add Medicine")}
+          </Text>
+        </TouchableOpacity>
         <View style={styles.bottomMarginContainer}></View>
       </ScrollView>
     </DefaultMainContainer>
@@ -273,7 +286,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   bottomMarginContainer: {
-    height: 18,
+    height: 40,
     width: "100%",
   },
   itemContent: {
@@ -300,6 +313,17 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     textAlign: "center",
+  },
+  addButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderStyle: "dashed",
+    alignItems: "center",
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   optionsOverlay: {
     ...StyleSheet.absoluteFill,

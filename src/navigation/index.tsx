@@ -151,7 +151,7 @@ export type RootStackParamList = {
     medicine?: Medicine;
   };
   EditAssessmentScreen: {
-    mode: "save-and-go-back" | "schedule" | "one-time";
+    mode: "create-and-go-back" | "update-and-go-back" | "schedule" | "one-time";
     assessment?: Assessment;
   };
   SelectEntryTypeScreen:

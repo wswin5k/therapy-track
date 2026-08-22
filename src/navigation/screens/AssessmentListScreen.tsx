@@ -74,7 +74,7 @@ function AssessmentListItem({
   const handleEdit = () => {
     navigation.navigate("EditAssessmentScreen", {
       assessment: assessment,
-      mode: "save-and-go-back",
+      mode: "update-and-go-back",
     });
   };
 
@@ -170,6 +170,7 @@ export function AssessmentListScreen() {
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
+  const navigation = useNavigation();
 
   const [assessements, setAssessments] = React.useState<Assessment[]>([]);
   const [assessmentsWithSchedules, setAssessmentsWithSchedules] =
@@ -197,6 +198,10 @@ export function AssessmentListScreen() {
       loadData();
     }, [loadData]),
   );
+
+  const handleAddAssessment = () => {
+    navigation.navigate("EditAssessmentScreen", { mode: "create-and-go-back" });
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -245,6 +250,14 @@ export function AssessmentListScreen() {
           );
         })}
         {assessements.length === 0 && renderEmptyState()}
+        <TouchableOpacity
+          onPress={handleAddAssessment}
+          style={[styles.addButton, { borderColor: theme.colors.primary }]}
+        >
+          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
+            {t("+ Add Assessment")}
+          </Text>
+        </TouchableOpacity>
         <View style={styles.bottomMarginContainer}></View>
       </ScrollView>
     </DefaultMainContainer>
@@ -269,7 +282,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   bottomMarginContainer: {
-    height: 18,
+    height: 40,
     width: "100%",
   },
   itemContent: {
@@ -296,6 +309,17 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     textAlign: "center",
+  },
+  addButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderStyle: "dashed",
+    alignItems: "center",
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   optionsOverlay: {
     ...StyleSheet.absoluteFill,

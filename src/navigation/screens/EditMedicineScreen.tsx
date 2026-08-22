@@ -24,7 +24,7 @@ import {
   Medicine,
 } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { dbUpdateMedicine } from "../../models/dbAccess";
+import { dbInsertMedicine, dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { baseUnitToUnitSelectionLabel } from "../enumMappings";
@@ -208,7 +208,7 @@ export function EditMedicineScreen() {
     React.useCallback(() => {
       const params = route.params as {
         mode: "save-and-go-back" | "schedule" | "one-time";
-        medicine: Medicine;
+        medicine?: Medicine;
       };
       setMode(params.mode);
       const medicineInit = params.medicine;
@@ -216,8 +216,6 @@ export function EditMedicineScreen() {
         setMedicineId(medicineInit.dbId);
         setName(medicineInit.name);
         setBaseUnit(medicineInit.baseUnit);
-
-        console.log(medicineInit.activeIngredients);
 
         setActiveIngredientInfos(
           medicineInit.activeIngredients.map(
@@ -300,7 +298,7 @@ export function EditMedicineScreen() {
       if (medicineId !== null) {
         await dbUpdateMedicine(db, { dbId: medicineId, ...medicineValidated });
       } else {
-        throw Error("Medicine ID has not been set.");
+        await dbInsertMedicine(db, medicineValidated);
       }
       navigation.goBack();
     } else {
