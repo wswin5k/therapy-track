@@ -9,7 +9,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../index";
 import { useTranslation } from "react-i18next";
 import RNDateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import {
@@ -20,7 +20,7 @@ import {
   View,
   VirtualizedList,
 } from "react-native";
-import { dayDifference } from "../utils";
+import { dayDifference, getToday } from "../utils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -29,12 +29,6 @@ type HomeNavigationProp = NativeStackNavigationProp<
 
 const INIITIAL_INDEX = 10_000;
 const TOTAL_ITEMS = 20_000;
-
-export function getToday(): Date {
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-  return today;
-}
 
 export function HomeSwipeable() {
   const navigation = useNavigation<HomeNavigationProp>();
@@ -122,11 +116,10 @@ export function HomeSwipeable() {
     navigation.setOptions({ title: formatDate(newDate) });
   };
 
-  const handleDatePick = (event: DateTimePickerEvent, newDate?: Date) => {
+  const handleDatePick = (_: DateTimePickerChangeEvent, newDate?: Date) => {
     setIsDatePickerOpened(false);
-    const today = getToday();
-    if (event.type === "dismissed") {
-    } else if (newDate) {
+    if (newDate) {
+      const today = getToday();
       const days = dayDifference(today, newDate);
       let targetIndex = 0;
       if (newDate > today) {
@@ -145,6 +138,11 @@ export function HomeSwipeable() {
       navigation.setOptions({ title: formatDate(newDate) });
     }
   };
+
+  const handleDateDismiss = () => {
+    setIsDatePickerOpened(false);
+  };
+
   const fabActions = [
     {
       label: "One-time entry",
@@ -179,7 +177,8 @@ export function HomeSwipeable() {
         <RNDateTimePicker
           mode="date"
           value={getDate(currentIndex - INIITIAL_INDEX)}
-          onChange={handleDatePick}
+          onValueChange={handleDatePick}
+          onDismiss={handleDateDismiss}
         />
       ) : (
         ""
