@@ -63,7 +63,7 @@ export function ModalPicker<T>({
         setNumberOfPresses((prev) => prev + 1);
         if (numberOfPresses > 2) {
           ToastAndroid.show(
-            "Exising assessment's type cannot be modified.",
+            "Existing assessment's type cannot be modified.",
             ToastAndroid.SHORT,
           );
         }

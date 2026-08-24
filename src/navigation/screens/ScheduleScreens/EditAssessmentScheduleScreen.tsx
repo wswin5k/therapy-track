@@ -79,7 +79,7 @@ export default function EditAssessmentScheduleScreen() {
     React.useState<AssessmentSchedule[]>([]);
   const [
     existingUnscheduledMeasurmentRecords,
-    setExisintUnscheduledMeasurmentRecords,
+    setExistingUnscheduledMeasurmentRecords,
   ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
 
   const updateGroupsRefWithDefaults = React.useCallback(() => {
@@ -127,7 +127,7 @@ export default function EditAssessmentScheduleScreen() {
             !params.assessment.dbId ||
             a.assessmentId === params.assessment.dbId,
         );
-        setExisintUnscheduledMeasurmentRecords(
+        setExistingUnscheduledMeasurmentRecords(
           newExistingUnscheduledMeasurmentRecords,
         );
       };
