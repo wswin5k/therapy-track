@@ -49,6 +49,11 @@ export function getToday(): Date {
   return today;
 }
 
+export function normalizeToDate(date: Date): Date {
+  date.setUTCHours(0, 0, 0, 0);
+  return date;
+}
+
 export function isEqualLowerCase(a: string | null, b: string | null): boolean {
   return a?.toLowerCase() === b?.toLowerCase();
 }
