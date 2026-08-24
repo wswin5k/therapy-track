@@ -63,7 +63,7 @@ export function EditSingleMeasurmentScreen() {
     React.useState<AssessmentSchedule[]>([]);
   const [
     existingUnscheduledMeasurmentRecords,
-    setExisintUnscheduledMeasurmentRecords,
+    setExistingUnscheduledMeasurmentRecords,
   ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
 
   const [assessment, setAssessment] = React.useState<AssessmentParam | null>(
@@ -104,7 +104,7 @@ export function EditSingleMeasurmentScreen() {
             !params.assessment.dbId ||
             a.assessmentId === params.assessment.dbId,
         );
-        setExisintUnscheduledMeasurmentRecords(
+        setExistingUnscheduledMeasurmentRecords(
           newExistingUnscheduledMeasurmentRecords,
         );
       };
