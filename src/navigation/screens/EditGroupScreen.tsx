@@ -21,13 +21,20 @@ import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Group } from "../../models/Frequency";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { dbInsertGroup, dbUpdateGroup } from "../../models/dbAccess";
+import {
+  dbGetGroups,
+  dbInsertGroup,
+  dbUpdateGroup,
+} from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   scheduleGroupNotification,
   cancelGroupNotification,
   requestNotificationPermissions,
 } from "../../services/notificationService";
+import { isEqualLowerCase } from "../utils";
+import { NAME_MAX_LENGTH, VALID_NAME } from "../../validation_constants";
+import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -68,6 +75,15 @@ export function EditGroupScreen() {
   const [group, setGroup] = React.useState<Group | null>(null);
   const [isEditMode, setIsEditMode] = React.useState(false);
 
+  // when modyfing an assessment we don't want to check for duplicate names
+  const [initialName, setInitialName] = React.useState<string | null>(null);
+  const [groupsNames, setGroupsNames] = React.useState<string[]>([]);
+
+  const loadData = React.useCallback(async () => {
+    const groups = await dbGetGroups(db);
+    setGroupsNames(groups.map((g) => g.name.toLowerCase()));
+  }, [db]);
+
   useFocusEffect(
     React.useCallback(() => {
       const params = route.params as { group?: Group };
@@ -77,6 +93,7 @@ export function EditGroupScreen() {
         setIsEditMode(true);
         setGroup(groupInit);
         setName(groupInit.name);
+        setInitialName(groupInit.name);
         setIsReminderOn(groupInit.isReminderOn);
         setReminderTime(groupInit.reminderTime);
       } else {
@@ -86,7 +103,8 @@ export function EditGroupScreen() {
         setIsReminderOn(false);
         setReminderTime(null);
       }
-    }, [route.params]),
+      loadData();
+    }, [loadData, route.params]),
   );
 
   const handleSelectTime = () => {
@@ -105,14 +123,29 @@ export function EditGroupScreen() {
     setIsTimePickerOpened(false);
   };
 
-  const validate = (): boolean => {
+  const validate = (
+    nameIsOkWhenNotChanged: boolean = false,
+  ): {
+    name: string;
+    color: string;
+    isReminderOn: boolean;
+    reminderTime: string | null;
+  } | null => {
     let isValid = true;
 
-    if (!name.trim()) {
+    let nameValidated = name.trim();
+    const nameSameAsInitial = isEqualLowerCase(nameValidated, initialName);
+    if (
+      nameValidated &&
+      ((nameValidated.length < NAME_MAX_LENGTH &&
+        !groupsNames.includes(nameValidated.toLowerCase()) &&
+        VALID_NAME.test(nameValidated)) ||
+        (nameIsOkWhenNotChanged && nameSameAsInitial))
+    ) {
+      setNameError(false);
+    } else {
       setNameError(true);
       isValid = false;
-    } else {
-      setNameError(false);
     }
 
     if (isReminderOn && !reminderTime) {
@@ -122,20 +155,24 @@ export function EditGroupScreen() {
       setReminderTimeError(false);
     }
 
-    return isValid;
+    if (isValid) {
+      return {
+        name: nameValidated,
+        color: group?.color ?? DEFAULT_GROUP_COLOR,
+        isReminderOn,
+        reminderTime: isReminderOn ? reminderTime : null,
+      };
+    } else {
+      return null;
+    }
   };
 
   const handleSave = async () => {
-    if (!validate()) {
+    const groupData = validate(Boolean(isEditMode && group));
+
+    if (!groupData) {
       return;
     }
-
-    const groupData = {
-      name: name.trim(),
-      color: group?.color ?? DEFAULT_GROUP_COLOR,
-      isReminderOn,
-      reminderTime: isReminderOn ? reminderTime : null,
-    };
 
     let groupId: number;
 
@@ -199,7 +236,10 @@ export function EditGroupScreen() {
                 backgroundColor: theme.colors.surface,
               },
               nameError
-                ? { borderColor: theme.colors.error, borderWidth: 1 }
+                ? {
+                    borderColor: theme.colors.error,
+                    borderWidth: ERROR_BORDER_WIDTH,
+                  }
                 : {},
             ]}
             onChangeText={(text: string) => {
@@ -242,7 +282,7 @@ export function EditGroupScreen() {
                 },
                 reminderTimeError && {
                   borderColor: theme.colors.error,
-                  borderWidth: 2,
+                  borderWidth: ERROR_BORDER_WIDTH,
                 },
               ]}
             >
