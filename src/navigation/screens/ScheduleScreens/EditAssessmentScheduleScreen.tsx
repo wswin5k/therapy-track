@@ -21,7 +21,9 @@ import {
 import { AssessmentParam, RootStackParamList } from "../..";
 import { useSQLiteContext } from "expo-sqlite";
 import {
+  dbGetAssessmentSchedules,
   dbGetGroups,
+  dbGetUnscheduledMeasurmentRecords,
   dbInsertAssessmentSchedule,
   dbInsertAssessmentScheduleWithAssessment,
 } from "../../../models/dbAccess";
@@ -31,6 +33,9 @@ import { frequencySelectionToDisplayForm } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
 import { assingDefaultGroups, frequencySelectionMap } from "./common";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
+import { UnscheduledMeasurmentRecord } from "../../../models/Records";
+import { normalizeToDate } from "../../utils";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -69,12 +74,20 @@ export default function EditAssessmentScheduleScreen() {
   const [defaultGroups, setDefaultGroups] = React.useState<Map<number, number>>(
     new Map(),
   );
+  const [groupsErrors, setGroupsErrors] = React.useState<boolean[]>([]);
+  const [existingAssessmentSchedules, setExistingAssessmentSchedules] =
+    React.useState<AssessmentSchedule[]>([]);
+  const [
+    existingUnscheduledMeasurmentRecords,
+    setExisintUnscheduledMeasurmentRecords,
+  ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
 
   const updateGroupsRefWithDefaults = React.useCallback(() => {
     const defaultGroups = assingDefaultGroups(groups);
-    for (let i = 0; i < nMeasurments; i++) {
-      groupsRef.current[i] = defaultGroups.get(i) ?? null;
-    }
+    groupsRef.current = Array.from(
+      { length: nMeasurments },
+      (_, idx) => defaultGroups.get(idx) ?? null,
+    );
   }, [groups, nMeasurments]);
 
   useFocusEffect(
@@ -93,9 +106,30 @@ export default function EditAssessmentScheduleScreen() {
         };
         setAssessment(params.assessment);
 
-        const groups = await dbGetGroups(db);
-        setGroups(groups);
-        setDefaultGroups(assingDefaultGroups(groups));
+        const newGroups = await dbGetGroups(db);
+        setGroups(newGroups);
+        setGroupsErrors(Array.from({ length: newGroups.length }, () => false));
+        setDefaultGroups(assingDefaultGroups(newGroups));
+
+        const newExistingAssessmentSchedules = (
+          await dbGetAssessmentSchedules(db)
+        ).filter(
+          (a) =>
+            !params.assessment.dbId ||
+            a.assessment.dbId === params.assessment.dbId,
+        );
+        setExistingAssessmentSchedules(newExistingAssessmentSchedules);
+
+        const newExistingUnscheduledMeasurmentRecords = (
+          await dbGetUnscheduledMeasurmentRecords(db)
+        ).filter(
+          (a) =>
+            !params.assessment.dbId ||
+            a.assessmentId === params.assessment.dbId,
+        );
+        setExisintUnscheduledMeasurmentRecords(
+          newExistingUnscheduledMeasurmentRecords,
+        );
       };
       setData();
     }, [db, route.params]),
@@ -106,7 +140,7 @@ export default function EditAssessmentScheduleScreen() {
   };
   const handleStartDateChange = (_: DateTimePickerChangeEvent, date?: Date) => {
     if (date) {
-      setStartDate(date);
+      setStartDate(normalizeToDate(date));
       setStartDateError(false);
     }
     setIsStartDatePickerOpened(false);
@@ -124,7 +158,7 @@ export default function EditAssessmentScheduleScreen() {
   };
   const handleEndDateChange = (_: DateTimePickerChangeEvent, date?: Date) => {
     if (date) {
-      setEndDate(date);
+      setEndDate(normalizeToDate(date));
     }
     setIsEndDatePickerOpened(false);
   };
@@ -140,6 +174,11 @@ export default function EditAssessmentScheduleScreen() {
     freq: Frequency;
     startDate: Date;
     endDate: Date | null;
+    measurments: {
+      index: number;
+      offset: number | null;
+      groupId: number | null;
+    }[];
   } | null => {
     let isDataValid = true;
 
@@ -163,11 +202,51 @@ export default function EditAssessmentScheduleScreen() {
       isDataValid = true;
     }
 
+    const measurments = Array.from(
+      groupsRef.current.entries(),
+      ([index, groupIdx]) => {
+        const groupId = groupIdx === null ? null : groups[groupIdx].dbId;
+        return { index, offset: null, groupId };
+      },
+    );
+
+    const existingAssessemtnSchedulesWithinDate =
+      existingAssessmentSchedules.filter(
+        (ea) =>
+          !(
+            (endDate !== null && endDate <= ea.startDate) ||
+            (startDate !== null &&
+              ea.endDate !== null &&
+              ea.endDate <= startDate)
+          ),
+      );
+    const existingUnscheduledMeasurmentRecordsWithinDate =
+      existingUnscheduledMeasurmentRecords.filter(
+        (mr) =>
+          startDate !== null &&
+          startDate <= mr.date &&
+          (endDate === null || mr.date < endDate),
+      );
+    const newGroupsErros = measurments.map(
+      ({ groupId }) =>
+        existingAssessemtnSchedulesWithinDate.some((as) =>
+          as.measurments.some((m) => m.groupId === groupId),
+        ) ||
+        existingUnscheduledMeasurmentRecordsWithinDate.some(
+          (mr) => mr.groupId === groupId,
+        ),
+    );
+    if (newGroupsErros.some(Boolean)) {
+      isDataValid = false;
+    }
+    setGroupsErrors(newGroupsErros);
+
     if (isDataValid && freqRef.current && startDate) {
       return {
         freq: freqRef.current,
         startDate,
         endDate,
+        measurments,
       };
     }
     return null;
@@ -180,20 +259,12 @@ export default function EditAssessmentScheduleScreen() {
       return;
     }
 
-    const measurments = Array.from(
-      groupsRef.current.entries(),
-      ([index, groupIdx]) => {
-        const groupId = groupIdx === null ? null : groups[groupIdx].dbId;
-        return { index, offset: null, groupId };
-      },
-    );
-
     if (assessment && assessment.dbId) {
       await dbInsertAssessmentSchedule(db, assessment.dbId, {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        measurments,
+        measurments: validatedData.measurments,
       });
       navigation.popToTop();
     } else if (assessment) {
@@ -201,7 +272,7 @@ export default function EditAssessmentScheduleScreen() {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        measurments,
+        measurments: validatedData.measurments,
       });
       navigation.popToTop();
     } else {
@@ -304,6 +375,7 @@ export default function EditAssessmentScheduleScreen() {
                     borderColor: theme.colors.border,
                     backgroundColor: theme.colors.surface,
                   }}
+                  error={groupsErrors[idx]}
                 />
               </View>
             </View>
@@ -462,7 +534,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   pickerContainer: {
-    height: 52,
     justifyContent: "center",
     width: "45%",
     overflow: "hidden",

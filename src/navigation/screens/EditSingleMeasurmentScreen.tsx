@@ -6,7 +6,9 @@ import RNDateTimePicker, {
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
+  dbGetAssessmentSchedules,
   dbGetGroups,
+  dbGetUnscheduledMeasurmentRecords,
   dbInsertAssessment,
   dbInsertUnscheduledMeasurmentRecord,
 } from "../../models/dbAccess";
@@ -20,15 +22,21 @@ import {
 import { AssessmentParam, RootStackParamList } from "..";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { AssessmentValue } from "../../models/Records";
+import {
+  AssessmentValue,
+  UnscheduledMeasurmentRecord,
+} from "../../models/Records";
 import {
   AssessmentInput,
   getDefaultValue,
   isTextValueValid,
 } from "../../components/AssessmentInput";
-import { AssessmentType } from "../../models/AssessmentSchedule";
+import {
+  AssessmentSchedule,
+  AssessmentType,
+} from "../../models/AssessmentSchedule";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { getToday } from "../utils";
+import { getToday, normalizeToDate } from "../utils";
 
 type EditSingleMeasurmentScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -50,6 +58,14 @@ export function EditSingleMeasurmentScreen() {
   const [valueError, setValueError] = React.useState<boolean>(false);
   const groupIdxRef = React.useRef<number | null>(null);
 
+  const [groupError, setGroupError] = React.useState<boolean>(false);
+  const [existingAssessmentSchedules, setExistingAssessmentSchedules] =
+    React.useState<AssessmentSchedule[]>([]);
+  const [
+    existingUnscheduledMeasurmentRecords,
+    setExisintUnscheduledMeasurmentRecords,
+  ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
+
   const [assessment, setAssessment] = React.useState<AssessmentParam | null>(
     null,
   );
@@ -65,12 +81,32 @@ export function EditSingleMeasurmentScreen() {
         setAssessment(params.assessment);
         setValue(getDefaultValue(params.assessment.type));
         if (params.selectedDate) {
-          setDate(new Date(params.selectedDate));
+          setDate(normalizeToDate(new Date(params.selectedDate)));
         } else {
-          setDate(new Date());
+          setDate(normalizeToDate(new Date()));
         }
         const groups = await dbGetGroups(db);
         setGroups(groups);
+
+        const newExistingAssessmentSchedules = (
+          await dbGetAssessmentSchedules(db)
+        ).filter(
+          (a) =>
+            !params.assessment.dbId ||
+            a.assessment.dbId === params.assessment.dbId,
+        );
+        setExistingAssessmentSchedules(newExistingAssessmentSchedules);
+
+        const newExistingUnscheduledMeasurmentRecords = (
+          await dbGetUnscheduledMeasurmentRecords(db)
+        ).filter(
+          (a) =>
+            !params.assessment.dbId ||
+            a.assessmentId === params.assessment.dbId,
+        );
+        setExisintUnscheduledMeasurmentRecords(
+          newExistingUnscheduledMeasurmentRecords,
+        );
       };
       setData();
     }, [db, route.params]),
@@ -82,7 +118,7 @@ export function EditSingleMeasurmentScreen() {
 
   const handleDateChange = (_: DateTimePickerChangeEvent, newDate?: Date) => {
     if (newDate) {
-      setDate(newDate);
+      setDate(normalizeToDate(newDate));
       setDateError(false);
     }
     setIsDatePickerOpened(false);
@@ -100,7 +136,34 @@ export function EditSingleMeasurmentScreen() {
       if (assessment) {
         if (value) {
           if (!isTextValueValid(value, assessment.valueDomain)) {
-            return { date, assessment, value };
+            const groupId =
+              groupIdxRef.current === null
+                ? null
+                : groups[groupIdxRef.current].dbId;
+
+            const existingAssessemtnSchedulesWithinDate =
+              existingAssessmentSchedules.filter(
+                (ea) =>
+                  date &&
+                  ea.startDate <= date &&
+                  (ea.endDate === null || date <= ea.endDate),
+              );
+            const existingUnscheduledMeasurmentRecordsWithinDate =
+              existingUnscheduledMeasurmentRecords.filter(
+                (mr) => date !== null && date.getTime() === mr.date.getTime(),
+              );
+            if (
+              !existingAssessemtnSchedulesWithinDate.some((as) =>
+                as.measurments.some((m) => m.groupId === groupId),
+              ) &&
+              !existingUnscheduledMeasurmentRecordsWithinDate.some(
+                (mr) => mr.groupId === groupId,
+              )
+            ) {
+              return { date, assessment, value };
+            } else {
+              setGroupError(true);
+            }
           } else {
             setValueError(true);
           }
@@ -228,6 +291,7 @@ export function EditSingleMeasurmentScreen() {
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.surface,
               }}
+              error={groupError}
             />
           </View>
         </View>
