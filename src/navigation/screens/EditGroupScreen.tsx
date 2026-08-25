@@ -75,7 +75,7 @@ export function EditGroupScreen() {
   const [group, setGroup] = React.useState<Group | null>(null);
   const [isEditMode, setIsEditMode] = React.useState(false);
 
-  // when modyfing an assessment we don't want to check for duplicate names
+  // when modyfing a group we don't want to check for duplicate names
   const [initialName, setInitialName] = React.useState<string | null>(null);
   const [groupsNames, setGroupsNames] = React.useState<string[]>([]);
 

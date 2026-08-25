@@ -64,8 +64,7 @@ export async function scheduleGroupNotification(group: {
   await Notifications.scheduleNotificationAsync({
     identifier,
     content: {
-      title: "Therapy Track reminder",
-      body: `${group.name} medications are due`,
+      title: `${group.name} medications are due`,
       data: { groupId: group.dbId },
       sound: true,
     },
