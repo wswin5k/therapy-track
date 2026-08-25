@@ -8,10 +8,6 @@ import {
 } from "react-native";
 
 type FlickerViewProps = ViewProps & {
-  /**
-   * Flicker for 2 seconds after mounting.
-   * Defaults to false.
-   */
   flicker?: boolean;
   style?: StyleProp<ViewStyle>;
 };

@@ -144,8 +144,7 @@ const DrawerTabs = createDrawerNavigator({
 });
 
 export type RootStackParamList = {
-  HomeSwipeable:
-    { selectedDate?: string; scrollToGroupId?: number } | undefined;
+  HomeSwipeable: { selectedDate?: string } | undefined;
   DrawerTabs: { selectedDate?: string } | undefined;
   EditMedicineScreen: {
     mode: "save-and-go-back" | "schedule" | "one-time";

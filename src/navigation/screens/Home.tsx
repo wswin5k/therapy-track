@@ -455,13 +455,7 @@ function ScheduledMeasurment({
   );
 }
 
-export function Home({
-  date,
-  scrollToGroupId,
-}: {
-  date: Date;
-  scrollToGroupId?: number;
-}) {
+export function Home({ date }: { date: Date }) {
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
@@ -740,7 +734,9 @@ export function Home({
       response &&
       response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
     ) {
-      const notificationDate = normalizeToDate(new Date(response.notification.date));
+      const notificationDate = normalizeToDate(
+        new Date(response.notification.date),
+      );
       if (notificationDate.getTime() !== normalizeToDate(date).getTime()) {
         return;
       }
@@ -760,7 +756,7 @@ export function Home({
         return () => clearTimeout(timer);
       }
     }
-  }, [response]);
+  }, [response, date]);
 
   const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
