@@ -28,7 +28,6 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
 import { BaseUnit, Medicine } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Group } from "../../models/Frequency";
 import {
@@ -43,8 +42,10 @@ import {
   ValueDomain,
 } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
-import { dayDifference } from "../utils";
+import { dayDifference, normalizeToDate } from "../utils";
 import { getToday } from "../utils";
+import * as Notifications from "expo-notifications";
+import { FlickerView } from "../../components/FlickerView";
 
 class DosageInfo {
   medicineName: string;
@@ -487,6 +488,12 @@ export function Home({ date }: { date: Date }) {
     React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
 
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const groupIdToPositionRef = React.useRef<Map<number, number>>(new Map());
+  const [flickerGroupId, setFlickerGroupId] = React.useState<number | null>(
+    null,
+  );
+
   const loadGroups = React.useCallback(async () => {
     const groups = await dbGetGroups(db);
     const idToGroup = new Map();
@@ -720,6 +727,37 @@ export function Home({ date }: { date: Date }) {
     ]),
   );
 
+  const response = Notifications.useLastNotificationResponse();
+
+  React.useEffect(() => {
+    if (
+      response &&
+      response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
+    ) {
+      const notificationDate = normalizeToDate(
+        new Date(response.notification.date),
+      );
+      if (notificationDate.getTime() !== normalizeToDate(date).getTime()) {
+        return;
+      }
+      const data = response.notification.request.content.data;
+      if (data && "groupId" in data && typeof data.groupId === "number") {
+        const groupId = data.groupId;
+        const timer = setTimeout(() => {
+          if (scrollViewRef.current) {
+            scrollViewRef.current?.scrollTo({
+              y: groupIdToPositionRef.current.get(groupId),
+              animated: true,
+            });
+            setFlickerGroupId(groupId);
+          }
+        }, 500);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [response, date]);
+
   const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
       await dbDeleteScheduledDosageRecord(db, dosage.dosageRecordId);
@@ -902,23 +940,30 @@ export function Home({ date }: { date: Date }) {
         />
       )}
 
-      <ScrollView style={styles.list}>
+      <ScrollView style={styles.list} ref={scrollViewRef}>
         {[...groups.values()].map(
           (group) =>
             (getUnscheduledDosages(group.dbId) ||
               getScheduledDosages(group.dbId) ||
               getUnscheduledMeasurments(group.dbId) ||
               getScheduledMeasurments(group.dbId)) && (
-              <LinearGradient
+              <FlickerView
+                flicker={group.dbId === flickerGroupId}
                 key={group.dbId}
-                colors={[theme.colors.card, theme.colors.card]}
-                start={{ x: 1, y: 0.0 }}
-                end={{ x: 0.0, y: 10 }}
                 style={[
                   styles.groupContainer,
                   isFuture ? styles.disabledElement : {},
-                  { borderColor: theme.colors.border },
+                  {
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.card,
+                  },
                 ]}
+                onLayout={(e) =>
+                  groupIdToPositionRef.current.set(
+                    group.dbId,
+                    e.nativeEvent.layout.y,
+                  )
+                }
               >
                 <Text
                   style={[styles.headerLabel, { color: theme.colors.text }]}
@@ -927,22 +972,22 @@ export function Home({ date }: { date: Date }) {
                 </Text>
                 {renderScheduled(group)}
                 {renderUnscheduled(group)}
-              </LinearGradient>
+              </FlickerView>
             ),
         )}
         {(getUnscheduledDosages() ||
           getScheduledDosages() ||
           getUnscheduledMeasurments() ||
           getScheduledMeasurments()) && (
-          <LinearGradient
+          <FlickerView
             key={-1}
-            colors={[theme.colors.card, theme.colors.card, theme.colors.card]}
-            start={{ x: 0.0, y: 0.0 }}
-            end={{ x: 1, y: 1.0 }}
             style={[
               styles.groupContainer,
               isFuture ? styles.disabledElement : {},
-              { borderColor: theme.colors.border },
+              {
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.card,
+              },
             ]}
           >
             {areGroupsEmpty || (
@@ -952,7 +997,7 @@ export function Home({ date }: { date: Date }) {
             )}
             {renderScheduled()}
             {renderUnscheduled()}
-          </LinearGradient>
+          </FlickerView>
         )}
         {isScheduledEmpty && isUnscheduledEmpty && renderEmptyState()}
         <View style={styles.bottomMarginContainer}></View>
