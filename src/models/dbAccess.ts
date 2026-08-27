@@ -682,7 +682,7 @@ async function dbInsertDosages(
   for (const dosage of dosages) {
     const result = await db.runAsync(
       `INSERT INTO dosages 
-      (amount, index_, offset, group_, schedule) 
+      (amount, index_, offset, group_, medicine_schedule) 
       VALUES (?, ?, ?, ?, ?)`,
       dosage.amount,
       dosage.index,
