@@ -3,15 +3,15 @@ export class ScheduledDosageRecord {
     public dbId: number,
     public record_date: Date,
     public date: Date,
-    public scheduleId: number,
-    public doseIndex: number,
+    public medicineScheduleId: number,
+    public dosageIndex: number,
   ) {}
 }
 
 export class UnscheduledDosageRecord {
   constructor(
     public dbId: number,
-    public ecord_date: Date,
+    public record_date: Date,
     public date: Date,
     public medicineId: number,
     public amount: number,

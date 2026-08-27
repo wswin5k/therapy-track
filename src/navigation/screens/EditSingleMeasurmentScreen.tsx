@@ -36,7 +36,11 @@ import {
   AssessmentType,
 } from "../../models/AssessmentSchedule";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { getToday, normalizeToDate } from "../utils";
+import {
+  deserializeDateOnly,
+  getTodayDateOnly,
+  isEqualDateOnly,
+} from "../../dateOnlyUtils";
 
 type EditSingleMeasurmentScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -81,9 +85,9 @@ export function EditSingleMeasurmentScreen() {
         setAssessment(params.assessment);
         setValue(getDefaultValue(params.assessment.type));
         if (params.selectedDate) {
-          setDate(normalizeToDate(new Date(params.selectedDate)));
+          setDate(deserializeDateOnly(params.selectedDate));
         } else {
-          setDate(normalizeToDate(new Date()));
+          setDate(getTodayDateOnly());
         }
         const groups = await dbGetGroups(db);
         setGroups(groups);
@@ -118,7 +122,7 @@ export function EditSingleMeasurmentScreen() {
 
   const handleDateChange = (_: DateTimePickerChangeEvent, newDate?: Date) => {
     if (newDate) {
-      setDate(normalizeToDate(newDate));
+      setDate(newDate);
       setDateError(false);
     }
     setIsDatePickerOpened(false);
@@ -150,7 +154,7 @@ export function EditSingleMeasurmentScreen() {
               );
             const existingUnscheduledMeasurmentRecordsWithinDate =
               existingUnscheduledMeasurmentRecords.filter(
-                (mr) => date !== null && date.getTime() === mr.date.getTime(),
+                (mr) => date !== null && isEqualDateOnly(date, mr.date),
               );
             if (
               !existingAssessemtnSchedulesWithinDate.some((as) =>
@@ -302,7 +306,7 @@ export function EditSingleMeasurmentScreen() {
             value={date ?? new Date()}
             onValueChange={handleDateChange}
             onDismiss={handleDateDismiss}
-            maximumDate={getToday()}
+            maximumDate={getTodayDateOnly()}
           />
         ) : (
           ""

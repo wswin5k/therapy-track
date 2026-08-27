@@ -9,17 +9,17 @@ export const frequencySelectionMap: { [key: string]: Frequency } = {
 };
 
 export function assingDefaultGroups(groups: Group[]): Map<number, number> {
-  const doseIdxToGroup = new Map();
+  const dosageIdxToGroup = new Map();
 
   groups.forEach((g, idx) => {
     if (g.name === "Morning") {
-      doseIdxToGroup.set(0, idx);
+      dosageIdxToGroup.set(0, idx);
     } else if (g.name === "Afternoon") {
-      doseIdxToGroup.set(1, idx);
+      dosageIdxToGroup.set(1, idx);
     } else if (g.name === "Evening") {
-      doseIdxToGroup.set(2, idx);
+      dosageIdxToGroup.set(2, idx);
     }
   });
 
-  return doseIdxToGroup;
+  return dosageIdxToGroup;
 }

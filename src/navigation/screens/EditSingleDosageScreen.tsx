@@ -22,8 +22,8 @@ import { MedicineParam, RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToDoseHeader } from "../enumMappings";
-import { getToday } from "../utils";
+import { baseUnitToDosageHeader } from "../enumMappings";
+import { deserializeDateOnly, getTodayDateOnly } from "../../dateOnlyUtils";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -41,7 +41,7 @@ export function EditSingleDosageScreen() {
   const [dateError, setDateError] = React.useState<boolean>(false);
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
-  const [dose, setDose] = React.useState<number>(1);
+  const [amount, setAmount] = React.useState<number>(1);
   const groupIdxRef = React.useRef<number | null>(null);
 
   const [medicine, setMedicine] = React.useState<MedicineParam | null>(null);
@@ -56,9 +56,9 @@ export function EditSingleDosageScreen() {
         };
         setMedicine(params.medicine);
         if (params.selectedDate) {
-          setDate(new Date(params.selectedDate));
+          setDate(deserializeDateOnly(params.selectedDate));
         } else {
-          setDate(new Date());
+          setDate(getTodayDateOnly());
         }
         const groups = await dbGetGroups(db);
         setGroups(groups);
@@ -85,11 +85,11 @@ export function EditSingleDosageScreen() {
   const validate = (): {
     date: Date;
     medicine: MedicineParam;
-    doseAmount: number;
+    dosageAmount: number;
   } | null => {
     if (date) {
       if (medicine) {
-        return { date: date, medicine: medicine, doseAmount: dose };
+        return { date: date, medicine: medicine, dosageAmount: amount };
       } else {
         throw Error("Medicine has not been set");
       }
@@ -111,7 +111,7 @@ export function EditSingleDosageScreen() {
     await dbInsertUnscheduledDosageRecord(db, {
       date: dataValidated.date,
       medicineId: medicineId,
-      doseAmount: dataValidated.doseAmount,
+      dosageAmount: dataValidated.dosageAmount,
       group:
         groupIdxRef.current !== null ? groups[groupIdxRef.current].dbId : null,
     });
@@ -119,8 +119,8 @@ export function EditSingleDosageScreen() {
     navigation.popToTop();
   };
 
-  const handleDoseChange = (value: number) => {
-    setDose(value);
+  const handleAmountChange = (value: number) => {
+    setAmount(value);
   };
 
   const handleGroupChange = (groupIdx: number) => {
@@ -128,7 +128,7 @@ export function EditSingleDosageScreen() {
   };
 
   const doseHeader = medicine
-    ? baseUnitToDoseHeader(medicine.baseUnit)
+    ? baseUnitToDosageHeader(medicine.baseUnit)
     : "Dose";
 
   return (
@@ -138,8 +138,8 @@ export function EditSingleDosageScreen() {
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
             {doseHeader}
           </Text>
-          <View style={styles.doseContainer}>
-            <SmallNumberStepper onChange={handleDoseChange} />
+          <View style={styles.dosagesContainer}>
+            <SmallNumberStepper onChange={handleAmountChange} />
           </View>
         </View>
 
@@ -199,7 +199,7 @@ export function EditSingleDosageScreen() {
             value={date ?? new Date()}
             onValueChange={handleDateChange}
             onDismiss={handleDateDismiss}
-            maximumDate={getToday()}
+            maximumDate={getTodayDateOnly()}
           />
         ) : (
           ""
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
-  doseContainer: {
+  dosagesContainer: {
     width: "45%",
     height: 52,
   },

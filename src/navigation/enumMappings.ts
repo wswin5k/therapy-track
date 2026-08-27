@@ -45,7 +45,7 @@ export function baseUnitToUnitSelectionLabel(key: BaseUnit) {
   return capitalizeFirstLetter(baseUnitToSingularLongForm[key]);
 }
 
-export function baseUnitToDoseHeader(key: BaseUnit): string {
+export function baseUnitToDosageHeader(key: BaseUnit): string {
   return capitalizeFirstLetter(
     i18next.t(baseUnitToSingularShortForm[key], { count: 2 }),
   );

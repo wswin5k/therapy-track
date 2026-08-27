@@ -14,7 +14,7 @@ import {
   useTheme,
 } from "@react-navigation/native";
 import {
-  dbDeleteSchedule,
+  dbDeleteMedicineSchedule,
   dbDeleteScheduledDosageRecordsForSchedule,
   dbGetMedicineSchedules,
 } from "../../models/dbAccess";
@@ -58,7 +58,7 @@ function ScheduleListItem({
 
   const confirmDelete = async () => {
     await dbDeleteScheduledDosageRecordsForSchedule(db, schedule.dbId);
-    await dbDeleteSchedule(db, schedule.dbId);
+    await dbDeleteMedicineSchedule(db, schedule.dbId);
     setDeleteDialogVisible(false);
     await loadSchedules();
   };

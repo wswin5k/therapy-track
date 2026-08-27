@@ -66,7 +66,7 @@ export class Medicine {
   }
 }
 
-export class Dose {
+export class Dosage {
   amount: number;
   index: number;
   offset: number | null;
@@ -93,7 +93,7 @@ export class Schedule {
   startDate: Date;
   endDate: Date | null;
   freq: Frequency;
-  doses: Dose[];
+  dosages: Dosage[];
   dbId: number;
 
   constructor(
@@ -101,14 +101,14 @@ export class Schedule {
     startDate: Date,
     endDate: Date | null,
     freq: Frequency,
-    doses: Dose[],
+    dosages: Dosage[],
     dbId: number,
   ) {
     this.medicine = medicine;
     this.startDate = startDate;
     this.endDate = endDate;
     this.freq = freq;
-    this.doses = doses;
+    this.dosages = dosages;
     this.dbId = dbId;
   }
 }

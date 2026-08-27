@@ -339,7 +339,7 @@ export function RecordHistoryScreen() {
       const dailyRow =
         dayToHeaderToValues.get(dateStr) || new Map<string, number>();
 
-      const schedule = idToSchedule.get(r.scheduleId);
+      const schedule = idToSchedule.get(r.medicineScheduleId);
       if (!schedule) {
         throw Error("Record not connected to medicine schedule.");
       }
@@ -358,7 +358,7 @@ export function RecordHistoryScreen() {
         );
 
         let amountTotal = dailyRow.get(fullHeader) || 0;
-        amountTotal += ai.amount * schedule.doses[r.doseIndex].amount;
+        amountTotal += ai.amount * schedule.dosages[r.dosageIndex].amount;
         dailyRow.set(fullHeader, amountTotal);
       }
       dayToHeaderToValues.set(dateStr, dailyRow);
