@@ -178,7 +178,7 @@ function UnscheduledDosage({
           styles.scheduleItem,
           {
             borderColor: theme.colors.border,
-            filter: optionsOpened ? "blur(4px), opacity(50%)" : "opacity(50%)",
+            filter: optionsOpened ? "blur(4px), opacity(50%)" : "",
             borderBottomWidth: bottomBorder ? 2 : 0,
           },
         ]}
@@ -193,9 +193,8 @@ function UnscheduledDosage({
         <View style={[styles.scheduleContent, { flex: 5 }]}>
           <Text
             style={[
-              styles.contentText,
+              styles.unscheduledContentText,
               {
-                textDecorationLine: "line-through",
                 color: theme.colors.text,
               },
             ]}
@@ -208,11 +207,6 @@ function UnscheduledDosage({
               count: dosage.amount,
             })}
           </Text>
-          <Ionicons
-            name="checkmark-circle"
-            size={24}
-            color={theme.colors.success}
-          />
         </View>
       </TouchableOpacity>
     </View>
@@ -280,7 +274,7 @@ function UnscheduledMeasurment({
           styles.scheduleItem,
           {
             borderColor: theme.colors.border,
-            filter: optionsOpened ? "blur(4px), opacity(50%)" : "opacity(50%)",
+            filter: optionsOpened ? "blur(4px), opacity(50%)" : "",
             borderBottomWidth: bottomBorder ? 2 : 0,
           },
         ]}
@@ -295,9 +289,8 @@ function UnscheduledMeasurment({
         <View style={[styles.scheduleContent, { flex: 5 }]}>
           <Text
             style={[
-              styles.contentText,
+              styles.unscheduledContentText,
               {
-                textDecorationLine: "line-through",
                 color: theme.colors.text,
               },
             ]}
@@ -307,11 +300,6 @@ function UnscheduledMeasurment({
             {"  –  "}
             {t("assessment")}
           </Text>
-          <Ionicons
-            name="checkmark-circle"
-            size={24}
-            color={theme.colors.success}
-          />
         </View>
       </TouchableOpacity>
     </View>
@@ -340,7 +328,6 @@ function ScheduledDosage({
         styles.scheduleItem,
         {
           borderColor: theme.colors.border,
-          filter: isDone ? "opacity(50%)" : "",
           borderBottomWidth: bottomBorder ? 2 : 0,
         },
       ]}
@@ -357,7 +344,6 @@ function ScheduledDosage({
           style={[
             styles.contentText,
             {
-              textDecorationLine: isDone ? "line-through" : "none",
               color: theme.colors.text,
             },
           ]}
@@ -410,7 +396,6 @@ function ScheduledMeasurment({
         styles.scheduleItem,
         {
           borderColor: theme.colors.border,
-          filter: isDone ? "opacity(50%)" : "",
           borderBottomWidth: bottomBorder ? 2 : 0,
         },
       ]}
@@ -427,7 +412,6 @@ function ScheduledMeasurment({
           style={[
             styles.contentText,
             {
-              textDecorationLine: isDone ? "line-through" : "none",
               color: theme.colors.text,
             },
           ]}
@@ -838,7 +822,9 @@ export function Home({ date }: { date: Date }) {
     return (
       <>
         {(dosages || measurments) && (
-          <Text style={[styles.modeLabel, { color: theme.colors.text }]}>
+          <Text
+            style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
+          >
             Scheduled
           </Text>
         )}
@@ -1056,6 +1042,12 @@ const styles = StyleSheet.create({
     fontWeight: 400,
     marginBottom: 4,
     maxWidth: "85%",
+  },
+  unscheduledContentText: {
+    fontSize: 15,
+    fontWeight: 400,
+    marginBottom: 4,
+    maxWidth: "100%",
   },
   frequency: {
     fontSize: 14,
