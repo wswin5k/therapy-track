@@ -42,8 +42,12 @@ import {
   ValueDomain,
 } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
-import { dayDifference, normalizeToDate } from "../utils";
-import { getToday } from "../utils";
+import {
+  dayDifference,
+  isEqualDateOnly,
+  normalizeToDateOnly,
+} from "../../dateOnlyUtils";
+import { getTodayDateOnly } from "../../dateOnlyUtils";
 import * as Notifications from "expo-notifications";
 import { FlickerView } from "../../components/FlickerView";
 
@@ -445,7 +449,7 @@ export function Home({ date }: { date: Date }) {
   const theme = useTheme();
 
   const isFuture = React.useMemo(() => {
-    return date > getToday();
+    return date > getTodayDateOnly();
   }, [date]);
 
   const [groups, setGroups] = React.useState<Map<number | null, Group>>(
@@ -489,15 +493,9 @@ export function Home({ date }: { date: Date }) {
 
   const loadScheduledDosages = React.useCallback(async () => {
     const result = await dbGetMedicineSchedules(db);
-    const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
-      const startTime = new Date(s.startDate.toDateString()).getTime();
-      const endTime = s.endDate
-        ? new Date(s.endDate.toDateString()).getTime()
-        : null;
       const timeMatch =
-        startTime <= selectedTime &&
-        (!endTime || (endTime && selectedTime <= endTime));
+        s.startDate <= date && (!s.endDate || (s.endDate && date <= s.endDate));
 
       let dayFreqMatch = true;
       if (s.freq.intervalUnit === "week") {
@@ -517,19 +515,20 @@ export function Home({ date }: { date: Date }) {
 
     let newScheduledDosages = new Map<number | null, DosageInfo[]>();
     for (const s of schedulesToday) {
-      for (const dose of s.doses) {
-        const groupId = dose.groupId;
+      for (const dosage of s.dosages) {
+        const groupId = dosage.groupId;
         const groupDosages = newScheduledDosages.get(groupId) || [];
         const dosageRecord = dosageRecords.find(
-          (dr) => dr.scheduleId === s.dbId && dr.doseIndex === dose.index,
+          (dr) =>
+            dr.medicineScheduleId === s.dbId && dr.dosageIndex === dosage.index,
         );
         const dosageRecordId = dosageRecord ? dosageRecord.dbId : null;
         groupDosages.push(
           new DosageInfo(
             s.medicine.name,
             s.medicine.baseUnit,
-            dose.amount,
-            dose.index,
+            dosage.amount,
+            dosage.index,
             s.dbId,
             dosageRecordId,
             groupId,
@@ -549,15 +548,9 @@ export function Home({ date }: { date: Date }) {
 
   const loadScheduledMeasurments = React.useCallback(async () => {
     const result = await dbGetAssessmentSchedules(db);
-    const selectedTime = date.getTime();
     const schedulesToday = result.filter((s) => {
-      const startTime = new Date(s.startDate.toDateString()).getTime();
-      const endTime = s.endDate
-        ? new Date(s.endDate.toDateString()).getTime()
-        : null;
       const timeMatch =
-        startTime <= selectedTime &&
-        (!endTime || (endTime && selectedTime <= endTime));
+        s.startDate <= date && (!s.endDate || (s.endDate && date <= s.endDate));
 
       let dayFreqMatch = true;
       if (s.freq.intervalUnit === "week") {
@@ -718,10 +711,10 @@ export function Home({ date }: { date: Date }) {
       response &&
       response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
     ) {
-      const notificationDate = normalizeToDate(
+      const notificationDate = normalizeToDateOnly(
         new Date(response.notification.date),
       );
-      if (notificationDate.getTime() !== normalizeToDate(date).getTime()) {
+      if (isEqualDateOnly(notificationDate, date)) {
         return;
       }
       const data = response.notification.request.content.data;
@@ -747,9 +740,9 @@ export function Home({ date }: { date: Date }) {
       await dbDeleteScheduledDosageRecord(db, dosage.dosageRecordId);
     } else {
       await dbInsertScheduledDosageRecord(db, {
-        scheduleId: dosage.scheduleId,
+        medicineScheduleId: dosage.scheduleId,
         date,
-        doseIndex: dosage.index,
+        dosageIndex: dosage.index,
       });
     }
     await loadScheduledDosages();
@@ -1053,7 +1046,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 2,
   },
-  doses: {
+  dosages: {
     fontSize: 14,
     marginBottom: 2,
   },

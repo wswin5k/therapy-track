@@ -16,7 +16,7 @@ import {
 import {
   dbDeleteGroup,
   dbGetGroups,
-  dbGroupHasDoses,
+  dbGroupHasDosagesOrMeasurments,
   dbGroupHasUnscheduledRecords,
 } from "../../models/dbAccess";
 import { Group } from "../../models/Frequency";
@@ -137,7 +137,7 @@ function GroupListItem({
         visible={deleteRefusalDialogVisible}
         title={t("Group is in use")}
         message={t(
-          "Cannot delete group while it's assigned to doses or records",
+          "Cannot delete a group while it's assigned to schedules or records",
         )}
         closeText={t("Close")}
         onClose={closeDeleteRefusal}
@@ -190,9 +190,9 @@ export function GroupListScreen() {
 
     const newGroupsWithUsages = new Set<number>();
     for (const group of groups) {
-      const hasDoses = await dbGroupHasDoses(db, group.dbId);
+      const hasDosages = await dbGroupHasDosagesOrMeasurments(db, group.dbId);
       const hasRecords = await dbGroupHasUnscheduledRecords(db, group.dbId);
-      if (hasDoses || hasRecords) {
+      if (hasDosages || hasRecords) {
         newGroupsWithUsages.add(group.dbId);
       }
     }

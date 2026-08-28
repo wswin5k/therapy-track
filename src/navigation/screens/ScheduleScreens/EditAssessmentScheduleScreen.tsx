@@ -35,7 +35,6 @@ import { assingDefaultGroups, frequencySelectionMap } from "./common";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { UnscheduledMeasurmentRecord } from "../../../models/Records";
-import { normalizeToDate } from "../../utils";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -140,7 +139,7 @@ export default function EditAssessmentScheduleScreen() {
   };
   const handleStartDateChange = (_: DateTimePickerChangeEvent, date?: Date) => {
     if (date) {
-      setStartDate(normalizeToDate(date));
+      setStartDate(date);
       setStartDateError(false);
     }
     setIsStartDatePickerOpened(false);
@@ -158,7 +157,7 @@ export default function EditAssessmentScheduleScreen() {
   };
   const handleEndDateChange = (_: DateTimePickerChangeEvent, date?: Date) => {
     if (date) {
-      setEndDate(normalizeToDate(date));
+      setEndDate(date);
     }
     setIsEndDatePickerOpened(false);
   };
@@ -289,8 +288,8 @@ export default function EditAssessmentScheduleScreen() {
     setFreq(item);
     const freq = frequencySelectionMap[item];
     freqRef.current = freq;
-    if (freq.numberOfDoses !== nMeasurments) {
-      setNMeasurments(freq.numberOfDoses);
+    if (freq.numberOfDosages !== nMeasurments) {
+      setNMeasurments(freq.numberOfDosages);
       updateGroupsRefWithDefaults();
     }
   };

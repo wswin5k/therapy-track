@@ -14,11 +14,11 @@ import {
   useTheme,
 } from "@react-navigation/native";
 import {
-  dbDeleteSchedule,
+  dbDeleteMedicineSchedule,
   dbDeleteScheduledDosageRecordsForSchedule,
   dbGetMedicineSchedules,
 } from "../../models/dbAccess";
-import { Schedule } from "../../models/MedicineSchedule";
+import { MedicineSchedule } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { RootStackParamList } from "..";
@@ -40,7 +40,7 @@ function ScheduleListItem({
   handleOptionsToggle,
   onPress,
 }: {
-  schedule: Schedule;
+  schedule: MedicineSchedule;
   loadSchedules: () => Promise<void>;
   optionsOpened: boolean;
   handleOptionsToggle: () => void;
@@ -58,7 +58,7 @@ function ScheduleListItem({
 
   const confirmDelete = async () => {
     await dbDeleteScheduledDosageRecordsForSchedule(db, schedule.dbId);
-    await dbDeleteSchedule(db, schedule.dbId);
+    await dbDeleteMedicineSchedule(db, schedule.dbId);
     setDeleteDialogVisible(false);
     await loadSchedules();
   };
@@ -187,7 +187,7 @@ export function MedicineSchedulesListScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation();
 
-  const [schedules, setSchedules] = React.useState<Schedule[]>([]);
+  const [schedules, setSchedules] = React.useState<MedicineSchedule[]>([]);
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
 
   const loadSchedules = React.useCallback(async () => {

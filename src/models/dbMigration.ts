@@ -25,16 +25,16 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       base_unit TEXT NOT NULL,
       active_ingredients TEXT NOT NULL );
 
-      CREATE TABLE doses (id INTEGER PRIMARY KEY NOT NULL,
+      CREATE TABLE dosages (id INTEGER PRIMARY KEY NOT NULL,
       amount REAL NOT NULL,
       index_ INTEGER NOT NULL,
       offset INTEGER,
       group_ INTEGER,
-      schedule INTEGER,
+      medicine_schedule INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
-      FOREIGN KEY(schedule) REFERENCES schedules(id));
+      FOREIGN KEY(medicine_schedule) REFERENCES medicine_schedules(id));
 
-      CREATE TABLE schedules (
+      CREATE TABLE medicine_schedules (
       id INTEGER PRIMARY KEY NOT NULL,
       medicine INTEGER,
       start_date TEXT NOT NULL,
@@ -44,11 +44,11 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE scheduled_dosage_records (
       id INTEGER PRIMARY KEY NOT NULL,
-      record_date TEXT NOT NULL,
+      record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,
-      schedule INTEGER,
-      dose_index INTEGER,
-      FOREIGN KEY(schedule) REFERENCES schedules(id));
+      medicine_schedule INTEGER,
+      dosage_index INTEGER,
+      FOREIGN KEY(medicine_schedule) REFERENCES medicine_schedules(id));
 
       CREATE TABLE groups (
       id INTEGER PRIMARY KEY NOT NULL,
@@ -59,10 +59,10 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE unscheduled_dosage_records (
       id INTEGER PRIMARY KEY NOT NULL,
-      record_date TEXT NOT NULL,
+      record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,
       medicine INTEGER NOT NULL,
-      dose_amount REAL NOT NULL,
+      dosage_amount REAL NOT NULL,
       group_ INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(medicine) REFERENCES medicines(id));
@@ -71,11 +71,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       INSERT INTO groups (name, color) VALUES ("Afternoon", "#30c82dff");
       INSERT INTO groups (name, color) VALUES ("Evening", "#2f39c9ff");
 
-    `);
-    currentDbVersion = 1;
-  }
-  if (currentDbVersion === 1) {
-    await db.execAsync(`
       CREATE TABLE assessments (id INTEGER PRIMARY KEY NOT NULL,
       name TEXT NOT NULL,
       type TEXT NOT NULL,
@@ -99,7 +94,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     
       CREATE TABLE scheduled_measurment_records (
       id INTEGER PRIMARY KEY NOT NULL,
-      record_date TEXT NOT NULL,
+      record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,
       assessment_schedule INTEGER,
       measurment_index INTEGER,
@@ -108,7 +103,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE unscheduled_measurment_records (
       id INTEGER PRIMARY KEY NOT NULL,
-      record_date TEXT NOT NULL,
+      record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,
       assessment INTEGER NOT NULL,
       value TEXT NOT NULL,
@@ -116,7 +111,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(assessment) REFERENCES assessments(id));
     `);
-    currentDbVersion = 2;
+    currentDbVersion = 1;
   }
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }

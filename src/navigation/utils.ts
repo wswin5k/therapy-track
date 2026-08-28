@@ -1,10 +1,3 @@
-export function dayDifference(firstTime: Date, secondDate: Date): number {
-  const oneDay = 24 * 60 * 60 * 1000;
-  return Math.round(
-    Math.abs((firstTime.getTime() - secondDate.getTime()) / oneDay),
-  );
-}
-
 export function mixColors(
   color1: string,
   color2: string,
@@ -41,17 +34,6 @@ export function mixColors(
   const b = Math.round(b1 * w + b2 * (1 - w));
 
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
-}
-
-export function getToday(): Date {
-  const today = new Date();
-  today.setHours(12, 0, 0, 0);
-  return today;
-}
-
-export function normalizeToDate(date: Date): Date {
-  date.setUTCHours(0, 0, 0, 0);
-  return date;
 }
 
 export function isEqualLowerCase(a: string | null, b: string | null): boolean {

@@ -28,8 +28,8 @@ import { MedicineParam, RootStackParamList } from "../..";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   dbGetGroups,
-  dbInsertSchedule,
-  dbInsertScheduleWithMedicine,
+  dbInsertMedicineSchedule,
+  dbInsertMedicineScheduleWithMedicine,
 } from "../../../models/dbAccess";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../../components/DropdownPicker";
@@ -48,19 +48,19 @@ const frequencySelectionMap: { [key: string]: Frequency } = {
 };
 
 function assingDefaultGroups(groups: Group[]): Map<number, number> {
-  const doseIdxToGroup = new Map();
+  const dosageIdxToGroup = new Map();
 
   groups.forEach((g, idx) => {
     if (g.name === "Morning") {
-      doseIdxToGroup.set(0, idx);
+      dosageIdxToGroup.set(0, idx);
     } else if (g.name === "Afternoon") {
-      doseIdxToGroup.set(1, idx);
+      dosageIdxToGroup.set(1, idx);
     } else if (g.name === "Evening") {
-      doseIdxToGroup.set(2, idx);
+      dosageIdxToGroup.set(2, idx);
     }
   });
 
-  return doseIdxToGroup;
+  return dosageIdxToGroup;
 }
 
 type EditMedicineScheduleScreenNavigationProp = NativeStackNavigationProp<
@@ -79,12 +79,12 @@ export default function EditMedicineScheduleScreen() {
   const freqRef = React.useRef<Frequency | null>(null);
   const [freqError, setFreqError] = React.useState<boolean>(false);
 
-  const [nDoses, setNDoses] = React.useState<number>(1);
+  const [nDosages, setNDosages] = React.useState<number>(1);
   const amountsRef = React.useRef<number[]>(
-    Array.from({ length: nDoses }, () => 1),
+    Array.from({ length: nDosages }, () => 1),
   );
   const groupsRef = React.useRef<(number | null)[]>(
-    Array.from({ length: nDoses }, () => null),
+    Array.from({ length: nDosages }, () => null),
   );
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
@@ -103,10 +103,10 @@ export default function EditMedicineScheduleScreen() {
 
   const updateGroupsRefWithDefaults = React.useCallback(() => {
     const defaultGroups = assingDefaultGroups(groups);
-    for (let i = 0; i < nDoses; i++) {
+    for (let i = 0; i < nDosages; i++) {
       groupsRef.current[i] = defaultGroups.get(i) ?? null;
     }
-  }, [groups, nDoses]);
+  }, [groups, nDosages]);
 
   useFocusEffect(
     React.useCallback(
@@ -211,7 +211,7 @@ export default function EditMedicineScheduleScreen() {
       return;
     }
 
-    const doses = Array.from(
+    const dosages = Array.from(
       amountsRef.current.entries(),
       ([index, amount]) => {
         const groupId =
@@ -223,19 +223,19 @@ export default function EditMedicineScheduleScreen() {
     );
 
     if (medicine && medicine.dbId) {
-      await dbInsertSchedule(db, medicine.dbId, {
+      await dbInsertMedicineSchedule(db, medicine.dbId, {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        doses,
+        dosages,
       });
       navigation.popToTop();
     } else if (medicine) {
-      await dbInsertScheduleWithMedicine(db, medicine, {
+      await dbInsertMedicineScheduleWithMedicine(db, medicine, {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        doses,
+        dosages,
       });
       navigation.popToTop();
     } else {
@@ -252,13 +252,13 @@ export default function EditMedicineScheduleScreen() {
     setFreq(item);
     const freq = frequencySelectionMap[item];
     freqRef.current = freq;
-    if (freq.numberOfDoses !== nDoses) {
-      setNDoses(freq.numberOfDoses);
+    if (freq.numberOfDosages !== nDosages) {
+      setNDosages(freq.numberOfDosages);
       updateGroupsRefWithDefaults();
     }
   };
 
-  const createDoseInputHandler = (idx: number) => {
+  const createDosagesInputHandler = (idx: number) => {
     return (value: number) => {
       amountsRef.current[idx] = value;
     };
@@ -289,29 +289,29 @@ export default function EditMedicineScheduleScreen() {
           />
         </View>
 
-        <View style={[styles.rowDosesHeader]}>
-          <View style={styles.doseHeaderContainer}>
+        <View style={[styles.rowDosagesHeader]}>
+          <View style={styles.dosageHeaderContainer}>
             <Text
-              style={[styles.doseHeaderLabel, { color: theme.colors.text }]}
+              style={[styles.dosageHeaderLabel, { color: theme.colors.text }]}
             >
               {t(doseHeader)}
             </Text>
           </View>
-          <View style={styles.doseHeaderContainer}>
+          <View style={styles.dosageHeaderContainer}>
             <Text
-              style={[styles.doseHeaderLabel, { color: theme.colors.text }]}
+              style={[styles.dosageHeaderLabel, { color: theme.colors.text }]}
             >
               {t("Group (optional)")}
             </Text>
           </View>
         </View>
 
-        <View style={styles.dosesContainer}>
-          {Array.from({ length: nDoses }, (_, idx) => (
-            <View key={idx} style={styles.rowDose}>
-              <View style={styles.doseAmountContainer}>
+        <View style={styles.dosagesContainer}>
+          {Array.from({ length: nDosages }, (_, idx) => (
+            <View key={idx} style={styles.rowDosage}>
+              <View style={styles.dosageAmountContainer}>
                 <SmallNumberStepper
-                  onChange={createDoseInputHandler(idx)}
+                  onChange={createDosagesInputHandler(idx)}
                   defaultValue={1}
                 />
               </View>
@@ -445,30 +445,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 60,
   },
-  dosesContainer: {
+  dosagesContainer: {
     marginBottom: 30,
   },
-  rowDosesHeader: {
+  rowDosagesHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     height: 40,
   },
-  rowDose: {
+  rowDosage: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     height: 60,
   },
-  doseHeaderLabel: {
+  dosageHeaderLabel: {
     fontSize: 16,
   },
-  doseHeaderContainer: {
+  dosageHeaderContainer: {
     width: "45%",
     justifyContent: "center",
     alignItems: "center",
   },
-  doseAmountContainer: {
+  dosageAmountContainer: {
     width: "45%",
     height: 52,
   },

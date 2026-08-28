@@ -20,7 +20,8 @@ import {
   View,
   VirtualizedList,
 } from "react-native";
-import { dayDifference, getToday } from "../utils";
+import { dayDifference, serializeDateOnly } from "../../dateOnlyUtils";
+import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -42,13 +43,13 @@ export function HomeSwipeable() {
     React.useState<boolean>(false);
 
   const getDate = (slotValue: number) => {
-    const newDate = getToday();
+    const newDate = getTodayDateOnly();
     newDate.setDate(newDate.getDate() + slotValue);
     return newDate;
   };
   const getSelectedDateCapped = () => {
     const selectedDate = getDate(currentIndex - INIITIAL_INDEX);
-    const today = getToday();
+    const today = getTodayDateOnly();
     return selectedDate > today ? today : selectedDate;
   };
 
@@ -119,7 +120,7 @@ export function HomeSwipeable() {
   const handleDatePick = (_: DateTimePickerChangeEvent, newDate?: Date) => {
     setIsDatePickerOpened(false);
     if (newDate) {
-      const today = getToday();
+      const today = getTodayDateOnly();
       const days = dayDifference(today, newDate);
       let targetIndex = 0;
       if (newDate > today) {
@@ -148,7 +149,7 @@ export function HomeSwipeable() {
       onPress: () =>
         navigation.navigate("SelectEntryTypeScreen", {
           mode: "one-time",
-          selectedDate: getSelectedDateCapped().toISOString(),
+          selectedDate: serializeDateOnly(getSelectedDateCapped()),
         }),
     },
     {
@@ -156,7 +157,7 @@ export function HomeSwipeable() {
       onPress: () =>
         navigation.navigate("SelectEntryTypeScreen", {
           mode: "schedule",
-          selectedDate: getSelectedDateCapped().toISOString(),
+          selectedDate: serializeDateOnly(getSelectedDateCapped()),
         }),
     },
   ];

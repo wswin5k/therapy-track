@@ -25,7 +25,7 @@ import {
   dbGetUnscheduledMeasurmentRecords,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { Schedule } from "../../models/MedicineSchedule";
+import { MedicineSchedule } from "../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
@@ -38,9 +38,10 @@ import {
 import { Group } from "../../models/Frequency";
 import { baseUnitShorFormPlural } from "../enumMappings";
 import StickyTable from "../../components/StickyTable";
+import { getTodayDateOnly, serializeDateOnly } from "../../dateOnlyUtils";
 
 function extractDate(datetime: Date): string {
-  return datetime.toISOString().split("T")[0];
+  return serializeDateOnly(datetime);
 }
 
 function escapeCSVField(field: string): string {
@@ -288,7 +289,7 @@ export function RecordHistoryScreen() {
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
 
     const schedules = await dbGetMedicineSchedules(db);
-    const idToSchedule = new Map<number, Schedule>();
+    const idToSchedule = new Map<number, MedicineSchedule>();
     schedules.forEach((s) => {
       idToSchedule.set(s.dbId, s);
     });
@@ -339,7 +340,7 @@ export function RecordHistoryScreen() {
       const dailyRow =
         dayToHeaderToValues.get(dateStr) || new Map<string, number>();
 
-      const schedule = idToSchedule.get(r.scheduleId);
+      const schedule = idToSchedule.get(r.medicineScheduleId);
       if (!schedule) {
         throw Error("Record not connected to medicine schedule.");
       }
@@ -358,7 +359,7 @@ export function RecordHistoryScreen() {
         );
 
         let amountTotal = dailyRow.get(fullHeader) || 0;
-        amountTotal += ai.amount * schedule.doses[r.doseIndex].amount;
+        amountTotal += ai.amount * schedule.dosages[r.dosageIndex].amount;
         dailyRow.set(fullHeader, amountTotal);
       }
       dayToHeaderToValues.set(dateStr, dailyRow);
@@ -431,8 +432,9 @@ export function RecordHistoryScreen() {
     try {
       const csvContent = generateCSV(columnHeaders, cells);
 
-      const today = new Date().toISOString().split("T")[0];
-      const fileName = `dosage-history-${today}.csv`;
+      const today = getTodayDateOnly();
+      const todayStr = serializeDateOnly(today);
+      const fileName = `dosage-history-${todayStr}.csv`;
 
       const tempFileUri = `${FileSystem.cacheDirectory}${fileName}`;
       await FileSystem.writeAsStringAsync(tempFileUri, csvContent, {
