@@ -22,7 +22,7 @@ import { MedicineParam, RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToDosageHeader } from "../enumMappings";
+import { baseUnitToDoseHeader } from "../enumMappings";
 import { deserializeDateOnly, getTodayDateOnly } from "../../dateOnlyUtils";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
@@ -128,7 +128,7 @@ export function EditSingleDosageScreen() {
   };
 
   const doseHeader = medicine
-    ? baseUnitToDosageHeader(medicine.baseUnit)
+    ? baseUnitToDoseHeader(medicine.baseUnit)
     : "Dose";
 
   return (

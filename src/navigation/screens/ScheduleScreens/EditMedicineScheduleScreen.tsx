@@ -34,7 +34,7 @@ import {
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../../components/DropdownPicker";
 import {
-  baseUnitToDosageHeader,
+  baseUnitToDoseHeader,
   frequencySelectionToDisplayForm,
 } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
@@ -271,7 +271,7 @@ export default function EditMedicineScheduleScreen() {
   };
 
   const doseHeader = medicine
-    ? baseUnitToDosageHeader(medicine.baseUnit)
+    ? baseUnitToDoseHeader(medicine.baseUnit)
     : "Dose";
 
   return (
