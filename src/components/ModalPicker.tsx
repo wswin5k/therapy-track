@@ -28,6 +28,7 @@ interface ModalPickerProps<T> {
   showTitle?: boolean;
   error?: boolean;
   disabled?: boolean;
+  disabledMessage?: string;
 }
 
 export function ModalPicker<T>({
@@ -40,6 +41,7 @@ export function ModalPicker<T>({
   showTitle = false,
   error = false,
   disabled = false,
+  disabledMessage = undefined,
 }: ModalPickerProps<T>) {
   const [modalVisible, setModalVisible] = React.useState(false);
   const theme = useTheme();
@@ -58,15 +60,10 @@ export function ModalPicker<T>({
   };
 
   const handlePress = () => {
-    if (disabled) {
-      if (Platform.OS === "android") {
-        setNumberOfPresses((prev) => prev + 1);
-        if (numberOfPresses > 2) {
-          ToastAndroid.show(
-            "Existing assessment's type cannot be modified.",
-            ToastAndroid.SHORT,
-          );
-        }
+    if (disabled && disabledMessage && Platform.OS === "android") {
+      setNumberOfPresses((prev) => prev + 1);
+      if (numberOfPresses > 2) {
+        ToastAndroid.show(disabledMessage, ToastAndroid.SHORT);
       }
     } else {
       setModalVisible(true);
