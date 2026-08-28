@@ -38,9 +38,10 @@ import {
 import { Group } from "../../models/Frequency";
 import { baseUnitShorFormPlural } from "../enumMappings";
 import StickyTable from "../../components/StickyTable";
+import { getTodayDateOnly, serializeDateOnly } from "../../dateOnlyUtils";
 
 function extractDate(datetime: Date): string {
-  return datetime.toISOString().split("T")[0];
+  return serializeDateOnly(datetime);
 }
 
 function escapeCSVField(field: string): string {
@@ -431,8 +432,9 @@ export function RecordHistoryScreen() {
     try {
       const csvContent = generateCSV(columnHeaders, cells);
 
-      const today = new Date().toISOString().split("T")[0];
-      const fileName = `dosage-history-${today}.csv`;
+      const today = getTodayDateOnly();
+      const todayStr = serializeDateOnly(today);
+      const fileName = `dosage-history-${todayStr}.csv`;
 
       const tempFileUri = `${FileSystem.cacheDirectory}${fileName}`;
       await FileSystem.writeAsStringAsync(tempFileUri, csvContent, {
