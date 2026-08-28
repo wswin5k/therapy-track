@@ -1,5 +1,6 @@
-/* The functions assume that date is represented as a Date object withing a given
- *  timezone and with all time fields set to 0.*/
+/* The functions assume that date is represented as a Date object
+ * with all time fields set to 0. To get the actual day functions utilizing
+ * local time zone should be used. */
 
 export function normalizeToDateOnly(date: Date): Date {
   date.setHours(0, 0, 0, 0);
