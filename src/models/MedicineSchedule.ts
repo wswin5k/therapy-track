@@ -88,7 +88,7 @@ export class Dosage {
   }
 }
 
-export class Schedule {
+export class MedicineSchedule {
   medicine: Medicine;
   startDate: Date;
   endDate: Date | null;

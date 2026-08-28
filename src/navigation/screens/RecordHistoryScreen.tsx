@@ -25,7 +25,7 @@ import {
   dbGetUnscheduledMeasurmentRecords,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { Schedule } from "../../models/MedicineSchedule";
+import { MedicineSchedule } from "../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
@@ -288,7 +288,7 @@ export function RecordHistoryScreen() {
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
 
     const schedules = await dbGetMedicineSchedules(db);
-    const idToSchedule = new Map<number, Schedule>();
+    const idToSchedule = new Map<number, MedicineSchedule>();
     schedules.forEach((s) => {
       idToSchedule.set(s.dbId, s);
     });

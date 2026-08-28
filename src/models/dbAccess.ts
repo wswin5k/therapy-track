@@ -1,5 +1,8 @@
 import { SQLiteDatabase } from "expo-sqlite";
-import { Schedule as MedicineSchedule, Dosage } from "./MedicineSchedule";
+import {
+  MedicineSchedule as MedicineSchedule,
+  Dosage,
+} from "./MedicineSchedule";
 import { Group } from "./Frequency";
 import { Frequency, IntervalUnit } from "./Frequency";
 import {
@@ -54,7 +57,7 @@ interface MedicineRow {
 
 interface ScheduledDosageRecordRow {
   id: number;
-  record_date: string;
+  record_datetime: string;
   date: string;
   medicine_schedule: number;
   dosage_index: number;
@@ -62,7 +65,7 @@ interface ScheduledDosageRecordRow {
 
 interface UncheduledDosageRecordRow {
   id: number;
-  record_date: string;
+  record_datetime: string;
   date: string;
   medicine: number;
   dosage_amount: number;
@@ -94,7 +97,7 @@ interface AssessmentRow {
 
 interface UncheduledMeasurmentRecordRow {
   id: number;
-  record_date: string;
+  record_datetime: string;
   date: string;
   assessment: number;
   value: string;
@@ -123,7 +126,7 @@ interface MeasurmentRow {
 
 interface ScheduledMeasurmentRecordRow {
   id: number;
-  record_date: string;
+  record_datetime: string;
   date: string;
   assessment_schedule: number;
   measurment_index: number;
@@ -300,7 +303,7 @@ function parseMedicineScheduleWithMedicineRow(
   return new MedicineSchedule(
     medicineData,
     deserializeDateOnly(row.start_date),
-    row.end_date ? deserializeDateOnly(row.start_date) : null,
+    deserializeDateOnlyNullable(row.end_date),
     frequency,
     dosages,
     row.id,
@@ -333,7 +336,7 @@ function parseAssessmentScheduleWithAssessmentRow(
   return new AssessmentSchedule(
     assessment,
     deserializeDateOnly(row.start_date),
-    deserializeDateOnlyNullable(row.start_date),
+    deserializeDateOnlyNullable(row.end_date),
     frequency,
     measurments,
     row.id,
@@ -433,6 +436,8 @@ export async function dbUpdateMedicineSchedule(
 ) {
   const startDateStr = serializeDateOnly(medicineSchedule.startDate);
   const endDateStr = serializeDateOnlyNullable(medicineSchedule.endDate);
+
+  console.log(startDateStr, endDateStr);
 
   await db.runAsync(
     `UPDATE medicine_schedules
@@ -540,7 +545,7 @@ export async function dbGetScheduledDosageRecords(
     (row) =>
       new ScheduledDosageRecord(
         row.id,
-        deserializeRecordDatetime(row.record_date),
+        deserializeRecordDatetime(row.record_datetime),
         deserializeDateOnly(row.date),
         row.medicine_schedule,
         row.dosage_index,
@@ -566,7 +571,7 @@ export async function dbGetScheduledMeasurmentRecords(
     (row) =>
       new ScheduledMeasurmentRecord(
         row.id,
-        deserializeRecordDatetime(row.record_date),
+        deserializeRecordDatetime(row.record_datetime),
         deserializeDateOnly(row.date),
         row.assessment_schedule,
         row.measurment_index,
@@ -586,7 +591,7 @@ export async function dbInsertUnscheduledDosageRecord(
 ): Promise<number> {
   const result = await db.runAsync(
     `INSERT INTO unscheduled_dosage_records 
-    (record_date, date, medicine, dosage_amount, group_) 
+    (record_datetime, date, medicine, dosage_amount, group_) 
     VALUES (?, ?, ?, ?, ?)`,
     serializeRecordDatetime(new Date()),
     serializeDateOnly(record.date),
@@ -621,7 +626,7 @@ export async function dbGetUnscheduledDosageRecords(
     (row) =>
       new UnscheduledDosageRecord(
         row.id,
-        deserializeRecordDatetime(row.record_date),
+        deserializeRecordDatetime(row.record_datetime),
         deserializeDateOnly(row.date),
         row.medicine,
         row.dosage_amount,
@@ -815,7 +820,7 @@ export async function dbInsertUnscheduledMeasurmentRecord(
   const valueStr = strigifyAssessmentValue(record.value);
   const result = await db.runAsync(
     `INSERT INTO unscheduled_measurment_records 
-    (record_date, date, assessment, value, group_) 
+    (record_datetime, date, assessment, value, group_) 
     VALUES (?, ?, ?, ?, ?)`,
     serializeRecordDatetime(new Date()),
     serializeDateOnly(record.date),
@@ -845,7 +850,7 @@ export async function dbGetUnscheduledMeasurmentRecords(
     );
     return new UnscheduledMeasurmentRecord(
       row.id,
-      deserializeRecordDatetime(row.record_date),
+      deserializeRecordDatetime(row.record_datetime),
       deserializeDateOnly(row.date),
       row.assessment,
       value,
@@ -867,7 +872,7 @@ export async function dbInsertScheduledMeasurmentRecord(
 
   const result = await db.runAsync(
     `INSERT INTO scheduled_measurment_records 
-    (record_date, date, assessment_schedule, measurment_index, value) 
+    (record_datetime, date, assessment_schedule, measurment_index, value) 
     VALUES (?, ?, ?, ?, ?)`,
     serializeRecordDatetime(new Date()),
     serializeDateOnly(record.date),

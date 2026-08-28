@@ -10,7 +10,7 @@ import {
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
-import { Schedule } from "../../../models/MedicineSchedule";
+import { MedicineSchedule } from "../../../models/MedicineSchedule";
 import {
   useFocusEffect,
   useNavigation,
@@ -43,7 +43,7 @@ export default function PartiallyEditAnyScheduleScreen() {
   const [endDate, setEndDate] = React.useState<Date | null>(null);
 
   const [schedule, setSchedule] = React.useState<
-    Schedule | AssessmentSchedule | null
+    MedicineSchedule | AssessmentSchedule | null
   >(null);
 
   useFocusEffect(
@@ -115,7 +115,8 @@ export default function PartiallyEditAnyScheduleScreen() {
     }
     if (schedule) {
       if (startDate !== schedule.startDate || endDate !== schedule.endDate) {
-        if (schedule instanceof Schedule) {
+        console.log(startDate, endDate);
+        if (schedule instanceof MedicineSchedule) {
           await dbUpdateMedicineSchedule(db, {
             dbId: schedule.dbId,
             startDate,
