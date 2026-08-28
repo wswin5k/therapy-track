@@ -15,7 +15,7 @@ import {
 } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { NAME_MAX_LENGTH } from "../../validation_constants";
+import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import {
@@ -37,7 +37,6 @@ import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonConsts";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import { isEqualLowerCase } from "../utils";
-import { VALID_NAME } from "../../validation_constants";
 
 export const TEXT_MAX_LENGTH = 200;
 const DEFAULT_NUMERIC_MAX = 10;

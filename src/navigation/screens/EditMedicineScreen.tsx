@@ -22,7 +22,7 @@ import {
   ActiveIngredient,
   Medicine,
 } from "../../models/MedicineSchedule";
-import { NAME_MAX_LENGTH } from "../../validation_constants";
+import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import {
   dbGetMedicines,
@@ -35,7 +35,6 @@ import { baseUnitToUnitSelectionLabel } from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
 import { isEqualLowerCase } from "../utils";
-import { VALID_NAME } from "../../validation_constants";
 
 class ActiveIngredientInfo {
   name: string | null;

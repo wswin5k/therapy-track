@@ -33,7 +33,7 @@ import {
   requestNotificationPermissions,
 } from "../../services/notificationService";
 import { isEqualLowerCase } from "../utils";
-import { NAME_MAX_LENGTH, VALID_NAME } from "../../validation_constants";
+import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
