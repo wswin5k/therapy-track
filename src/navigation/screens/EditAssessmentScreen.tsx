@@ -494,6 +494,9 @@ export function EditAssessmentScreen() {
           pressableStyle={styles.fullWidthPickerContainer}
           error={assessmentTypeError}
           disabled={typeInputDisabled}
+          disabledMessage={t(
+            "The type of an existing assessment cannot be modified.",
+          )}
         />
         {renderValueDomain()}
       </ScrollView>
