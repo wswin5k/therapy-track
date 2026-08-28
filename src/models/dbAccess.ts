@@ -1010,7 +1010,7 @@ export async function dbInsertAssessmentScheduleWithAssessment(
     type: AssessmentType;
     valueDomain: ValueDomain;
   },
-  assessment_schedule: {
+  assessmentSchedule: {
     startDate: Date;
     endDate: Date | null;
     measurments: {
@@ -1022,7 +1022,7 @@ export async function dbInsertAssessmentScheduleWithAssessment(
   },
 ) {
   const assessmentId = await dbInsertAssessment(db, assessment);
-  await dbInsertAssessmentSchedule(db, assessmentId, assessment_schedule);
+  await dbInsertAssessmentSchedule(db, assessmentId, assessmentSchedule);
 }
 
 async function dbGetMeasurments(
