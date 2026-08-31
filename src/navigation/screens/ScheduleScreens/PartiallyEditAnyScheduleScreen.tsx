@@ -115,7 +115,6 @@ export default function PartiallyEditAnyScheduleScreen() {
     }
     if (schedule) {
       if (startDate !== schedule.startDate || endDate !== schedule.endDate) {
-        console.log(startDate, endDate);
         if (schedule instanceof MedicineSchedule) {
           await dbUpdateMedicineSchedule(db, {
             dbId: schedule.dbId,

@@ -22,11 +22,42 @@ export function strKeyOfBaseUnit(x: BaseUnit) {
 }
 
 export enum IngredientAmountUnit {
-  Milligram = "mg",
-  Gram = "g",
-  Microgram = "µg",
-  InternationalUnit = "IU",
-  Unit = "unit",
+  Milligram = "Milligram",
+  Gram = "Gram",
+  Microgram = "Microgram",
+  InternationalUnit = "InternationalUnit",
+  Unit = "Unit",
+}
+
+export function weightUnitToGramsMultiplier(
+  unit: IngredientAmountUnit,
+): number {
+  switch (unit) {
+    case IngredientAmountUnit.Gram:
+      return 1_000_000;
+    case IngredientAmountUnit.Milligram:
+      return 1_000;
+    case IngredientAmountUnit.Microgram:
+      return 1;
+    default:
+      throw Error(`${unit} is not a weight unit.`);
+  }
+}
+
+export function isWeightUnit(unit: IngredientAmountUnit): boolean {
+  return [
+    IngredientAmountUnit.Gram,
+    IngredientAmountUnit.Milligram,
+    IngredientAmountUnit.Microgram,
+  ].includes(unit);
+}
+
+export function maxWieghtUnit(
+  units: IngredientAmountUnit[],
+): IngredientAmountUnit {
+  return [...units].sort(
+    (a, b) => weightUnitToGramsMultiplier(b) - weightUnitToGramsMultiplier(a),
+  )[0];
 }
 
 export class ActiveIngredient {

@@ -144,10 +144,16 @@ function deserializeRecordDatetime(value: string): Date {
 
 function parseActiveIngredients(json: string) {
   const aiData = JSON.parse(json);
-  return aiData.map(
-    (ai: { name: string; amount: number; unit: string }) =>
-      new ActiveIngredient(ai.name, ai.amount, ai.unit as IngredientAmountUnit),
-  );
+  return aiData.map((ai: { name: string; amount: number; unit: string }) => {
+    if (!Object.keys(IngredientAmountUnit).includes(ai.unit)) {
+      throw Error(`${ai.unit} is not a valid IngredientAmountUnit enum value.`);
+    }
+    return new ActiveIngredient(
+      ai.name,
+      ai.amount,
+      ai.unit as IngredientAmountUnit,
+    );
+  });
 }
 
 function parseValueDomain(json: string | null, assessmentType: AssessmentType) {
@@ -436,8 +442,6 @@ export async function dbUpdateMedicineSchedule(
 ) {
   const startDateStr = serializeDateOnly(medicineSchedule.startDate);
   const endDateStr = serializeDateOnlyNullable(medicineSchedule.endDate);
-
-  console.log(startDateStr, endDateStr);
 
   await db.runAsync(
     `UPDATE medicine_schedules
@@ -970,7 +974,7 @@ async function dbInsertMeasurments(
 export async function dbInsertAssessmentSchedule(
   db: SQLiteDatabase,
   assessmentId: number,
-  assessment_schedule: {
+  assessmentSchedule: {
     startDate: Date;
     endDate: Date | null;
     measurments: {
@@ -981,9 +985,9 @@ export async function dbInsertAssessmentSchedule(
     freq: Frequency;
   },
 ) {
-  const freqJson = JSON.stringify(assessment_schedule.freq);
-  const startDateStr = serializeDateOnly(assessment_schedule.startDate);
-  const endDateStr = serializeDateOnlyNullable(assessment_schedule.endDate);
+  const freqJson = JSON.stringify(assessmentSchedule.freq);
+  const startDateStr = serializeDateOnly(assessmentSchedule.startDate);
+  const endDateStr = serializeDateOnlyNullable(assessmentSchedule.endDate);
 
   const result = await db.runAsync(
     `INSERT INTO assessment_schedules 
@@ -999,7 +1003,7 @@ export async function dbInsertAssessmentSchedule(
   await dbInsertMeasurments(
     db,
     assessmentScheduleId,
-    assessment_schedule.measurments,
+    assessmentSchedule.measurments,
   );
 }
 
