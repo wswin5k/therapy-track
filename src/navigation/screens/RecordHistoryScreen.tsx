@@ -630,10 +630,7 @@ export function RecordHistoryScreen() {
 
   const handleOpenConfiguration = React.useCallback(() => {
     setIsMenuOpen(false);
-    navigation.navigate("RecordHistoryConfigurationScreen", {
-      configuration: recordHistoryConfiguration,
-    });
-  }, [navigation, recordHistoryConfiguration]);
+  }, []);
 
   React.useEffect(() => {
     navigation.setOptions({
