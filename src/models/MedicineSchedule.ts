@@ -1,3 +1,4 @@
+import { ingredientAmountUnitEnumToDisplayForm } from "../navigation/enumMappings";
 import { Frequency } from "./Frequency";
 
 export enum BaseUnit {
@@ -92,7 +93,8 @@ export class Medicine {
 
   activeIngredientsString(): string[] {
     return this.activeIngredients.map(
-      (ai) => `${ai.name} ${ai.amount}${ai.unit}`,
+      (ai) =>
+        `${ai.name} ${ai.amount}${ingredientAmountUnitEnumToDisplayForm(ai.unit)}`,
     );
   }
 }

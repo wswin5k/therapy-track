@@ -27,6 +27,7 @@ import {
 import { useSQLiteContext } from "expo-sqlite";
 import {
   IngredientAmountUnit,
+  isWeightUnit,
   maxWeightUnit,
   MedicineSchedule,
   weightUnitToGramsMultiplier,
@@ -385,25 +386,29 @@ export function RecordHistoryScreen() {
 
       if (recordHistoryConfiguration.showActiveIngredients) {
         for (const ai of medicine.activeIngredients) {
-          const fullHeader = `${ai.name} – ${baseUnitLabel}`;
-          const shortHeader = `${ai.name}`;
+          const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
+          let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
+          let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
 
-          fullActiveIngredientHeaderToWeightUnits.set(
-            fullHeader,
-            (
-              fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
-              new Set()
-            ).add(ai.unit),
-          );
-
+          let weightUnitMultiplier = 1;
+          if (isWeightUnit(ai.unit)) {
+            fullHeader = `${ai.name} – ${baseUnitLabel}`;
+            shortHeader = `${ai.name}`;
+            weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
+            fullActiveIngredientHeaderToWeightUnits.set(
+              fullHeader,
+              (
+                fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
+                new Set()
+              ).add(ai.unit),
+            );
+          }
           updateHeaderCounter(
             fullHeaderToShortHeader,
             shortHeaderCounts,
             fullHeader,
             shortHeader,
           );
-
-          const weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
           let amountTotal = dailyRow.get(fullHeader) || 0;
           amountTotal += ai.amount * r.amount * weightUnitMultiplier;
           dailyRow.set(fullHeader, amountTotal);
@@ -443,25 +448,29 @@ export function RecordHistoryScreen() {
 
       if (recordHistoryConfiguration.showActiveIngredients) {
         for (const ai of medicine.activeIngredients) {
-          const fullHeader = `${ai.name} – ${baseUnitLabel}`;
-          const shortHeader = `${ai.name}`;
+          const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
+          let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
+          let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
 
-          fullActiveIngredientHeaderToWeightUnits.set(
-            fullHeader,
-            (
-              fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
-              new Set()
-            ).add(ai.unit),
-          );
-
+          let weightUnitMultiplier = 1;
+          if (isWeightUnit(ai.unit)) {
+            fullHeader = `${ai.name} – ${baseUnitLabel}`;
+            shortHeader = `${ai.name}`;
+            weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
+            fullActiveIngredientHeaderToWeightUnits.set(
+              fullHeader,
+              (
+                fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
+                new Set()
+              ).add(ai.unit),
+            );
+          }
           updateHeaderCounter(
             fullHeaderToShortHeader,
             shortHeaderCounts,
             fullHeader,
             shortHeader,
           );
-
-          const weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
           let amountTotal = dailyRow.get(fullHeader) || 0;
           amountTotal +=
             ai.amount *
