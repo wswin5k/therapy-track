@@ -52,7 +52,7 @@ export function isWeightUnit(unit: IngredientAmountUnit): boolean {
   ].includes(unit);
 }
 
-export function maxWieghtUnit(
+export function maxWeightUnit(
   units: IngredientAmountUnit[],
 ): IngredientAmountUnit {
   return [...units].sort(

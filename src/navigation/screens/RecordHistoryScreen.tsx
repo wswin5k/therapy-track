@@ -27,7 +27,7 @@ import {
 import { useSQLiteContext } from "expo-sqlite";
 import {
   IngredientAmountUnit,
-  maxWieghtUnit as maxWeightUnit,
+  maxWeightUnit,
   MedicineSchedule,
   weightUnitToGramsMultiplier,
 } from "../../models/MedicineSchedule";
@@ -108,10 +108,7 @@ export function MenuModal({
           ]}
         >
           <TouchableOpacity
-            style={[
-              styles.menuItem,
-              { borderBottomWidth: 2, borderColor: theme.colors.border },
-            ]}
+            style={[styles.menuItem, { borderColor: theme.colors.border }]}
             onPress={handleSaveToCSV}
           >
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
@@ -680,7 +677,7 @@ export function RecordHistoryScreen() {
   );
 }
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
     padding: 36,
@@ -734,25 +731,10 @@ export const styles = StyleSheet.create({
   menuItem: {
     alignContent: "flex-start",
     padding: 20,
-    //borderWidth: 3,
+    borderBottomWidth: 2,
     width: "100%",
   },
   menuText: {
     alignItems: "center",
-  },
-  configureColumnsContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-  },
-  configurationEntry: {
-    alignContent: "flex-start",
-    padding: 20,
-    //borderWidth: 3,
-    width: "100%",
   },
 });
