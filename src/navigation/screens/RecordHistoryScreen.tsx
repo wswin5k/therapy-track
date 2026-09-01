@@ -48,8 +48,23 @@ import {
 } from "../enumMappings";
 import StickyTable from "../../components/StickyTable";
 import { getTodayDateOnly, serializeDateOnly } from "../../dateOnlyUtils";
-import { RecordHistoryConfiguration } from "./RecordHistoryConfigurationScreen";
 import { getOrThrow } from "../utils";
+
+class MovingAverage {
+  constructor(
+    public columnName: string,
+    public numberOfDays: number,
+  ) {}
+}
+export class RecordHistoryConfiguration {
+  constructor(
+    public showActiveIngredients: boolean,
+    public showMedicines: boolean,
+    public showAssessments: boolean,
+    public expandCells: boolean,
+    public movingAverages: MovingAverage[],
+  ) {}
+}
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
