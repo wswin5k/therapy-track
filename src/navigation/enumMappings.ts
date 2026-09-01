@@ -1,5 +1,5 @@
 import i18next from "i18next";
-import { BaseUnit } from "../models/MedicineSchedule";
+import { BaseUnit, IngredientAmountUnit } from "../models/MedicineSchedule";
 import { AssessmentType } from "../models/AssessmentSchedule";
 import { FrequencySelection } from "../models/Frequency";
 
@@ -52,9 +52,7 @@ export function baseUnitToDoseHeader(key: BaseUnit): string {
 }
 
 export function baseUnitShorFormPlural(key: BaseUnit): string {
-  return capitalizeFirstLetter(
-    i18next.t(baseUnitToSingularShortForm[key], { count: 2 }),
-  );
+  return i18next.t(baseUnitToSingularShortForm[key], { count: 2 });
 }
 
 export function frequencySelectionToDisplayForm(key: FrequencySelection) {
@@ -75,6 +73,19 @@ export function assessmentTypeToDisplayForm(key: AssessmentType) {
     SingleSelect: "Single select",
     MultiSelect: "Multiple select",
     Text: "Text",
+  };
+  return mapping[key];
+}
+
+export function ingredientAmountUnitEnumToDisplayForm(
+  key: IngredientAmountUnit,
+) {
+  const mapping = {
+    Milligram: "mg",
+    Gram: "g",
+    Microgram: "µg",
+    InternationalUnit: "IU",
+    Unit: "unit",
   };
   return mapping[key];
 }

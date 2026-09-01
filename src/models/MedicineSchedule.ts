@@ -1,3 +1,4 @@
+import { ingredientAmountUnitEnumToDisplayForm } from "../navigation/enumMappings";
 import { Frequency } from "./Frequency";
 
 export enum BaseUnit {
@@ -22,11 +23,42 @@ export function strKeyOfBaseUnit(x: BaseUnit) {
 }
 
 export enum IngredientAmountUnit {
-  Milligram = "mg",
-  Gram = "g",
-  Microgram = "µg",
-  InternationalUnit = "IU",
-  Unit = "unit",
+  Milligram = "Milligram",
+  Gram = "Gram",
+  Microgram = "Microgram",
+  InternationalUnit = "InternationalUnit",
+  Unit = "Unit",
+}
+
+export function weightUnitToGramsMultiplier(
+  unit: IngredientAmountUnit,
+): number {
+  switch (unit) {
+    case IngredientAmountUnit.Gram:
+      return 1_000_000;
+    case IngredientAmountUnit.Milligram:
+      return 1_000;
+    case IngredientAmountUnit.Microgram:
+      return 1;
+    default:
+      throw Error(`${unit} is not a weight unit.`);
+  }
+}
+
+export function isWeightUnit(unit: IngredientAmountUnit): boolean {
+  return [
+    IngredientAmountUnit.Gram,
+    IngredientAmountUnit.Milligram,
+    IngredientAmountUnit.Microgram,
+  ].includes(unit);
+}
+
+export function maxWeightUnit(
+  units: IngredientAmountUnit[],
+): IngredientAmountUnit {
+  return [...units].sort(
+    (a, b) => weightUnitToGramsMultiplier(b) - weightUnitToGramsMultiplier(a),
+  )[0];
 }
 
 export class ActiveIngredient {
@@ -61,7 +93,8 @@ export class Medicine {
 
   activeIngredientsString(): string[] {
     return this.activeIngredients.map(
-      (ai) => `${ai.name} ${ai.amount}${ai.unit}`,
+      (ai) =>
+        `${ai.name} ${ai.amount}${ingredientAmountUnitEnumToDisplayForm(ai.unit)}`,
     );
   }
 }

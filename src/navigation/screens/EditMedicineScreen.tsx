@@ -31,7 +31,10 @@ import {
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
-import { baseUnitToUnitSelectionLabel } from "../enumMappings";
+import {
+  baseUnitToUnitSelectionLabel,
+  ingredientAmountUnitEnumToDisplayForm,
+} from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
 import { isEqualLowerCase } from "../utils";
@@ -150,7 +153,7 @@ function ActiveIngredientRow({
           onValueChange={(unit: IngredientAmountUnit) => {
             updateCallback({ unit });
           }}
-          getLabel={(unit) => unit}
+          getLabel={(unit) => ingredientAmountUnitEnumToDisplayForm(unit)}
           placeholder="Unit"
           pressableStyle={{
             ...styles.pickerContainer,

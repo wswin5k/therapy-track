@@ -25,7 +25,13 @@ import {
   dbGetUnscheduledMeasurmentRecords,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { MedicineSchedule } from "../../models/MedicineSchedule";
+import {
+  IngredientAmountUnit,
+  isWeightUnit,
+  maxWeightUnit,
+  MedicineSchedule,
+  weightUnitToGramsMultiplier,
+} from "../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
@@ -36,9 +42,29 @@ import {
   AssessmentSchedule,
 } from "../../models/AssessmentSchedule";
 import { Group } from "../../models/Frequency";
-import { baseUnitShorFormPlural } from "../enumMappings";
+import {
+  baseUnitShorFormPlural,
+  ingredientAmountUnitEnumToDisplayForm,
+} from "../enumMappings";
 import StickyTable from "../../components/StickyTable";
 import { getTodayDateOnly, serializeDateOnly } from "../../dateOnlyUtils";
+import { getOrThrow } from "../utils";
+
+class MovingAverage {
+  constructor(
+    public columnName: string,
+    public numberOfDays: number,
+  ) {}
+}
+export class RecordHistoryConfiguration {
+  constructor(
+    public showActiveIngredients: boolean,
+    public showMedicines: boolean,
+    public showAssessments: boolean,
+    public expandCells: boolean,
+    public movingAverages: MovingAverage[],
+  ) {}
+}
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -72,10 +98,12 @@ export function MenuModal({
   visible,
   onClose,
   handleSaveToCSV,
+  handleOpenConfiguration,
 }: {
   visible: boolean;
   onClose: () => void;
   handleSaveToCSV: () => void;
+  handleOpenConfiguration: () => void;
 }) {
   const theme = useTheme();
 
@@ -103,6 +131,14 @@ export function MenuModal({
               Save to CSV
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderColor: theme.colors.border }]}
+            onPress={handleOpenConfiguration}
+          >
+            <Text style={[styles.menuText, { color: theme.colors.text }]}>
+              Configure columns
+            </Text>
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     )
@@ -120,7 +156,10 @@ export function RecordHistoryScreen() {
   const [cells, setCells] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
-
+  const [recordHistoryConfiguration, setRecordHistoryConfiguration] =
+    React.useState<RecordHistoryConfiguration>(
+      new RecordHistoryConfiguration(true, true, true, false, []),
+    );
   const formatDate = React.useCallback(
     (date: Date) => {
       return new Intl.DateTimeFormat(i18n.resolvedLanguage, {
@@ -142,13 +181,15 @@ export function RecordHistoryScreen() {
       if (shortHeaderCounts.get(shortHeader) === 1) {
         headers.push(shortHeader);
 
-        for (const headerToValues of dayToHeaderToValues.values()) {
-          const values = headerToValues.get(fullHeader);
-          if (!values) {
-            continue;
+        if (fullHeader !== shortHeader) {
+          for (const headerToValues of dayToHeaderToValues.values()) {
+            const values = headerToValues.get(fullHeader);
+            if (!values) {
+              continue;
+            }
+            headerToValues.set(shortHeader, values);
+            headerToValues.delete(fullHeader);
           }
-          headerToValues.set(shortHeader, values);
-          headerToValues.delete(fullHeader);
         }
       } else {
         headers.push(fullHeader);
@@ -170,8 +211,44 @@ export function RecordHistoryScreen() {
         shortHeader,
         (shortHeaderCounts.get(shortHeader) || 0) + 1,
       );
-    } else {
-      shortHeaderCounts.set(shortHeader, 1);
+    }
+  }
+
+  function insertActiveIngredientWeightUnits(
+    dayToHeaderToValues: Map<string, Map<string, number>>,
+    fullHeaderToShortHeader: Map<string, string>,
+    shortHeaderCounts: Map<string, number>,
+    fullHeaderToWeightUnits: Map<string, Set<IngredientAmountUnit>>,
+  ) {
+    for (const [fullHeader, weightUnits] of fullHeaderToWeightUnits) {
+      const weightUnit = maxWeightUnit([...weightUnits]);
+      const weightUnitMultiplier = weightUnitToGramsMultiplier(weightUnit);
+      const weightUnitDisplay =
+        ingredientAmountUnitEnumToDisplayForm(weightUnit);
+
+      const newFullHeader = `${fullHeader} [${weightUnitDisplay}]`;
+      const shortHeader = getOrThrow(fullHeaderToShortHeader, fullHeader);
+      const newShortHeader = `${shortHeader} [${weightUnitDisplay}]`;
+
+      fullHeaderToShortHeader.set(newFullHeader, newShortHeader);
+      fullHeaderToShortHeader.delete(fullHeader);
+
+      if (shortHeaderCounts.has(shortHeader)) {
+        shortHeaderCounts.set(
+          newShortHeader,
+          getOrThrow(shortHeaderCounts, shortHeader),
+        );
+        shortHeaderCounts.delete(shortHeader);
+      }
+
+      for (const headerToValues of dayToHeaderToValues.values()) {
+        const value = headerToValues.get(fullHeader);
+        if (!value) {
+          continue;
+        }
+        headerToValues.set(newFullHeader, value / weightUnitMultiplier);
+        headerToValues.delete(fullHeader);
+      }
     }
   }
 
@@ -231,7 +308,7 @@ export function RecordHistoryScreen() {
       }
 
       const groupLabel = getGroupLabel(r.groupId);
-      const fullHeader = `${assessment.name} ${groupLabel}`;
+      const fullHeader = `${assessment.name} – ${groupLabel}`;
       const shortHeader = assessment.name;
 
       updateHeaderCounter(
@@ -259,7 +336,7 @@ export function RecordHistoryScreen() {
       const measurment = assessmentSchedule.measurments[r.measurmentIndex];
 
       const groupLabel = getGroupLabel(measurment.groupId);
-      const fullHeader = `${assessmentSchedule.assessment.name} ${groupLabel}`;
+      const fullHeader = `${assessmentSchedule.assessment.name} – ${groupLabel}`;
       const shortHeader = assessmentSchedule.assessment.name;
 
       updateHeaderCounter(
@@ -306,6 +383,11 @@ export function RecordHistoryScreen() {
     const fullHeaderToShortHeader = new Map<string, string>();
     const shortHeaderCounts = new Map<string, number>();
 
+    const fullActiveIngredientHeaderToWeightUnits = new Map<
+      string,
+      Set<IngredientAmountUnit>
+    >();
+
     for (const r of unscheduledDosageRecords) {
       const dateStr = extractDate(r.date);
       const dailyRow =
@@ -315,23 +397,54 @@ export function RecordHistoryScreen() {
       if (!medicine) {
         throw Error("Record not connected to medicine.");
       }
+      const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
 
-      for (const ai of medicine.activeIngredients) {
-        const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
-        const fullHeader = `${ai.name} ${baseUnitLabel} [${ai.unit}]`;
-        const shortHeader = `${ai.name} [${ai.unit}]`;
+      if (recordHistoryConfiguration.showActiveIngredients) {
+        for (const ai of medicine.activeIngredients) {
+          const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
+          let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
+          let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
+
+          let weightUnitMultiplier = 1;
+          if (isWeightUnit(ai.unit)) {
+            fullHeader = `${ai.name} – ${baseUnitLabel}`;
+            shortHeader = `${ai.name}`;
+            weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
+            fullActiveIngredientHeaderToWeightUnits.set(
+              fullHeader,
+              (
+                fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
+                new Set()
+              ).add(ai.unit),
+            );
+          }
+          updateHeaderCounter(
+            fullHeaderToShortHeader,
+            shortHeaderCounts,
+            fullHeader,
+            shortHeader,
+          );
+          let amountTotal = dailyRow.get(fullHeader) || 0;
+          amountTotal += ai.amount * r.amount * weightUnitMultiplier;
+          dailyRow.set(fullHeader, amountTotal);
+        }
+      }
+
+      if (recordHistoryConfiguration.showMedicines) {
+        const header = `${medicine.name} [${baseUnitLabel}]`;
+        let amountTotal = dailyRow.get(header) || 0;
 
         updateHeaderCounter(
           fullHeaderToShortHeader,
           shortHeaderCounts,
-          fullHeader,
-          shortHeader,
+          header,
+          header,
         );
 
-        let amountTotal = dailyRow.get(fullHeader) || 0;
-        amountTotal += ai.amount * r.amount;
-        dailyRow.set(fullHeader, amountTotal);
+        amountTotal += r.amount;
+        dailyRow.set(header, amountTotal);
       }
+
       dayToHeaderToValues.set(dateStr, dailyRow);
     }
 
@@ -346,24 +459,65 @@ export function RecordHistoryScreen() {
       }
 
       const medicine = schedule.medicine;
-      for (const ai of medicine.activeIngredients) {
-        const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
-        const fullHeader = `${ai.name} ${baseUnitLabel} [${ai.unit}]`;
-        const shortHeader = `${ai.name} [${ai.unit}]`;
+      const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
+
+      if (recordHistoryConfiguration.showActiveIngredients) {
+        for (const ai of medicine.activeIngredients) {
+          const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
+          let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
+          let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
+
+          let weightUnitMultiplier = 1;
+          if (isWeightUnit(ai.unit)) {
+            fullHeader = `${ai.name} – ${baseUnitLabel}`;
+            shortHeader = `${ai.name}`;
+            weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
+            fullActiveIngredientHeaderToWeightUnits.set(
+              fullHeader,
+              (
+                fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
+                new Set()
+              ).add(ai.unit),
+            );
+          }
+          updateHeaderCounter(
+            fullHeaderToShortHeader,
+            shortHeaderCounts,
+            fullHeader,
+            shortHeader,
+          );
+          let amountTotal = dailyRow.get(fullHeader) || 0;
+          amountTotal +=
+            ai.amount *
+            schedule.dosages[r.dosageIndex].amount *
+            weightUnitMultiplier;
+          dailyRow.set(fullHeader, amountTotal);
+        }
+      }
+
+      if (recordHistoryConfiguration.showMedicines) {
+        const header = `${medicine.name} [${baseUnitLabel}]`;
 
         updateHeaderCounter(
           fullHeaderToShortHeader,
           shortHeaderCounts,
-          fullHeader,
-          shortHeader,
+          header,
+          header,
         );
 
-        let amountTotal = dailyRow.get(fullHeader) || 0;
-        amountTotal += ai.amount * schedule.dosages[r.dosageIndex].amount;
-        dailyRow.set(fullHeader, amountTotal);
+        let amountTotal = dailyRow.get(header) || 0;
+        amountTotal += schedule.dosages[r.dosageIndex].amount;
+        dailyRow.set(header, amountTotal);
       }
       dayToHeaderToValues.set(dateStr, dailyRow);
     }
+
+    insertActiveIngredientWeightUnits(
+      dayToHeaderToValues,
+      fullHeaderToShortHeader,
+      shortHeaderCounts,
+      fullActiveIngredientHeaderToWeightUnits,
+    );
 
     const headers = calculateHeaders(
       fullHeaderToShortHeader,
@@ -372,11 +526,18 @@ export function RecordHistoryScreen() {
     );
 
     return [headers, dayToHeaderToValues];
-  }, [db]);
+  }, [
+    db,
+    recordHistoryConfiguration.showActiveIngredients,
+    recordHistoryConfiguration.showMedicines,
+  ]);
 
   const loadAndCombineDataForTable = React.useCallback(async () => {
     const [medicinesHeaders, medicinesHistory] = await getMedicineData();
-    const [assessmentsHeaders, assessmentsHistory] = await getAssessmentData();
+    const [assessmentsHeaders, assessmentsHistory] =
+      recordHistoryConfiguration.showAssessments
+        ? await getAssessmentData()
+        : [[], new Map()];
 
     const newTableRows = new Array();
 
@@ -416,12 +577,24 @@ export function RecordHistoryScreen() {
     setColumnHeaders(headers);
     setRowHeaders(newRowHeaders);
     setCells(newTableRows);
-  }, [getAssessmentData, getMedicineData, formatDate]);
+  }, [
+    getAssessmentData,
+    getMedicineData,
+    formatDate,
+    recordHistoryConfiguration.showAssessments,
+  ]);
+
+  const loadConfiguration = React.useCallback(async () => {
+    setRecordHistoryConfiguration(
+      new RecordHistoryConfiguration(true, true, true, false, []),
+    );
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
       loadAndCombineDataForTable();
-    }, [loadAndCombineDataForTable]),
+      loadConfiguration();
+    }, [loadAndCombineDataForTable, loadConfiguration]),
   );
 
   const handleMenuToggle = React.useCallback(() => {
@@ -476,6 +649,10 @@ export function RecordHistoryScreen() {
     setIsMenuOpen(false);
   }, [cells, columnHeaders]);
 
+  const handleOpenConfiguration = React.useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
   React.useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -502,20 +679,23 @@ export function RecordHistoryScreen() {
   );
 
   return (
-    <DefaultMainContainer style={[styles.mainContainer]}>
+    <DefaultMainContainer>
       <MenuModal
         visible={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
+        handleOpenConfiguration={handleOpenConfiguration}
       ></MenuModal>
       {cells.length === 0 ? (
         renderEmptyState()
       ) : (
-        <StickyTable
-          columnHeaders={columnHeaders}
-          rowHeaders={rowHeaders}
-          data={cells}
-        />
+        <View style={[styles.mainContainer]}>
+          <StickyTable
+            columnHeaders={columnHeaders}
+            rowHeaders={rowHeaders}
+            data={cells}
+          />
+        </View>
       )}
     </DefaultMainContainer>
   );
@@ -533,6 +713,8 @@ const styles = StyleSheet.create({
   },
   mainContainer: {
     padding: 6,
+    width: "100%",
+    height: "100%",
   },
   tableHeader: {
     margin: 0,
@@ -565,15 +747,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     right: 0,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
     alignItems: "center",
     borderBottomWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
   },
   menuItem: {
-    alignItems: "center",
+    alignContent: "flex-start",
+    padding: 20,
+    borderBottomWidth: 2,
+    width: "100%",
   },
   menuText: {
     alignItems: "center",
