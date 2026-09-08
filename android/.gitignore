@@ -18,7 +18,7 @@ app/src/main/java/inline/
 # Bundle artifacts
 *.jsbundle
 
-#app/src/debug*
+app/src/debug*
 app/debug.keystore
 
 .kotlin/

@@ -1,8 +1,8 @@
-FROM node:24-trixie AS base
+FROM node:26-trixie AS base
 
 # Set environment variables for Android SDK
 ENV ANDROID_HOME=/opt/android-sdk
-ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/36.0.0
+ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/build-tools/37.0.0
 
 WORKDIR /app
 
@@ -60,7 +60,7 @@ RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
 
 # Accept licenses and install platform tools, build tools, and platforms
 RUN yes | sdkmanager --licenses && \
-    sdkmanager "platform-tools" "build-tools;36.0.0" "platforms;android-36"
+    sdkmanager "platform-tools" "build-tools;37.0.0" "platforms;android-37.2"
 
 # Set up global npm permissions for the unprivileged node user
 ENV NPM_CONFIG_PREFIX=/home/node/.npm-global

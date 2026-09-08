@@ -22,6 +22,19 @@ The following instructions require only adb (from Android platfrom-tools) and do
 > [!TIP]
 > The commands below have shortcuts in Makefile.
 
+## Release build
+
+1. Build a release APK.
+  ```sh
+	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
+  ```
+
+2. Connect your device and install the release application.
+
+  ```sh
+  adb install android/app/build/outputs/apk/release/app-release.apk
+  ```
+
 ## Development set-up
 
 This setup requires constant connection with the host and allows hot reloading of javascript code.
@@ -50,7 +63,7 @@ This setup requires constant connection with the host and allows hot reloading o
   docker compose build expo
   ```
 
-3. Build a debug APK.
+3. Build the debug APK.
   ```sh
   docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
   ```
@@ -76,22 +89,9 @@ This setup requires constant connection with the host and allows hot reloading o
 7. Open the application on the Android device. Now whenever you make code changes the application should reload.
 
 
-## Release build
-
-1. Build a release APK.
-  ```sh
-	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
-  ```
-
-2. Connect your device and install the release application.
-
-  ```sh
-  adb install android/app/build/outputs/apk/release/app-release.apk
-  ```
-
 # Development with VSCodium and container environment
 
-VSCodium doesn't have proprietary Dev Containers VSCode extension. Instead it can be connected to the container with Open Remote - SSH extension.
+VSCodium doesn't have the proprietary Dev Containers VSCode extension. Instead it can be connected to the container with Open Remote - SSH extension.
 
 1. Generate new ssh key and copy the public key to the project directory
 
