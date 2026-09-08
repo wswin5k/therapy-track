@@ -49,3 +49,11 @@ export function getOrThrow<K, V>(map: Map<K, V>, key: K): V {
 
   return value;
 }
+
+export function* cycle<T>(iterable: Iterable<T>): Generator<T, never, unknown> {
+  const items = [...iterable];
+  while (items.length) {
+    yield* items;
+  }
+  throw new Error("Unreachable code in cycle function.");
+}

@@ -62,6 +62,7 @@ export class RecordHistoryConfiguration {
     public showMedicines: boolean,
     public showAssessments: boolean,
     public expandCells: boolean,
+    public columnWidths: Map<string, number>,
     public movingAverages: MovingAverage[],
   ) {}
 }
@@ -158,7 +159,7 @@ export function RecordHistoryScreen() {
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   const [recordHistoryConfiguration, setRecordHistoryConfiguration] =
     React.useState<RecordHistoryConfiguration>(
-      new RecordHistoryConfiguration(true, true, true, false, []),
+      new RecordHistoryConfiguration(true, true, true, false, new Map(), []),
     );
   const formatDate = React.useCallback(
     (date: Date) => {
@@ -586,7 +587,7 @@ export function RecordHistoryScreen() {
 
   const loadConfiguration = React.useCallback(async () => {
     setRecordHistoryConfiguration(
-      new RecordHistoryConfiguration(true, true, true, false, []),
+      new RecordHistoryConfiguration(true, true, true, false, new Map(), []),
     );
   }, []);
 
