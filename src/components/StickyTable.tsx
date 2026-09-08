@@ -1,4 +1,4 @@
-import { useTheme } from "@react-navigation/native";
+import { useFocusEffect, useTheme } from "@react-navigation/native";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Animated, {
   useSharedValue,
@@ -191,69 +191,78 @@ export default function StickyTable({
     alignRowHeight(rowIndex, columnIndex);
   };
 
-  const calculateColumnWidths = (
-    columnWidthsFromHeaderLayout: (number[] | null)[],
-    columnWidthsFromCellLayout: (number | null)[],
-  ) => {
-    const allNotNull = (arr: (number[] | number | null)[]) =>
-      arr.every((el) => el !== null);
-
-    if (
-      !allNotNull(columnWidthsFromHeaderLayout) ||
-      !allNotNull(columnWidthsFromCellLayout)
-    ) {
-      return;
-    }
-
-    const columnWidthsFromLayouts = columnWidthsFromHeaderLayout.map(
-      (widthsFromHeaders, idx) =>
-        [
-          ...new Set([
-            ...(widthsFromHeaders ?? []),
-            columnWidthsFromCellLayout[idx],
-          ]),
-        ].sort((a, b) => a - b),
-    );
-
-    const newColumnWidths = [];
-    for (const [idx, widths] of columnWidthsFromLayouts.entries()) {
-      let coalescedWidths = widths.filter((a, idx) =>
-        widths.slice(idx + 1).every((b) => !isSizeClose(a, b)),
-      );
+  const calculateColumnWidths = React.useCallback(
+    (
+      columnWidthsFromHeaderLayout: (number[] | null)[],
+      columnWidthsFromCellLayout: (number | null)[],
+    ) => {
+      const allNotNull = (arr: (number[] | number | null)[]) =>
+        arr.every((el) => el !== null);
 
       if (
-        coalescedWidths.length === 3 &&
-        coalescedWidths[2] === MID_CELL_WIDTH
+        !allNotNull(columnWidthsFromHeaderLayout) ||
+        !allNotNull(columnWidthsFromCellLayout)
       ) {
-        coalescedWidths = [coalescedWidths[0], coalescedWidths[2]];
+        return;
       }
 
-      let cycleOptions = [columnWidths[0]];
-      let startingWidth = coalescedWidths[0];
-      if (coalescedWidths.length === 3) {
-        startingWidth = coalescedWidths[1];
-        cycleOptions = [
-          coalescedWidths[2],
-          coalescedWidths[1],
-          coalescedWidths[0],
-          coalescedWidths[1],
-        ];
-      } else if (coalescedWidths.length === 2) {
-        startingWidth = coalescedWidths[1];
-        cycleOptions = [coalescedWidths[0], coalescedWidths[1]];
-      }
-      columnWidthsCycles.current[idx] = cycle(cycleOptions);
-      newColumnWidths.push(startingWidth);
-    }
-    setColumnsWidths(newColumnWidths);
-  };
+      const columnWidthsFromLayouts = columnWidthsFromHeaderLayout.map(
+        (widthsFromHeaders, idx) =>
+          [
+            ...new Set([
+              ...(widthsFromHeaders ?? []),
+              columnWidthsFromCellLayout[idx],
+            ]),
+          ].sort((a, b) => a - b),
+      );
 
-  React.useEffect(() => {
-    calculateColumnWidths(
+      const newColumnWidths = [];
+      for (const [idx, widths] of columnWidthsFromLayouts.entries()) {
+        let coalescedWidths = widths.filter((a, idx) =>
+          widths.slice(idx + 1).every((b) => !isSizeClose(a, b)),
+        );
+
+        if (
+          coalescedWidths.length === 3 &&
+          coalescedWidths[2] === MID_CELL_WIDTH
+        ) {
+          coalescedWidths = [coalescedWidths[0], coalescedWidths[2]];
+        }
+
+        let cycleOptions = [coalescedWidths[0]];
+        let startingWidth = coalescedWidths[0];
+        if (coalescedWidths.length === 3) {
+          startingWidth = coalescedWidths[1];
+          cycleOptions = [
+            coalescedWidths[2],
+            coalescedWidths[1],
+            coalescedWidths[0],
+            coalescedWidths[1],
+          ];
+        } else if (coalescedWidths.length === 2) {
+          startingWidth = coalescedWidths[1];
+          cycleOptions = [coalescedWidths[0], coalescedWidths[1]];
+        }
+        columnWidthsCycles.current[idx] = cycle(cycleOptions);
+        newColumnWidths.push(startingWidth);
+      }
+      setColumnsWidths(newColumnWidths);
+    },
+    [],
+  );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      calculateColumnWidths(
+        columnWidthsFromHeaderLayout,
+        columnWidthsFromCellLayout,
+      );
+    }, [
+      calculateColumnWidths,
       columnWidthsFromHeaderLayout,
       columnWidthsFromCellLayout,
-    );
-  }, [columnWidthsFromHeaderLayout, columnWidthsFromCellLayout]);
+    ]),
+  );
 
   const handleToggleRowHeight = (rowIndex: number, columnIndex: number) => {
     setRowHeights((current) =>
