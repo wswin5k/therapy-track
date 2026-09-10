@@ -29,22 +29,25 @@ function isSizeClose(a: number, b: number): boolean {
 }
 
 type RecordHistoryTableProps = {
-  columnHeaders: string[];
-  rowHeaders: string[];
-  data: string[][];
+  fullHeaders: string[];
+  fullHeaderToDisplayHeader: Map<string, string>;
   // todo possbily take the cells in the following types
   // not strings
-  columnTypes: ValueType[];
+  fullHeaderToValueType: Map<string, ValueType>;
+  rowHeaders: string[];
+  data: string[][];
   expandCells: boolean;
 };
 
 export default function RecordHistoryTable({
-  columnHeaders,
+  fullHeaders,
+  fullHeaderToDisplayHeader,
+  fullHeaderToValueType,
   rowHeaders,
   data,
-  columnTypes,
   expandCells,
 }: RecordHistoryTableProps) {
+  console.log(fullHeaderToValueType);
   const theme = useTheme();
 
   const [rowHeights, setRowHeights] = React.useState<number[]>(
@@ -69,21 +72,21 @@ export default function RecordHistoryTable({
 
   const [columnWidthsFromHeaderLayout, setColumnWidthsFromHeaderLayout] =
     React.useState<(number[] | null)[]>(
-      Array.from({ length: columnHeaders.length - 1 }, () => null),
+      Array.from({ length: fullHeaders.length - 1 }, () => null),
     );
   const [columnWidthsFromCellLayout, setColumnWidthsFromCellLayout] =
     React.useState<(number | null)[]>(
-      Array.from({ length: columnHeaders.length - 1 }, () => null),
+      Array.from({ length: fullHeaders.length - 1 }, () => null),
     );
   const columnWidthsCycles = React.useRef(
-    Array.from({ length: columnHeaders.length }, () => cycle([MID_CELL_WIDTH])),
+    Array.from({ length: fullHeaders.length }, () => cycle([MID_CELL_WIDTH])),
   );
   const [intermediateColumnWidths, setIntermediateColumnsWidths] =
     React.useState<number[]>(
-      Array.from({ length: columnHeaders.length }, () => MID_CELL_WIDTH),
+      Array.from({ length: fullHeaders.length }, () => MID_CELL_WIDTH),
     );
   const [columnWidths, setColumnsWidths] = React.useState<number[]>(
-    Array.from({ length: columnHeaders.length }, () => MID_CELL_WIDTH),
+    Array.from({ length: fullHeaders.length }, () => MID_CELL_WIDTH),
   );
 
   const scrollX = useSharedValue(0);
@@ -162,6 +165,13 @@ export default function RecordHistoryTable({
 
     styles.width = columnWidths[columnIndex];
     styles.height = rowHeights[rowIndex];
+
+    if (
+      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) ===
+      ValueType.MultiSelect
+    ) {
+      styles.alignItems = "flex-start";
+    }
 
     return styles;
   };
@@ -292,12 +302,19 @@ export default function RecordHistoryTable({
         return;
       }
 
+      const columnWidthsFromMultiSelectValues = fullHeaders.slice(1).map((header) =>
+        fullHeaderToValueType.get(header) === ValueType.MultiSelect
+          ? 200
+          : MID_CELL_WIDTH,
+      );
+
       const columnWidthsFromLayouts = columnWidthsFromHeaderLayout.map(
         (widthsFromHeaders, idx) =>
           [
             ...new Set([
               ...(widthsFromHeaders ?? []),
               columnWidthsFromCellLayout[idx],
+              columnWidthsFromMultiSelectValues[idx],
             ]),
           ].sort((a, b) => a - b),
       );
@@ -404,7 +421,7 @@ export default function RecordHistoryTable({
   return (
     <View style={styles.container}>
       {/* Hidden column headers for measuring purposes */}
-      {columnHeaders.slice(1).map((columnHeader, index) => (
+      {fullHeaders.slice(1).map((columnHeader, index) => (
         <View
           key={index}
           style={[
@@ -425,7 +442,7 @@ export default function RecordHistoryTable({
               handleColumnHeaderLayout(index, width);
             }}
           >
-            {columnHeader}
+            {fullHeaderToDisplayHeader.get(columnHeader)}
           </Text>
         </View>
       ))}
@@ -490,7 +507,7 @@ export default function RecordHistoryTable({
           ]}
         >
           <Text style={[styles.headerText, { color: theme.colors.text }]}>
-            {columnHeaders[0]}
+            {fullHeaderToDisplayHeader.get(fullHeaders[0])}
           </Text>
         </View>
 
@@ -503,13 +520,13 @@ export default function RecordHistoryTable({
             showsHorizontalScrollIndicator={false}
             scrollEnabled={false}
           >
-            {columnHeaders.slice(1).map((columnHeader, index) => (
+            {fullHeaders.slice(1).map((columnHeader, index) => (
               <View key={index}>
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.columnHeaderCell,
-                    computeColumnHeaderStyles(index, columnHeaders.length - 2),
+                    computeColumnHeaderStyles(index, fullHeaders.length - 2),
                     {
                       borderColor: theme.colors.border,
                       backgroundColor: theme.colors.primary,
@@ -522,7 +539,7 @@ export default function RecordHistoryTable({
                     ellipsizeMode="middle"
                     style={[styles.headerText, { color: theme.colors.text }]}
                   >
-                    {columnHeader}
+                    {fullHeaderToDisplayHeader.get(columnHeader)}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -630,8 +647,6 @@ const styles = StyleSheet.create({
   },
   cellText: {
     fontSize: 14,
-    textAlign: "auto",
-    alignSelf: "flex-start",
   },
   cornerCell: {
     justifyContent: "center",
