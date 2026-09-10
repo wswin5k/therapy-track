@@ -16,6 +16,7 @@ const DELTA_WIDTH_BUFFER = 10;
 const COLUMN_HEADER_PADDING = 8;
 
 const MIN_CELL_HEIGHT = 50;
+const MIN_CELL_LINES_LENGTH = 2;
 
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
 const MID_CELL_WIDTH = 150;
@@ -30,12 +31,14 @@ type StickyTableProps = {
   columnHeaders: string[];
   rowHeaders: string[];
   data: string[][];
+  expandCells: boolean;
 };
 
 export default function StickyTable({
   columnHeaders,
   rowHeaders,
   data,
+  expandCells,
 }: StickyTableProps) {
   const theme = useTheme();
 
@@ -47,8 +50,16 @@ export default function StickyTable({
       Array.from({ length: data[0].length }, () => MIN_CELL_HEIGHT),
     ),
   );
+  const fittingCellLineLenghts = React.useRef<number[][]>(
+    Array.from({ length: data.length }, () =>
+      Array.from({ length: data[0].length }, () => MIN_CELL_LINES_LENGTH),
+    ),
+  );
   const [rowsNumberOfLines, setRowsNumberOfLines] = React.useState<number[]>(
-    Array.from({ length: data.length }, () => 2),
+    Array.from({ length: data.length }, () => MIN_CELL_LINES_LENGTH),
+  );
+  const relevantColumnForRowHeight = React.useRef<number[]>(
+    Array.from({ length: data.length }, () => 0),
   );
 
   const [columnWidthsFromHeaderLayout, setColumnWidthsFromHeaderLayout] =
@@ -151,6 +162,7 @@ export default function StickyTable({
   };
 
   const handleColumnHeaderLayout = (index: number, fittingWidth: number) => {
+    // called on initial mount
     const newMaxWidth = Math.max(fittingWidth, MIN_CELL_WIDTH);
     const newDefaultWidth = Math.min(newMaxWidth, MID_CELL_WIDTH);
     let widthOptions = [MIN_CELL_WIDTH, newDefaultWidth, newMaxWidth];
@@ -163,14 +175,20 @@ export default function StickyTable({
     });
   };
 
-  const handleCellTextLayout = (index: number, linesNumber: number) => {
+  const handleMinCellTextLayout = (
+    rowIndex: number,
+    columnIndex: number,
+    linesLength: number,
+  ) => {
+    // effectively called on initial mount
+
     // if the content does not fit in 6 lines adds MID_CELL_WIDTH as one
     // of the columns widths
     setColumnWidthsFromCellLayout((current) =>
       current.map((el, idx) => {
         const elOrMin = el ?? MIN_CELL_WIDTH;
-        return index === idx
-          ? linesNumber < 6
+        return columnIndex === idx
+          ? linesLength < 6
             ? elOrMin
             : Math.max(elOrMin, MID_CELL_WIDTH)
           : el;
@@ -178,17 +196,80 @@ export default function StickyTable({
     );
   };
 
-  const handleCellLayout = (
+  const handleIntermediateCellTextLayout = (
+    rowIndex: number,
+    columnIndex: number,
+    fittingLinesLength: number,
+  ) => {
+    // effectively called on initial mount
+    // and on column width toggle (header click)
+
+    fittingCellLineLenghts.current[rowIndex][columnIndex] = Math.max(
+      fittingLinesLength,
+      MIN_CELL_LINES_LENGTH,
+    );
+
+    setRowsNumberOfLines((current) =>
+      current.map((el, idx) => {
+        if (rowIndex === idx) {
+          if (expandCells) {
+            return 1000;
+          } else if (el === MIN_CELL_LINES_LENGTH) {
+            return MIN_CELL_LINES_LENGTH;
+          } else {
+            return fittingCellLineLenghts.current[rowIndex][
+              relevantColumnForRowHeight.current[rowIndex]
+            ];
+          }
+        } else {
+          return el;
+        }
+      }),
+    );
+  };
+
+  const handleIntermediateCellLayout = (
     rowIndex: number,
     columnIndex: number,
     fittingHeight: number,
   ) => {
+    // effectively called on initial mount
+    // and on column width toggle (header click)
+
     let newFittingHeight = Math.max(fittingHeight, MIN_CELL_HEIGHT);
     if (isSizeClose(newFittingHeight, MIN_CELL_HEIGHT)) {
       newFittingHeight = MIN_CELL_HEIGHT;
     }
     fittingCellHeights.current[rowIndex][columnIndex] = newFittingHeight;
-    alignRowHeight(rowIndex, columnIndex);
+
+    setRowHeights((current) =>
+      current.map((el, idx) => {
+        if (rowIndex === idx) {
+          if (expandCells) {
+            const maxFittingHeight = Math.max(
+              ...fittingCellHeights.current[rowIndex],
+            );
+            return maxFittingHeight;
+          } else if (el === MIN_CELL_HEIGHT) {
+            return MIN_CELL_HEIGHT;
+          } else {
+            const fittingHeight =
+              fittingCellHeights.current[rowIndex][
+                relevantColumnForRowHeight.current[rowIndex]
+              ];
+            return fittingHeight;
+          }
+        } else {
+          return el;
+        }
+      }),
+    );
+
+    setColumnsWidths((current) =>
+      current.map((el, idx) =>
+        idx === columnIndex ? intermediateColumnWidths[idx] : el,
+      ),
+    );
   };
 
   const calculateColumnWidths = React.useCallback(
@@ -246,7 +327,7 @@ export default function StickyTable({
         columnWidthsCycles.current[idx] = cycle(cycleOptions);
         newColumnWidths.push(startingWidth);
       }
-      setColumnsWidths(newColumnWidths);
+      setIntermediateColumnsWidths(newColumnWidths);
     },
     [],
   );
@@ -264,13 +345,17 @@ export default function StickyTable({
     ]),
   );
 
-  const handleToggleRowHeight = (rowIndex: number, columnIndex: number) => {
+  const handleCellPress = (rowIndex: number, columnIndex: number) => {
+    // toggles row height
+    if (expandCells) {
+      return;
+    }
     setRowHeights((current) =>
       current.map((el, idx) => {
         if (rowIndex === idx) {
           const fittingHeight =
             fittingCellHeights.current[rowIndex][columnIndex];
-          if (el === MIN_CELL_HEIGHT) {
+          if (fittingHeight > el || el === MIN_CELL_HEIGHT) {
             return fittingHeight;
           } else {
             return MIN_CELL_HEIGHT;
@@ -281,33 +366,21 @@ export default function StickyTable({
       }),
     );
     setRowsNumberOfLines((current) =>
-      current.map((el, idx) =>
-        idx === rowIndex && rowHeights[idx] === MIN_CELL_HEIGHT ? 1000 : 2,
-      ),
-    );
-  };
-
-  const alignRowHeight = (rowIndex: number, columnIndex: number) => {
-    setRowHeights((current) =>
       current.map((el, idx) => {
         if (rowIndex === idx) {
-          const fittingHeight =
-            fittingCellHeights.current[rowIndex][columnIndex];
-          if (el === MIN_CELL_HEIGHT) {
-            return MIN_CELL_HEIGHT;
+          const fittitngLinesLegth =
+            fittingCellLineLenghts.current[rowIndex][columnIndex];
+          if (fittitngLinesLegth > el || el === MIN_CELL_LINES_LENGTH) {
+            return fittitngLinesLegth;
           } else {
-            return fittingHeight;
+            return MIN_CELL_LINES_LENGTH;
           }
         } else {
           return el;
         }
       }),
     );
-    setColumnsWidths((current) =>
-      current.map((el, idx) =>
-        idx === columnIndex ? intermediateColumnWidths[idx] : el,
-      ),
-    );
+    relevantColumnForRowHeight.current[rowIndex] = columnIndex;
   };
 
   const handleToggleColumnWidth = (index: number) => {
@@ -363,7 +436,7 @@ export default function StickyTable({
                   style={[styles.cellText]}
                   onTextLayout={(event) => {
                     const linesLength = event.nativeEvent.lines.length;
-                    handleCellTextLayout(columnIndex, linesLength);
+                    handleMinCellTextLayout(rowIndex, columnIndex, linesLength);
                   }}
                 >
                   {cell}
@@ -380,7 +453,15 @@ export default function StickyTable({
                   onLayout={(event) => {
                     const height =
                       Math.ceil(event.nativeEvent.layout.height) + 20;
-                    handleCellLayout(rowIndex, columnIndex, height);
+                    handleIntermediateCellLayout(rowIndex, columnIndex, height);
+                  }}
+                  onTextLayout={(event) => {
+                    const linesLength = event.nativeEvent.lines.length;
+                    handleIntermediateCellTextLayout(
+                      rowIndex,
+                      columnIndex,
+                      linesLength,
+                    );
                   }}
                 >
                   {cell}
@@ -490,7 +571,8 @@ export default function StickyTable({
                 {row.map((cell, columnIndex) => (
                   <TouchableOpacity
                     key={columnIndex}
-                    onPress={() => handleToggleRowHeight(rowIndex, columnIndex)}
+                    disabled={expandCells}
+                    onPress={() => handleCellPress(rowIndex, columnIndex)}
                     style={[
                       styles.cell,
                       computeCellStyles(
