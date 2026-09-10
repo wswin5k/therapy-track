@@ -695,6 +695,7 @@ export function RecordHistoryScreen() {
             columnHeaders={columnHeaders}
             rowHeaders={rowHeaders}
             data={cells}
+            expandCells={recordHistoryConfiguration.expandCells}
           />
         </View>
       )}
