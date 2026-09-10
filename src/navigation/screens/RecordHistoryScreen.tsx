@@ -40,15 +40,17 @@ import { useTranslation } from "react-i18next";
 import {
   Assessment,
   AssessmentSchedule,
+  ValueType,
 } from "../../models/AssessmentSchedule";
 import { Group } from "../../models/Frequency";
 import {
   baseUnitShorFormPlural,
   ingredientAmountUnitEnumToDisplayForm,
 } from "../enumMappings";
-import StickyTable from "../../components/StickyTable";
+import RecordHistoryTable from "../../components/RecordHistoryTable";
 import { getTodayDateOnly, serializeDateOnly } from "../../dateOnlyUtils";
-import { getOrThrow } from "../utils";
+import { getOrThrow, castToStringArray } from "../utils";
+import { AssessmentValue } from "../../models/Records";
 
 class MovingAverage {
   constructor(
@@ -93,6 +95,25 @@ function generateCSV(headers: string[], records: string[][]): string {
   }
 
   return csvRows.join("\n");
+}
+
+function formatAssessmentValue(
+  value: AssessmentValue,
+  type: ValueType,
+): string {
+  switch (type) {
+    case ValueType.Text:
+      return value.toString();
+    case ValueType.Numeric:
+      return value.toString();
+    case ValueType.Boolean:
+      return value ? "Yes" : "No";
+    case ValueType.SingleSelect:
+      return value.toString();
+    case ValueType.MultiSelect:
+      // uses no-break space U+00A0
+      return " • " + castToStringArray(value).join("\n • ");
+  }
 }
 
 export function MenuModal({
@@ -154,6 +175,7 @@ export function RecordHistoryScreen() {
 
   const [rowHeaders, setRowHeaders] = React.useState<string[]>([]);
   const [columnHeaders, setColumnHeaders] = React.useState<string[]>([]);
+  const [columnTypes, setColumnTypes] = React.useState<ValueType[]>([]);
   const [cells, setCells] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
@@ -254,7 +276,7 @@ export function RecordHistoryScreen() {
   }
 
   const getAssessmentData = React.useCallback(async (): Promise<
-    [string[], Map<string, Map<string, string>>]
+    [string[], ValueType[], Map<string, Map<string, string>>]
   > => {
     const scheuledMeasurmentRecrods = await dbGetScheduledMeasurmentRecords(db);
     const unscheduledMeasurmentRecords =
@@ -297,6 +319,8 @@ export function RecordHistoryScreen() {
       return groupLabel;
     };
 
+    const assessmentColumnTypes = [];
+
     for (const r of unscheduledMeasurmentRecords) {
       const dateStr = extractDate(r.date);
       const dailyRow =
@@ -320,7 +344,11 @@ export function RecordHistoryScreen() {
       );
 
       dailyRow.set(fullHeader, r.value.toString());
+      dailyRow.set(fullHeader, formatAssessmentValue(r.value, assessment.type));
+
       dayToHeaderToValues.set(dateStr, dailyRow);
+
+      assessmentColumnTypes.push(assessment.type);
     }
 
     for (const r of scheuledMeasurmentRecrods) {
@@ -347,8 +375,13 @@ export function RecordHistoryScreen() {
         shortHeader,
       );
 
-      dailyRow.set(fullHeader, r.value.toString());
+      dailyRow.set(
+        fullHeader,
+        formatAssessmentValue(r.value, assessmentSchedule.assessment.type),
+      );
       dayToHeaderToValues.set(dateStr, dailyRow);
+
+      assessmentColumnTypes.push(assessmentSchedule.assessment.type);
     }
 
     const headers = calculateHeaders(
@@ -356,12 +389,11 @@ export function RecordHistoryScreen() {
       shortHeaderCounts,
       dayToHeaderToValues,
     );
-
-    return [headers, dayToHeaderToValues];
+    return [headers, assessmentColumnTypes, dayToHeaderToValues];
   }, [db]);
 
   const getMedicineData = React.useCallback(async (): Promise<
-    [string[], Map<string, Map<string, number>>]
+    [string[], ValueType[], Map<string, Map<string, number>>]
   > => {
     const scheduledDosageRecords = await dbGetScheduledDosageRecords(db);
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
@@ -388,6 +420,8 @@ export function RecordHistoryScreen() {
       string,
       Set<IngredientAmountUnit>
     >();
+
+    const medicineColumnTypes = [];
 
     for (const r of unscheduledDosageRecords) {
       const dateStr = extractDate(r.date);
@@ -447,6 +481,8 @@ export function RecordHistoryScreen() {
       }
 
       dayToHeaderToValues.set(dateStr, dailyRow);
+
+      medicineColumnTypes.push(ValueType.Numeric);
     }
 
     for (const r of scheduledDosageRecords) {
@@ -511,6 +547,7 @@ export function RecordHistoryScreen() {
         dailyRow.set(header, amountTotal);
       }
       dayToHeaderToValues.set(dateStr, dailyRow);
+      medicineColumnTypes.push(ValueType.Numeric);
     }
 
     insertActiveIngredientWeightUnits(
@@ -526,7 +563,7 @@ export function RecordHistoryScreen() {
       dayToHeaderToValues,
     );
 
-    return [headers, dayToHeaderToValues];
+    return [headers, medicineColumnTypes, dayToHeaderToValues];
   }, [
     db,
     recordHistoryConfiguration.showActiveIngredients,
@@ -534,11 +571,12 @@ export function RecordHistoryScreen() {
   ]);
 
   const loadAndCombineDataForTable = React.useCallback(async () => {
-    const [medicinesHeaders, medicinesHistory] = await getMedicineData();
-    const [assessmentsHeaders, assessmentsHistory] =
+    const [medicinesHeaders, medicineColumnTypes, medicinesHistory] =
+      await getMedicineData();
+    const [assessmentsHeaders, assessmentColumnTypes, assessmentsHistory] =
       recordHistoryConfiguration.showAssessments
         ? await getAssessmentData()
-        : [[], new Map()];
+        : [[], [], new Map()];
 
     const newTableRows = new Array();
 
@@ -563,7 +601,7 @@ export function RecordHistoryScreen() {
       for (const header of assessmentsHeaders) {
         const value = assessmentsHistory.get(day)?.get(header);
         if (value) {
-          record.push(value.toString());
+          record.push(value);
         } else {
           record.push("");
         }
@@ -574,8 +612,9 @@ export function RecordHistoryScreen() {
 
     const headers = medicinesHeaders.concat(assessmentsHeaders);
     headers.unshift("Date");
-
     setColumnHeaders(headers);
+    const types = medicineColumnTypes.concat(assessmentColumnTypes);
+    setColumnTypes(types);
     setRowHeaders(newRowHeaders);
     setCells(newTableRows);
   }, [
@@ -691,10 +730,11 @@ export function RecordHistoryScreen() {
         renderEmptyState()
       ) : (
         <View style={[styles.mainContainer]}>
-          <StickyTable
+          <RecordHistoryTable
             columnHeaders={columnHeaders}
             rowHeaders={rowHeaders}
             data={cells}
+            columnTypes={columnTypes}
             expandCells={recordHistoryConfiguration.expandCells}
           />
         </View>

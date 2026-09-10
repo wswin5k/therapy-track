@@ -57,3 +57,10 @@ export function* cycle<T>(iterable: Iterable<T>): Generator<T, never, unknown> {
   }
   throw new Error("Unreachable code in cycle function.");
 }
+
+export function castToStringArray(value: any): string[] {
+  if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
+    return value;
+  }
+  return [];
+}

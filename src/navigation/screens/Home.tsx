@@ -38,7 +38,7 @@ import { baseUnitToSingularShortForm } from "../enumMappings";
 import { AssessmentValue } from "../../models/Records";
 import {
   Assessment,
-  AssessmentType,
+  ValueType,
   ValueDomain,
 } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
@@ -110,7 +110,7 @@ class UnscheduledMeasurmentInfo {
 class ScheduledMeasurmentInfo {
   constructor(
     public assessmentName: string,
-    public assessmentType: AssessmentType,
+    public assessmentType: ValueType,
     public value: AssessmentValue | null,
     public valueDomain: ValueDomain,
     public index: number,

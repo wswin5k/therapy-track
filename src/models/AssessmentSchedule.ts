@@ -1,6 +1,6 @@
 import { Frequency } from "./Frequency";
 
-export enum AssessmentType {
+export enum ValueType {
   Numeric = "Numeric",
   Boolean = "Boolean",
   Text = "Text",
@@ -29,7 +29,7 @@ export type ValueDomain =
 export class Assessment {
   constructor(
     public name: string,
-    public type: AssessmentType,
+    public type: ValueType,
     public valueDomain: ValueDomain,
     public dbId: number,
   ) {}

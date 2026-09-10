@@ -15,12 +15,16 @@ import {
 } from "@react-navigation/native";
 import type { RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
+import {
+  NAME_MAX_LENGTH,
+  SELECT_VALUE_MAX_LENGTH,
+  VALID_NAME,
+} from "../../validationConstants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import {
   Assessment,
-  AssessmentType,
+  ValueType,
   NumericValueDomain,
   SelectValueDomain,
   TextValueDomain,
@@ -44,16 +48,14 @@ const DEFAULT_NUMERIC_MIN = 0;
 const NUMERIC_MAX = 1_000_000;
 const NUMERIC_MIN = -1_000_000;
 
-export function getDefaultValueDomain(
-  type: AssessmentType,
-): ValueDomain | null {
+export function getDefaultValueDomain(type: ValueType): ValueDomain | null {
   switch (type) {
-    case AssessmentType.Text:
+    case ValueType.Text:
       return new TextValueDomain(TEXT_MAX_LENGTH);
-    case AssessmentType.Numeric:
+    case ValueType.Numeric:
       return new NumericValueDomain(DEFAULT_NUMERIC_MIN, DEFAULT_NUMERIC_MAX);
-    case AssessmentType.SingleSelect:
-    case AssessmentType.MultiSelect:
+    case ValueType.SingleSelect:
+    case ValueType.MultiSelect:
       return new SelectValueDomain(["", ""]);
     default:
       return null;
@@ -74,8 +76,9 @@ export function EditAssessmentScreen() {
 
   const [assessmentId, setAssessmentId] = React.useState<number | null>(null);
   const [name, setName] = React.useState("");
-  const [assessmentType, setAssessmentType] =
-    React.useState<AssessmentType | null>(null);
+  const [assessmentType, setAssessmentType] = React.useState<ValueType | null>(
+    null,
+  );
   const [referenceValueDomain, setReferenceValueDomain] =
     React.useState<ValueDomain | null>(null);
   const [valueDomain, setValueDomain] = React.useState<ValueDomain>(null);
@@ -132,7 +135,7 @@ export function EditAssessmentScreen() {
     nameIsOkWhenNotChanged: boolean,
   ): {
     name: string;
-    type: AssessmentType;
+    type: ValueType;
     valueDomain: ValueDomain;
   } | null => {
     let asssessmentValidated = true;
@@ -161,8 +164,8 @@ export function EditAssessmentScreen() {
 
     let valueDomainValidated = null;
     if (
-      assessmentType === AssessmentType.SingleSelect ||
-      assessmentType === AssessmentType.MultiSelect
+      assessmentType === ValueType.SingleSelect ||
+      assessmentType === ValueType.MultiSelect
     ) {
       if (valueDomain && valueDomain instanceof SelectValueDomain) {
         newSelectValueDomainErrors = valueDomain.values.map(
@@ -179,7 +182,7 @@ export function EditAssessmentScreen() {
           if (!value) {
             newSelectValueDomainErrors[i] = true;
           }
-          if (value.length > NAME_MAX_LENGTH) {
+          if (value.length > SELECT_VALUE_MAX_LENGTH) {
             newSelectValueDomainErrors[i] = true;
           }
           if (!VALID_NAME.test(value)) {
@@ -218,7 +221,7 @@ export function EditAssessmentScreen() {
     return null;
   };
 
-  const handleAssessmentTypePick = (itemValue: AssessmentType) => {
+  const handleAssessmentTypePick = (itemValue: ValueType) => {
     setAssessmentType(itemValue);
     const newValueDomain = getDefaultValueDomain(itemValue);
     setValueDomain(newValueDomain);
@@ -448,11 +451,11 @@ export function EditAssessmentScreen() {
   let renderValueDomain = () => <View></View>;
 
   switch (assessmentType) {
-    case AssessmentType.Numeric:
+    case ValueType.Numeric:
       renderValueDomain = renderNumericValueDomain;
       break;
-    case AssessmentType.SingleSelect:
-    case AssessmentType.MultiSelect:
+    case ValueType.SingleSelect:
+    case ValueType.MultiSelect:
       if (valueDomain && valueDomain instanceof SelectValueDomain) {
         renderValueDomain = () => renderSelectValueDomain(valueDomain);
       }
@@ -487,7 +490,7 @@ export function EditAssessmentScreen() {
           />
         </View>
         <ModalPicker
-          values={Object.values(AssessmentType)}
+          values={Object.values(ValueType)}
           selectedValue={assessmentType}
           onValueChange={handleAssessmentTypePick}
           getLabel={assessmentTypeToDisplayForm}

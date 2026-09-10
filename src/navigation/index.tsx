@@ -22,7 +22,7 @@ import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
 import {
   Assessment,
-  AssessmentType,
+  ValueType,
   ValueDomain,
 } from "../models/AssessmentSchedule";
 import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
@@ -60,7 +60,7 @@ export interface MedicineParam {
 
 export interface AssessmentParam {
   name: string;
-  type: AssessmentType;
+  type: ValueType;
   valueDomain: ValueDomain;
   dbId?: number;
 }
@@ -182,7 +182,7 @@ export type RootStackParamList = {
   EditSingleMeasurmentScreen: {
     assessment: {
       name: string;
-      type: AssessmentType;
+      type: ValueType;
       dbId?: number;
     };
     selectedDate?: string;

@@ -10,6 +10,7 @@ import Animated, {
 import type { ReanimatedScrollEvent } from "react-native-reanimated/lib/typescript/hook/commonTypes";
 import { cycle, mixColors } from "../navigation/utils";
 import React from "react";
+import { ValueType } from "../models/AssessmentSchedule";
 
 const TABLE_RADIUS = 10;
 const DELTA_WIDTH_BUFFER = 10;
@@ -27,19 +28,23 @@ function isSizeClose(a: number, b: number): boolean {
   return Math.abs(a - b) < DELTA_WIDTH_BUFFER;
 }
 
-type StickyTableProps = {
+type RecordHistoryTableProps = {
   columnHeaders: string[];
   rowHeaders: string[];
   data: string[][];
+  // todo possbily take the cells in the following types
+  // not strings
+  columnTypes: ValueType[];
   expandCells: boolean;
 };
 
-export default function StickyTable({
+export default function RecordHistoryTable({
   columnHeaders,
   rowHeaders,
   data,
+  columnTypes,
   expandCells,
-}: StickyTableProps) {
+}: RecordHistoryTableProps) {
   const theme = useTheme();
 
   const [rowHeights, setRowHeights] = React.useState<number[]>(
@@ -625,6 +630,8 @@ const styles = StyleSheet.create({
   },
   cellText: {
     fontSize: 14,
+    textAlign: "auto",
+    alignSelf: "flex-start",
   },
   cornerCell: {
     justifyContent: "center",
@@ -656,6 +663,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
+    padding: 6,
   },
   hiddenContainer: {
     position: "absolute",
