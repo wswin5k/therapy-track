@@ -18,7 +18,7 @@ const TABLE_RADIUS = 10;
 const DELTA_WIDTH_BUFFER = 10;
 const COLUMN_HEADER_PADDING = 8;
 
-const MIN_CELL_HEIGHT = 54;
+const MIN_CELL_HEIGHT = 52;
 const MIN_CELL_LINES_LENGTH = 2;
 
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
