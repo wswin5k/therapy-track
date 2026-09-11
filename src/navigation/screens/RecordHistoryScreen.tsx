@@ -596,7 +596,7 @@ export function RecordHistoryScreen() {
     db,
     recordHistoryConfiguration.showActiveIngredients,
     recordHistoryConfiguration.showMedicines,
-    recordHistoryConfiguration.mergeIngredientsWithDifferentForms
+    recordHistoryConfiguration.mergeIngredientsWithDifferentForms,
   ]);
 
   const loadAndCombineDataForTable = React.useCallback(async () => {
