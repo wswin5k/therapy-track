@@ -28,6 +28,13 @@ function isSizeClose(a: number, b: number): boolean {
   return Math.abs(a - b) < DELTA_WIDTH_BUFFER;
 }
 
+class ColumnFitWidths {
+  constructor(
+    public headerFit: number,
+    public multiSelectFit: number | null,
+  ) {}
+}
+
 type RecordHistoryTableProps = {
   fullHeaders: string[];
   fullHeaderToDisplayHeader: Map<string, string>;
@@ -47,7 +54,6 @@ export default function RecordHistoryTable({
   data,
   expandCells,
 }: RecordHistoryTableProps) {
-  console.log(fullHeaderToValueType);
   const theme = useTheme();
 
   const [rowHeights, setRowHeights] = React.useState<number[]>(
@@ -71,7 +77,7 @@ export default function RecordHistoryTable({
   );
 
   const [columnWidthsFromHeaderLayout, setColumnWidthsFromHeaderLayout] =
-    React.useState<(number[] | null)[]>(
+    React.useState<(ColumnFitWidths | null)[]>(
       Array.from({ length: fullHeaders.length - 1 }, () => null),
     );
   const [columnWidthsFromCellLayout, setColumnWidthsFromCellLayout] =
@@ -176,16 +182,33 @@ export default function RecordHistoryTable({
     return styles;
   };
 
-  const handleColumnHeaderLayout = (index: number, fittingWidth: number) => {
+  const calculateMultiSelectFitWidth = (columnIndex: number): number | null => {
+    if (
+      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) !==
+      ValueType.MultiSelect
+    ) {
+      return null;
+    }
+    const lognestLineLength = Math.max(
+      ...data.map((rowData) =>
+        Math.max(
+          ...rowData[columnIndex].split("\n").map((line) => line.length),
+        ),
+      ),
+    );
+    // todo this is an approximation, calculate it with hidden columns
+    return lognestLineLength * 14 * 0.55;
+  };
+
+  const handleColumnHeaderLayout = (index: number, headerFitWidth: number) => {
     // called on initial mount
-    const newMaxWidth = Math.max(fittingWidth, MIN_CELL_WIDTH);
-    const newDefaultWidth = Math.min(newMaxWidth, MID_CELL_WIDTH);
-    let widthOptions = [MIN_CELL_WIDTH, newDefaultWidth, newMaxWidth];
+    const multiSelectFitWidth = calculateMultiSelectFitWidth(index);
     setColumnWidthsFromHeaderLayout((current) => {
       const newValue = current.map((el, idx) =>
-        index === idx ? widthOptions : el,
+        index === idx
+          ? new ColumnFitWidths(headerFitWidth, multiSelectFitWidth)
+          : el,
       );
-      //calculateColumnWidths(newValue,columnWidthsFromCellLayout);
       return newValue;
     });
   };
@@ -289,10 +312,10 @@ export default function RecordHistoryTable({
 
   const calculateColumnWidths = React.useCallback(
     (
-      columnWidthsFromHeaderLayout: (number[] | null)[],
+      columnWidthsFromHeaderLayout: (ColumnFitWidths | null)[],
       columnWidthsFromCellLayout: (number | null)[],
     ) => {
-      const allNotNull = (arr: (number[] | number | null)[]) =>
+      const allNotNull = (arr: (ColumnFitWidths | number | null)[]) =>
         arr.every((el) => el !== null);
 
       if (
@@ -302,35 +325,37 @@ export default function RecordHistoryTable({
         return;
       }
 
-      const columnWidthsFromMultiSelectValues = fullHeaders.slice(1).map((header) =>
-        fullHeaderToValueType.get(header) === ValueType.MultiSelect
-          ? 200
-          : MID_CELL_WIDTH,
-      );
-
-      const columnWidthsFromLayouts = columnWidthsFromHeaderLayout.map(
-        (widthsFromHeaders, idx) =>
-          [
-            ...new Set([
-              ...(widthsFromHeaders ?? []),
-              columnWidthsFromCellLayout[idx],
-              columnWidthsFromMultiSelectValues[idx],
-            ]),
-          ].sort((a, b) => a - b),
-      );
-
       const newColumnWidths = [];
-      for (const [idx, widths] of columnWidthsFromLayouts.entries()) {
+      for (const [idx, textFitWidth] of columnWidthsFromCellLayout.entries()) {
+        const fitWidths = columnWidthsFromHeaderLayout[idx];
+
+        let defaultWidth =
+          fitWidths.headerFit < MID_CELL_WIDTH
+            ? fitWidths.headerFit
+            : MID_CELL_WIDTH;
+
+        let contentFitWidth = defaultWidth;
+
+        if (textFitWidth !== null && fitWidths !== null) {
+          contentFitWidth = Math.max(
+            defaultWidth,
+            textFitWidth,
+            fitWidths.multiSelectFit ?? defaultWidth,
+          );
+        }
+
+        let widths = [];
+        if (fitWidths.headerFit > contentFitWidth) {
+          widths = [MIN_CELL_WIDTH, contentFitWidth, fitWidths.headerFit];
+        } else {
+          // if header can be displayed within contentFitWidth then
+          // it is not needed
+          widths = [MIN_CELL_WIDTH, contentFitWidth];
+        }
+
         let coalescedWidths = widths.filter((a, idx) =>
           widths.slice(idx + 1).every((b) => !isSizeClose(a, b)),
         );
-
-        if (
-          coalescedWidths.length === 3 &&
-          coalescedWidths[2] === MID_CELL_WIDTH
-        ) {
-          coalescedWidths = [coalescedWidths[0], coalescedWidths[2]];
-        }
 
         let cycleOptions = [coalescedWidths[0]];
         let startingWidth = coalescedWidths[0];
