@@ -13,6 +13,12 @@ export function getTodayDateOnly(): Date {
   return today;
 }
 
+export function getShiftedDateOnly(date: Date, days: number): Date {
+  const newDate = new Date(date);
+  newDate.setDate(date.getDate() + days);
+  return newDate;
+}
+
 export function dayDifference(firstTime: Date, secondDate: Date): number {
   const oneDay = 24 * 60 * 60 * 1000;
   return Math.round(
