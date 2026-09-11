@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { BaseUnit, IngredientAmountUnit } from "../models/MedicineSchedule";
-import { AssessmentType } from "../models/AssessmentSchedule";
+import { ValueType } from "../models/AssessmentSchedule";
 import { FrequencySelection } from "../models/Frequency";
 
 function capitalizeFirstLetter(val: string) {
@@ -66,7 +66,7 @@ export function frequencySelectionToDisplayForm(key: FrequencySelection) {
   return mapping[key];
 }
 
-export function assessmentTypeToDisplayForm(key: AssessmentType) {
+export function assessmentTypeToDisplayForm(key: ValueType) {
   const mapping = {
     Numeric: "Number",
     Boolean: "Yes/No",

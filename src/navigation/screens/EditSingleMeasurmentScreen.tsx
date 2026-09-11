@@ -31,10 +31,7 @@ import {
   getDefaultValue,
   isTextValueValid,
 } from "../../components/AssessmentInput";
-import {
-  AssessmentSchedule,
-  AssessmentType,
-} from "../../models/AssessmentSchedule";
+import { AssessmentSchedule, ValueType } from "../../models/AssessmentSchedule";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   deserializeDateOnly,
@@ -212,9 +209,7 @@ export function EditSingleMeasurmentScreen() {
     <DefaultMainContainer>
       <View style={styles.scrollContainer}>
         {assessment ? (
-          [AssessmentType.Boolean, AssessmentType.Numeric].includes(
-            assessment.type,
-          ) ? (
+          [ValueType.Boolean, ValueType.Numeric].includes(assessment.type) ? (
             <View style={[styles.rowContainer]}>
               <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
                 {"Value"}

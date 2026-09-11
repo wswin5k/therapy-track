@@ -1,5 +1,5 @@
 import {
-  AssessmentType,
+  ValueType,
   NumericValueDomain,
   SelectValueDomain,
   TextValueDomain,
@@ -41,18 +41,16 @@ export function isTextValueValid(
   );
 }
 
-export function getDefaultValue(
-  assessementType: AssessmentType,
-): AssessmentValue {
+export function getDefaultValue(assessementType: ValueType): AssessmentValue {
   switch (assessementType) {
-    case AssessmentType.Numeric:
+    case ValueType.Numeric:
       return 0;
-    case AssessmentType.Boolean:
+    case ValueType.Boolean:
       return false;
-    case AssessmentType.Text:
+    case ValueType.Text:
       return "";
-    case AssessmentType.SingleSelect:
-    case AssessmentType.MultiSelect:
+    case ValueType.SingleSelect:
+    case ValueType.MultiSelect:
       return [];
   }
 }
@@ -64,7 +62,7 @@ export function AssessmentInput({
   handleValueChange,
   valueError,
 }: {
-  type: AssessmentType;
+  type: ValueType;
   value: AssessmentValue | null;
   valueDomain: ValueDomain;
   handleValueChange: (value: AssessmentValue) => void;
@@ -190,7 +188,7 @@ export function AssessmentInput({
                 if (options.includes(v)) {
                   handleValueChange(options.filter((el) => el !== v));
                 } else {
-                  if (type === AssessmentType.SingleSelect) {
+                  if (type === ValueType.SingleSelect) {
                     handleValueChange([v]);
                   } else {
                     handleValueChange([v, ...options]);
@@ -227,7 +225,7 @@ export function AssessmentInput({
   let renderInput = () => <Text>Wrong assessment type</Text>;
 
   switch (type) {
-    case AssessmentType.Numeric:
+    case ValueType.Numeric:
       if (
         valueDomain &&
         valueDomain instanceof NumericValueDomain &&
@@ -237,12 +235,12 @@ export function AssessmentInput({
         renderInput = () => renderNumericInput(value, valueDomain);
       }
       break;
-    case AssessmentType.Boolean:
+    case ValueType.Boolean:
       if (value !== null && typeof value === "boolean") {
         renderInput = () => renderBooleanInput(value);
       }
       break;
-    case AssessmentType.Text:
+    case ValueType.Text:
       if (
         valueDomain &&
         valueDomain instanceof TextValueDomain &&
@@ -252,8 +250,8 @@ export function AssessmentInput({
         renderInput = () => renderTextInput(value);
       }
       break;
-    case AssessmentType.SingleSelect:
-    case AssessmentType.MultiSelect:
+    case ValueType.SingleSelect:
+    case ValueType.MultiSelect:
       if (
         valueDomain &&
         valueDomain instanceof SelectValueDomain &&
@@ -269,8 +267,6 @@ export function AssessmentInput({
 const styles = StyleSheet.create({
   selectInputContainer: {
     maxHeight: 320,
-    borderWidth: 0,
-    borderRadius: 8,
     width: "90%",
     alignSelf: "center",
   },
@@ -279,7 +275,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     height: 45,
-    paddingLeft: 20,
+    paddingLeft: 16,
     paddingRight: 10,
     width: "94%",
     alignSelf: "center",

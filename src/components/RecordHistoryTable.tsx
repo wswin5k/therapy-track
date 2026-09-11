@@ -10,6 +10,7 @@ import Animated, {
 import type { ReanimatedScrollEvent } from "react-native-reanimated/lib/typescript/hook/commonTypes";
 import { cycle, mixColors } from "../navigation/utils";
 import React from "react";
+import { ValueType } from "../models/AssessmentSchedule";
 
 const TABLE_RADIUS = 10;
 const DELTA_WIDTH_BUFFER = 10;
@@ -27,19 +28,32 @@ function isSizeClose(a: number, b: number): boolean {
   return Math.abs(a - b) < DELTA_WIDTH_BUFFER;
 }
 
-type StickyTableProps = {
-  columnHeaders: string[];
+class ColumnFitWidths {
+  constructor(
+    public headerFit: number,
+    public multiSelectFit: number | null,
+  ) {}
+}
+
+type RecordHistoryTableProps = {
+  fullHeaders: string[];
+  fullHeaderToDisplayHeader: Map<string, string>;
+  // todo possbily take the cells in the following types
+  // not strings
+  fullHeaderToValueType: Map<string, ValueType>;
   rowHeaders: string[];
   data: string[][];
   expandCells: boolean;
 };
 
-export default function StickyTable({
-  columnHeaders,
+export default function RecordHistoryTable({
+  fullHeaders,
+  fullHeaderToDisplayHeader,
+  fullHeaderToValueType,
   rowHeaders,
   data,
   expandCells,
-}: StickyTableProps) {
+}: RecordHistoryTableProps) {
   const theme = useTheme();
 
   const [rowHeights, setRowHeights] = React.useState<number[]>(
@@ -63,22 +77,22 @@ export default function StickyTable({
   );
 
   const [columnWidthsFromHeaderLayout, setColumnWidthsFromHeaderLayout] =
-    React.useState<(number[] | null)[]>(
-      Array.from({ length: columnHeaders.length - 1 }, () => null),
+    React.useState<(ColumnFitWidths | null)[]>(
+      Array.from({ length: fullHeaders.length - 1 }, () => null),
     );
   const [columnWidthsFromCellLayout, setColumnWidthsFromCellLayout] =
     React.useState<(number | null)[]>(
-      Array.from({ length: columnHeaders.length - 1 }, () => null),
+      Array.from({ length: fullHeaders.length - 1 }, () => null),
     );
   const columnWidthsCycles = React.useRef(
-    Array.from({ length: columnHeaders.length }, () => cycle([MID_CELL_WIDTH])),
+    Array.from({ length: fullHeaders.length }, () => cycle([MID_CELL_WIDTH])),
   );
   const [intermediateColumnWidths, setIntermediateColumnsWidths] =
     React.useState<number[]>(
-      Array.from({ length: columnHeaders.length }, () => MID_CELL_WIDTH),
+      Array.from({ length: fullHeaders.length }, () => MID_CELL_WIDTH),
     );
   const [columnWidths, setColumnsWidths] = React.useState<number[]>(
-    Array.from({ length: columnHeaders.length }, () => MID_CELL_WIDTH),
+    Array.from({ length: fullHeaders.length }, () => MID_CELL_WIDTH),
   );
 
   const scrollX = useSharedValue(0);
@@ -158,19 +172,43 @@ export default function StickyTable({
     styles.width = columnWidths[columnIndex];
     styles.height = rowHeights[rowIndex];
 
+    if (
+      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) ===
+      ValueType.MultiSelect
+    ) {
+      styles.alignItems = "flex-start";
+    }
+
     return styles;
   };
 
-  const handleColumnHeaderLayout = (index: number, fittingWidth: number) => {
+  const calculateMultiSelectFitWidth = (columnIndex: number): number | null => {
+    if (
+      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) !==
+      ValueType.MultiSelect
+    ) {
+      return null;
+    }
+    const lognestLineLength = Math.max(
+      ...data.map((rowData) =>
+        Math.max(
+          ...rowData[columnIndex].split("\n").map((line) => line.length),
+        ),
+      ),
+    );
+    // todo this is an approximation, calculate it with hidden columns
+    return lognestLineLength * 14 * 0.55;
+  };
+
+  const handleColumnHeaderLayout = (index: number, headerFitWidth: number) => {
     // called on initial mount
-    const newMaxWidth = Math.max(fittingWidth, MIN_CELL_WIDTH);
-    const newDefaultWidth = Math.min(newMaxWidth, MID_CELL_WIDTH);
-    let widthOptions = [MIN_CELL_WIDTH, newDefaultWidth, newMaxWidth];
+    const multiSelectFitWidth = calculateMultiSelectFitWidth(index);
     setColumnWidthsFromHeaderLayout((current) => {
       const newValue = current.map((el, idx) =>
-        index === idx ? widthOptions : el,
+        index === idx
+          ? new ColumnFitWidths(headerFitWidth, multiSelectFitWidth)
+          : el,
       );
-      //calculateColumnWidths(newValue,columnWidthsFromCellLayout);
       return newValue;
     });
   };
@@ -274,10 +312,10 @@ export default function StickyTable({
 
   const calculateColumnWidths = React.useCallback(
     (
-      columnWidthsFromHeaderLayout: (number[] | null)[],
+      columnWidthsFromHeaderLayout: (ColumnFitWidths | null)[],
       columnWidthsFromCellLayout: (number | null)[],
     ) => {
-      const allNotNull = (arr: (number[] | number | null)[]) =>
+      const allNotNull = (arr: (ColumnFitWidths | number | null)[]) =>
         arr.every((el) => el !== null);
 
       if (
@@ -287,28 +325,37 @@ export default function StickyTable({
         return;
       }
 
-      const columnWidthsFromLayouts = columnWidthsFromHeaderLayout.map(
-        (widthsFromHeaders, idx) =>
-          [
-            ...new Set([
-              ...(widthsFromHeaders ?? []),
-              columnWidthsFromCellLayout[idx],
-            ]),
-          ].sort((a, b) => a - b),
-      );
-
       const newColumnWidths = [];
-      for (const [idx, widths] of columnWidthsFromLayouts.entries()) {
+      for (const [idx, textFitWidth] of columnWidthsFromCellLayout.entries()) {
+        const fitWidths = columnWidthsFromHeaderLayout[idx];
+
+        let defaultWidth =
+          fitWidths.headerFit < MID_CELL_WIDTH
+            ? fitWidths.headerFit
+            : MID_CELL_WIDTH;
+
+        let contentFitWidth = defaultWidth;
+
+        if (textFitWidth !== null && fitWidths !== null) {
+          contentFitWidth = Math.max(
+            defaultWidth,
+            textFitWidth,
+            fitWidths.multiSelectFit ?? defaultWidth,
+          );
+        }
+
+        let widths = [];
+        if (fitWidths.headerFit > contentFitWidth) {
+          widths = [MIN_CELL_WIDTH, contentFitWidth, fitWidths.headerFit];
+        } else {
+          // if header can be displayed within contentFitWidth then
+          // it is not needed
+          widths = [MIN_CELL_WIDTH, contentFitWidth];
+        }
+
         let coalescedWidths = widths.filter((a, idx) =>
           widths.slice(idx + 1).every((b) => !isSizeClose(a, b)),
         );
-
-        if (
-          coalescedWidths.length === 3 &&
-          coalescedWidths[2] === MID_CELL_WIDTH
-        ) {
-          coalescedWidths = [coalescedWidths[0], coalescedWidths[2]];
-        }
 
         let cycleOptions = [coalescedWidths[0]];
         let startingWidth = coalescedWidths[0];
@@ -399,7 +446,7 @@ export default function StickyTable({
   return (
     <View style={styles.container}>
       {/* Hidden column headers for measuring purposes */}
-      {columnHeaders.slice(1).map((columnHeader, index) => (
+      {fullHeaders.slice(1).map((columnHeader, index) => (
         <View
           key={index}
           style={[
@@ -420,7 +467,7 @@ export default function StickyTable({
               handleColumnHeaderLayout(index, width);
             }}
           >
-            {columnHeader}
+            {fullHeaderToDisplayHeader.get(columnHeader)}
           </Text>
         </View>
       ))}
@@ -485,7 +532,7 @@ export default function StickyTable({
           ]}
         >
           <Text style={[styles.headerText, { color: theme.colors.text }]}>
-            {columnHeaders[0]}
+            {fullHeaderToDisplayHeader.get(fullHeaders[0])}
           </Text>
         </View>
 
@@ -498,13 +545,13 @@ export default function StickyTable({
             showsHorizontalScrollIndicator={false}
             scrollEnabled={false}
           >
-            {columnHeaders.slice(1).map((columnHeader, index) => (
+            {fullHeaders.slice(1).map((columnHeader, index) => (
               <View key={index}>
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.columnHeaderCell,
-                    computeColumnHeaderStyles(index, columnHeaders.length - 2),
+                    computeColumnHeaderStyles(index, fullHeaders.length - 2),
                     {
                       borderColor: theme.colors.border,
                       backgroundColor: theme.colors.primary,
@@ -517,7 +564,7 @@ export default function StickyTable({
                     ellipsizeMode="middle"
                     style={[styles.headerText, { color: theme.colors.text }]}
                   >
-                    {columnHeader}
+                    {fullHeaderToDisplayHeader.get(columnHeader)}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -656,6 +703,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
+    padding: 6,
   },
   hiddenContainer: {
     position: "absolute",

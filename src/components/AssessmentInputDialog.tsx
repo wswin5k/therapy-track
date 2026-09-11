@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, Modal, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { AssessmentType, ValueDomain } from "../models/AssessmentSchedule";
+import { ValueType, ValueDomain } from "../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
 import { AssessmentValue } from "../models/Records";
 import {
@@ -12,7 +12,7 @@ import {
 
 interface AssessmentInputDialogProps {
   title: string;
-  assessmentType: AssessmentType;
+  assessmentType: ValueType;
   initialValue: AssessmentValue | null;
   valueDomain: ValueDomain;
   onSave: (value: AssessmentValue) => void;

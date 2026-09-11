@@ -22,7 +22,7 @@ import {
 import {
   Assessment,
   AssessmentSchedule,
-  AssessmentType,
+  ValueType,
   Measurment,
   NumericValueDomain,
   SelectValueDomain,
@@ -91,7 +91,7 @@ interface GroupRow {
 interface AssessmentRow {
   id: number;
   name: string;
-  type: AssessmentType;
+  type: ValueType;
   value_domain: string | null;
 }
 
@@ -102,14 +102,14 @@ interface UncheduledMeasurmentRecordRow {
   assessment: number;
   value: string;
   group_: number | null;
-  assessment_type: AssessmentType;
+  assessment_type: ValueType;
 }
 
 interface AssessmentScheduleWithAssessmentRow {
   id: number;
   assessment: number;
   assessment_name: string;
-  assessment_type: AssessmentType;
+  assessment_type: ValueType;
   assessment_value_domain: string | null;
   start_date: string;
   end_date: string | null;
@@ -131,7 +131,7 @@ interface ScheduledMeasurmentRecordRow {
   assessment_schedule: number;
   measurment_index: number;
   value: string;
-  assessment_type: AssessmentType;
+  assessment_type: ValueType;
 }
 
 function serializeRecordDatetime(value: Date): string {
@@ -156,7 +156,7 @@ function parseActiveIngredients(json: string) {
   });
 }
 
-function parseValueDomain(json: string | null, assessmentType: AssessmentType) {
+function parseValueDomain(json: string | null, assessmentType: ValueType) {
   if (!json) {
     return null;
   }
@@ -165,12 +165,12 @@ function parseValueDomain(json: string | null, assessmentType: AssessmentType) {
     return null;
   }
   switch (assessmentType) {
-    case AssessmentType.Numeric:
+    case ValueType.Numeric:
       return new NumericValueDomain(vdData.min, vdData.max);
-    case AssessmentType.Text:
+    case ValueType.Text:
       return new TextValueDomain(vdData.max_characters);
-    case AssessmentType.SingleSelect:
-    case AssessmentType.MultiSelect:
+    case ValueType.SingleSelect:
+    case ValueType.MultiSelect:
       return new SelectValueDomain(vdData.values);
     default:
       return null;
@@ -187,15 +187,15 @@ function strigifyAssessmentValue(value: AssessmentValue): string {
 
 function parseAssessmentValue(
   value: string,
-  assessmentType: AssessmentType,
+  assessmentType: ValueType,
 ): AssessmentValue {
   switch (assessmentType) {
-    case AssessmentType.Numeric:
+    case ValueType.Numeric:
       return Number.parseFloat(value);
-    case AssessmentType.Boolean:
+    case ValueType.Boolean:
       return value === "true";
-    case AssessmentType.SingleSelect:
-    case AssessmentType.MultiSelect:
+    case ValueType.SingleSelect:
+    case ValueType.MultiSelect:
       return JSON.parse(value);
     default:
       return value;
@@ -794,7 +794,7 @@ export async function dbInsertAssessment(
   db: SQLiteDatabase,
   assessment: {
     name: string;
-    type: AssessmentType;
+    type: ValueType;
     valueDomain: ValueDomain;
   },
 ): Promise<number> {
@@ -850,7 +850,7 @@ export async function dbGetUnscheduledMeasurmentRecords(
   return rows.map((row) => {
     const value = parseAssessmentValue(
       row.value,
-      AssessmentType[row.assessment_type],
+      ValueType[row.assessment_type],
     );
     return new UnscheduledMeasurmentRecord(
       row.id,
@@ -901,7 +901,7 @@ export async function dbUpdateAssessment(
   db: SQLiteDatabase,
   assessment: {
     name: string;
-    type: AssessmentType;
+    type: ValueType;
     valueDomain: ValueDomain;
     dbId: number;
   },
@@ -928,7 +928,7 @@ export async function dbGetAssessments(
       FROM assessments
     `);
   return rows.map((row) => {
-    const assessmentType = AssessmentType[row.type];
+    const assessmentType = ValueType[row.type];
     const valueDomain = row.value_domain
       ? parseValueDomain(row.value_domain, assessmentType)
       : null;
@@ -1011,7 +1011,7 @@ export async function dbInsertAssessmentScheduleWithAssessment(
   db: SQLiteDatabase,
   assessment: {
     name: string;
-    type: AssessmentType;
+    type: ValueType;
     valueDomain: ValueDomain;
   },
   assessmentSchedule: {
