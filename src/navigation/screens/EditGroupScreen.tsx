@@ -222,11 +222,8 @@ export function EditGroupScreen() {
     <DefaultMainContainer>
       <View style={styles.mainContainer}>
         <View style={[styles.rowContainer]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t("Group Name")}
-          </Text>
           <TextInput
-            placeholder={t("e.g. After lunch")}
+            placeholder="Group Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
               styles.input,
@@ -249,7 +246,6 @@ export function EditGroupScreen() {
             value={name}
           />
         </View>
-
         <View style={styles.rowContainer}>
           <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
             {t("Enable Reminder")}
@@ -275,7 +271,7 @@ export function EditGroupScreen() {
             <TouchableOpacity
               onPress={handleSelectTime}
               style={[
-                styles.input,
+                styles.timeInput,
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
@@ -336,10 +332,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 30,
     height: 60,
-    margin: 15,
   },
   input: {
+    height: 55,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    width: "100%",
+  },
+  timeInput: {
     height: 52,
     width: "45%",
     borderWidth: 1,
