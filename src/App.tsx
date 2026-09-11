@@ -30,7 +30,7 @@ const CustomLightTheme: ReactNavigation.Theme = {
     background: "#F9F8F6",
     surface: "#f2f0eb",
     card: "#EFE9E3",
-    border: "#d7d3cd",
+    border: "#e0e0e0",
     text: "#363636ff",
     textSecondary: "#666666",
     textTertiary: "#999999",

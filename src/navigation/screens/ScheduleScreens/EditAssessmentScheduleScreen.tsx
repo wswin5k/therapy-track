@@ -114,7 +114,7 @@ export default function EditAssessmentScheduleScreen() {
           await dbGetAssessmentSchedules(db)
         ).filter(
           (a) =>
-            !params.assessment.dbId ||
+            params.assessment.dbId !== undefined &&
             a.assessment.dbId === params.assessment.dbId,
         );
         setExistingAssessmentSchedules(newExistingAssessmentSchedules);
@@ -123,7 +123,7 @@ export default function EditAssessmentScheduleScreen() {
           await dbGetUnscheduledMeasurmentRecords(db)
         ).filter(
           (a) =>
-            !params.assessment.dbId ||
+            params.assessment.dbId !== undefined &&
             a.assessmentId === params.assessment.dbId,
         );
         setExistingUnscheduledMeasurmentRecords(

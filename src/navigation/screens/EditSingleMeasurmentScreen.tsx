@@ -93,21 +93,23 @@ export function EditSingleMeasurmentScreen() {
           await dbGetAssessmentSchedules(db)
         ).filter(
           (a) =>
-            !params.assessment.dbId ||
+            params.assessment.dbId !== undefined &&
             a.assessment.dbId === params.assessment.dbId,
         );
+        console.log(newExistingAssessmentSchedules);
         setExistingAssessmentSchedules(newExistingAssessmentSchedules);
 
         const newExistingUnscheduledMeasurmentRecords = (
           await dbGetUnscheduledMeasurmentRecords(db)
         ).filter(
           (a) =>
-            !params.assessment.dbId ||
+            params.assessment.dbId !== undefined &&
             a.assessmentId === params.assessment.dbId,
         );
         setExistingUnscheduledMeasurmentRecords(
           newExistingUnscheduledMeasurmentRecords,
         );
+        console.log(newExistingUnscheduledMeasurmentRecords);
       };
       setData();
     }, [db, route.params]),
