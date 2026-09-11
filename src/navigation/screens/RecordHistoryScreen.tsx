@@ -70,6 +70,7 @@ export class RecordHistoryConfiguration {
     public showAssessments: boolean,
     public expandCells: boolean,
     public showDaysWithoutEntries: boolean,
+    public mergeIngredientsWithDifferentForms: boolean,
     public columnWidths: Map<string, number>,
     public movingAverages: MovingAverage[],
   ) {}
@@ -82,6 +83,7 @@ function defaultConfiguration(): RecordHistoryConfiguration {
     true,
     false,
     false,
+    true,
     new Map(),
     [],
   );
@@ -445,11 +447,17 @@ export function RecordHistoryScreen() {
           const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
           let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
           let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
+          if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+            fullHeader = shortHeader;
+          }
 
           let weightUnitMultiplier = 1;
           if (isWeightUnit(ai.unit)) {
             fullHeader = `${ai.name} – ${baseUnitLabel}`;
             shortHeader = `${ai.name}`;
+            if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+              fullHeader = shortHeader;
+            }
             weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
             fullActiveIngredientHeaderToWeightUnits.set(
               fullHeader,
@@ -507,11 +515,17 @@ export function RecordHistoryScreen() {
           const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
           let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
           let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
+          if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+            fullHeader = shortHeader;
+          }
 
           let weightUnitMultiplier = 1;
           if (isWeightUnit(ai.unit)) {
             fullHeader = `${ai.name} – ${baseUnitLabel}`;
             shortHeader = `${ai.name}`;
+            if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+              fullHeader = shortHeader;
+            }
             weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
             fullActiveIngredientHeaderToWeightUnits.set(
               fullHeader,
