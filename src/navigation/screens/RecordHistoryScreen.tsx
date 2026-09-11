@@ -48,7 +48,12 @@ import {
   ingredientAmountUnitEnumToDisplayForm,
 } from "../enumMappings";
 import RecordHistoryTable from "../../components/RecordHistoryTable";
-import { getTodayDateOnly, serializeDateOnly } from "../../dateOnlyUtils";
+import {
+  deserializeDateOnly,
+  getShiftedDateOnly,
+  getTodayDateOnly,
+  serializeDateOnly,
+} from "../../dateOnlyUtils";
 import { getOrThrow, castToStringArray } from "../utils";
 import { AssessmentValue } from "../../models/Records";
 
@@ -64,9 +69,22 @@ export class RecordHistoryConfiguration {
     public showMedicines: boolean,
     public showAssessments: boolean,
     public expandCells: boolean,
+    public showDaysWithoutEntries: boolean,
     public columnWidths: Map<string, number>,
     public movingAverages: MovingAverage[],
   ) {}
+}
+
+function defaultConfiguration(): RecordHistoryConfiguration {
+  return new RecordHistoryConfiguration(
+    true,
+    true,
+    true,
+    false,
+    false,
+    new Map(),
+    [],
+  );
 }
 
 function extractDate(datetime: Date): string {
@@ -177,12 +195,12 @@ class TableData {
 }
 
 export function RecordHistoryScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
   const navigation = useNavigation();
 
-  const [rowHeaders, setRowHeaders] = React.useState<string[]>([]);
+  const [rowHeaders, setRowHeaders] = React.useState<Date[]>([]);
   const [fullHeaders, setFullHeaders] = React.useState<string[]>([]);
   const [fullHeaderToDisplayHeader, setFullHeaderToDisplayHeader] =
     React.useState<Map<string, string>>(new Map());
@@ -193,21 +211,9 @@ export function RecordHistoryScreen() {
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   const [recordHistoryConfiguration, setRecordHistoryConfiguration] =
-    React.useState<RecordHistoryConfiguration>(
-      new RecordHistoryConfiguration(true, true, true, false, new Map(), []),
-    );
-  const formatDate = React.useCallback(
-    (date: Date) => {
-      return new Intl.DateTimeFormat(i18n.resolvedLanguage, {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }).format(date);
-    },
-    [i18n.resolvedLanguage],
-  );
+    React.useState<RecordHistoryConfiguration>(defaultConfiguration());
 
-  function calculateHeaders<T>(
+  function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
     shortHeaderCounts: Map<string, number>,
   ): Map<string, string> {
@@ -593,11 +599,26 @@ export function RecordHistoryScreen() {
       ...medicinesHistory.keys(),
       ...assessmentsHistory.keys(),
     ]);
-    const days = Array.from(daysSet).sort().reverse();
+    const days = Array.from(daysSet).sort();
+    let dates = [];
+    if (recordHistoryConfiguration.showDaysWithoutEntries) {
+      const startDay = deserializeDateOnly(days[0]);
+      const endDate = deserializeDateOnly(days[days.length - 1]);
 
-    const newRowHeaders = new Array();
+      for (
+        let date = endDate;
+        date >= startDay;
+        date = getShiftedDateOnly(date, -1)
+      ) {
+        dates.push(date);
+      }
+    } else {
+      dates = days.map((d) => deserializeDateOnly(d)).toReversed();
+    }
 
-    for (const day of days) {
+    for (const date of dates) {
+      const day = serializeDateOnly(date);
+
       const record = [];
       for (const header of medicineTableData.fullHeaders) {
         const value = medicinesHistory.get(day)?.get(header);
@@ -616,7 +637,6 @@ export function RecordHistoryScreen() {
         }
       }
       newTableRows.push(record);
-      newRowHeaders.push(formatDate(new Date(day)));
     }
 
     const headers = new Array(
@@ -640,20 +660,18 @@ export function RecordHistoryScreen() {
     headersMap.set("Date", "Date");
     setFullHeaderToDisplayHeader(headersMap);
 
-    setRowHeaders(newRowHeaders);
+    setRowHeaders(dates);
 
     setCells(newTableRows);
   }, [
     getAssessmentData,
     getMedicineData,
-    formatDate,
     recordHistoryConfiguration.showAssessments,
+    recordHistoryConfiguration.showDaysWithoutEntries,
   ]);
 
   const loadConfiguration = React.useCallback(async () => {
-    setRecordHistoryConfiguration(
-      new RecordHistoryConfiguration(true, true, true, false, new Map(), []),
-    );
+    setRecordHistoryConfiguration(defaultConfiguration());
   }, []);
 
   useFocusEffect(

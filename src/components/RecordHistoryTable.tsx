@@ -11,12 +11,14 @@ import type { ReanimatedScrollEvent } from "react-native-reanimated/lib/typescri
 import { cycle, mixColors } from "../navigation/utils";
 import React from "react";
 import { ValueType } from "../models/AssessmentSchedule";
+import { useTranslation } from "react-i18next";
+import { dayDifference } from "../dateOnlyUtils";
 
 const TABLE_RADIUS = 10;
 const DELTA_WIDTH_BUFFER = 10;
 const COLUMN_HEADER_PADDING = 8;
 
-const MIN_CELL_HEIGHT = 50;
+const MIN_CELL_HEIGHT = 54;
 const MIN_CELL_LINES_LENGTH = 2;
 
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
@@ -41,7 +43,7 @@ type RecordHistoryTableProps = {
   // todo possbily take the cells in the following types
   // not strings
   fullHeaderToValueType: Map<string, ValueType>;
-  rowHeaders: string[];
+  rowHeaders: Date[];
   data: string[][];
   expandCells: boolean;
 };
@@ -55,6 +57,19 @@ export default function RecordHistoryTable({
   expandCells,
 }: RecordHistoryTableProps) {
   const theme = useTheme();
+
+  const { i18n } = useTranslation();
+
+  const formatDate = React.useCallback(
+    (date: Date) => {
+      return new Intl.DateTimeFormat(i18n.resolvedLanguage, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+    },
+    [i18n.resolvedLanguage],
+  );
 
   const [rowHeights, setRowHeights] = React.useState<number[]>(
     Array.from({ length: data.length }, () => MIN_CELL_HEIGHT),
@@ -120,6 +135,16 @@ export default function RecordHistoryTable({
     scrollTo(rowHeaderRef, 0, scrollY.value, false);
   });
 
+  const dateGapStyle = (rowIndex: number) => {
+    const styles: Record<string, any> = {};
+    if (rowIndex > 0) {
+      if (dayDifference(rowHeaders[rowIndex - 1], rowHeaders[rowIndex]) > 1) {
+        styles.borderTopWidth = 3;
+      }
+    }
+    return styles;
+  };
+
   const computeColumnHeaderStyles = (
     columnIndex: number,
     columnsLength: number,
@@ -150,7 +175,7 @@ export default function RecordHistoryTable({
     styles.width = ROW_HEADER_WIDTH;
     styles.height = rowHeights[rowIndex - 1];
 
-    return styles;
+    return { ...styles, ...dateGapStyle(rowIndex - 1) };
   };
 
   const computeCellStyles = (
@@ -179,7 +204,7 @@ export default function RecordHistoryTable({
       styles.alignItems = "flex-start";
     }
 
-    return styles;
+    return { ...styles, ...dateGapStyle(rowIndex) };
   };
 
   const calculateMultiSelectFitWidth = (columnIndex: number): number | null => {
@@ -524,11 +549,11 @@ export default function RecordHistoryTable({
         <View
           style={[
             styles.cornerCell,
-            computeRowHeaderStyles(0, rowHeaders.length - 1),
             {
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.primary,
             },
+            computeRowHeaderStyles(0, rowHeaders.length - 1),
           ]}
         >
           <Text style={[styles.headerText, { color: theme.colors.text }]}>
@@ -586,7 +611,6 @@ export default function RecordHistoryTable({
                 key={index}
                 style={[
                   styles.rowHeaderCell,
-                  computeRowHeaderStyles(index + 1, rowHeaders.length),
                   {
                     borderColor: theme.colors.border,
                     backgroundColor: mixColors(
@@ -597,10 +621,11 @@ export default function RecordHistoryTable({
                       0.85,
                     ),
                   },
+                  computeRowHeaderStyles(index + 1, rowHeaders.length),
                 ]}
               >
                 <Text style={[{ color: theme.colors.text }, styles.headerText]}>
-                  {rowHeader}
+                  {formatDate(rowHeader)}
                 </Text>
               </View>
             ))}
@@ -622,12 +647,7 @@ export default function RecordHistoryTable({
                     onPress={() => handleCellPress(rowIndex, columnIndex)}
                     style={[
                       styles.cell,
-                      computeCellStyles(
-                        rowIndex,
-                        columnIndex,
-                        data.length - 1,
-                        row.length - 1,
-                      ),
+
                       {
                         borderColor: theme.colors.border,
                         backgroundColor:
@@ -635,6 +655,12 @@ export default function RecordHistoryTable({
                             ? theme.colors.surface
                             : theme.colors.card,
                       },
+                      computeCellStyles(
+                        rowIndex,
+                        columnIndex,
+                        data.length - 1,
+                        row.length - 1,
+                      ),
                     ]}
                   >
                     <Text
@@ -679,7 +705,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   cell: {
-    borderWidth: 1,
+    borderWidth: 0.5,
     minHeight: 48,
     padding: 6,
     justifyContent: "center",
