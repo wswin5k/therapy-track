@@ -210,23 +210,11 @@ export function RecordHistoryScreen() {
   function calculateHeaders<T>(
     fullHeaderToShortHeader: Map<string, string>,
     shortHeaderCounts: Map<string, number>,
-    dayToHeaderToValues: Map<string, Map<string, T>>,
   ): Map<string, string> {
     const headers = new Map();
     for (const [fullHeader, shortHeader] of fullHeaderToShortHeader) {
       if (shortHeaderCounts.get(shortHeader) === 1) {
         headers.set(fullHeader, shortHeader);
-
-        /*         if (fullHeader !== shortHeader) {
-          for (const headerToValues of dayToHeaderToValues.values()) {
-            const values = headerToValues.get(fullHeader);
-            if (!values) {
-              continue;
-            }
-            headerToValues.set(shortHeader, values);
-            headerToValues.delete(fullHeader);
-          }
-        } */
       } else {
         headers.set(fullHeader, fullHeader);
       }
@@ -396,7 +384,6 @@ export function RecordHistoryScreen() {
     const headersMap = calculateHeaders(
       fullHeaderToShortHeader,
       shortHeaderCounts,
-      dayToHeaderToValues,
     );
 
     const fullHeaders = Array.from(fullHeaderToShortHeader.keys()).sort();
@@ -570,7 +557,6 @@ export function RecordHistoryScreen() {
     const headersMap = calculateHeaders(
       fullHeaderToShortHeader,
       shortHeaderCounts,
-      dayToHeaderToValues,
     );
 
     const fullHeaders = Array.from(fullHeaderToShortHeader.keys()).sort();
