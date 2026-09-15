@@ -301,6 +301,7 @@ export default function EditMedicineScheduleScreen() {
         <View style={styles.dosagesContainer}>
           {Array.from({ length: nDosages }, (_, idx) => (
             <View
+              // complex key to re-render when there is a change in initialValue
               key={idx * 10 + (dosageIdxToDefaultGroupId.get(idx) ?? -1)}
               style={styles.rowDosage}
             >
