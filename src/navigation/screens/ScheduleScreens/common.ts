@@ -8,18 +8,20 @@ export const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1),
 };
 
-export function assingDefaultGroups(groups: Group[]): Map<number, number> {
-  const dosageIdxToGroup = new Map();
+export function assingDefaultGroups(
+  groups: Iterable<Group>,
+): Map<number, number> {
+  const dosageIdxToGroupId = new Map();
 
-  groups.forEach((g, idx) => {
+  for (const g of groups) {
     if (g.name === "Morning") {
-      dosageIdxToGroup.set(0, idx);
+      dosageIdxToGroupId.set(0, g.dbId);
     } else if (g.name === "Afternoon") {
-      dosageIdxToGroup.set(1, idx);
+      dosageIdxToGroupId.set(1, g.dbId);
     } else if (g.name === "Evening") {
-      dosageIdxToGroup.set(2, idx);
+      dosageIdxToGroupId.set(2, g.dbId);
     }
-  });
+  }
 
-  return dosageIdxToGroup;
+  return dosageIdxToGroupId;
 }

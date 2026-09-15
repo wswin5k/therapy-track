@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "@react-navigation/native";
+import { gstyles } from "../commonStyles";
 
 function isClose(a: number, b: number) {
   return Math.abs(a - b) < 1e-5;
@@ -15,7 +16,7 @@ type SmallNumberStepperProps = {
 };
 
 export default function SmallNumberStepper({
-  min = 0.25,
+  min = 0.1,
   max = 100,
   defaultValue = 1,
   fractionalStepsBelowZero = true,
@@ -26,29 +27,32 @@ export default function SmallNumberStepper({
 
   const handlePress = (type: "increment" | "decrement") => {
     let newValue = count;
+
+    const fractionalSteps = [1.0, 0.75, 0.66, 0.5, 0.33, 0.25, 0.1];
+
     if (type === "increment" && count < max) {
       if (newValue >= 1 || !fractionalStepsBelowZero) {
         newValue = Math.floor(count + 1.0);
-      } else if (count >= 0.75) {
-        newValue = 1;
-      } else if (count >= 0.5) {
-        newValue = 0.75;
-      } else if (count >= 0.25) {
-        newValue = 0.5;
       } else {
         newValue = 1;
+        for (const [idx, fs] of fractionalSteps.slice(1).entries()) {
+          if (count >= fs) {
+            newValue = fractionalSteps[idx];
+            break;
+          }
+        }
       }
     } else if (type === "decrement" && count > min) {
       if (newValue > 1 || !fractionalStepsBelowZero) {
         newValue = Math.ceil(count - 1.0);
-      } else if (count > 0.75) {
-        newValue = 0.75;
-      } else if (count > 0.5) {
-        newValue = 0.5;
-      } else if (count > 0.25) {
-        newValue = 0.25;
       } else {
         newValue = 1;
+        for (const [idx, fs] of fractionalSteps.slice(1).entries()) {
+          if (count > fs) {
+            newValue = fractionalSteps[idx + 1];
+            break;
+          }
+        }
       }
     }
 
@@ -99,7 +103,7 @@ export default function SmallNumberStepper({
           keyboardType="numeric"
           defaultValue={count.toString()}
           onChangeText={handleChangeText}
-          style={[styles.valueText, { color: theme.colors.text }]}
+          style={[gstyles.pressableText, { color: theme.colors.text }]}
         />
       </View>
 

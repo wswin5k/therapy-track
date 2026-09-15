@@ -38,6 +38,11 @@ import {
   frequencySelectionToDisplayForm,
 } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
+import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { ERROR_BORDER_WIDTH } from "../../commonConsts";
+import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
+import i18n from "../../../../i18n";
+import { assingDefaultGroups } from "./common";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
@@ -46,22 +51,6 @@ const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceWeekly: new Frequency(IntervalUnit.week, 1, 1),
   OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1),
 };
-
-function assingDefaultGroups(groups: Group[]): Map<number, number> {
-  const dosageIdxToGroup = new Map();
-
-  groups.forEach((g, idx) => {
-    if (g.name === "Morning") {
-      dosageIdxToGroup.set(0, idx);
-    } else if (g.name === "Afternoon") {
-      dosageIdxToGroup.set(1, idx);
-    } else if (g.name === "Evening") {
-      dosageIdxToGroup.set(2, idx);
-    }
-  });
-
-  return dosageIdxToGroup;
-}
 
 type EditMedicineScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -83,7 +72,7 @@ export default function EditMedicineScheduleScreen() {
   const amountsRef = React.useRef<number[]>(
     Array.from({ length: nDosages }, () => 1),
   );
-  const groupsRef = React.useRef<(number | null)[]>(
+  const dosageIdxToGroupId = React.useRef<(number | null)[]>(
     Array.from({ length: nDosages }, () => null),
   );
 
@@ -96,17 +85,22 @@ export default function EditMedicineScheduleScreen() {
   const [endDate, setEndDate] = React.useState<Date | null>(null);
 
   const [medicine, setMedicine] = React.useState<MedicineParam | null>(null);
-  const [groups, setGroups] = React.useState<Group[]>([]);
-  const [defaultGroups, setDefaultGroups] = React.useState<Map<number, number>>(
+
+  const [groupsMap, setGroupsMap] = React.useState<Map<number, Group>>(
     new Map(),
+  );
+  const [dosageIdxToDefaultGroupId, setDosageIdxToDefaultGroupIdx] =
+    React.useState<Map<number, number>>(new Map());
+  const groupsIds = React.useMemo(
+    () => [-1, ...Array.from(groupsMap.values()).map((g) => g.dbId)],
+    [groupsMap],
   );
 
   const updateGroupsRefWithDefaults = React.useCallback(() => {
-    const defaultGroups = assingDefaultGroups(groups);
     for (let i = 0; i < nDosages; i++) {
-      groupsRef.current[i] = defaultGroups.get(i) ?? null;
+      dosageIdxToGroupId.current[i] = dosageIdxToDefaultGroupId.get(i) ?? null;
     }
-  }, [groups, nDosages]);
+  }, [dosageIdxToDefaultGroupId, nDosages]);
 
   useFocusEffect(
     React.useCallback(
@@ -125,8 +119,10 @@ export default function EditMedicineScheduleScreen() {
         setMedicine(params.medicine);
 
         const groups = await dbGetGroups(db);
-        setGroups(groups);
-        setDefaultGroups(assingDefaultGroups(groups));
+        const newGroupsMap = new Map();
+        groups.forEach((g) => newGroupsMap.set(g.dbId, g));
+        setGroupsMap(newGroupsMap);
+        setDosageIdxToDefaultGroupIdx(assingDefaultGroups(groups));
       };
       setData();
     }, [db, route.params]),
@@ -214,10 +210,7 @@ export default function EditMedicineScheduleScreen() {
     const dosages = Array.from(
       amountsRef.current.entries(),
       ([index, amount]) => {
-        const groupId =
-          groupsRef.current[index] === null
-            ? null
-            : groups[groupsRef.current[index]].dbId;
+        const groupId = dosageIdxToGroupId.current[index];
         return { amount, index, offset: null, groupId };
       },
     );
@@ -266,7 +259,7 @@ export default function EditMedicineScheduleScreen() {
 
   const createGroupInputHandler = (idx: number) => {
     return (groupIdx: number) => {
-      groupsRef.current[idx] = groupIdx === -1 ? null : groupIdx;
+      dosageIdxToGroupId.current[idx] = groupIdx === -1 ? null : groupIdx;
     };
   };
 
@@ -276,61 +269,54 @@ export default function EditMedicineScheduleScreen() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={[styles.rowContainer, { marginBottom: 20 }]}>
+      <ScrollView
+        style={gstyles.editScrollContainer}
+        contentContainerStyle={gstyles.editScrollContentContainer}
+      >
+        <View style={[styles.rowFrequencyPicker]}>
           <ModalPicker
             values={Object.values(FrequencySelection)}
             selectedValue={freq}
             onValueChange={handleFrequencyPicker}
             getLabel={frequencySelectionToDisplayForm}
             placeholder="Select frequency"
-            pressableStyle={styles.fullWidthPickerContainer}
+            pressableStyle={gstyles.fullWidthPickerPressable}
             error={freqError}
           />
         </View>
 
-        <View style={[styles.rowDosagesHeader]}>
+        <View style={[styles.rowDosagesHeaders]}>
           <View style={styles.dosageHeaderContainer}>
-            <Text
-              style={[styles.dosageHeaderLabel, { color: theme.colors.text }]}
-            >
+            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
               {t(doseHeader)}
             </Text>
           </View>
           <View style={styles.dosageHeaderContainer}>
-            <Text
-              style={[styles.dosageHeaderLabel, { color: theme.colors.text }]}
-            >
-              {t("Group (optional)")}
+            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+              {t("Group")}
             </Text>
           </View>
         </View>
 
         <View style={styles.dosagesContainer}>
           {Array.from({ length: nDosages }, (_, idx) => (
-            <View key={idx} style={styles.rowDosage}>
+            <View
+              key={idx * 10 + (dosageIdxToDefaultGroupId.get(idx) ?? -1)}
+              style={styles.rowDosage}
+            >
               <View style={styles.dosageAmountContainer}>
                 <SmallNumberStepper
                   onChange={createDosagesInputHandler(idx)}
                   defaultValue={1}
                 />
               </View>
-              <View
-                style={[
-                  styles.pickerContainer,
-                  {
-                    backgroundColor: theme.colors.surface,
-                  },
-                ]}
-              >
+              <View style={[styles.dosageGroupPickerContainer]}>
                 <DropdownPicker
-                  options={[-1].concat(
-                    Array.from({ length: groups.length }, (_, i) => i),
-                  )}
-                  initialValue={defaultGroups.get(idx) ?? -1}
+                  options={groupsIds}
+                  initialValue={dosageIdxToDefaultGroupId.get(idx) ?? -1}
                   onValueChange={createGroupInputHandler(idx)}
                   getLabel={(gIdx) =>
-                    gIdx === -1 ? "None" : groups[gIdx].name
+                    gIdx === -1 ? "None" : (groupsMap.get(gIdx)?.name ?? "")
                   }
                   placeholder="group"
                   pressableStyle={{
@@ -343,33 +329,35 @@ export default function EditMedicineScheduleScreen() {
           ))}
         </View>
 
-        <View style={styles.rowContainer}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        <View style={styles.rowDate}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("Start date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectStartDate}
             style={[
-              styles.dateButton,
+              gstyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
               startDateError && {
                 borderColor: theme.colors.error,
-                borderWidth: 2,
+                borderWidth: ERROR_BORDER_WIDTH,
               },
             ]}
           >
-            <Text style={[styles.inputText, { color: theme.colors.text }]}>
-              {startDate ? startDate.toDateString() : t("Select date")}
+            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+              {startDate
+                ? toDisplayConcise(startDate, i18n.resolvedLanguage)
+                : t("Select date")}
             </Text>
           </TouchableOpacity>
         </View>
         {isStartDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={startDate ?? new Date()}
+            value={startDate ?? getTodayDateOnly()}
             onValueChange={handleStartDateChange}
             onDismiss={handleStartDateDismiss}
             neutralButton={{ label: "Clear", textColor: "" }}
@@ -379,22 +367,24 @@ export default function EditMedicineScheduleScreen() {
           ""
         )}
 
-        <View style={styles.rowContainer}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        <View style={styles.rowDate}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("End date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectEndDate}
             style={[
-              styles.dateButton,
+              gstyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
             ]}
           >
-            <Text style={[styles.inputText, { color: theme.colors.text }]}>
-              {endDate ? endDate.toDateString() : t("Infinitely")}
+            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+              {endDate
+                ? toDisplayConcise(endDate, i18n.resolvedLanguage)
+                : t("Infinitely")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -402,7 +392,7 @@ export default function EditMedicineScheduleScreen() {
         {isEndDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={endDate ?? new Date()}
+            value={endDate ?? getTodayDateOnly()}
             minimumDate={startDate ? startDate : undefined}
             onValueChange={handleEndDateChange}
             onDismiss={handeEndDateDismiss}
@@ -416,7 +406,7 @@ export default function EditMedicineScheduleScreen() {
 
       <View
         style={[
-          styles.footer,
+          gstyles.footer,
           {
             backgroundColor: theme.colors.background,
             borderTopColor: theme.colors.border,
@@ -425,9 +415,12 @@ export default function EditMedicineScheduleScreen() {
       >
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+          style={[
+            gstyles.nextButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
         >
-          <Text style={styles.nextButtonText}>{t("Save")}</Text>
+          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -435,20 +428,13 @@ export default function EditMedicineScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    padding: 16,
-  },
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    height: 60,
+  rowFrequencyPicker: {
+    marginBottom: 24,
   },
   dosagesContainer: {
-    marginBottom: 30,
+    marginBottom: 24,
   },
-  rowDosagesHeader: {
+  rowDosagesHeaders: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -458,10 +444,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: 60,
-  },
-  dosageHeaderLabel: {
-    fontSize: 16,
+    height: PRESSABLE_HEIGHT,
+    marginBottom: 6,
   },
   dosageHeaderContainer: {
     width: "45%",
@@ -470,57 +454,17 @@ const styles = StyleSheet.create({
   },
   dosageAmountContainer: {
     width: "45%",
-    height: 52,
+    height: PRESSABLE_HEIGHT,
   },
-  headerLabel: {
-    fontSize: 18,
-    fontWeight: "400",
-    width: "45%",
-  },
-  dateButton: {
-    height: 52,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    justifyContent: "center",
-    width: "45%",
-  },
-  inputError: {
-    borderWidth: 2,
-  },
-  inputText: {
-    fontSize: 16,
-  },
-  fullWidthPickerContainer: {
-    height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: "center",
-    width: "100%",
-  },
-  pickerContainer: {
-    height: 52,
+  dosageGroupPickerContainer: {
     justifyContent: "center",
     width: "45%",
     overflow: "hidden",
   },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    borderTopWidth: 1,
-    zIndex: 1,
-  },
-  nextButton: {
-    paddingVertical: 15,
-    borderRadius: 10,
+  rowDate: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-  },
-  nextButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    marginBottom: 6,
   },
 });

@@ -39,6 +39,18 @@ export function isLessOrEqualDateOnly(first: Date, second: Date): boolean {
   return first.getTime() <= second.getTime();
 }
 
+export function toDisplayConcise(date: Date, language: string | undefined) {
+  const now = new Date();
+  const yearFormat =
+    now.getFullYear() === date.getFullYear() ? undefined : "numeric";
+  return new Intl.DateTimeFormat(language, {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    year: yearFormat,
+  }).format(date);
+}
+
 export function serializeDateOnly(value: Date): string {
   return value.toLocaleDateString();
 }

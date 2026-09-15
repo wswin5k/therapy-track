@@ -35,6 +35,9 @@ import { assingDefaultGroups, frequencySelectionMap } from "./common";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { UnscheduledMeasurmentRecord } from "../../../models/Records";
+import { ERROR_BORDER_WIDTH } from "../../commonConsts";
+import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
+import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -42,7 +45,7 @@ type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export default function EditAssessmentScheduleScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const navigation =
     useNavigation<EditAssessmentScheduleScreenNavigationProp>();
@@ -54,7 +57,7 @@ export default function EditAssessmentScheduleScreen() {
   const [freqError, setFreqError] = React.useState<boolean>(false);
 
   const [nMeasurments, setNMeasurments] = React.useState<number>(1);
-  const groupsRef = React.useRef<(number | null)[]>(
+  const measurmentIdxToGroupId = React.useRef<(number | null)[]>(
     Array.from({ length: nMeasurments }, () => null),
   );
 
@@ -69,11 +72,18 @@ export default function EditAssessmentScheduleScreen() {
   const [assessment, setAssessment] = React.useState<AssessmentParam | null>(
     null,
   );
-  const [groups, setGroups] = React.useState<Group[]>([]);
-  const [defaultGroups, setDefaultGroups] = React.useState<Map<number, number>>(
+
+  const [groupsMap, setGroupsMap] = React.useState<Map<number, Group>>(
     new Map(),
   );
+  const [measurmentIdxToDefaultGroupId, setMeasurmentIdxToDefaultGroupIdx] =
+    React.useState<Map<number, number>>(new Map());
+  const groupsIds = React.useMemo(
+    () => [-1, ...Array.from(groupsMap.values()).map((g) => g.dbId)],
+    [groupsMap],
+  );
   const [groupsErrors, setGroupsErrors] = React.useState<boolean[]>([]);
+
   const [existingAssessmentSchedules, setExistingAssessmentSchedules] =
     React.useState<AssessmentSchedule[]>([]);
   const [
@@ -82,12 +92,11 @@ export default function EditAssessmentScheduleScreen() {
   ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
 
   const updateGroupsRefWithDefaults = React.useCallback(() => {
-    const defaultGroups = assingDefaultGroups(groups);
-    groupsRef.current = Array.from(
+    measurmentIdxToGroupId.current = Array.from(
       { length: nMeasurments },
-      (_, idx) => defaultGroups.get(idx) ?? null,
+      (_, idx) => measurmentIdxToDefaultGroupId.get(idx) ?? null,
     );
-  }, [groups, nMeasurments]);
+  }, [measurmentIdxToDefaultGroupId, nMeasurments]);
 
   useFocusEffect(
     React.useCallback(
@@ -105,10 +114,12 @@ export default function EditAssessmentScheduleScreen() {
         };
         setAssessment(params.assessment);
 
-        const newGroups = await dbGetGroups(db);
-        setGroups(newGroups);
-        setGroupsErrors(Array.from({ length: newGroups.length }, () => false));
-        setDefaultGroups(assingDefaultGroups(newGroups));
+        const groups = await dbGetGroups(db);
+        const newGroupsMap = new Map();
+        groups.forEach((g) => newGroupsMap.set(g.dbId, g));
+        setGroupsMap(newGroupsMap);
+        setMeasurmentIdxToDefaultGroupIdx(assingDefaultGroups(groups));
+        setGroupsErrors(Array.from({ length: nMeasurments }, () => false));
 
         const newExistingAssessmentSchedules = (
           await dbGetAssessmentSchedules(db)
@@ -131,7 +142,7 @@ export default function EditAssessmentScheduleScreen() {
         );
       };
       setData();
-    }, [db, route.params]),
+    }, [db, route.params, nMeasurments]),
   );
 
   const handleSelectStartDate = () => {
@@ -202,10 +213,9 @@ export default function EditAssessmentScheduleScreen() {
     }
 
     const measurments = Array.from(
-      groupsRef.current.entries(),
-      ([index, groupIdx]) => {
-        const groupId = groupIdx === null ? null : groups[groupIdx].dbId;
-        return { index, offset: null, groupId };
+      measurmentIdxToGroupId.current.entries(),
+      ([measurmentIdx, groupId]) => {
+        return { index: measurmentIdx, offset: null, groupId };
       },
     );
 
@@ -296,78 +306,60 @@ export default function EditAssessmentScheduleScreen() {
 
   const createGroupInputHandler = (idx: number) => {
     return (groupIdx: number) => {
-      groupsRef.current[idx] = groupIdx === -1 ? null : groupIdx;
+      measurmentIdxToGroupId.current[idx] = groupIdx === -1 ? null : groupIdx;
     };
   };
 
   return (
     <DefaultMainContainer>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={[styles.rowContainer, { marginBottom: 20 }]}>
+      <ScrollView
+        style={gstyles.editScrollContainer}
+        contentContainerStyle={gstyles.editScrollContentContainer}
+      >
+        <View style={[styles.rowFrequencyPicker]}>
           <ModalPicker
             values={Object.values(FrequencySelection)}
             selectedValue={freq}
             onValueChange={handleFrequencyPicker}
             getLabel={frequencySelectionToDisplayForm}
             placeholder="Select frequency"
-            pressableStyle={styles.fullWidthPickerContainer}
+            pressableStyle={gstyles.fullWidthPickerPressable}
             error={freqError}
           />
         </View>
 
-        <View style={[styles.rowMeasurmentsHeader]}>
+        <View style={[styles.rowMeasurmentsHeaders]}>
           <View style={styles.measurmentHeaderContainer}>
-            <Text
-              style={[
-                styles.measurmentHeaderLabel,
-                { color: theme.colors.text },
-              ]}
-            >
+            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
               {t("Measurment")}
             </Text>
           </View>
           <View style={styles.measurmentHeaderContainer}>
-            <Text
-              style={[
-                styles.measurmentHeaderLabel,
-                { color: theme.colors.text },
-              ]}
-            >
-              {t("Group (optional)")}
+            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+              {t("Group")}
             </Text>
           </View>
         </View>
 
         <View style={styles.measurmentsContainer}>
           {Array.from({ length: nMeasurments }, (_, idx) => (
-            <View key={idx} style={styles.rowMeasurment}>
+            <View
+              // complex key to re-render when there is a change in initialValue
+              key={idx * 10 + (measurmentIdxToDefaultGroupId.get(idx) ?? -1)}
+              style={styles.rowMeasurment}
+            >
               <View style={styles.measurmentOrdinalContainer}>
-                <Text
-                  style={[
-                    styles.measurmentHeaderLabel,
-                    { color: theme.colors.text },
-                  ]}
-                >
+                <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
                   {t(`number_ordinal_${idx + 1}`)}
                 </Text>
               </View>
-              <View
-                style={[
-                  styles.pickerContainer,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
+              <View style={[styles.measurmentGroupPickerContainer]}>
                 <DropdownPicker
-                  options={[-1].concat(
-                    Array.from({ length: groups.length }, (_, i) => i),
-                  )}
-                  initialValue={defaultGroups.get(idx) ?? -1}
+                  options={groupsIds}
+                  initialValue={measurmentIdxToDefaultGroupId.get(idx) ?? -1}
                   onValueChange={createGroupInputHandler(idx)}
                   getLabel={(gIdx) =>
-                    gIdx === -1 ? "None" : groups[gIdx].name
+                    gIdx === -1 ? "None" : (groupsMap.get(gIdx)?.name ?? "")
                   }
                   placeholder="group"
                   pressableStyle={{
@@ -381,33 +373,35 @@ export default function EditAssessmentScheduleScreen() {
           ))}
         </View>
 
-        <View style={styles.rowContainer}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        <View style={styles.rowDate}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("Start date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectStartDate}
             style={[
-              styles.dateButton,
+              gstyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
               startDateError && {
                 borderColor: theme.colors.error,
-                borderWidth: 2,
+                borderWidth: ERROR_BORDER_WIDTH,
               },
             ]}
           >
-            <Text style={[styles.inputText, { color: theme.colors.text }]}>
-              {startDate ? startDate.toDateString() : t("Select date")}
+            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+              {startDate
+                ? toDisplayConcise(startDate, i18n.resolvedLanguage)
+                : t("Select date")}
             </Text>
           </TouchableOpacity>
         </View>
         {isStartDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={startDate ?? new Date()}
+            value={startDate ?? getTodayDateOnly()}
             onValueChange={handleStartDateChange}
             onDismiss={handleStartDateDismiss}
             neutralButton={{ label: "Clear", textColor: "" }}
@@ -417,22 +411,24 @@ export default function EditAssessmentScheduleScreen() {
           ""
         )}
 
-        <View style={styles.rowContainer}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        <View style={styles.rowDate}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("End date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectEndDate}
             style={[
-              styles.dateButton,
+              gstyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
             ]}
           >
-            <Text style={[styles.inputText, { color: theme.colors.text }]}>
-              {endDate ? endDate.toDateString() : t("Infinitely")}
+            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+              {endDate
+                ? toDisplayConcise(endDate, i18n.resolvedLanguage)
+                : t("Infinitely")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -440,7 +436,7 @@ export default function EditAssessmentScheduleScreen() {
         {isEndDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={endDate ?? new Date()}
+            value={endDate ?? getTodayDateOnly()}
             minimumDate={startDate ? startDate : undefined}
             onValueChange={handleEndDateChange}
             onDismiss={handeEndDateDismiss}
@@ -454,7 +450,7 @@ export default function EditAssessmentScheduleScreen() {
 
       <View
         style={[
-          styles.footer,
+          gstyles.footer,
           {
             backgroundColor: theme.colors.background,
             borderTopColor: theme.colors.border,
@@ -463,9 +459,12 @@ export default function EditAssessmentScheduleScreen() {
       >
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+          style={[
+            gstyles.nextButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
         >
-          <Text style={styles.nextButtonText}>{t("Save")}</Text>
+          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -473,7 +472,49 @@ export default function EditAssessmentScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  rowFrequencyPicker: {
+    marginBottom: 24,
+  },
+  measurmentsContainer: {
+    marginBottom: 24,
+  },
+  rowMeasurmentsHeaders: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: 40,
+  },
+  rowMeasurment: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    height: PRESSABLE_HEIGHT,
+    marginBottom: 6,
+  },
+  measurmentHeaderContainer: {
+    width: "45%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  measurmentOrdinalContainer: {
+    width: "45%",
+    height: PRESSABLE_HEIGHT,
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+  measurmentGroupPickerContainer: {
+    justifyContent: "center",
+    width: "45%",
+    overflow: "hidden",
+  },
+  rowDate: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+
+  /*   scrollContainer: {
     flex: 1,
     padding: 16,
   },
@@ -522,6 +563,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     justifyContent: "center",
+    alignItems: "center",
     width: "45%",
   },
   inputText: {
@@ -555,5 +597,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  },
+  }, */
 });
