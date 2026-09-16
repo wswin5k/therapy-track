@@ -27,7 +27,7 @@ import {
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
-import { toDisplayConcise } from "../../../dateOnlyUtils";
+import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 
 export default function PartiallyEditAnyScheduleScreen() {
@@ -174,7 +174,7 @@ export default function PartiallyEditAnyScheduleScreen() {
         {isStartDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={startDate ?? new Date()}
+            value={startDate ?? getTodayDateOnly()}
             onValueChange={handleStartDateChange}
             onDismiss={handleStartDateDismiss}
             neutralButton={{ label: "Clear", textColor: "" }}
@@ -208,7 +208,7 @@ export default function PartiallyEditAnyScheduleScreen() {
         {isEndDatePickerOpened ? (
           <RNDateTimePicker
             mode="date"
-            value={endDate ?? new Date()}
+            value={endDate ?? getTodayDateOnly()}
             minimumDate={startDate ? startDate : undefined}
             onValueChange={handleEndDateChange}
             onDismiss={handeEndDateDismiss}
