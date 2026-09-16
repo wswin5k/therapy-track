@@ -355,9 +355,11 @@ export function EditMedicineScreen() {
     elementKeyCounter.current += 1;
   };
 
-  const handleRemoveActiveIngredient = (idx: number) => {
+  const handleRemoveActiveIngredient = (elementKey: number) => {
     return () => {
-      setActiveIngredientInfos((current) => current.toSpliced(idx, 1));
+      setActiveIngredientInfos((current) =>
+        current.filter((ing) => ing.elementKey !== elementKey),
+      );
     };
   };
 
