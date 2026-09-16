@@ -17,6 +17,12 @@ import {
   DISABLED_OPACITY,
   ERROR_BORDER_WIDTH,
 } from "../navigation/commonConsts";
+import {
+  PRESSABLE_HEIGHT,
+  PRESSABLE_PADDING_HORIZONTAL,
+  DEFAULT_BORDER_RADIUS,
+  gstyles,
+} from "../commonStyles";
 
 interface ModalPickerProps<T> {
   values: T[];
@@ -87,7 +93,7 @@ export function ModalPicker<T>({
           },
         ]}
       >
-        <Text style={[styles.titleText, { color: theme.colors.text }]}>
+        <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
           {placeholder}
         </Text>
         <TouchableOpacity
@@ -126,7 +132,7 @@ export function ModalPicker<T>({
       >
         <Text
           style={[
-            styles.defaultPressableText,
+            gstyles.pressableText,
             { color: theme.colors.text },
             (!selectedValue || disabled) && {
               color: theme.colors.textTertiary,
@@ -192,7 +198,7 @@ export function ModalPicker<T>({
                     <Text
                       numberOfLines={1}
                       style={[
-                        styles.listItemText,
+                        gstyles.pressableText,
                         {
                           color: isSelected
                             ? theme.colors.text
@@ -225,16 +231,12 @@ export function ModalPicker<T>({
 
 const styles = StyleSheet.create({
   defaultPressableStyle: {
-    height: 56,
+    height: PRESSABLE_HEIGHT,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
     flexDirection: "row",
     alignItems: "center",
-  },
-  defaultPressableText: {
-    fontSize: 16,
-    flex: 1,
   },
   chevron: {
     fontSize: 12,
@@ -270,7 +272,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     maxHeight: "70%",
-    width: "85%",
+    maxWidth: "85%",
+    width: 400,
   },
   listItem: {
     flexDirection: "row",
