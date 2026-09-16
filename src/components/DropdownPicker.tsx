@@ -59,17 +59,21 @@ export function DropdownPicker<T>({
     if (triggerRef.current) {
       triggerRef.current.measure(
         (
-          fx: number,
-          fy: number,
+          x: number,
+          y: number,
           width: number,
           height: number,
-          px: number,
-          py: number,
+          pageX: number,
+          pageY: number,
         ) => {
-          setTriggerLayout({ x: px, y: py, width, height });
+          setTriggerLayout({ x: pageX, y: pageY, width, height });
         },
       );
     }
+  };
+
+  const handleButtonLaoyt = () => {
+    measureTrigger();
   };
 
   const handleOpen = () => {
@@ -86,22 +90,40 @@ export function DropdownPicker<T>({
   );
 
   const screenHeight = Dimensions.get("window").height;
-  const maxDropdownHeight = 250;
-  const dropdownGap = 1;
+  const MAX_DROPDOWN_HEIGHT = 250;
+  const DROPDOWN_GAP = 1;
+  const SCREEN_EDGE_PADDING = 20;
 
-  const shouldPositionAbove =
-    triggerLayout.y + triggerLayout.height + maxDropdownHeight + dropdownGap >
-    screenHeight - 20;
+  const belowPositionY = triggerLayout.y + triggerLayout.height + DROPDOWN_GAP;
+  const centerPositionY = triggerLayout.y + triggerLayout.height / 2;
 
-  const dropdownTop = shouldPositionAbove
-    ? triggerLayout.y - maxDropdownHeight - dropdownGap
-    : triggerLayout.y + triggerLayout.height + dropdownGap;
+  const fitsBelow =
+    belowPositionY + MAX_DROPDOWN_HEIGHT < screenHeight - SCREEN_EDGE_PADDING;
+  const shouldPositionBelow = fitsBelow || centerPositionY < screenHeight / 2;
+
+  let dropdownTop = undefined;
+  let dropdownBottom = undefined;
+  let dropdownHeight = MAX_DROPDOWN_HEIGHT;
+  if (shouldPositionBelow) {
+    dropdownTop = belowPositionY;
+    dropdownHeight = Math.min(
+      MAX_DROPDOWN_HEIGHT,
+      screenHeight - SCREEN_EDGE_PADDING - belowPositionY,
+    );
+  } else {
+    dropdownHeight = Math.min(
+      MAX_DROPDOWN_HEIGHT,
+      triggerLayout.y - SCREEN_EDGE_PADDING,
+    );
+    dropdownBottom = screenHeight - triggerLayout.y + DROPDOWN_GAP;
+  }
 
   return (
     <>
       <TouchableOpacity
         ref={triggerRef}
         onPress={handleOpen}
+        onLayout={handleButtonLaoyt}
         style={[
           gstyles.pressable,
           {
@@ -147,16 +169,21 @@ export function DropdownPicker<T>({
               {
                 position: "absolute",
                 top: dropdownTop,
+                bottom: dropdownBottom,
                 left: triggerLayout.x,
                 width: triggerLayout.width,
-                maxHeight: maxDropdownHeight,
+                maxHeight: dropdownHeight,
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
             ]}
             onStartShouldSetResponder={() => true}
           >
-            <ScrollView style={styles.optionsList}>
+            <ScrollView
+              style={styles.optionsList}
+              showsVerticalScrollIndicator={true}
+              persistentScrollbar={true}
+            >
               {options.map((option, index) => {
                 const isSelected =
                   selectedValue &&
