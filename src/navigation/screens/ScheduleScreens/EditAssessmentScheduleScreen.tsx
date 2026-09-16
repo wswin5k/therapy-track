@@ -37,7 +37,11 @@ import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { UnscheduledMeasurmentRecord } from "../../../models/Records";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
-import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
+import {
+  gstyles,
+  PRESSABLE_HEIGHT,
+  PRESSABLE_PADDING_HORIZONTAL,
+} from "../../../commonStyles";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -56,9 +60,9 @@ export default function EditAssessmentScheduleScreen() {
   const freqRef = React.useRef<Frequency | null>(null);
   const [freqError, setFreqError] = React.useState<boolean>(false);
 
-  const [nMeasurments, setNMeasurments] = React.useState<number>(1);
-  const measurmentIdxToGroupId = React.useRef<(number | null)[]>(
-    Array.from({ length: nMeasurments }, () => null),
+  const [nMeasurements, setNMeasurements] = React.useState<number>(1);
+  const measurementIdxToGroupId = React.useRef<(number | null)[]>(
+    Array.from({ length: nMeasurements }, () => null),
   );
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
@@ -76,7 +80,7 @@ export default function EditAssessmentScheduleScreen() {
   const [groupsMap, setGroupsMap] = React.useState<Map<number, Group>>(
     new Map(),
   );
-  const [measurmentIdxToDefaultGroupId, setMeasurmentIdxToDefaultGroupIdx] =
+  const [measurementIdxToDefaultGroupId, setMeasurementIdxToDefaultGroupIdx] =
     React.useState<Map<number, number>>(new Map());
   const groupsIds = React.useMemo(
     () => [-1, ...Array.from(groupsMap.values()).map((g) => g.dbId)],
@@ -87,16 +91,16 @@ export default function EditAssessmentScheduleScreen() {
   const [existingAssessmentSchedules, setExistingAssessmentSchedules] =
     React.useState<AssessmentSchedule[]>([]);
   const [
-    existingUnscheduledMeasurmentRecords,
-    setExistingUnscheduledMeasurmentRecords,
+    existingUnscheduledMeasurementRecords,
+    setExistingUnscheduledMeasurementRecords,
   ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
 
   const updateGroupsRefWithDefaults = React.useCallback(() => {
-    measurmentIdxToGroupId.current = Array.from(
-      { length: nMeasurments },
-      (_, idx) => measurmentIdxToDefaultGroupId.get(idx) ?? null,
+    measurementIdxToGroupId.current = Array.from(
+      { length: nMeasurements },
+      (_, idx) => measurementIdxToDefaultGroupId.get(idx) ?? null,
     );
-  }, [measurmentIdxToDefaultGroupId, nMeasurments]);
+  }, [measurementIdxToDefaultGroupId, nMeasurements]);
 
   useFocusEffect(
     React.useCallback(
@@ -118,8 +122,8 @@ export default function EditAssessmentScheduleScreen() {
         const newGroupsMap = new Map();
         groups.forEach((g) => newGroupsMap.set(g.dbId, g));
         setGroupsMap(newGroupsMap);
-        setMeasurmentIdxToDefaultGroupIdx(assingDefaultGroups(groups));
-        setGroupsErrors(Array.from({ length: nMeasurments }, () => false));
+        setMeasurementIdxToDefaultGroupIdx(assingDefaultGroups(groups));
+        setGroupsErrors(Array.from({ length: nMeasurements }, () => false));
 
         const newExistingAssessmentSchedules = (
           await dbGetAssessmentSchedules(db)
@@ -130,19 +134,19 @@ export default function EditAssessmentScheduleScreen() {
         );
         setExistingAssessmentSchedules(newExistingAssessmentSchedules);
 
-        const newExistingUnscheduledMeasurmentRecords = (
+        const newExistingUnscheduledMeasurementRecords = (
           await dbGetUnscheduledMeasurmentRecords(db)
         ).filter(
           (a) =>
             params.assessment.dbId !== undefined &&
             a.assessmentId === params.assessment.dbId,
         );
-        setExistingUnscheduledMeasurmentRecords(
-          newExistingUnscheduledMeasurmentRecords,
+        setExistingUnscheduledMeasurementRecords(
+          newExistingUnscheduledMeasurementRecords,
         );
       };
       setData();
-    }, [db, route.params, nMeasurments]),
+    }, [db, route.params, nMeasurements]),
   );
 
   const handleSelectStartDate = () => {
@@ -184,7 +188,7 @@ export default function EditAssessmentScheduleScreen() {
     freq: Frequency;
     startDate: Date;
     endDate: Date | null;
-    measurments: {
+    measurements: {
       index: number;
       offset: number | null;
       groupId: number | null;
@@ -212,10 +216,10 @@ export default function EditAssessmentScheduleScreen() {
       isDataValid = true;
     }
 
-    const measurments = Array.from(
-      measurmentIdxToGroupId.current.entries(),
-      ([measurmentIdx, groupId]) => {
-        return { index: measurmentIdx, offset: null, groupId };
+    const measurements = Array.from(
+      measurementIdxToGroupId.current.entries(),
+      ([measurementIdx, groupId]) => {
+        return { index: measurementIdx, offset: null, groupId };
       },
     );
 
@@ -229,19 +233,19 @@ export default function EditAssessmentScheduleScreen() {
               ea.endDate <= startDate)
           ),
       );
-    const existingUnscheduledMeasurmentRecordsWithinDate =
-      existingUnscheduledMeasurmentRecords.filter(
+    const existingUnscheduledMeasurementRecordsWithinDate =
+      existingUnscheduledMeasurementRecords.filter(
         (mr) =>
           startDate !== null &&
           startDate <= mr.date &&
           (endDate === null || mr.date < endDate),
       );
-    const newGroupsErros = measurments.map(
+    const newGroupsErros = measurements.map(
       ({ groupId }) =>
         existingAssessemtnSchedulesWithinDate.some((as) =>
           as.measurments.some((m) => m.groupId === groupId),
         ) ||
-        existingUnscheduledMeasurmentRecordsWithinDate.some(
+        existingUnscheduledMeasurementRecordsWithinDate.some(
           (mr) => mr.groupId === groupId,
         ),
     );
@@ -255,7 +259,7 @@ export default function EditAssessmentScheduleScreen() {
         freq: freqRef.current,
         startDate,
         endDate,
-        measurments,
+        measurements,
       };
     }
     return null;
@@ -273,7 +277,7 @@ export default function EditAssessmentScheduleScreen() {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        measurments: validatedData.measurments,
+        measurments: validatedData.measurements,
       });
       navigation.popToTop();
     } else if (assessment) {
@@ -281,7 +285,7 @@ export default function EditAssessmentScheduleScreen() {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        measurments: validatedData.measurments,
+        measurments: validatedData.measurements,
       });
       navigation.popToTop();
     } else {
@@ -298,15 +302,15 @@ export default function EditAssessmentScheduleScreen() {
     setFreq(item);
     const freq = frequencySelectionMap[item];
     freqRef.current = freq;
-    if (freq.numberOfDosages !== nMeasurments) {
-      setNMeasurments(freq.numberOfDosages);
+    if (freq.numberOfDosages !== nMeasurements) {
+      setNMeasurements(freq.numberOfDosages);
       updateGroupsRefWithDefaults();
     }
   };
 
   const createGroupInputHandler = (idx: number) => {
     return (groupIdx: number) => {
-      measurmentIdxToGroupId.current[idx] = groupIdx === -1 ? null : groupIdx;
+      measurementIdxToGroupId.current[idx] = groupIdx === -1 ? null : groupIdx;
     };
   };
 
@@ -328,35 +332,54 @@ export default function EditAssessmentScheduleScreen() {
           />
         </View>
 
-        <View style={[styles.rowMeasurmentsHeaders]}>
-          <View style={styles.measurmentHeaderContainer}>
-            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
-              {t("Measurment")}
-            </Text>
+        {nMeasurements > 1 ? (
+          <View style={[styles.rowMeasurementsHeaders]}>
+            <View style={styles.measurementHeaderContainer}>
+              <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+                {t("Measurement")}
+              </Text>
+            </View>
+            <View style={styles.measurementHeaderContainer}>
+              <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+                {t("Group")}
+              </Text>
+            </View>
           </View>
-          <View style={styles.measurmentHeaderContainer}>
-            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
-              {t("Group")}
-            </Text>
-          </View>
-        </View>
+        ) : (
+          ""
+        )}
 
-        <View style={styles.measurmentsContainer}>
-          {Array.from({ length: nMeasurments }, (_, idx) => (
+        <View style={styles.measurementsContainer}>
+          {Array.from({ length: nMeasurements }, (_, idx) => (
             <View
               // complex key to re-render when there is a change in initialValue
-              key={idx * 10 + (measurmentIdxToDefaultGroupId.get(idx) ?? -1)}
-              style={styles.rowMeasurment}
+              key={idx * 10 + (measurementIdxToDefaultGroupId.get(idx) ?? -1)}
+              style={styles.rowMeasurement}
             >
-              <View style={styles.measurmentOrdinalContainer}>
-                <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
-                  {t(`number_ordinal_${idx + 1}`)}
-                </Text>
-              </View>
-              <View style={[styles.measurmentGroupPickerContainer]}>
+              {nMeasurements > 1 ? (
+                <View style={styles.measurementOrdinalContainer}>
+                  <Text
+                    style={[
+                      styles.measurementText,
+                      { color: theme.colors.text },
+                    ]}
+                  >
+                    {t(`number_ordinal_${idx + 1}`)}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.measurementGroupContainer}>
+                  <Text
+                    style={[gstyles.labelText, { color: theme.colors.text }]}
+                  >
+                    {t("Group")}
+                  </Text>
+                </View>
+              )}
+              <View style={[styles.measurementGroupPickerContainer]}>
                 <DropdownPicker
                   options={groupsIds}
-                  initialValue={measurmentIdxToDefaultGroupId.get(idx) ?? -1}
+                  initialValue={measurementIdxToDefaultGroupId.get(idx) ?? -1}
                   onValueChange={createGroupInputHandler(idx)}
                   getLabel={(gIdx) =>
                     gIdx === -1 ? "None" : (groupsMap.get(gIdx)?.name ?? "")
@@ -473,36 +496,46 @@ export default function EditAssessmentScheduleScreen() {
 
 const styles = StyleSheet.create({
   rowFrequencyPicker: {
+    marginBottom: 16,
+  },
+  measurementsContainer: {
     marginBottom: 24,
   },
-  measurmentsContainer: {
-    marginBottom: 24,
-  },
-  rowMeasurmentsHeaders: {
+  rowMeasurementsHeaders: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     height: 40,
   },
-  rowMeasurment: {
+  rowMeasurement: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     height: PRESSABLE_HEIGHT,
     marginBottom: 6,
   },
-  measurmentHeaderContainer: {
+  measurementHeaderContainer: {
     width: "45%",
     justifyContent: "center",
     alignItems: "center",
   },
-  measurmentOrdinalContainer: {
+  measurementOrdinalContainer: {
+    width: "45%",
+    height: PRESSABLE_HEIGHT,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  measurementGroupContainer: {
     width: "45%",
     height: PRESSABLE_HEIGHT,
     justifyContent: "center",
     alignItems: "flex-start",
   },
-  measurmentGroupPickerContainer: {
+  measurementText: {
+    fontSize: 19,
+    fontWeight: "400",
+  },
+  measurementGroupPickerContainer: {
     justifyContent: "center",
     width: "45%",
     overflow: "hidden",

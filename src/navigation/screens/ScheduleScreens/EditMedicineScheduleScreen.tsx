@@ -430,7 +430,7 @@ export default function EditMedicineScheduleScreen() {
 
 const styles = StyleSheet.create({
   rowFrequencyPicker: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   dosagesContainer: {
     marginBottom: 24,
