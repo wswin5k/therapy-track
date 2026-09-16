@@ -41,7 +41,6 @@ import { ModalPicker } from "../../../components/ModalPicker";
 import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
-import i18n from "../../../../i18n";
 import { assingDefaultGroups } from "./common";
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
@@ -58,7 +57,7 @@ type EditMedicineScheduleScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export default function EditMedicineScheduleScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<EditMedicineScheduleScreenNavigationProp>();
   const route = useRoute();

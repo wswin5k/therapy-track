@@ -37,11 +37,7 @@ import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { UnscheduledMeasurmentRecord } from "../../../models/Records";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
-import {
-  gstyles,
-  PRESSABLE_HEIGHT,
-  PRESSABLE_PADDING_HORIZONTAL,
-} from "../../../commonStyles";
+import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
