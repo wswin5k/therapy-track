@@ -38,6 +38,7 @@ import {
 import { ModalPicker } from "../../components/ModalPicker";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
 import { isEqualLowerCase } from "../utils";
+import { DEFAULT_BORDER_RADIUS, gstyles } from "../../commonStyles";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -87,13 +88,13 @@ function ActiveIngredientRow({
 
   return (
     <View style={styles.ingredientRow}>
-      <View style={{ flex: 2 }}>
+      <View style={{ flex: 2.2 }}>
         <TextInput
           onChangeText={(text: string) => {
             updateCallback({ name: text });
           }}
           style={[
-            styles.ingredientInput,
+            styles.ingredientNameInput,
             {
               borderColor: theme.colors.border,
               color: theme.colors.text,
@@ -112,7 +113,7 @@ function ActiveIngredientRow({
           autoCapitalize="none"
         />
       </View>
-      <View style={{ flex: 1.2 }}>
+      <View style={{ flex: 1 }}>
         <TextInput
           onChangeText={(weightStr: string) => {
             const amount = parseFloat(weightStr);
@@ -121,7 +122,7 @@ function ActiveIngredientRow({
             });
           }}
           style={[
-            styles.ingredientInput,
+            styles.ingredientAmountInput,
             {
               borderColor: theme.colors.border,
               color: theme.colors.text,
@@ -134,7 +135,7 @@ function ActiveIngredientRow({
                 }
               : {},
           ]}
-          placeholder="Amount"
+          placeholder="Qty"
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType="numeric"
           value={
@@ -156,10 +157,11 @@ function ActiveIngredientRow({
           getLabel={(unit) => ingredientAmountUnitEnumToDisplayForm(unit)}
           placeholder="Unit"
           pressableStyle={{
-            ...styles.pickerContainer,
+            ...styles.ingredientPickerContainer,
             borderColor: theme.colors.border,
             backgroundColor: theme.colors.surface,
           }}
+          pressableTextStyle={styles.ingredientPickerText}
         />
       </View>
       {removeButton ? (
@@ -380,13 +382,16 @@ export function EditMedicineScreen() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        style={gstyles.editScrollContainer}
+        contentContainerStyle={gstyles.editScrollContentContainer}
+      >
         <View style={[styles.rowContainer]}>
           <TextInput
             placeholder="Medicine Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              styles.input,
+              gstyles.pressableTextInput,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
@@ -405,22 +410,27 @@ export function EditMedicineScreen() {
             value={name}
           />
         </View>
-        <ModalPicker
-          values={Object.values(BaseUnit)}
-          selectedValue={baseUnit}
-          onValueChange={(value) => {
-            setBaseUnit(value);
-          }}
-          getLabel={baseUnitToUnitSelectionLabel}
-          placeholder="Select base unit"
-          pressableStyle={styles.fullWidthPickerContainer}
-          error={baseUnitError}
-        />
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Active ingredients per base unit")}
-        </Text>
+        <View style={styles.rowContainer}>
+          <ModalPicker
+            values={Object.values(BaseUnit)}
+            selectedValue={baseUnit}
+            onValueChange={(value) => {
+              setBaseUnit(value);
+            }}
+            getLabel={baseUnitToUnitSelectionLabel}
+            placeholder="Select base unit"
+            pressableStyle={gstyles.fullWidthPickerPressable}
+            error={baseUnitError}
+          />
+        </View>
 
-        <View style={styles.ingredientsList}>
+        <View style={styles.rowActiveIngredientsHeader}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            {t("Active ingredients per base unit")}
+          </Text>
+        </View>
+
+        <View>
           {activeIngredientInfos.map((ing) => (
             <ActiveIngredientRow
               key={ing.elementKey}
@@ -446,12 +456,15 @@ export function EditMedicineScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+          style={[
+            gstyles.nextButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
         >
-          <Text style={styles.nextButtonText}>
+          <Text style={gstyles.nextButtonText}>
             {mode === "save-and-go-back" ? "Save" : "Next"}
           </Text>
         </TouchableOpacity>
@@ -460,61 +473,48 @@ export function EditMedicineScreen() {
   );
 }
 
+const ING_HEIGHT: number = 50;
+const ING_FONT_SIZE: number = 17;
+
 const styles = StyleSheet.create({
-  scrollContainer: {
-    padding: 16,
-  },
-  headerLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 8,
-    marginTop: 20,
-    marginLeft: 5,
-  },
   rowContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 30,
-    height: 60,
+    marginBottom: 28,
   },
-  input: {
-    height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    width: "100%",
-  },
-  ingredientInput: {
-    height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 15,
-    width: "100%",
+  rowActiveIngredientsHeader: {
+    marginBottom: 12,
   },
   ingredientRow: {
+    height: ING_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
-    gap: 10,
+    gap: 8,
   },
-  ingredientsList: {
-    marginBottom: 15,
-  },
-  pickerContainer: {
-    height: 55,
+  ingredientNameInput: {
+    height: ING_HEIGHT,
     borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: "center",
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: 8,
+    fontSize: ING_FONT_SIZE,
+    width: "100%",
   },
-  fullWidthPickerContainer: {
-    height: 55,
+  ingredientAmountInput: {
+    height: ING_HEIGHT,
     borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: "center",
-    marginBottom: 5,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: 8,
+    fontSize: ING_FONT_SIZE,
+    width: "100%",
+    textAlign: "right",
+  },
+  ingredientPickerContainer: {
+    height: ING_HEIGHT,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: 10,
+  },
+  ingredientPickerText: {
+    fontSize: ING_FONT_SIZE,
   },
   removeButton: {
     width: 20,
@@ -532,31 +532,12 @@ const styles = StyleSheet.create({
   addButton: {
     padding: 12,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     borderStyle: "dashed",
     alignItems: "center",
   },
   addButtonText: {
     fontSize: 17,
     fontWeight: "600",
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    borderTopWidth: 1,
-    zIndex: 1,
-  },
-  nextButton: {
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  nextButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
 });

@@ -28,6 +28,14 @@ export const gstyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  pressableTextInput: {
+    height: PRESSABLE_HEIGHT,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
+    fontSize: 18,
+    width: "100%",
+  },
   datePressable: {
     height: PRESSABLE_HEIGHT,
     borderWidth: 1,

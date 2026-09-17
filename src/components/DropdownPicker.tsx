@@ -9,6 +9,7 @@ import {
   ViewStyle,
   StyleProp,
   Dimensions,
+  TextStyle,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
@@ -22,6 +23,7 @@ interface ModalDropdownPickerProps<T> {
   getValue?: (option: T) => string;
   placeholder?: string;
   pressableStyle?: StyleProp<ViewStyle>;
+  pressableTextStyle?: StyleProp<TextStyle>;
   disabled?: boolean;
   error?: boolean;
 }
@@ -34,6 +36,7 @@ export function DropdownPicker<T>({
   getValue,
   placeholder = "Select an option",
   pressableStyle,
+  pressableTextStyle,
   disabled = false,
   error = false,
 }: ModalDropdownPickerProps<T>) {
@@ -142,6 +145,7 @@ export function DropdownPicker<T>({
         <Text
           style={[
             gstyles.pressableText,
+            pressableTextStyle,
             { color: theme.colors.text },
             selectedValue === null && { color: theme.colors.textTertiary },
           ]}

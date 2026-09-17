@@ -177,7 +177,10 @@ export function ModalPicker<T>({
             onStartShouldSetResponder={() => true}
           >
             {showTitle && renderTitle()}
-            <ScrollView>
+            <ScrollView
+              showsVerticalScrollIndicator={true}
+              persistentScrollbar={true}
+            >
               {values.map((value, index) => {
                 const isSelected = value === selectedValue;
                 return (
