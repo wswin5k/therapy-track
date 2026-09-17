@@ -1,6 +1,5 @@
 import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { createURL } from "expo-linking";
-import React from "react";
 import { useColorScheme } from "react-native";
 import { Navigation } from "./navigation";
 import { SQLiteProvider } from "expo-sqlite";
