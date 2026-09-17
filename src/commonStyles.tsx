@@ -9,7 +9,7 @@ export const gstyles = StyleSheet.create({
     flex: 1,
   },
   editScrollContentContainer: {
-    padding: 20,
+    padding: 22,
   },
   labelText: {
     fontSize: 17,
@@ -18,6 +18,14 @@ export const gstyles = StyleSheet.create({
   pressableText: {
     fontSize: 18,
     fontWeight: "400",
+  },
+  pressableTextInput: {
+    height: PRESSABLE_HEIGHT,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
+    fontSize: 18,
+    width: "100%",
   },
   pressable: {
     height: PRESSABLE_HEIGHT,
@@ -28,19 +36,19 @@ export const gstyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  pressableTextInput: {
-    height: PRESSABLE_HEIGHT,
-    borderWidth: 1,
-    borderRadius: DEFAULT_BORDER_RADIUS,
-    paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
-    fontSize: 18,
-    width: "100%",
-  },
   datePressable: {
     height: PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
+    justifyContent: "center",
+    alignItems: "flex-end",
+  },
+  timePressable: {
+    height: PRESSABLE_HEIGHT,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: 14,
     justifyContent: "center",
     alignItems: "flex-end",
   },

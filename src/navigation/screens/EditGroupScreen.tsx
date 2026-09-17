@@ -7,6 +7,7 @@ import {
   View,
   TouchableOpacity,
   Switch,
+  ScrollView,
 } from "react-native";
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
@@ -35,6 +36,7 @@ import {
 import { isEqualLowerCase } from "../utils";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { gstyles, PRESSABLE_HEIGHT } from "../../commonStyles";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -220,13 +222,16 @@ export function EditGroupScreen() {
 
   return (
     <DefaultMainContainer>
-      <View style={styles.mainContainer}>
+      <ScrollView
+        style={gstyles.editScrollContainer}
+        contentContainerStyle={gstyles.editScrollContentContainer}
+      >
         <View style={[styles.rowContainer]}>
           <TextInput
             placeholder="Group Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              styles.input,
+              gstyles.pressableTextInput,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
@@ -247,8 +252,8 @@ export function EditGroupScreen() {
           />
         </View>
         <View style={styles.rowContainer}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t("Enable Reminder")}
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            {t("Enable reminder")}
           </Text>
 
           <Switch
@@ -265,13 +270,13 @@ export function EditGroupScreen() {
 
         {isReminderOn && (
           <View style={[styles.rowContainer]}>
-            <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-              {t("Reminder Time")}
+            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+              {t("Reminder time")}
             </Text>
             <TouchableOpacity
               onPress={handleSelectTime}
               style={[
-                styles.timeInput,
+                gstyles.timePressable,
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
@@ -284,7 +289,7 @@ export function EditGroupScreen() {
             >
               <Text
                 style={[
-                  styles.inputText,
+                  gstyles.pressableText,
                   {
                     color: reminderTime
                       ? theme.colors.text
@@ -306,14 +311,17 @@ export function EditGroupScreen() {
             onDismiss={handleTimeDismiss}
           />
         )}
-      </View>
+      </ScrollView>
 
-      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.saveButton, { backgroundColor: theme.colors.primary }]}
+          style={[
+            gstyles.nextButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
         >
-          <Text style={styles.saveButtonText}>{t("Save")}</Text>
+          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -321,60 +329,14 @@ export function EditGroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    padding: 16,
-  },
-  headerLabel: {
-    fontSize: 18,
-    fontWeight: "400",
-  },
   rowContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 30,
-    height: 60,
-  },
-  input: {
-    height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    width: "100%",
-  },
-  timeInput: {
-    height: 52,
-    width: "45%",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    justifyContent: "center",
-  },
-  inputText: {
-    fontSize: 16,
   },
   switch: {
     transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    borderTopWidth: 1,
-    zIndex: 1,
-  },
-  saveButton: {
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    height: PRESSABLE_HEIGHT,
   },
 });
