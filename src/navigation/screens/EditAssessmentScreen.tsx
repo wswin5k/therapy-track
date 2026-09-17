@@ -41,6 +41,11 @@ import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonConsts";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import { isEqualLowerCase } from "../utils";
+import {
+  DEFAULT_BORDER_RADIUS,
+  gstyles,
+  PRESSABLE_HEIGHT,
+} from "../../commonStyles";
 
 export const TEXT_MAX_LENGTH = 200;
 const DEFAULT_NUMERIC_MAX = 10;
@@ -280,9 +285,12 @@ export function EditAssessmentScreen() {
 
     return (
       <>
-        <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-          {t("Select options")}
-        </Text>
+        <View style={styles.rowActiveIngredientsHeader}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            {t("Select options")}
+          </Text>
+        </View>
+
         <View>
           {valueDomain.values.map((v, idx) => {
             const editable = !notRemovableOptions.includes(v);
@@ -416,8 +424,8 @@ export function EditAssessmentScreen() {
 
     return (
       <View>
-        <View style={[styles.rowContainer]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        <View style={[styles.rowNumericLimitContainer]}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("Minimum")}
           </Text>
           <View style={styles.numberStepperInput}>
@@ -430,8 +438,8 @@ export function EditAssessmentScreen() {
             />
           </View>
         </View>
-        <View style={[styles.rowContainer]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+        <View style={[styles.rowNumericLimitContainer]}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("Maximum")}
           </Text>
           <View style={styles.numberStepperInput}>
@@ -464,13 +472,16 @@ export function EditAssessmentScreen() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={[styles.nameContainer]}>
+      <ScrollView
+        style={gstyles.editScrollContainer}
+        contentContainerStyle={gstyles.editScrollContentContainer}
+      >
+        <View style={[styles.rowNameContainer]}>
           <TextInput
             placeholder="Assessment Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              styles.input,
+              gstyles.pressableTextInput,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
@@ -489,27 +500,32 @@ export function EditAssessmentScreen() {
             value={name}
           />
         </View>
-        <ModalPicker
-          values={Object.values(ValueType)}
-          selectedValue={assessmentType}
-          onValueChange={handleAssessmentTypePick}
-          getLabel={assessmentTypeToDisplayForm}
-          pressableStyle={styles.fullWidthPickerContainer}
-          error={assessmentTypeError}
-          disabled={typeInputDisabled}
-          disabledMessage={t(
-            "The type of an existing assessment cannot be modified.",
-          )}
-        />
+        <View style={styles.rowPickerContainer}>
+          <ModalPicker
+            values={Object.values(ValueType)}
+            selectedValue={assessmentType}
+            onValueChange={handleAssessmentTypePick}
+            getLabel={assessmentTypeToDisplayForm}
+            pressableStyle={gstyles.fullWidthPickerPressable}
+            error={assessmentTypeError}
+            disabled={typeInputDisabled}
+            disabledMessage={t(
+              "The type of an existing assessment cannot be modified.",
+            )}
+          />
+        </View>
         {renderValueDomain()}
       </ScrollView>
 
-      <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
+      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+          style={[
+            gstyles.nextButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
         >
-          <Text style={styles.nextButtonText}>
+          <Text style={gstyles.nextButtonText}>
             {["create-and-go-back", "update-and-go-back"].includes(mode)
               ? "Save"
               : "Next"}
@@ -520,72 +536,46 @@ export function EditAssessmentScreen() {
   );
 }
 
+const SELECT_HEIGHT: number = 50;
+
 const styles = StyleSheet.create({
-  scrollContainer: {
-    padding: 16,
-    paddingBottom: 110,
+  rowNameContainer: {
+    marginBottom: 28,
   },
-  headerLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 8,
-    marginTop: 20,
-    marginLeft: 5,
+  rowPickerContainer: {
+    marginBottom: 32,
   },
-  nameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 30,
-    height: 60,
-  },
-  rowContainer: {
+  rowNumericLimitContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: 60,
-    margin: 15,
+    marginBottom: 18,
   },
   numberStepperInput: {
-    height: 55,
-    width: 150,
-    alignSelf: "center",
+    width: "50%",
+    height: PRESSABLE_HEIGHT,
   },
-  input: {
-    height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    width: "100%",
+  rowActiveIngredientsHeader: {
+    marginBottom: 12,
   },
   selectRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
-    marginLeft: 20,
     marginHorizontal: 20,
     gap: 10,
   },
   selectInput: {
-    height: 50,
+    height: SELECT_HEIGHT,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: 12,
     marginLeft: 20,
-    fontSize: 16,
-  },
-  fullWidthPickerContainer: {
-    height: 55,
-    borderWidth: 1,
-    borderRadius: 8,
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 5,
+    fontSize: 17,
   },
   removeButton: {
     width: 20,
-    height: 50,
+    height: SELECT_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -603,28 +593,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderStyle: "dashed",
     alignItems: "center",
-    height: 50,
+    height: SELECT_HEIGHT,
     paddingHorizontal: 15,
     marginLeft: 20,
     marginRight: 30,
-    fontSize: 16,
   },
   addButtonText: {
     fontSize: 17,
     fontWeight: "600",
-  },
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-  },
-  nextButton: {
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  nextButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
 });

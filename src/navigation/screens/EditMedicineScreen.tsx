@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     width: 20,
-    height: 50,
+    height: ING_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -535,6 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: DEFAULT_BORDER_RADIUS,
     borderStyle: "dashed",
     alignItems: "center",
+    marginRight: 30,
   },
   addButtonText: {
     fontSize: 17,
