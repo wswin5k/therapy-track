@@ -1,4 +1,10 @@
-import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  View,
+  ScrollView,
+} from "react-native";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
@@ -23,7 +29,13 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import { baseUnitToDoseHeader } from "../enumMappings";
-import { deserializeDateOnly, getTodayDateOnly } from "../../dateOnlyUtils";
+import {
+  deserializeDateOnly,
+  getTodayDateOnly,
+  toDisplayConcise,
+} from "../../dateOnlyUtils";
+import { gstyles } from "../../commonStyles";
+import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -31,7 +43,7 @@ type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 export function EditSingleDosageScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<EditSingeDosageScreenNavigationProp>();
   const route = useRoute();
@@ -133,49 +145,62 @@ export function EditSingleDosageScreen() {
 
   return (
     <DefaultMainContainer>
-      <View style={[styles.mainContainer]}>
+      <ScrollView
+        style={gstyles.editScrollContainer}
+        contentContainerStyle={gstyles.editScrollContentContainer}
+      >
         <View style={[styles.rowContainer]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {doseHeader}
-          </Text>
-          <View style={styles.dosagesContainer}>
-            <SmallNumberStepper onChange={handleAmountChange} />
-          </View>
-        </View>
-
-        <View style={[styles.rowContainer]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("Date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectDate}
             style={[
-              styles.dateButton,
+              gstyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
-              dateError && { borderColor: theme.colors.error, borderWidth: 2 },
-            ]}
-          >
-            <Text style={[styles.inputText, { color: theme.colors.text }]}>
-              {date ? date.toDateString() : "Select date"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={[styles.rowContainer]}>
-          <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-            {t("Group (optional)")}
-          </Text>
-
-          <View
-            style={[
-              styles.pickerContainer,
-              {
-                backgroundColor: theme.colors.surface,
+              dateError && {
+                borderColor: theme.colors.error,
+                borderWidth: ERROR_BORDER_WIDTH,
               },
             ]}
           >
+            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+              {date
+                ? toDisplayConcise(date, i18n.resolvedLanguage)
+                : "Select date"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {isDatePickerOpened ? (
+          <RNDateTimePicker
+            mode="date"
+            value={date ?? getTodayDateOnly()}
+            onValueChange={handleDateChange}
+            onDismiss={handleDateDismiss}
+            maximumDate={getTodayDateOnly()}
+          />
+        ) : (
+          ""
+        )}
+
+        <View style={[styles.rowContainer]}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            {doseHeader}
+          </Text>
+          <View style={styles.dosageContainer}>
+            <SmallNumberStepper onChange={handleAmountChange} />
+          </View>
+        </View>
+
+        <View style={[styles.rowContainer]}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            {t("Group")}
+          </Text>
+
+          <View style={[styles.pickerContainer]}>
             <DropdownPicker
               options={[-1].concat(
                 Array.from({ length: groups.length }, (_, i) => i),
@@ -185,106 +210,41 @@ export function EditSingleDosageScreen() {
               getLabel={(idx) => (idx === -1 ? "None" : groups[idx].name)}
               placeholder="group"
               pressableStyle={{
-                ...styles.picker,
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.surface,
               }}
             />
           </View>
         </View>
-
-        {isDatePickerOpened ? (
-          <RNDateTimePicker
-            mode="date"
-            value={date ?? new Date()}
-            onValueChange={handleDateChange}
-            onDismiss={handleDateDismiss}
-            maximumDate={getTodayDateOnly()}
-          />
-        ) : (
-          ""
-        )}
-        <View style={[styles.footer, { borderTopColor: theme.colors.border }]}>
-          <TouchableOpacity
-            onPress={handleSave}
-            style={[
-              styles.nextButton,
-              { backgroundColor: theme.colors.primary },
-            ]}
-          >
-            <Text style={styles.nextButtonText}>{t("Save")}</Text>
-          </TouchableOpacity>
-        </View>
+      </ScrollView>
+      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[
+            gstyles.nextButton,
+            { backgroundColor: theme.colors.primary },
+          ]}
+        >
+          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
+        </TouchableOpacity>
       </View>
     </DefaultMainContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-  },
-  dosagesContainer: {
-    width: "45%",
-    height: 52,
-  },
-  headerLabel: {
-    fontSize: 18,
-    fontWeight: "400",
-  },
   rowContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: 60,
-    margin: 15,
-    paddingLeft: 10,
+    marginBottom: 32,
   },
-  dateButton: {
-    height: 52,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    justifyContent: "center",
-    width: "45%",
-  },
-  dateError: {
-    borderWidth: 2,
-  },
-  inputText: {
-    fontSize: 16,
+  dosageContainer: {
+    width: "50%",
   },
   pickerContainer: {
-    height: 52,
     justifyContent: "center",
-    width: "45%",
+    width: "50%",
     overflow: "hidden",
-  },
-  picker: {
-    width: "100%",
-    height: 50,
-    borderWidth: 1,
-  },
-  pickerItem: {
-    fontSize: 16,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    borderTopWidth: 1,
-    zIndex: 1,
-  },
-  nextButton: {
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  nextButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
 });
