@@ -103,7 +103,7 @@ export default function SmallNumberStepper({
           keyboardType="numeric"
           defaultValue={count.toString()}
           onChangeText={handleChangeText}
-          style={[gstyles.pressableText, { color: theme.colors.text }]}
+          style={[styles.valueText, { color: theme.colors.text }]}
         />
       </View>
 
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   valueText: {
-    fontSize: 18,
+    ...gstyles.pressableText,
     fontWeight: "500",
   },
 });

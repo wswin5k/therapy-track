@@ -9,6 +9,7 @@ export const gstyles = StyleSheet.create({
     flex: 1,
   },
   editScrollContentContainer: {
+    paddingTop: 30,
     padding: 22,
   },
   labelText: {
