@@ -799,6 +799,20 @@ export function Home({ date }: { date: Date }) {
     await loadScheduledMeasurments();
   };
 
+  const handleMeasurmentInputClear = async () => {
+    if (clickedScheduledMeasurment) {
+      if (clickedScheduledMeasurment.measurmentRecordId) {
+        await dbDeleteScheduledMeasurmentRecord(
+          db,
+          clickedScheduledMeasurment.measurmentRecordId,
+        );
+      }
+    }
+
+    setClickedScheduledMeasurment(null);
+    await loadScheduledMeasurments();
+  };
+
   const getScheduledDosages = (groupId?: number) =>
     scheduledDosages.get(groupId ?? null);
   const getScheduledMeasurments = (groupId?: number) =>
@@ -916,6 +930,7 @@ export function Home({ date }: { date: Date }) {
           initialValue={clickedScheduledMeasurment.value}
           onCancel={handleMeasurmentInputCancel}
           onSave={handleMeasurmentInputSave}
+          onClear={handleMeasurmentInputClear}
         />
       )}
 
