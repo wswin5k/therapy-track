@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "500",
     width: "100%",
     textAlign: "center",
