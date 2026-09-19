@@ -355,11 +355,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  fullAssessmentInputContainer: {
-    flexDirection: "column",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
   rowDate: {
     flexDirection: "row",
     justifyContent: "space-between",
