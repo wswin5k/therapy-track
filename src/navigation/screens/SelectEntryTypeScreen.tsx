@@ -73,7 +73,7 @@ export function SelectEntryTypeScreen() {
   };
 
   return (
-    <DefaultMainContainer style={{ borderWidth: 2 }}>
+    <DefaultMainContainer>
       <View style={sStyles.selectMainContainer}>
         <TouchableOpacity
           onPress={handleSelectMedicine}

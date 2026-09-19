@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   useRoute,
@@ -75,28 +75,30 @@ export function SelectMedicineScreen() {
   };
 
   return (
-    <DefaultMainContainer justifyContent="center">
-      {medicines.length > 0 && (
-        <ModalPicker
-          values={medicines}
-          onValueChange={handleSelectMedicine}
-          getLabel={createMedicineLabel}
-          placeholder="Select existing medicine"
-          selectedValue={null}
-          pressableStyle={sStyles.picker}
-        />
-      )}
+    <DefaultMainContainer>
+      <View style={sStyles.selectMainContainer}>
+        {medicines.length > 0 && (
+          <ModalPicker
+            values={medicines}
+            onValueChange={handleSelectMedicine}
+            getLabel={createMedicineLabel}
+            placeholder="Select existing medicine"
+            selectedValue={null}
+            pressableStyle={sStyles.picker}
+          />
+        )}
 
-      <Text style={[sStyles.labelText, { color: theme.colors.text }]}>
-        {t("or")}
-      </Text>
+        <Text style={[sStyles.labelText, { color: theme.colors.text }]}>
+          {t("or")}
+        </Text>
 
-      <TouchableOpacity
-        onPress={handleAddNewMedicine}
-        style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
-      >
-        <Text style={sStyles.buttonText}>{t("Add new medicine")}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleAddNewMedicine}
+          style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
+        >
+          <Text style={sStyles.buttonText}>{t("Add new medicine")}</Text>
+        </TouchableOpacity>
+      </View>
     </DefaultMainContainer>
   );
 }
