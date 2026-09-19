@@ -18,6 +18,7 @@ interface AssessmentInputDialogProps {
   valueDomain: ValueDomain;
   onSave: (value: AssessmentValue) => void;
   onCancel: () => void;
+  onClear: () => void;
 }
 
 export function AssessmentInputDialog({
@@ -27,6 +28,7 @@ export function AssessmentInputDialog({
   valueDomain,
   onSave,
   onCancel,
+  onClear,
 }: AssessmentInputDialogProps) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -65,6 +67,16 @@ export function AssessmentInputDialog({
               { backgroundColor: theme.colors.background },
             ]}
           >
+            <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
+              <Text
+                style={[
+                  styles.closeButtonText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
+                ✕
+              </Text>
+            </TouchableOpacity>
             <Text style={[styles.title, { color: theme.colors.text }]}>
               {title}
             </Text>
@@ -77,21 +89,27 @@ export function AssessmentInputDialog({
             />
             <View style={styles.marginContainer}></View>
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.cancelButton,
-                  {
-                    borderColor: theme.colors.border,
-                    backgroundColor: theme.colors.card,
-                  },
-                ]}
-                onPress={onCancel}
-              >
-                <Text style={[styles.buttonText, { color: theme.colors.text }]}>
-                  {t("Cancel")}
-                </Text>
-              </TouchableOpacity>
+              {initialValue !== null ? (
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.clearButton,
+                    {
+                      borderColor: theme.colors.primary,
+                      backgroundColor: theme.colors.surface,
+                    },
+                  ]}
+                  onPress={onClear}
+                >
+                  <Text
+                    style={[styles.buttonText, { color: theme.colors.text }]}
+                  >
+                    {t("Clear")}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                ""
+              )}
               <TouchableOpacity
                 style={[
                   styles.button,
@@ -99,7 +117,7 @@ export function AssessmentInputDialog({
                 ]}
                 onPress={handleSave}
               >
-                <Text style={[styles.buttonText, { color: "white" }]}>
+                <Text style={[styles.buttonText, { color: "#fff" }]}>
                   {t("Save")}
                 </Text>
               </TouchableOpacity>
@@ -147,25 +165,39 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
+    justifyContent: "center",
     width: "100%",
-    gap: 12,
-    height: 48,
+    gap: 20,
+    height: 44,
   },
   button: {
-    flex: 1,
-    paddingVertical: 12,
+    flexShrink: 1,
+    width: "50%",
     paddingHorizontal: 16,
     borderRadius: DEFAULT_BORDER_RADIUS,
-    alignItems: "center",
     justifyContent: "center",
   },
-  cancelButton: {
-    borderWidth: 1,
+  clearButton: {
+    borderWidth: 1.2,
   },
   buttonText: {
     fontSize: 17,
     fontWeight: "500",
     width: "100%",
     textAlign: "center",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    zIndex: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    marginTop: 6,
+  },
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: "300",
   },
 });
