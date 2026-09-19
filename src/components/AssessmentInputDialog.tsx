@@ -9,6 +9,7 @@ import {
   getDefaultValue,
   isTextValueValid,
 } from "./AssessmentInput";
+import { DEFAULT_BORDER_RADIUS } from "../commonStyles";
 
 interface AssessmentInputDialogProps {
   title: string;
@@ -67,15 +68,14 @@ export function AssessmentInputDialog({
             <Text style={[styles.title, { color: theme.colors.text }]}>
               {title}
             </Text>
-            <View style={styles.content}>
-              <AssessmentInput
-                value={value}
-                type={assessmentType}
-                handleValueChange={setValue}
-                valueDomain={valueDomain}
-                valueError={valueError}
-              />
-            </View>
+            <AssessmentInput
+              value={value}
+              type={assessmentType}
+              handleValueChange={setValue}
+              valueDomain={valueDomain}
+              valueError={valueError}
+            />
+            <View style={styles.marginContainer}></View>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[
@@ -118,35 +118,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     height: "100%",
+    width: "100%",
   },
   modal: {
     width: 400,
     maxWidth: "85%",
-    maxHeight: "70%",
-    alignSelf: "center",
+    maxHeight: "65%",
   },
   dialog: {
-    borderRadius: 12,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: 20,
     paddingVertical: 20,
     maxHeight: "100%",
+    width: "100%",
     alignItems: "center",
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 12,
+    marginBottom: 14,
     textAlign: "center",
-    height: 40,
+    height: 30,
     textAlignVertical: "center",
     width: "100%",
   },
-  content: {
-    fontSize: 15,
-    marginBottom: 15,
-    textAlign: "left",
-    lineHeight: 21,
-    width: "100%",
+  marginContainer: {
+    height: 16,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -158,7 +155,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -166,7 +163,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   buttonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "500",
     width: "100%",
     textAlign: "center",
