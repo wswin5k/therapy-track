@@ -51,7 +51,7 @@ export function SelectAssessmentScreen() {
       });
     } else {
       // mode === "one-time"
-      navigation.navigate("EditSingleMeasurmentScreen", {
+      navigation.navigate("EditSingleMeasurementScreen", {
         assessment: assessment,
         selectedDate: selectedDate,
       });

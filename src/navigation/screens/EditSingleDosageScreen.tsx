@@ -151,6 +151,15 @@ export function EditSingleDosageScreen() {
       >
         <View style={[styles.rowContainer]}>
           <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            {doseHeader}
+          </Text>
+          <View style={styles.dosageContainer}>
+            <SmallNumberStepper onChange={handleAmountChange} />
+          </View>
+        </View>
+
+        <View style={[styles.rowContainer]}>
+          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
             {t("Date")}
           </Text>
           <TouchableOpacity
@@ -185,15 +194,6 @@ export function EditSingleDosageScreen() {
         ) : (
           ""
         )}
-
-        <View style={[styles.rowContainer]}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
-            {doseHeader}
-          </Text>
-          <View style={styles.dosageContainer}>
-            <SmallNumberStepper onChange={handleAmountChange} />
-          </View>
-        </View>
 
         <View style={[styles.rowContainer]}>
           <Text style={[gstyles.labelText, { color: theme.colors.text }]}>

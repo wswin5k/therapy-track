@@ -21,6 +21,7 @@ import {
 import Ionicons from "@react-native-vector-icons/ionicons";
 import React from "react";
 import { TEXT_MAX_LENGTH } from "../navigation/screens/EditAssessmentScreen";
+import { DEFAULT_BORDER_RADIUS } from "../commonStyles";
 
 export function isStringArray(value: unknown): value is string[] {
   return (
@@ -128,6 +129,7 @@ export function AssessmentInput({
           style={[
             styles.textInput,
             {
+              color: theme.colors.text,
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.surface,
             },
@@ -137,8 +139,12 @@ export function AssessmentInput({
             },
           ]}
         />
-
-        <Text style={styles.textInputLenght}>
+        <Text
+          style={[
+            styles.textInputLenght,
+            { color: valueError ? theme.colors.error : theme.colors.text },
+          ]}
+        >
           {textInputLength > 0.875 * TEXT_MAX_LENGTH
             ? `${textInputLength}/${TEXT_MAX_LENGTH}`
             : " "}
@@ -158,6 +164,7 @@ export function AssessmentInput({
 
     return (
       <ScrollView
+        nestedScrollEnabled={true}
         persistentScrollbar={true}
         style={[
           styles.selectInputContainer,
@@ -266,7 +273,6 @@ export function AssessmentInput({
 
 const styles = StyleSheet.create({
   selectInputContainer: {
-    maxHeight: 320,
     width: "90%",
     alignSelf: "center",
   },
@@ -301,10 +307,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   textInputContainer: {
-    padding: 8,
-    paddingTop: 8,
-    paddingBottom: 8,
     width: "100%",
+    height: 120,
+    flexShrink: 1,
     justifyContent: "center",
     alignSelf: "center",
     flexDirection: "column",
@@ -312,18 +317,18 @@ const styles = StyleSheet.create({
   textInput: {
     textAlignVertical: "top",
     borderWidth: 1,
-    fontSize: 16,
-    maxHeight: 70,
-    borderRadius: 8,
+    fontSize: 17,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     paddingVertical: 8,
     paddingHorizontal: 8,
     width: "100%",
+    flex: 1,
     justifyContent: "center",
     alignSelf: "center",
     flexDirection: "row",
   },
   textInputLenght: {
     alignSelf: "flex-end",
-    margin: 4,
+    margin: 2,
   },
 });

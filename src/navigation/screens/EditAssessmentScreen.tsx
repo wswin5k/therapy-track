@@ -246,7 +246,7 @@ export function EditAssessmentScreen() {
       if (!assessmentValidated) {
         return;
       }
-      navigation.navigate("EditSingleMeasurmentScreen", {
+      navigation.navigate("EditSingleMeasurementScreen", {
         assessment: assessmentValidated,
       });
     } else if (mode === "update-and-go-back") {

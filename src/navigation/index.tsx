@@ -26,7 +26,7 @@ import {
   ValueDomain,
 } from "../models/AssessmentSchedule";
 import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
-import { EditSingleMeasurmentScreen } from "./screens/EditSingleMeasurmentScreen";
+import { EditSingleMeasurementScreen } from "./screens/EditSingleMeasurementScreen";
 import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
 import { HomeSwipeable } from "./screens/HomeSwipeable";
 import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
@@ -179,7 +179,7 @@ export type RootStackParamList = {
     };
     selectedDate?: string;
   };
-  EditSingleMeasurmentScreen: {
+  EditSingleMeasurementScreen: {
     assessment: {
       name: string;
       type: ValueType;
@@ -280,11 +280,11 @@ const RootStack = createNativeStackNavigator({
         title: "Add single dosage",
       },
     },
-    EditSingleMeasurmentScreen: {
-      screen: EditSingleMeasurmentScreen,
+    EditSingleMeasurementScreen: {
+      screen: EditSingleMeasurementScreen,
       options: {
         presentation: "modal",
-        title: "Add single measurment",
+        title: "Add single measurement",
       },
     },
     EditGroupScreen: {
