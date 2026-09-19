@@ -34,7 +34,7 @@ import {
   getTodayDateOnly,
   toDisplayConcise,
 } from "../../dateOnlyUtils";
-import { gstyles } from "../../commonStyles";
+import { eStyles } from "../../commonStyles";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
 
 type EditSingeDosageScreenNavigationProp = NativeStackNavigationProp<
@@ -146,11 +146,11 @@ export function EditSingleDosageScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={gstyles.editScrollContainer}
-        contentContainerStyle={gstyles.editScrollContentContainer}
+        style={eStyles.editMainScrollContainer}
+        contentContainerStyle={eStyles.editMainScrollContentContainer}
       >
         <View style={[styles.rowContainer]}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {doseHeader}
           </Text>
           <View style={styles.dosageContainer}>
@@ -159,13 +159,13 @@ export function EditSingleDosageScreen() {
         </View>
 
         <View style={[styles.rowContainer]}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectDate}
             style={[
-              gstyles.datePressable,
+              eStyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
@@ -176,7 +176,7 @@ export function EditSingleDosageScreen() {
               },
             ]}
           >
-            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {date
                 ? toDisplayConcise(date, i18n.resolvedLanguage)
                 : "Select date"}
@@ -196,7 +196,7 @@ export function EditSingleDosageScreen() {
         )}
 
         <View style={[styles.rowContainer]}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Group")}
           </Text>
 
@@ -217,15 +217,15 @@ export function EditSingleDosageScreen() {
           </View>
         </View>
       </ScrollView>
-      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
+      <View style={[eStyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
           style={[
-            gstyles.nextButton,
+            eStyles.nextButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
+          <Text style={eStyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>

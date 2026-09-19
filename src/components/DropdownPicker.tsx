@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
-import { gstyles } from "../commonStyles";
+import { eStyles } from "../commonStyles";
 
 interface ModalDropdownPickerProps<T> {
   options: T[];
@@ -128,7 +128,7 @@ export function DropdownPicker<T>({
         onPress={handleOpen}
         onLayout={handleButtonLaoyt}
         style={[
-          gstyles.pressable,
+          eStyles.pressable,
           {
             borderColor: theme.colors.border,
             backgroundColor: theme.colors.surface,
@@ -144,7 +144,7 @@ export function DropdownPicker<T>({
       >
         <Text
           style={[
-            gstyles.pressableText,
+            eStyles.pressableText,
             pressableTextStyle,
             { color: theme.colors.text },
             selectedValue === null && { color: theme.colors.textTertiary },
@@ -207,7 +207,7 @@ export function DropdownPicker<T>({
                   >
                     <Text
                       style={[
-                        gstyles.pressableText,
+                        eStyles.pressableText,
                         {
                           color: isSelected
                             ? theme.colors.primary

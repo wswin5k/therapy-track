@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   useRoute,
@@ -14,6 +14,7 @@ import { Medicine } from "../../models/MedicineSchedule";
 import { dbGetMedicines } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ModalPicker } from "../../components/ModalPicker";
+import { sStyles } from "../../commonStyles";
 
 type SelectMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -66,9 +67,7 @@ export function SelectMedicineScreen() {
   };
 
   const createMedicineLabel = (m: Medicine): string => {
-    let ingredientsStr = m.activeIngredients
-      .map((ai) => `${ai.name} ${ai.amount}${ai.unit}`)
-      .join(", ");
+    let ingredientsStr = m.activeIngredientsString().join(", ");
 
     ingredientsStr = ingredientsStr ? "(" + ingredientsStr + ")" : "";
 
@@ -84,52 +83,20 @@ export function SelectMedicineScreen() {
           getLabel={createMedicineLabel}
           placeholder="Select existing medicine"
           selectedValue={null}
-          pressableStyle={styles.fullWidthPickerContainer}
+          pressableStyle={sStyles.picker}
         />
       )}
 
-      <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
+      <Text style={[sStyles.labelText, { color: theme.colors.text }]}>
         {t("or")}
       </Text>
 
       <TouchableOpacity
         onPress={handleAddNewMedicine}
-        style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
+        style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
       >
-        <Text style={styles.nextButtonText}>{t("Add new medicine")}</Text>
+        <Text style={sStyles.buttonText}>{t("Add new medicine")}</Text>
       </TouchableOpacity>
     </DefaultMainContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  headerLabel: {
-    fontSize: 18,
-    fontWeight: "500",
-    textAlign: "center",
-    margin: 15,
-  },
-  fullWidthPickerContainer: {
-    maxWidth: "80%",
-    width: 300,
-    height: 60,
-    borderWidth: 1,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignSelf: "center",
-    padding: 15,
-  },
-  nextButton: {
-    maxWidth: "80%",
-    width: 300,
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  nextButtonText: {
-    color: "#fff",
-    fontSize: 17.5,
-    fontWeight: "500",
-  },
-});

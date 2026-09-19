@@ -38,7 +38,7 @@ import {
   frequencySelectionToDisplayForm,
 } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
-import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
 import { assingDefaultGroups } from "./common";
@@ -269,8 +269,8 @@ export default function EditMedicineScheduleScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={gstyles.editScrollContainer}
-        contentContainerStyle={gstyles.editScrollContentContainer}
+        style={eStyles.editMainScrollContainer}
+        contentContainerStyle={eStyles.editMainScrollContentContainer}
       >
         <View style={[styles.rowFrequencyPicker]}>
           <ModalPicker
@@ -279,19 +279,19 @@ export default function EditMedicineScheduleScreen() {
             onValueChange={handleFrequencyPicker}
             getLabel={frequencySelectionToDisplayForm}
             placeholder="Select frequency"
-            pressableStyle={gstyles.fullWidthPickerPressable}
+            pressableStyle={eStyles.fullWidthPickerPressable}
             error={freqError}
           />
         </View>
 
         <View style={[styles.rowDosagesHeaders]}>
           <View style={styles.dosageHeaderContainer}>
-            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
               {t(doseHeader)}
             </Text>
           </View>
           <View style={styles.dosageHeaderContainer}>
-            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
               {t("Group")}
             </Text>
           </View>
@@ -330,13 +330,13 @@ export default function EditMedicineScheduleScreen() {
         </View>
 
         <View style={styles.rowDate}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Start date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectStartDate}
             style={[
-              gstyles.datePressable,
+              eStyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
@@ -347,7 +347,7 @@ export default function EditMedicineScheduleScreen() {
               },
             ]}
           >
-            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {startDate
                 ? toDisplayConcise(startDate, i18n.resolvedLanguage)
                 : t("Select date")}
@@ -368,20 +368,20 @@ export default function EditMedicineScheduleScreen() {
         )}
 
         <View style={styles.rowDate}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("End date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectEndDate}
             style={[
-              gstyles.datePressable,
+              eStyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
             ]}
           >
-            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {endDate
                 ? toDisplayConcise(endDate, i18n.resolvedLanguage)
                 : t("Infinitely")}
@@ -406,7 +406,7 @@ export default function EditMedicineScheduleScreen() {
 
       <View
         style={[
-          gstyles.footer,
+          eStyles.footer,
           {
             backgroundColor: theme.colors.background,
             borderTopColor: theme.colors.border,
@@ -416,11 +416,11 @@ export default function EditMedicineScheduleScreen() {
         <TouchableOpacity
           onPress={handleSave}
           style={[
-            gstyles.nextButton,
+            eStyles.nextButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
+          <Text style={eStyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     marginBottom: 6,
   },
   dosageHeaderContainer: {
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   },
   dosageAmountContainer: {
     width: "45%",
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
   },
   dosageGroupPickerContainer: {
     justifyContent: "center",

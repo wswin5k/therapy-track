@@ -18,10 +18,10 @@ import {
   ERROR_BORDER_WIDTH,
 } from "../navigation/commonConsts";
 import {
-  PRESSABLE_HEIGHT,
+  EDIT_PRESSABLE_HEIGHT,
   PRESSABLE_PADDING_HORIZONTAL,
   DEFAULT_BORDER_RADIUS,
-  gstyles,
+  eStyles,
 } from "../commonStyles";
 
 interface ModalPickerProps<T> {
@@ -93,7 +93,7 @@ export function ModalPicker<T>({
           },
         ]}
       >
-        <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+        <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
           {placeholder}
         </Text>
         <TouchableOpacity
@@ -132,7 +132,7 @@ export function ModalPicker<T>({
       >
         <Text
           style={[
-            gstyles.pressableText,
+            eStyles.pressableText,
             { color: theme.colors.text },
             (!selectedValue || disabled) && {
               color: theme.colors.textTertiary,
@@ -201,7 +201,7 @@ export function ModalPicker<T>({
                     <Text
                       numberOfLines={1}
                       style={[
-                        gstyles.pressableText,
+                        eStyles.pressableText,
                         {
                           color: isSelected
                             ? theme.colors.text
@@ -234,7 +234,7 @@ export function ModalPicker<T>({
 
 const styles = StyleSheet.create({
   defaultPressableStyle: {
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,

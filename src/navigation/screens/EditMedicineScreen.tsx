@@ -38,7 +38,7 @@ import {
 import { ModalPicker } from "../../components/ModalPicker";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
 import { isEqualLowerCase } from "../utils";
-import { DEFAULT_BORDER_RADIUS, gstyles } from "../../commonStyles";
+import { DEFAULT_BORDER_RADIUS, eStyles } from "../../commonStyles";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -383,15 +383,15 @@ export function EditMedicineScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={gstyles.editScrollContainer}
-        contentContainerStyle={gstyles.editScrollContentContainer}
+        style={eStyles.editMainScrollContainer}
+        contentContainerStyle={eStyles.editMainScrollContentContainer}
       >
         <View style={[styles.rowContainer]}>
           <TextInput
             placeholder="Medicine Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              gstyles.pressableTextInput,
+              eStyles.pressableTextInput,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
@@ -419,13 +419,13 @@ export function EditMedicineScreen() {
             }}
             getLabel={baseUnitToUnitSelectionLabel}
             placeholder="Select base unit"
-            pressableStyle={gstyles.fullWidthPickerPressable}
+            pressableStyle={eStyles.fullWidthPickerPressable}
             error={baseUnitError}
           />
         </View>
 
         <View style={styles.rowActiveIngredientsHeader}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Active ingredients per base unit")}
           </Text>
         </View>
@@ -456,15 +456,15 @@ export function EditMedicineScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
+      <View style={[eStyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
           style={[
-            gstyles.nextButton,
+            eStyles.nextButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={gstyles.nextButtonText}>
+          <Text style={eStyles.nextButtonText}>
             {mode === "save-and-go-back" ? "Save" : "Next"}
           </Text>
         </TouchableOpacity>
