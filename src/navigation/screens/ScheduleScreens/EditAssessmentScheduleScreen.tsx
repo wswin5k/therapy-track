@@ -37,7 +37,7 @@ import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { UnscheduledMeasurmentRecord } from "../../../models/Records";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
-import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -313,8 +313,8 @@ export default function EditAssessmentScheduleScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={gstyles.editScrollContainer}
-        contentContainerStyle={gstyles.editScrollContentContainer}
+        style={eStyles.editMainScrollContainer}
+        contentContainerStyle={eStyles.editMainScrollContentContainer}
       >
         <View style={[styles.rowFrequencyPicker]}>
           <ModalPicker
@@ -323,7 +323,7 @@ export default function EditAssessmentScheduleScreen() {
             onValueChange={handleFrequencyPicker}
             getLabel={frequencySelectionToDisplayForm}
             placeholder="Select frequency"
-            pressableStyle={gstyles.fullWidthPickerPressable}
+            pressableStyle={eStyles.fullWidthPickerPressable}
             error={freqError}
           />
         </View>
@@ -331,12 +331,12 @@ export default function EditAssessmentScheduleScreen() {
         {nMeasurements > 1 ? (
           <View style={[styles.rowMeasurementsHeaders]}>
             <View style={styles.measurementHeaderContainer}>
-              <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+              <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
                 {t("Measurement")}
               </Text>
             </View>
             <View style={styles.measurementHeaderContainer}>
-              <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+              <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
                 {t("Group")}
               </Text>
             </View>
@@ -366,7 +366,7 @@ export default function EditAssessmentScheduleScreen() {
               ) : (
                 <View style={styles.measurementGroupContainer}>
                   <Text
-                    style={[gstyles.labelText, { color: theme.colors.text }]}
+                    style={[eStyles.labelText, { color: theme.colors.text }]}
                   >
                     {t("Group")}
                   </Text>
@@ -393,13 +393,13 @@ export default function EditAssessmentScheduleScreen() {
         </View>
 
         <View style={styles.rowDate}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Start date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectStartDate}
             style={[
-              gstyles.datePressable,
+              eStyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
@@ -410,7 +410,7 @@ export default function EditAssessmentScheduleScreen() {
               },
             ]}
           >
-            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {startDate
                 ? toDisplayConcise(startDate, i18n.resolvedLanguage)
                 : t("Select date")}
@@ -431,20 +431,20 @@ export default function EditAssessmentScheduleScreen() {
         )}
 
         <View style={styles.rowDate}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("End date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectEndDate}
             style={[
-              gstyles.datePressable,
+              eStyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
             ]}
           >
-            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {endDate
                 ? toDisplayConcise(endDate, i18n.resolvedLanguage)
                 : t("Infinitely")}
@@ -469,7 +469,7 @@ export default function EditAssessmentScheduleScreen() {
 
       <View
         style={[
-          gstyles.footer,
+          eStyles.footer,
           {
             backgroundColor: theme.colors.background,
             borderTopColor: theme.colors.border,
@@ -479,11 +479,11 @@ export default function EditAssessmentScheduleScreen() {
         <TouchableOpacity
           onPress={handleSave}
           style={[
-            gstyles.nextButton,
+            eStyles.nextButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
+          <Text style={eStyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     marginBottom: 6,
   },
   measurementHeaderContainer: {
@@ -517,13 +517,13 @@ const styles = StyleSheet.create({
   },
   measurementOrdinalContainer: {
     width: "45%",
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
   },
   measurementGroupContainer: {
     width: "45%",
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     justifyContent: "center",
     alignItems: "flex-start",
   },

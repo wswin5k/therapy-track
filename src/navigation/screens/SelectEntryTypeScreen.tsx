@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import {
   useRoute,
   useNavigation,
@@ -10,6 +10,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { dbGetAssessments, dbGetMedicines } from "../../models/dbAccess";
 import React from "react";
 import { useSQLiteContext } from "expo-sqlite";
+import { sStyles } from "../../commonStyles";
 
 export function SelectEntryTypeScreen() {
   const { t } = useTranslation();
@@ -72,46 +73,26 @@ export function SelectEntryTypeScreen() {
   };
 
   return (
-    <DefaultMainContainer justifyContent="center">
-      <TouchableOpacity
-        onPress={handleSelectMedicine}
-        style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
-      >
-        <Text style={styles.nextButtonText}>{t("Medicine")}</Text>
-      </TouchableOpacity>
+    <DefaultMainContainer>
+      <View style={sStyles.selectMainContainer}>
+        <TouchableOpacity
+          onPress={handleSelectMedicine}
+          style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
+        >
+          <Text style={sStyles.buttonText}>{t("Medicine")}</Text>
+        </TouchableOpacity>
 
-      <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
-        {t("or")}
-      </Text>
+        <Text style={[sStyles.labelText, { color: theme.colors.text }]}>
+          {t("or")}
+        </Text>
 
-      <TouchableOpacity
-        onPress={handleSelectAssessment}
-        style={[styles.nextButton, { backgroundColor: theme.colors.primary }]}
-      >
-        <Text style={styles.nextButtonText}>{t("Assessment")}</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleSelectAssessment}
+          style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
+        >
+          <Text style={sStyles.buttonText}>{t("Assessment")}</Text>
+        </TouchableOpacity>
+      </View>
     </DefaultMainContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  headerLabel: {
-    fontSize: 18,
-    fontWeight: "500",
-    textAlign: "center",
-    margin: 15,
-  },
-  nextButton: {
-    maxWidth: "80%",
-    width: 300,
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  nextButtonText: {
-    color: "#fff",
-    fontSize: 17.5,
-    fontWeight: "500",
-  },
-});

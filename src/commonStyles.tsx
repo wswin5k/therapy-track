@@ -1,14 +1,16 @@
 import { StyleSheet } from "react-native";
 
-export const PRESSABLE_HEIGHT: number = 54;
 export const DEFAULT_BORDER_RADIUS: number = 8;
 export const PRESSABLE_PADDING_HORIZONTAL: number = 12;
 
-export const gstyles = StyleSheet.create({
-  editScrollContainer: {
+//styles for edit screens
+export const EDIT_PRESSABLE_HEIGHT: number = 54;
+
+export const eStyles = StyleSheet.create({
+  editMainScrollContainer: {
     flex: 1,
   },
-  editScrollContentContainer: {
+  editMainScrollContentContainer: {
     paddingTop: 30,
     padding: 22,
   },
@@ -21,7 +23,7 @@ export const gstyles = StyleSheet.create({
     fontWeight: "400",
   },
   pressableTextInput: {
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -29,7 +31,7 @@ export const gstyles = StyleSheet.create({
     width: "100%",
   },
   pressable: {
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -38,7 +40,7 @@ export const gstyles = StyleSheet.create({
     justifyContent: "space-between",
   },
   datePressable: {
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -46,7 +48,7 @@ export const gstyles = StyleSheet.create({
     alignItems: "flex-end",
   },
   timePressable: {
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: 14,
@@ -54,7 +56,7 @@ export const gstyles = StyleSheet.create({
     alignItems: "flex-end",
   },
   fullWidthPickerPressable: {
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -74,5 +76,45 @@ export const gstyles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+});
+
+// styles for select screens
+const SELECT_PRESSABLE_HEIGHT: number = 54;
+
+export const sStyles = StyleSheet.create({
+  selectMainContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  labelText: {
+    fontSize: 18,
+    fontWeight: "500",
+    textAlign: "center",
+    margin: 15,
+  },
+  button: {
+    height: SELECT_PRESSABLE_HEIGHT,
+    maxWidth: "80%",
+    width: 300,
+    paddingVertical: 15,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "500",
+  },
+  picker: {
+    height: SELECT_PRESSABLE_HEIGHT,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
+    justifyContent: "center",
+    maxWidth: "80%",
+    width: 300,
+    alignSelf: "center",
   },
 });

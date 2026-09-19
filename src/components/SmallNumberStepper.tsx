@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { gstyles } from "../commonStyles";
+import { eStyles } from "../commonStyles";
 
 function isClose(a: number, b: number) {
   return Math.abs(a - b) < 1e-5;
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   valueText: {
-    ...gstyles.pressableText,
+    ...eStyles.pressableText,
     fontWeight: "500",
   },
 });

@@ -26,7 +26,7 @@ import {
 } from "../../../models/dbAccess";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
-import { gstyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 
@@ -143,17 +143,17 @@ export default function PartiallyEditAnyScheduleScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={gstyles.editScrollContainer}
-        contentContainerStyle={gstyles.editScrollContentContainer}
+        style={eStyles.editMainScrollContainer}
+        contentContainerStyle={eStyles.editMainScrollContentContainer}
       >
         <View style={styles.rowContainer}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Start date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectStartDate}
             style={[
-              gstyles.datePressable,
+              eStyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
@@ -164,7 +164,7 @@ export default function PartiallyEditAnyScheduleScreen() {
               },
             ]}
           >
-            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {startDate
                 ? toDisplayConcise(startDate, i18n.resolvedLanguage)
                 : t("Select date")}
@@ -185,20 +185,20 @@ export default function PartiallyEditAnyScheduleScreen() {
         )}
 
         <View style={styles.rowContainer}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("End date")}
           </Text>
           <TouchableOpacity
             onPress={handleSelectEndDate}
             style={[
-              gstyles.datePressable,
+              eStyles.datePressable,
               {
                 backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
             ]}
           >
-            <Text style={[gstyles.pressableText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {endDate
                 ? toDisplayConcise(endDate, i18n.resolvedLanguage)
                 : t("Infinitely")}
@@ -222,7 +222,7 @@ export default function PartiallyEditAnyScheduleScreen() {
 
       <View
         style={[
-          gstyles.footer,
+          eStyles.footer,
           {
             backgroundColor: theme.colors.background,
             borderTopColor: theme.colors.border,
@@ -232,11 +232,11 @@ export default function PartiallyEditAnyScheduleScreen() {
         <TouchableOpacity
           onPress={handleSave}
           style={[
-            gstyles.nextButton,
+            eStyles.nextButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
+          <Text style={eStyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
     marginBottom: 20,
   },
 });

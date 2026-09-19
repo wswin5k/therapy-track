@@ -36,7 +36,7 @@ import {
 import { isEqualLowerCase } from "../utils";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { ERROR_BORDER_WIDTH } from "../commonConsts";
-import { gstyles, PRESSABLE_HEIGHT } from "../../commonStyles";
+import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../commonStyles";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -223,15 +223,15 @@ export function EditGroupScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={gstyles.editScrollContainer}
-        contentContainerStyle={gstyles.editScrollContentContainer}
+        style={eStyles.editMainScrollContainer}
+        contentContainerStyle={eStyles.editMainScrollContentContainer}
       >
         <View style={[styles.rowContainer]}>
           <TextInput
             placeholder="Group Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              gstyles.pressableTextInput,
+              eStyles.pressableTextInput,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
@@ -252,7 +252,7 @@ export function EditGroupScreen() {
           />
         </View>
         <View style={styles.rowContainer}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Enable reminder")}
           </Text>
 
@@ -270,13 +270,13 @@ export function EditGroupScreen() {
 
         {isReminderOn && (
           <View style={[styles.rowContainer]}>
-            <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
               {t("Reminder time")}
             </Text>
             <TouchableOpacity
               onPress={handleSelectTime}
               style={[
-                gstyles.timePressable,
+                eStyles.timePressable,
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.border,
@@ -289,7 +289,7 @@ export function EditGroupScreen() {
             >
               <Text
                 style={[
-                  gstyles.pressableText,
+                  eStyles.pressableText,
                   {
                     color: reminderTime
                       ? theme.colors.text
@@ -313,15 +313,15 @@ export function EditGroupScreen() {
         )}
       </ScrollView>
 
-      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
+      <View style={[eStyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
           style={[
-            gstyles.nextButton,
+            eStyles.nextButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={gstyles.nextButtonText}>{t("Save")}</Text>
+          <Text style={eStyles.nextButtonText}>{t("Save")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
@@ -337,6 +337,6 @@ const styles = StyleSheet.create({
   },
   switch: {
     transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
   },
 });

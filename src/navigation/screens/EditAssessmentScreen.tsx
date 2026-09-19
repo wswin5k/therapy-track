@@ -43,8 +43,8 @@ import SmallNumberStepper from "../../components/SmallNumberStepper";
 import { isEqualLowerCase } from "../utils";
 import {
   DEFAULT_BORDER_RADIUS,
-  gstyles,
-  PRESSABLE_HEIGHT,
+  eStyles,
+  EDIT_PRESSABLE_HEIGHT,
 } from "../../commonStyles";
 
 export const TEXT_MAX_LENGTH = 200;
@@ -286,7 +286,7 @@ export function EditAssessmentScreen() {
     return (
       <>
         <View style={styles.rowActiveIngredientsHeader}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Select options")}
           </Text>
         </View>
@@ -425,7 +425,7 @@ export function EditAssessmentScreen() {
     return (
       <View>
         <View style={[styles.rowNumericLimitContainer]}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Minimum")}
           </Text>
           <View style={styles.numberStepperInput}>
@@ -439,7 +439,7 @@ export function EditAssessmentScreen() {
           </View>
         </View>
         <View style={[styles.rowNumericLimitContainer]}>
-          <Text style={[gstyles.labelText, { color: theme.colors.text }]}>
+          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
             {t("Maximum")}
           </Text>
           <View style={styles.numberStepperInput}>
@@ -473,15 +473,15 @@ export function EditAssessmentScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={gstyles.editScrollContainer}
-        contentContainerStyle={gstyles.editScrollContentContainer}
+        style={eStyles.editMainScrollContainer}
+        contentContainerStyle={eStyles.editMainScrollContentContainer}
       >
         <View style={[styles.rowNameContainer]}>
           <TextInput
             placeholder="Assessment Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              gstyles.pressableTextInput,
+              eStyles.pressableTextInput,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
@@ -506,7 +506,7 @@ export function EditAssessmentScreen() {
             selectedValue={assessmentType}
             onValueChange={handleAssessmentTypePick}
             getLabel={assessmentTypeToDisplayForm}
-            pressableStyle={gstyles.fullWidthPickerPressable}
+            pressableStyle={eStyles.fullWidthPickerPressable}
             error={assessmentTypeError}
             disabled={typeInputDisabled}
             disabledMessage={t(
@@ -517,15 +517,15 @@ export function EditAssessmentScreen() {
         {renderValueDomain()}
       </ScrollView>
 
-      <View style={[gstyles.footer, { borderTopColor: theme.colors.border }]}>
+      <View style={[eStyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}
           style={[
-            gstyles.nextButton,
+            eStyles.nextButton,
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={gstyles.nextButtonText}>
+          <Text style={eStyles.nextButtonText}>
             {["create-and-go-back", "update-and-go-back"].includes(mode)
               ? "Save"
               : "Next"}
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   },
   numberStepperInput: {
     width: "50%",
-    height: PRESSABLE_HEIGHT,
+    height: EDIT_PRESSABLE_HEIGHT,
   },
   rowActiveIngredientsHeader: {
     marginBottom: 12,
