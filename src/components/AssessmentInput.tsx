@@ -322,7 +322,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 8,
     width: "100%",
-    height: "100%",
     flex: 1,
     justifyContent: "center",
     alignSelf: "center",
