@@ -27,6 +27,7 @@ export function sortArrayMeasurmentValue(
   value: AssessmentValue,
   valueDomain: ValueDomain,
 ) {
+  // consider using a map
   if (Array.isArray(value) && valueDomain instanceof SelectValueDomain) {
     value.sort(
       (a, b) => valueDomain.values.indexOf(a) - valueDomain.values.indexOf(b),

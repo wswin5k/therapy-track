@@ -1050,13 +1050,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   contentText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 400,
     marginBottom: 4,
     maxWidth: "85%",
   },
   unscheduledContentText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 400,
     marginBottom: 4,
     maxWidth: "100%",
