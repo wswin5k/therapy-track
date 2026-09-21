@@ -1,3 +1,5 @@
+import { SelectValueDomain, ValueDomain } from "./AssessmentSchedule";
+
 export class ScheduledDosageRecord {
   constructor(
     public dbId: number,
@@ -20,6 +22,17 @@ export class UnscheduledDosageRecord {
 }
 
 export type AssessmentValue = number | string | boolean | string[];
+
+export function sortArrayMeasurmentValue(
+  value: AssessmentValue,
+  valueDomain: ValueDomain,
+) {
+  if (Array.isArray(value) && valueDomain instanceof SelectValueDomain) {
+    value.sort(
+      (a, b) => valueDomain.values.indexOf(a) - valueDomain.values.indexOf(b),
+    );
+  }
+}
 
 export class ScheduledMeasurmentRecord {
   constructor(

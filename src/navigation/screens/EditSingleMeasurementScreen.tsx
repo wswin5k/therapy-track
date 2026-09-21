@@ -30,6 +30,7 @@ import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import {
   AssessmentValue,
+  sortArrayMeasurmentValue,
   UnscheduledMeasurmentRecord,
 } from "../../models/Records";
 import {
@@ -199,6 +200,10 @@ export function EditSingleMeasurementScreen() {
       dataValidated.assessment.dbId ??
       (await dbInsertAssessment(db, dataValidated.assessment));
 
+    sortArrayMeasurmentValue(
+      dataValidated.value,
+      dataValidated.assessment.valueDomain,
+    );
     await dbInsertUnscheduledMeasurmentRecord(db, {
       date: dataValidated.date,
       assessmentId: assessmentId,

@@ -821,6 +821,7 @@ export async function dbInsertUnscheduledMeasurmentRecord(
     group: number | null;
   },
 ): Promise<number> {
+  // array values should be sorted according to value domain order
   const valueStr = strigifyAssessmentValue(record.value);
   const result = await db.runAsync(
     `INSERT INTO unscheduled_measurment_records 
@@ -872,6 +873,7 @@ export async function dbInsertScheduledMeasurmentRecord(
     value: AssessmentValue;
   },
 ): Promise<number> {
+  // array values should be sorted according to value domain order
   const valueStr = strigifyAssessmentValue(record.value);
 
   const result = await db.runAsync(

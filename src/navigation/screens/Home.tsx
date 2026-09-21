@@ -35,7 +35,10 @@ import {
   scheduleGroupNotification,
 } from "../../services/notificationService";
 import { baseUnitToSingularShortForm } from "../enumMappings";
-import { AssessmentValue } from "../../models/Records";
+import {
+  AssessmentValue,
+  sortArrayMeasurmentValue,
+} from "../../models/Records";
 import {
   Assessment,
   ValueType,
@@ -787,6 +790,7 @@ export function Home({ date }: { date: Date }) {
           clickedScheduledMeasurment.measurmentRecordId,
         );
       }
+      sortArrayMeasurmentValue(value, clickedScheduledMeasurment.valueDomain);
       await dbInsertScheduledMeasurmentRecord(db, {
         date,
         assessmentScheduleId: clickedScheduledMeasurment.assessmentScheduleId,
@@ -1046,13 +1050,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   contentText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 400,
     marginBottom: 4,
     maxWidth: "85%",
   },
   unscheduledContentText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 400,
     marginBottom: 4,
     maxWidth: "100%",
