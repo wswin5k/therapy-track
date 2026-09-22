@@ -86,11 +86,6 @@ export function FloatingActionButton({
         outputRange: [0, -80 * (index + 1)],
       });
 
-      const scale = animationValue.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 1],
-      });
-
       const opacity = animationValue.interpolate({
         inputRange: [0.0, 0.5, 1],
         outputRange: [0.0, 0.0, 1],
@@ -103,7 +98,7 @@ export function FloatingActionButton({
           style={[
             styles.actionButtonContainer,
             {
-              transform: [{ translateY }, { scale }],
+              transform: [{ translateY }],
               opacity,
             },
           ]}
