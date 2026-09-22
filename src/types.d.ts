@@ -22,6 +22,7 @@ declare global {
         surface: string;
         textSecondary: string;
         textTertiary: string;
+        textOnPrimary: string;
         success: string;
         error: string;
       };

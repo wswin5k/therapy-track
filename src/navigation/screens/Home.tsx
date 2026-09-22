@@ -27,7 +27,6 @@ import {
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
 import { BaseUnit, Medicine } from "../../models/MedicineSchedule";
-import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Group } from "../../models/Frequency";
 import {
@@ -925,7 +924,7 @@ export function Home({ date }: { date: Date }) {
   );
 
   return (
-    <DefaultMainContainer>
+    <>
       {clickedScheduledMeasurment && (
         <AssessmentInputDialog
           title={clickedScheduledMeasurment.assessmentName}
@@ -1000,7 +999,7 @@ export function Home({ date }: { date: Date }) {
         {isScheduledEmpty && isUnscheduledEmpty && renderEmptyState()}
         <View style={styles.bottomMarginContainer}></View>
       </ScrollView>
-    </DefaultMainContainer>
+    </>
   );
 }
 
@@ -1046,7 +1045,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.8,
   },
   bottomMarginContainer: {
-    height: 80,
+    height: 92,
     width: "100%",
   },
   contentText: {

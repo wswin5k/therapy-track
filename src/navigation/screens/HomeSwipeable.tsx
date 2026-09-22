@@ -23,6 +23,8 @@ import {
 import { dayDifference, serializeDateOnly } from "../../dateOnlyUtils";
 import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
+import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "HomeSwipeable"
@@ -91,7 +93,13 @@ export function HomeSwipeable() {
     }, [navigation, formatDate, currentIndex]),
   );
 
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: windowDimensionsWidth } = useWindowDimensions();
+  const { left: safeInsetsLeft, right: safeInsetsRight } = useSafeAreaInsets();
+  const screenWidth = React.useMemo(
+    () => windowDimensionsWidth - safeInsetsLeft - safeInsetsRight,
+    [windowDimensionsWidth, safeInsetsLeft, safeInsetsRight],
+  );
+
   React.useEffect(() => {
     if (listRef.current) {
       const timeoutId = setTimeout(() => {
@@ -170,9 +178,8 @@ export function HomeSwipeable() {
       </View>
     );
   };
-
   return (
-    <View style={[{ width: "100%", height: "100%" }]}>
+    <DefaultMainContainer>
       {isDatePickerOpened ? (
         <RNDateTimePicker
           mode="date"
@@ -206,7 +213,7 @@ export function HomeSwipeable() {
         windowSize={5}
         removeClippedSubviews={true}
       />
-      <FloatingActionButton actions={fabActions} position="right" />
-    </View>
+      <FloatingActionButton actions={fabActions} />
+    </DefaultMainContainer>
   );
 }
