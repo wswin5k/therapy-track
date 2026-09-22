@@ -117,7 +117,12 @@ export function AssessmentInputDialog({
                 ]}
                 onPress={handleSave}
               >
-                <Text style={[styles.buttonText, { color: "#fff" }]}>
+                <Text
+                  style={[
+                    styles.buttonText,
+                    { color: theme.colors.textOnPrimary },
+                  ]}
+                >
                   {t("Save")}
                 </Text>
               </TouchableOpacity>
