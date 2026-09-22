@@ -96,7 +96,11 @@ export function SelectMedicineScreen() {
           onPress={handleAddNewMedicine}
           style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
         >
-          <Text style={sStyles.buttonText}>{t("Add new medicine")}</Text>
+          <Text
+            style={[sStyles.buttonText, { color: theme.colors.textOnPrimary }]}
+          >
+            {t("Add new medicine")}
+          </Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>

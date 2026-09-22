@@ -102,7 +102,14 @@ function ScheduleListItem({
         ]}
         onPress={handleEdit}
       >
-        <Text style={styles.optionsButtonText}>{t("Edit dates")}</Text>
+        <Text
+          style={[
+            styles.optionsButtonText,
+            { color: theme.colors.textOnPrimary },
+          ]}
+        >
+          {t("Edit dates")}
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -111,7 +118,14 @@ function ScheduleListItem({
         ]}
         onPress={handleDelete}
       >
-        <Text style={styles.optionsButtonText}>{t("Delete")}</Text>
+        <Text
+          style={[
+            styles.optionsButtonText,
+            { color: theme.colors.textOnPrimary },
+          ]}
+        >
+          {t("Delete")}
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -120,7 +134,14 @@ function ScheduleListItem({
         ]}
         onPress={handleOptionsToggle}
       >
-        <Text style={styles.optionsButtonText}>{t("Cancel")}</Text>
+        <Text
+          style={[
+            styles.optionsButtonText,
+            { color: theme.colors.textOnPrimary },
+          ]}
+        >
+          {t("Cancel")}
+        </Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -316,7 +337,6 @@ const styles = StyleSheet.create({
     minWidth: "25%",
   },
   optionsButtonText: {
-    color: "#fff",
     fontSize: 15,
     fontWeight: "500",
     textAlign: "center",

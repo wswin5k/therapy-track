@@ -483,7 +483,14 @@ export default function EditAssessmentScheduleScreen() {
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={eStyles.nextButtonText}>{t("Save")}</Text>
+          <Text
+            style={[
+              eStyles.nextButtonText,
+              { color: theme.colors.textOnPrimary },
+            ]}
+          >
+            {t("Save")}
+          </Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>

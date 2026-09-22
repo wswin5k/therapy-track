@@ -525,7 +525,12 @@ export function EditAssessmentScreen() {
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={eStyles.nextButtonText}>
+          <Text
+            style={[
+              eStyles.nextButtonText,
+              { color: theme.colors.textOnPrimary },
+            ]}
+          >
             {["create-and-go-back", "update-and-go-back"].includes(mode)
               ? "Save"
               : "Next"}

@@ -81,7 +81,11 @@ export function SelectAssessmentScreen() {
           onPress={handleAddNewAssessment}
           style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
         >
-          <Text style={sStyles.buttonText}>{t("Add new assessment")}</Text>
+          <Text
+            style={[sStyles.buttonText, { color: theme.colors.textOnPrimary }]}
+          >
+            {t("Add new assessment")}
+          </Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>

@@ -73,7 +73,6 @@ export const eStyles = StyleSheet.create({
     alignItems: "center",
   },
   nextButtonText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -103,7 +102,6 @@ export const sStyles = StyleSheet.create({
     alignSelf: "center",
   },
   buttonText: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "500",
   },

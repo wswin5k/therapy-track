@@ -161,7 +161,14 @@ function UnscheduledDosage({
         style={[styles.optionsButton, { backgroundColor: theme.colors.error }]}
         onPress={handleDelete}
       >
-        <Text style={styles.optionsButtonText}>{t("Delete")}</Text>
+        <Text
+          style={[
+            styles.optionsButtonText,
+            { color: theme.colors.textOnPrimary },
+          ]}
+        >
+          {t("Delete")}
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -170,7 +177,14 @@ function UnscheduledDosage({
         ]}
         onPress={handleOptionsToggle}
       >
-        <Text style={styles.optionsButtonText}>{t("Cancel")}</Text>
+        <Text
+          style={[
+            styles.optionsButtonText,
+            { color: theme.colors.textOnPrimary },
+          ]}
+        >
+          {t("Cancel")}
+        </Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -257,7 +271,14 @@ function UnscheduledMeasurment({
         style={[styles.optionsButton, { backgroundColor: theme.colors.error }]}
         onPress={handleDelete}
       >
-        <Text style={styles.optionsButtonText}>{t("Delete")}</Text>
+        <Text
+          style={[
+            styles.optionsButtonText,
+            { color: theme.colors.textOnPrimary },
+          ]}
+        >
+          {t("Delete")}
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -266,7 +287,14 @@ function UnscheduledMeasurment({
         ]}
         onPress={handleOptionsToggle}
       >
-        <Text style={styles.optionsButtonText}>{t("Cancel")}</Text>
+        <Text
+          style={[
+            styles.optionsButtonText,
+            { color: theme.colors.textOnPrimary },
+          ]}
+        >
+          {t("Cancel")}
+        </Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -1082,11 +1110,6 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     padding: 0,
   },
-  deleteButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
   emptyContainer: {
     alignItems: "center",
     padding: 20,
@@ -1115,7 +1138,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   optionsButtonText: {
-    color: "#fff",
     fontSize: 15,
     fontWeight: "500",
     textAlign: "center",
