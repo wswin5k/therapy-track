@@ -1045,7 +1045,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.8,
   },
   bottomMarginContainer: {
-    height: 80,
+    height: 92,
     width: "100%",
   },
   contentText: {

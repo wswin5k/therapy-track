@@ -24,6 +24,7 @@ import { dayDifference, serializeDateOnly } from "../../dateOnlyUtils";
 import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "HomeSwipeable"
@@ -92,7 +93,13 @@ export function HomeSwipeable() {
     }, [navigation, formatDate, currentIndex]),
   );
 
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: windowDimensionsWidth } = useWindowDimensions();
+  const { left: safeInsetsLeft, right: safeInsetsRight } = useSafeAreaInsets();
+  const screenWidth = React.useMemo(
+    () => windowDimensionsWidth - safeInsetsLeft - safeInsetsRight,
+    [windowDimensionsWidth, safeInsetsLeft, safeInsetsRight],
+  );
+
   React.useEffect(() => {
     if (listRef.current) {
       const timeoutId = setTimeout(() => {
@@ -104,13 +111,13 @@ export function HomeSwipeable() {
       }, 30);
       return () => clearTimeout(timeoutId);
     }
-  }, [screenWidth, currentIndex]);
+  }, [windowDimensionsWidth, currentIndex]);
 
   const handleMomentumScrollEnd = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const landedIndex = Math.round(offsetX / screenWidth);
+    const landedIndex = Math.round(offsetX / windowDimensionsWidth);
     setCurrentIndex(landedIndex);
 
     const newDate = getDate(landedIndex - INIITIAL_INDEX);
@@ -171,7 +178,6 @@ export function HomeSwipeable() {
       </View>
     );
   };
-
   return (
     <DefaultMainContainer>
       {isDatePickerOpened ? (
