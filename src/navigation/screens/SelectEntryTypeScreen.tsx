@@ -79,7 +79,7 @@ export function SelectEntryTypeScreen() {
           onPress={handleSelectMedicine}
           style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
         >
-          <Text style={sStyles.buttonText}>{t("Medicine")}</Text>
+          <Text style={[sStyles.buttonText, {color: theme.colors.textOnPrimary}]}>{t("Medicine")}</Text>
         </TouchableOpacity>
 
         <Text style={[sStyles.labelText, { color: theme.colors.text }]}>
@@ -90,7 +90,7 @@ export function SelectEntryTypeScreen() {
           onPress={handleSelectAssessment}
           style={[sStyles.button, { backgroundColor: theme.colors.primary }]}
         >
-          <Text style={sStyles.buttonText}>{t("Assessment")}</Text>
+          <Text style={[sStyles.buttonText, {color: theme.colors.textOnPrimary}]}>{t("Assessment")}</Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>
