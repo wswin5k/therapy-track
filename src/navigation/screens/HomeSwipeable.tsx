@@ -111,13 +111,13 @@ export function HomeSwipeable() {
       }, 30);
       return () => clearTimeout(timeoutId);
     }
-  }, [windowDimensionsWidth, currentIndex]);
+  }, [screenWidth, currentIndex]);
 
   const handleMomentumScrollEnd = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const landedIndex = Math.round(offsetX / windowDimensionsWidth);
+    const landedIndex = Math.round(offsetX / screenWidth);
     setCurrentIndex(landedIndex);
 
     const newDate = getDate(landedIndex - INIITIAL_INDEX);
