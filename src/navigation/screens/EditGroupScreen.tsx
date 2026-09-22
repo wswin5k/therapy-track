@@ -321,7 +321,14 @@ export function EditGroupScreen() {
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={[eStyles.nextButtonText, {color: theme.colors.textOnPrimary}]}>{t("Save")}</Text>
+          <Text
+            style={[
+              eStyles.nextButtonText,
+              { color: theme.colors.textOnPrimary },
+            ]}
+          >
+            {t("Save")}
+          </Text>
         </TouchableOpacity>
       </View>
     </DefaultMainContainer>

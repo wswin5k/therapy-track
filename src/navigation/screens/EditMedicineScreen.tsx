@@ -464,7 +464,12 @@ export function EditMedicineScreen() {
             { backgroundColor: theme.colors.primary },
           ]}
         >
-          <Text style={[eStyles.nextButtonText, {color: theme.colors.textOnPrimary}]}>
+          <Text
+            style={[
+              eStyles.nextButtonText,
+              { color: theme.colors.textOnPrimary },
+            ]}
+          >
             {mode === "save-and-go-back" ? "Save" : "Next"}
           </Text>
         </TouchableOpacity>
