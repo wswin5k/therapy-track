@@ -23,6 +23,7 @@ import {
 import { dayDifference, serializeDateOnly } from "../../dateOnlyUtils";
 import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
+import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "HomeSwipeable"
@@ -172,7 +173,7 @@ export function HomeSwipeable() {
   };
 
   return (
-    <View style={[{ width: "100%", height: "100%" }]}>
+    <DefaultMainContainer>
       {isDatePickerOpened ? (
         <RNDateTimePicker
           mode="date"
@@ -206,7 +207,7 @@ export function HomeSwipeable() {
         windowSize={5}
         removeClippedSubviews={true}
       />
-      <FloatingActionButton actions={fabActions} position="right" />
-    </View>
+      <FloatingActionButton actions={fabActions} />
+    </DefaultMainContainer>
   );
 }

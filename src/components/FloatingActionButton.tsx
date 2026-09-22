@@ -7,6 +7,7 @@ import {
   StyleSheet,
   type ViewStyle,
   useAnimatedValue,
+  Pressable,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 
@@ -14,19 +15,17 @@ interface FloatingActionButtonProps {
   actions: {
     label: string;
     onPress: () => void;
-    color?: string;
   }[];
-  position?: "right" | "left";
-  mainButtonColor?: string;
   mainIcon?: string;
   style?: ViewStyle;
 }
 
+// on Android native driver doesn't allow clicks mid-animation
+const ANIMATION_USE_NATIVE_DRIVER = false;
+
 export function FloatingActionButton({
   actions,
-  position = "right",
-  mainButtonColor,
-  mainIcon = "+",
+  mainIcon = "＋",
   style,
 }: FloatingActionButtonProps) {
   const theme = useTheme();
@@ -34,21 +33,19 @@ export function FloatingActionButton({
   const animationValue = useAnimatedValue(0);
   const rotateValue = useAnimatedValue(0);
 
-  const resolvedMainButtonColor = mainButtonColor || theme.colors.primary;
-
   const toggleMenu = () => {
     const toValue = isExpanded ? 0 : 1;
 
     Animated.parallel([
       Animated.spring(animationValue, {
         toValue,
-        useNativeDriver: true,
+        useNativeDriver: ANIMATION_USE_NATIVE_DRIVER,
         friction: 8,
         tension: 40,
       }),
       Animated.spring(rotateValue, {
         toValue,
-        useNativeDriver: true,
+        useNativeDriver: ANIMATION_USE_NATIVE_DRIVER,
         friction: 8,
         tension: 40,
       }),
@@ -62,13 +59,13 @@ export function FloatingActionButton({
       Animated.parallel([
         Animated.spring(animationValue, {
           toValue: 0,
-          useNativeDriver: true,
+          useNativeDriver: ANIMATION_USE_NATIVE_DRIVER,
           friction: 8,
           tension: 40,
         }),
         Animated.spring(rotateValue, {
           toValue: 0,
-          useNativeDriver: true,
+          useNativeDriver: ANIMATION_USE_NATIVE_DRIVER,
           friction: 8,
           tension: 40,
         }),
@@ -91,38 +88,26 @@ export function FloatingActionButton({
 
       const scale = animationValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, 1],
+        outputRange: [1, 1],
       });
 
       const opacity = animationValue.interpolate({
-        inputRange: [0, 0.5, 1],
-        outputRange: [0, 0, 1],
+        inputRange: [0.0, 0.5, 1],
+        outputRange: [0.0, 0.0, 1],
       });
 
       return (
         <Animated.View
           key={index}
+          pointerEvents={isExpanded ? "auto" : "none"}
           style={[
             styles.actionButtonContainer,
             {
               transform: [{ translateY }, { scale }],
               opacity,
-              [position === "right" ? "right" : "left"]: 6,
-              flexDirection: position === "right" ? "row" : "row-reverse",
             },
           ]}
         >
-          <View
-            style={[
-              styles.labelContainer,
-              position === "right" ? { marginRight: 10 } : { marginLeft: 10 },
-              { backgroundColor: theme.colors.background },
-            ]}
-          >
-            <Text style={[styles.labelText, { color: theme.colors.text }]}>
-              {action.label}
-            </Text>
-          </View>
           <TouchableOpacity
             onPress={() => {
               action.onPress();
@@ -130,11 +115,18 @@ export function FloatingActionButton({
             }}
             style={[
               styles.actionButton,
-              { backgroundColor: action.color || theme.colors.primary },
+              { backgroundColor: theme.colors.primary },
             ]}
             activeOpacity={0.8}
           >
-            <Text style={styles.actionButtonText}>{index + 1}</Text>
+            <Text
+              style={[
+                styles.actionButtonText,
+                { color: theme.colors.textOnPrimary },
+              ]}
+            >
+              {action.label}
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       );
@@ -142,34 +134,24 @@ export function FloatingActionButton({
   };
 
   return (
-    <View style={[styles.container, style]} pointerEvents="box-none">
+    <View style={[styles.container, style]}>
       {isExpanded && (
-        <TouchableOpacity
-          style={styles.overlay}
-          onPress={closeMenu}
-          activeOpacity={1}
-        />
+        <Pressable style={styles.overlay} onPress={closeMenu}></Pressable>
       )}
 
-      <View
-        style={[
-          styles.buttonContainer,
-          position === "right" ? { right: 20 } : { left: 20 },
-        ]}
-        pointerEvents="box-none"
-      >
+      <View style={[styles.fabLayer]}>
         {renderActionButtons()}
-
         <TouchableOpacity
           onPress={toggleMenu}
-          style={[
-            styles.mainButton,
-            { backgroundColor: resolvedMainButtonColor },
-          ]}
+          style={[styles.mainButton, { backgroundColor: theme.colors.primary }]}
           activeOpacity={0.9}
         >
           <Animated.Text
-            style={[styles.mainIcon, { transform: [{ rotate: rotation }] }]}
+            style={[
+              styles.mainIcon,
+              { color: theme.colors.textOnPrimary },
+              { transform: [{ rotate: rotation }] },
+            ]}
           >
             {mainIcon}
           </Animated.Text>
@@ -179,69 +161,71 @@ export function FloatingActionButton({
   );
 }
 
+const SHADOW_PROPS = {
+  elevation: 3,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3,
+};
+
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFill,
     zIndex: 1,
+    pointerEvents: "box-none",
   },
   overlay: {
     ...StyleSheet.absoluteFill,
+    zIndex: 2,
     backgroundColor: "transparent",
+  },
+  fabLayer: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 3,
+    pointerEvents: "box-none",
+    position: "absolute",
+    bottom: 16,
+    right: 16,
+    flexDirection: "column",
+    alignItems: "flex-end",
+    justifyContent: "flex-end",
+    overflow: "visible",
   },
   buttonContainer: {
     position: "absolute",
-    bottom: 60,
-    flexDirection: "row",
+    bottom: 16,
+    right: 16,
+    flexDirection: "column",
     alignItems: "flex-end",
   },
   mainButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 100,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    ...SHADOW_PROPS,
   },
   mainIcon: {
-    fontSize: 28,
-    fontWeight: "300",
-    color: "#fff",
+    fontSize: 24,
+    fontWeight: "600",
   },
   actionButtonContainer: {
     position: "absolute",
     bottom: 0,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "flex-start",
+    right: 0,
   },
   actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    height: 54,
+    borderRadius: 100,
+    paddingHorizontal: 20,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
+    ...SHADOW_PROPS,
   },
   actionButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  labelContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  labelText: {
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: "500",
   },
 });
