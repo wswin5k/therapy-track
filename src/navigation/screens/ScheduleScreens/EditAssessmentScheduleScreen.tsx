@@ -10,8 +10,9 @@ import {
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
-import { Group } from "../../../models/Frequency";
-import { Frequency, FrequencySelection } from "../../../models/Frequency";
+import { Group, IntervalUnit } from "../../../models/Frequency";
+import { Frequency } from "../../../models/Frequency";
+import { FrequencySelection } from "./common";
 import {
   useFocusEffect,
   useNavigation,
@@ -29,7 +30,6 @@ import {
 } from "../../../models/dbAccess";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../../components/DropdownPicker";
-import { frequencySelectionToDisplayForm } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
 import { assingDefaultGroups, frequencySelectionMap } from "./common";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -41,7 +41,7 @@ import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "EditMedicineScheduleScreen"
+  "EditAssessmentScheduleScreen"
 >;
 
 export default function EditAssessmentScheduleScreen() {
@@ -52,14 +52,24 @@ export default function EditAssessmentScheduleScreen() {
   const route = useRoute();
   const db = useSQLiteContext();
 
-  const [freq, setFreq] = React.useState<FrequencySelection | null>(null);
+  const [freqSelection, setFreqSelection] =
+    React.useState<FrequencySelection | null>(null);
   const freqRef = React.useRef<Frequency | null>(null);
-  const [freqError, setFreqError] = React.useState<boolean>(false);
+  const [customFreqLabel, setCustomFreqLabel] = React.useState<string | null>(
+    null,
+  );
+  const [freqSelectionError, setFreqSelectionError] =
+    React.useState<boolean>(false);
 
   const [nMeasurements, setNMeasurements] = React.useState<number>(1);
   const measurementIdxToGroupId = React.useRef<(number | null)[]>(
     Array.from({ length: nMeasurements }, () => null),
   );
+  // offsets for the measurment
+  // value other than one is used only
+  // with "specific weekdays" custom frequency
+  // the measurments will be cartesian-multiplied with it
+  const offsetsMultiplier = React.useRef<number[]>([0]);
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
     React.useState<boolean>(false);
@@ -98,6 +108,25 @@ export default function EditAssessmentScheduleScreen() {
     );
   }, [measurementIdxToDefaultGroupId, nMeasurements]);
 
+  const frequencySelectionToPickerLabels =
+    (specialCustomLabel: boolean) => (key: FrequencySelection) => {
+      const mapping = {
+        OnceDaily: "Once daily",
+        TwiceDaily: "Twice daily",
+        ThriceDaily: "Three times daily",
+        OnceWeekly: "Weekly",
+        OnceBiweekly: "Every two weeks",
+        Custom: "Custom...",
+      };
+      if (
+        specialCustomLabel &&
+        key === FrequencySelection.Custom &&
+        customFreqLabel
+      ) {
+        return customFreqLabel;
+      }
+      return mapping[key];
+    };
   useFocusEffect(
     React.useCallback(
       () => updateGroupsRefWithDefaults(),
@@ -111,8 +140,35 @@ export default function EditAssessmentScheduleScreen() {
         const params = route.params as {
           assessment: AssessmentParam;
           scheduleId?: number;
+          customFrequency?: {
+            freq: Frequency;
+            doesurementOffsets: number[];
+            label: string;
+          };
         };
         setAssessment(params.assessment);
+
+        if (params.customFrequency) {
+          freqRef.current = params.customFrequency?.freq ?? null;
+          const freq = params.customFrequency.freq;
+          if (
+            freq.intervalUnit === IntervalUnit.week &&
+            freq.intervalLength === 1
+          ) {
+            setNMeasurements(1);
+            offsetsMultiplier.current =
+              params.customFrequency.doesurementOffsets;
+          } else {
+            setNMeasurements(freq.numberOfDosages);
+          }
+          setCustomFreqLabel(
+            params.customFrequency
+              ? `Custom: ` + params.customFrequency?.label
+              : null,
+          );
+          navigation.setParams({ customFrequency: undefined });
+          updateGroupsRefWithDefaults();
+        }
 
         const groups = await dbGetGroups(db);
         const newGroupsMap = new Map();
@@ -142,7 +198,13 @@ export default function EditAssessmentScheduleScreen() {
         );
       };
       setData();
-    }, [db, route.params, nMeasurements]),
+    }, [
+      db,
+      route.params,
+      nMeasurements,
+      navigation,
+      updateGroupsRefWithDefaults,
+    ]),
   );
 
   const handleSelectStartDate = () => {
@@ -194,9 +256,9 @@ export default function EditAssessmentScheduleScreen() {
 
     if (!freqRef.current) {
       isDataValid = false;
-      setFreqError(true);
+      setFreqSelectionError(true);
     } else {
-      setFreqError(false);
+      setFreqSelectionError(false);
     }
 
     if (!startDate) {
@@ -212,12 +274,16 @@ export default function EditAssessmentScheduleScreen() {
       isDataValid = true;
     }
 
-    const measurements = Array.from(
-      measurementIdxToGroupId.current.entries(),
-      ([measurementIdx, groupId]) => {
-        return { index: measurementIdx, offset: null, groupId };
-      },
-    );
+    let measurements = [];
+    for (const [mIdx, m] of measurementIdxToGroupId.current.entries()) {
+      for (const [oIdx, o] of offsetsMultiplier.current.entries()) {
+        measurements.push({
+          groupId: m,
+          index: mIdx * offsetsMultiplier.current.length + oIdx,
+          offset: o,
+        });
+      }
+    }
 
     const existingAssessemtnSchedulesWithinDate =
       existingAssessmentSchedules.filter(
@@ -267,7 +333,6 @@ export default function EditAssessmentScheduleScreen() {
     if (!validatedData) {
       return;
     }
-
     if (assessment && assessment.dbId) {
       await dbInsertAssessmentSchedule(db, assessment.dbId, {
         startDate: validatedData.startDate,
@@ -292,10 +357,16 @@ export default function EditAssessmentScheduleScreen() {
   const handleFrequencyPicker = (item: FrequencySelection | null) => {
     if (!item) {
       freqRef.current = null;
-      setFreq(null);
+      setFreqSelection(null);
       return;
     }
-    setFreq(item);
+    if (item === FrequencySelection.Custom) {
+      freqRef.current = null;
+      setFreqSelection(item);
+      navigation.navigate("EditCustomFrequencyScreen");
+      return;
+    }
+    setFreqSelection(item);
     const freq = frequencySelectionMap[item];
     freqRef.current = freq;
     if (freq.numberOfDosages !== nMeasurements) {
@@ -319,12 +390,13 @@ export default function EditAssessmentScheduleScreen() {
         <View style={[styles.rowFrequencyPicker]}>
           <ModalPicker
             values={Object.values(FrequencySelection)}
-            selectedValue={freq}
+            selectedValue={freqSelection}
             onValueChange={handleFrequencyPicker}
-            getLabel={frequencySelectionToDisplayForm}
+            getLabel={frequencySelectionToPickerLabels(false)}
+            getPressableLabel={frequencySelectionToPickerLabels(true)}
             placeholder="Select frequency"
             pressableStyle={eStyles.fullWidthPickerPressable}
-            error={freqError}
+            error={freqSelectionError}
           />
         </View>
 

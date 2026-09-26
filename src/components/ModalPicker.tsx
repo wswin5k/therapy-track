@@ -28,6 +28,7 @@ interface ModalPickerProps<T> {
   values: T[];
   onValueChange: (value: T) => void;
   getLabel: (value: T) => string;
+  getPressableLabel?: (value: T) => string;
   selectedValue: T | null;
   placeholder?: string;
   pressableStyle?: StyleProp<ViewStyle>;
@@ -41,6 +42,7 @@ export function ModalPicker<T>({
   values,
   onValueChange,
   getLabel,
+  getPressableLabel = undefined,
   selectedValue = null,
   placeholder = "Select an option",
   pressableStyle,
@@ -80,7 +82,10 @@ export function ModalPicker<T>({
     return value ? getLabel(value) : placeholder;
   };
 
-  const selectedLabel = getLabelSafe(selectedValue);
+  const getPressableLabelSafe = (value: T | null): string => {
+    const getPressableLabelSafeFunction = getPressableLabel ?? getLabel;
+    return value ? getPressableLabelSafeFunction(value) : placeholder;
+  };
 
   const renderTitle = () => {
     return (
@@ -132,7 +137,7 @@ export function ModalPicker<T>({
       >
         <Text
           style={[
-            eStyles.pressableText,
+            styles.pressableText,
             { color: theme.colors.text },
             (!selectedValue || disabled) && {
               color: theme.colors.textTertiary,
@@ -140,7 +145,7 @@ export function ModalPicker<T>({
           ]}
           numberOfLines={1}
         >
-          {selectedLabel}
+          {getPressableLabelSafe(selectedValue)}
         </Text>
         <Text
           style={[
@@ -240,10 +245,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pressableText: {
+    ...eStyles.pressableText,
+    flex: 1,
   },
   chevron: {
     fontSize: 12,
     marginLeft: 8,
+    flexShrink: 0,
   },
   modalOverlay: {
     flex: 1,

@@ -12,11 +12,8 @@ import RNDateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import SmallNumberStepper from "../../../components/SmallNumberStepper";
 import { Group } from "../../../models/Frequency";
-import {
-  Frequency,
-  FrequencySelection,
-  IntervalUnit,
-} from "../../../models/Frequency";
+import { Frequency, IntervalUnit } from "../../../models/Frequency";
+import { FrequencySelection } from "./common";
 import {
   useFocusEffect,
   useNavigation,
@@ -49,6 +46,7 @@ const frequencySelectionMap: { [key: string]: Frequency } = {
   ThriceDaily: new Frequency(IntervalUnit.day, 1, 3),
   OnceWeekly: new Frequency(IntervalUnit.week, 1, 1),
   OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1),
+  Custom: new Frequency(IntervalUnit.week, 2, 1),
 };
 
 type EditMedicineScheduleScreenNavigationProp = NativeStackNavigationProp<
@@ -237,6 +235,12 @@ export default function EditMedicineScheduleScreen() {
 
   const handleFrequencyPicker = (item: FrequencySelection | null) => {
     if (!item) {
+      freqRef.current = null;
+      setFreq(null);
+      return;
+    }
+    if (item === FrequencySelection.Custom) {
+      //navigation.navigate("EditCustomFrequencyScreen");
       freqRef.current = null;
       setFreq(null);
       return;

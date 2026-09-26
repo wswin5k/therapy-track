@@ -27,6 +27,7 @@ import {
   baseUnitToSingularShortForm,
   frequencySelectionToDisplayForm,
 } from "../enumMappings";
+import { getFrequencySelection } from "./ScheduleScreens/common";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -84,7 +85,7 @@ function ScheduleListItem({
   };
 
   const frequencyLabel = frequencySelectionToDisplayForm(
-    schedule.freq.getFrequencyLabel(),
+    getFrequencySelection(schedule.freq),
   );
   const dateRange = schedule.endDate
     ? `${formatDate(schedule.startDate)} - ${formatDate(schedule.endDate)}`

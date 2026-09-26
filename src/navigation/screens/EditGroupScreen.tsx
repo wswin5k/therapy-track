@@ -231,7 +231,7 @@ export function EditGroupScreen() {
             placeholder="Group Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              eStyles.pressableTextInput,
+              eStyles.fullWidthTextInputPressable,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,
