@@ -28,7 +28,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
 import { BaseUnit, Medicine } from "../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { Group } from "../../models/Frequency";
+import { Group, IntervalUnit } from "../../models/Frequency";
 import {
   cancelGroupNotification,
   scheduleGroupNotification,
@@ -582,10 +582,21 @@ export function Home({ date }: { date: Date }) {
       const timeMatch =
         s.startDate <= date && (!s.endDate || (s.endDate && date <= s.endDate));
 
-      let dayFreqMatch = true;
-      if (s.freq.intervalUnit === "week") {
+      const dayDiff = dayDifference(date, s.startDate);
+      let dayFreqMatch = false;
+      if (s.freq.intervalUnit === IntervalUnit.week) {
+        if (
+          s.measurments.some(
+            (m) =>
+              ((dayDiff - (m.offset ?? 0)) % s.freq.intervalLength) * 7 !== 0,
+          )
+        ) {
+          dayFreqMatch = true;
+        }
+      }
+      if (s.freq.intervalUnit === IntervalUnit.day) {
         const dayDiff = dayDifference(date, s.startDate);
-        if (dayDiff % (s.freq.intervalLength * 7) !== 0) {
+        if (dayDiff % s.freq.intervalLength !== 0) {
           dayFreqMatch = false;
         }
       }
