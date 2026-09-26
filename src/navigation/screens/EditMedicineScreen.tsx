@@ -391,7 +391,7 @@ export function EditMedicineScreen() {
             placeholder="Medicine Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              eStyles.pressableTextInput,
+              eStyles.fullWidthTextInputPressable,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,

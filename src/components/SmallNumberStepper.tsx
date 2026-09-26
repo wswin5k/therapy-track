@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { eStyles } from "../commonStyles";
+import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
 
 function isClose(a: number, b: number) {
   return Math.abs(a - b) < 1e-5;
@@ -13,6 +14,8 @@ type SmallNumberStepperProps = {
   defaultValue?: number;
   fractionalStepsBelowZero?: boolean;
   onChange: (value: number) => void;
+  disabled?: boolean;
+  error?: boolean;
 };
 
 export default function SmallNumberStepper({
@@ -21,6 +24,8 @@ export default function SmallNumberStepper({
   defaultValue = 1,
   fractionalStepsBelowZero = true,
   onChange,
+  disabled = false,
+  error = false,
 }: SmallNumberStepperProps) {
   const [count, setCount] = React.useState<number>(defaultValue);
   const theme = useTheme();
@@ -81,10 +86,15 @@ export default function SmallNumberStepper({
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
         },
+        error && {
+          borderColor: theme.colors.error,
+          borderWidth: ERROR_BORDER_WIDTH,
+        },
       ]}
     >
       <Pressable
         onPress={() => handlePress("decrement")}
+        disabled={disabled}
         style={({ pressed }) => [
           styles.button,
           { backgroundColor: theme.colors.card },
@@ -92,6 +102,7 @@ export default function SmallNumberStepper({
             opacity: 0.3,
             backgroundColor: theme.colors.background,
           },
+          !disabled && SHADOW_STYLE,
           pressed && { opacity: 0.7, backgroundColor: theme.colors.border },
         ]}
       >
@@ -104,11 +115,13 @@ export default function SmallNumberStepper({
           defaultValue={count.toString()}
           onChangeText={handleChangeText}
           style={[styles.valueText, { color: theme.colors.text }]}
+          editable={!disabled}
         />
       </View>
 
       <Pressable
         onPress={() => handlePress("increment")}
+        disabled={disabled}
         style={({ pressed }) => [
           styles.button,
           { backgroundColor: theme.colors.card },
@@ -116,6 +129,7 @@ export default function SmallNumberStepper({
             opacity: 0.3,
             backgroundColor: theme.colors.background,
           },
+          !disabled && SHADOW_STYLE,
           pressed && { opacity: 0.7, backgroundColor: theme.colors.border },
         ]}
       >
@@ -124,6 +138,13 @@ export default function SmallNumberStepper({
     </View>
   );
 }
+
+const SHADOW_STYLE = {
+  elevation: 2,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.2,
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -141,10 +162,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
   },
   buttonText: {
     fontSize: 20,

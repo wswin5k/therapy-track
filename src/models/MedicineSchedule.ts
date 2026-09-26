@@ -122,26 +122,12 @@ export class Dosage {
 }
 
 export class MedicineSchedule {
-  medicine: Medicine;
-  startDate: Date;
-  endDate: Date | null;
-  freq: Frequency;
-  dosages: Dosage[];
-  dbId: number;
-
   constructor(
-    medicine: Medicine,
-    startDate: Date,
-    endDate: Date | null,
-    freq: Frequency,
-    dosages: Dosage[],
-    dbId: number,
-  ) {
-    this.medicine = medicine;
-    this.startDate = startDate;
-    this.endDate = endDate;
-    this.freq = freq;
-    this.dosages = dosages;
-    this.dbId = dbId;
-  }
+    public medicine: Medicine,
+    public startDate: Date,
+    public endDate: Date | null,
+    public freq: Frequency,
+    public dosages: Dosage[],
+    public dbId: number,
+  ) {}
 }

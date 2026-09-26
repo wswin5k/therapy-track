@@ -7,6 +7,7 @@ import { DATABASE_NAME, migrateDbIfNeeded } from "./models/dbMigration";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
+import "@formatjs/intl-locale/polyfill.js";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,7 +26,7 @@ const CustomLightTheme: ReactNavigation.Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "#7dc4cb",
+    primary: "#1a807a",
     background: "#F9F8F6",
     surface: "#f2f0eb",
     card: "#EFE9E3",
@@ -43,7 +44,7 @@ const CustomDarkTheme: ReactNavigation.Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: "#7dc4cb",
+    primary: "#1a807a",
     background: "#423f3c",
     surface: "#3b3839",
     card: "#33302e",

@@ -481,7 +481,7 @@ export function EditAssessmentScreen() {
             placeholder="Assessment Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              eStyles.pressableTextInput,
+              eStyles.fullWidthTextInputPressable,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,

@@ -1,7 +1,7 @@
 import i18next from "i18next";
 import { BaseUnit, IngredientAmountUnit } from "../models/MedicineSchedule";
 import { ValueType } from "../models/AssessmentSchedule";
-import { FrequencySelection } from "../models/Frequency";
+import { FrequencySelection } from "./screens/ScheduleScreens/common";
 
 function capitalizeFirstLetter(val: string) {
   return String(val).charAt(0).toUpperCase() + String(val).slice(1);
@@ -62,6 +62,19 @@ export function frequencySelectionToDisplayForm(key: FrequencySelection) {
     ThriceDaily: "Three times daily",
     OnceWeekly: "Weekly",
     OnceBiweekly: "Every two weeks",
+    Custom: "Custom frequency",
+  };
+  return mapping[key];
+}
+
+export function frequencySelectionToPickerLabels(key: FrequencySelection) {
+  const mapping = {
+    OnceDaily: "Once daily",
+    TwiceDaily: "Twice daily",
+    ThriceDaily: "Three times daily",
+    OnceWeekly: "Weekly",
+    OnceBiweekly: "Every two weeks",
+    Custom: "Custom...",
   };
   return mapping[key];
 }

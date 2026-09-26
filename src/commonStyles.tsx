@@ -22,7 +22,14 @@ export const eStyles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "400",
   },
-  pressableTextInput: {
+  textInputPressable: {
+    height: EDIT_PRESSABLE_HEIGHT,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
+    fontSize: 18,
+  },
+  fullWidthTextInputPressable: {
     height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
