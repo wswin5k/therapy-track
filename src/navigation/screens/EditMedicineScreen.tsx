@@ -42,14 +42,14 @@ import { DEFAULT_BORDER_RADIUS, eStyles } from "../../commonStyles";
 
 class ActiveIngredientInfo {
   name: string | null;
-  amount: number | null;
+  amount: string | null;
   unit: IngredientAmountUnit | null;
   elementKey: number;
 
   constructor(
     elementKey: number,
     name: string | null = null,
-    amount: number | null = null,
+    amount: string | null = null,
     unit: IngredientAmountUnit = IngredientAmountUnit.Milligram,
   ) {
     this.elementKey = elementKey;
@@ -65,7 +65,7 @@ type ActiveIngedientRowProps = {
   updateCallback: (
     updates: Partial<{
       name: string | null;
-      amount: number | null;
+      amount: string | null;
       unit: IngredientAmountUnit | null;
     }>,
   ) => void;
@@ -115,10 +115,9 @@ function ActiveIngredientRow({
       </View>
       <View style={{ flex: 1 }}>
         <TextInput
-          onChangeText={(weightStr: string) => {
-            const amount = parseFloat(weightStr);
+          onChangeText={(amountStr: string) => {
             updateCallback({
-              amount: isNaN(amount) ? null : amount,
+              amount: amountStr,
             });
           }}
           style={[
@@ -138,11 +137,7 @@ function ActiveIngredientRow({
           placeholder="Qty"
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType="numeric"
-          value={
-            activeIngredientInfo.amount
-              ? activeIngredientInfo.amount.toString()
-              : ""
-          }
+          value={activeIngredientInfo.amount ?? ""}
         />
       </View>
       <View style={{ flex: 1.2 }}>
@@ -242,7 +237,12 @@ export function EditMedicineScreen() {
         setActiveIngredientInfos(
           medicineInit.activeIngredients.map(
             (ai, idx) =>
-              new ActiveIngredientInfo(idx, ai.name, ai.amount, ai.unit),
+              new ActiveIngredientInfo(
+                idx,
+                ai.name,
+                ai.amount.toString(),
+                ai.unit,
+              ),
           ),
         );
       }
@@ -289,7 +289,7 @@ export function EditMedicineScreen() {
         errors.name = true;
         medicineValidated = false;
       }
-      if (ing.amount === null || isNaN(ing.amount)) {
+      if (ing.amount === null || isNaN(parseFloat(ing.amount))) {
         errors.weight = true;
         medicineValidated = false;
       }
@@ -302,7 +302,10 @@ export function EditMedicineScreen() {
     if (Object.keys(newIngredientErrors).length === 0) {
       activeIngredients = activeIngredientInfos
         .filter((ing) => ing.name && ing.amount && ing.unit)
-        .map((ing) => new ActiveIngredient(ing.name!, ing.amount!, ing.unit!));
+        .map(
+          (ing) =>
+            new ActiveIngredient(ing.name!, parseFloat(ing.amount!), ing.unit!),
+        );
     } else {
       medicineValidated = false;
     }
@@ -369,7 +372,7 @@ export function EditMedicineScreen() {
     elementKey: number,
     updates: Partial<{
       name: string | null;
-      amount: number | null;
+      amount: string | null;
       unit: IngredientAmountUnit | null;
     }>,
   ) => {
