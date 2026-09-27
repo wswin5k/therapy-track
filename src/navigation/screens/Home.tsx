@@ -588,13 +588,14 @@ export function Home({ date }: { date: Date }) {
         if (
           s.measurments.some(
             (m) =>
-              ((dayDiff - (m.offset ?? 0)) % s.freq.intervalLength) * 7 !== 0,
+              (dayDiff - (m.offset ?? 0)) % (s.freq.intervalLength * 7) === 0,
           )
         ) {
           dayFreqMatch = true;
         }
       }
       if (s.freq.intervalUnit === IntervalUnit.day) {
+        dayFreqMatch = true;
         const dayDiff = dayDifference(date, s.startDate);
         if (dayDiff % s.freq.intervalLength !== 0) {
           dayFreqMatch = false;
@@ -619,6 +620,14 @@ export function Home({ date }: { date: Date }) {
     >();
     for (const s of schedulesToday) {
       for (const measurment of s.measurments) {
+        const dayDiff = dayDifference(date, s.startDate);
+        if (
+          s.freq.intervalUnit === IntervalUnit.week &&
+          (dayDiff - (measurment.offset ?? 0)) % (s.freq.intervalLength * 7) !==
+            0
+        ) {
+          continue;
+        }
         const groupId = measurment.groupId;
         const groupMeasurments = newScheduledMeasurments.get(groupId) || [];
         const measurmentRecord = measurmentRecords.find(
