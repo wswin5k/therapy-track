@@ -70,10 +70,9 @@ export default function EditAssessmentScheduleScreen() {
   const [freqSelectionError, setFreqSelectionError] =
     React.useState<boolean>(false);
 
-  const [nMeasurements, setNMeasurements] = React.useState<number>(1);
-  const measurementIdxToGroupId = React.useRef<(number | null)[]>(
-    Array.from({ length: nMeasurements }, () => null),
-  );
+  const [measurementIdxToGroupId, setMeasurementIdxToGroupId] = React.useState<
+    (number | null)[]
+  >([]);
   // offsets for the measurement
   // value other than one is used only
   // with "specific weekdays" custom frequency
@@ -126,87 +125,87 @@ export default function EditAssessmentScheduleScreen() {
       return frequencySelectionToPickerLabels(key);
     };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const setData = async () => {
-        const params = route.params as {
-          assessment: AssessmentParam;
-          scheduleId?: number;
-          customFrequency?: {
-            freq: Frequency;
-            offsetsMultiplier: number[];
-            label: string;
-          };
-        };
-        setAssessment(params.assessment);
+  const loadParams = React.useCallback(async () => {
+    const params = route.params as {
+      assessment: AssessmentParam;
+      scheduleId?: number;
+      customFrequency?: {
+        freq: Frequency;
+        offsetsMultiplier: number[];
+      };
+    };
+    setAssessment(params.assessment);
 
-        let newNMeasurements = 1;
-
-        if (params.customFrequency) {
-          freqRef.current = params.customFrequency?.freq ?? null;
-          const freq = params.customFrequency.freq;
-          if (
-            freq.intervalUnit === IntervalUnit.week &&
-            freq.intervalLength === 1
-          ) {
-            offsetsMultiplier.current =
-              params.customFrequency.offsetsMultiplier;
-          } else {
-            newNMeasurements = freq.numberOfDosages;
-          }
-          const frequencyLabel = frequencyToDisplayForm(
-            t,
-            weekdays,
-            freq,
-            params.customFrequency.offsetsMultiplier,
-          );
-          setCustomFreqLabel(
-            params.customFrequency ? `Custom: ` + frequencyLabel : null,
-          );
-          navigation.setParams({ customFrequency: undefined });
-        }
-        setNMeasurements(newNMeasurements);
-        measurementIdxToGroupId.current = Array.from(
+    if (params.customFrequency) {
+      freqRef.current = params.customFrequency?.freq ?? null;
+      const freq = params.customFrequency.freq;
+      let newNMeasurements = 1;
+      if (
+        freq.intervalUnit === IntervalUnit.week &&
+        freq.intervalLength === 1
+      ) {
+        offsetsMultiplier.current = params.customFrequency.offsetsMultiplier;
+      } else {
+        newNMeasurements = freq.numberOfDosages;
+      }
+      setMeasurementIdxToGroupId(
+        Array.from(
           { length: newNMeasurements },
           (_, idx) => measurementIdxToDefaultGroupId.get(idx) ?? null,
-        );
-        setGroupsErrors(Array.from({ length: newNMeasurements }, () => false));
+        ),
+      );
+      setGroupsErrors(Array.from({ length: newNMeasurements }, () => false));
+      const frequencyLabel = frequencyToDisplayForm(
+        t,
+        weekdays,
+        freq,
+        params.customFrequency.offsetsMultiplier,
+      );
+      setCustomFreqLabel("Custom: " + frequencyLabel);
+      navigation.setParams({ customFrequency: undefined });
+    }
 
-        const newExistingAssessmentSchedules = (
-          await dbGetAssessmentSchedules(db)
-        ).filter(
-          (a) =>
-            params.assessment.dbId !== undefined &&
-            a.assessment.dbId === params.assessment.dbId,
-        );
-        setExistingAssessmentSchedules(newExistingAssessmentSchedules);
+    const newExistingAssessmentSchedules = (
+      await dbGetAssessmentSchedules(db)
+    ).filter(
+      (a) =>
+        params.assessment.dbId !== undefined &&
+        a.assessment.dbId === params.assessment.dbId,
+    );
+    setExistingAssessmentSchedules(newExistingAssessmentSchedules);
 
-        const newExistingUnscheduledMeasurementRecords = (
-          await dbGetUnscheduledMeasurmentRecords(db)
-        ).filter(
-          (a) =>
-            params.assessment.dbId !== undefined &&
-            a.assessmentId === params.assessment.dbId,
-        );
-        setExistingUnscheduledMeasurementRecords(
-          newExistingUnscheduledMeasurementRecords,
-        );
-      };
-      setData();
-    }, [db, route.params, navigation, measurementIdxToDefaultGroupId]),
-  );
+    const newExistingUnscheduledMeasurementRecords = (
+      await dbGetUnscheduledMeasurmentRecords(db)
+    ).filter(
+      (a) =>
+        params.assessment.dbId !== undefined &&
+        a.assessmentId === params.assessment.dbId,
+    );
+    setExistingUnscheduledMeasurementRecords(
+      newExistingUnscheduledMeasurementRecords,
+    );
+  }, [
+    db,
+    measurementIdxToDefaultGroupId,
+    navigation,
+    route.params,
+    t,
+    weekdays,
+  ]);
+
+  const loadaGroupsData = React.useCallback(async () => {
+    const groups = await dbGetGroups(db);
+    const newGroupsMap = new Map();
+    groups.forEach((g) => newGroupsMap.set(g.dbId, g));
+    setGroupsMap(newGroupsMap);
+    setMeasurementIdxToDefaultGroupIdx(assingDefaultGroups(groups));
+  }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
-      const setGroupData = async () => {
-        const groups = await dbGetGroups(db);
-        const newGroupsMap = new Map();
-        groups.forEach((g) => newGroupsMap.set(g.dbId, g));
-        setGroupsMap(newGroupsMap);
-        setMeasurementIdxToDefaultGroupIdx(assingDefaultGroups(groups));
-      };
-      setGroupData();
-    }, [db]),
+      loadaGroupsData();
+      loadParams();
+    }, [loadaGroupsData, loadParams]),
   );
 
   const handleSelectStartDate = () => {
@@ -281,11 +280,11 @@ export default function EditAssessmentScheduleScreen() {
       const offsetsMultiplierValidated = offsetsMultiplier.current ?? [
         getWeekday(startDate),
       ];
-      for (const [mIdx, m] of measurementIdxToGroupId.current.entries()) {
+      for (const [mIdx, m] of measurementIdxToGroupId.entries()) {
         for (const [oIdx, o] of offsetsMultiplierValidated.entries()) {
           measurements.push({
             groupId: m,
-            index: mIdx * offsetsMultiplier.current.length + oIdx,
+            index: mIdx * offsetsMultiplierValidated.length + oIdx,
             offset: o,
           });
         }
@@ -377,18 +376,20 @@ export default function EditAssessmentScheduleScreen() {
     setFreqSelectionError(false);
     const freq = frequencySelectionMap[item];
     freqRef.current = freq;
-    if (freq.numberOfDosages !== nMeasurements) {
-      setNMeasurements(freq.numberOfDosages);
-      measurementIdxToGroupId.current = Array.from(
+    setMeasurementIdxToGroupId(
+      Array.from(
         { length: freq.numberOfDosages },
         (_, idx) => measurementIdxToDefaultGroupId.get(idx) ?? null,
-      );
-    }
+      ),
+    );
   };
 
   const createGroupInputHandler = (idx: number) => {
-    return (groupIdx: number) => {
-      measurementIdxToGroupId.current[idx] = groupIdx === -1 ? null : groupIdx;
+    return (newGroupId: number) => {
+      const newGroupIdNormalized = newGroupId === -1 ? null : newGroupId;
+      setMeasurementIdxToGroupId((current) =>
+        current.map((gId, mIdx) => (mIdx === idx ? newGroupIdNormalized : gId)),
+      );
     };
   };
 
@@ -411,7 +412,7 @@ export default function EditAssessmentScheduleScreen() {
           />
         </View>
 
-        {nMeasurements > 1 ? (
+        {measurementIdxToGroupId.length > 1 ? (
           <View style={[styles.rowMeasurementsHeaders]}>
             <View style={styles.measurementHeaderContainer}>
               <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
@@ -429,13 +430,13 @@ export default function EditAssessmentScheduleScreen() {
         )}
 
         <View style={styles.measurementsContainer}>
-          {Array.from({ length: nMeasurements }, (_, idx) => (
+          {measurementIdxToGroupId.map((gId, mIdx) => (
             <View
               // complex key to re-render when there is a change in initialValue
-              key={idx * 10 + (measurementIdxToDefaultGroupId.get(idx) ?? -1)}
+              key={mIdx * 10 + (gId ?? -1)}
               style={styles.rowMeasurement}
             >
-              {nMeasurements > 1 ? (
+              {measurementIdxToGroupId.length > 1 ? (
                 <View style={styles.measurementOrdinalContainer}>
                   <Text
                     style={[
@@ -443,7 +444,7 @@ export default function EditAssessmentScheduleScreen() {
                       { color: theme.colors.text },
                     ]}
                   >
-                    {t(`number_ordinal_${idx + 1}`)}
+                    {t(`number_ordinal_${mIdx + 1}`)}
                   </Text>
                 </View>
               ) : (
@@ -458,8 +459,8 @@ export default function EditAssessmentScheduleScreen() {
               <View style={[styles.measurementGroupPickerContainer]}>
                 <DropdownPicker
                   options={groupsIds}
-                  initialValue={measurementIdxToDefaultGroupId.get(idx) ?? -1}
-                  onValueChange={createGroupInputHandler(idx)}
+                  initialValue={gId ?? -1}
+                  onValueChange={createGroupInputHandler(mIdx)}
                   getLabel={(gIdx) =>
                     gIdx === -1 ? "None" : (groupsMap.get(gIdx)?.name ?? "")
                   }
@@ -468,7 +469,7 @@ export default function EditAssessmentScheduleScreen() {
                     borderColor: theme.colors.border,
                     backgroundColor: theme.colors.surface,
                   }}
-                  error={groupsErrors[idx]}
+                  error={groupsErrors[mIdx]}
                 />
               </View>
             </View>

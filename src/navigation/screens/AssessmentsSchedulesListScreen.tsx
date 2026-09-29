@@ -25,7 +25,6 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import { frequencyToDisplayForm, getWeekdays } from "./ScheduleScreens/common";
 import { AssessmentSchedule } from "../../models/AssessmentSchedule";
-import { getFrequencySelection } from "./ScheduleScreens/common";
 import { capitalizeFirstLetter } from "../utils";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<

@@ -16,8 +16,7 @@ import { eStyles } from "../../../commonStyles";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { Frequency, IntervalUnit } from "../../../models/Frequency";
 import { getWeekdays } from "./common";
-
-export const TEXT_MAX_LENGTH = 200;
+import { MAX_DOEASUREMENTS } from "../../../validationConstants";
 
 export enum CustomFrequencyType {
   XTimesADay = "XTimesASay",
@@ -78,7 +77,9 @@ export function EditCustomFrequencyScreen() {
         break;
       case CustomFrequencyType.SpecificDaysOfTheWeek:
         // Mon-Sun: 1-7 -> 0-6
-        const offsetsMultiplier = selectedWeekdays.map((w) => (w + 6) % 7);
+        const offsetsMultiplier = selectedWeekdays.map(
+          (wIdx) => (weekdays[wIdx].index + 6) % 7,
+        );
         customFrequency = {
           freq: new Frequency(IntervalUnit.week, 1, selectedWeekdays.length),
           offsetsMultiplier: offsetsMultiplier,
@@ -153,7 +154,7 @@ export function EditCustomFrequencyScreen() {
                 onChange={(value) => setTimesADay(value)}
                 fractionalStepsBelowZero={false}
                 min={1}
-                max={24}
+                max={MAX_DOEASUREMENTS}
                 disabled={frequencyType !== CustomFrequencyType.XTimesADay}
               />
             </View>

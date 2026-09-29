@@ -529,29 +529,30 @@ export function Home({ date }: { date: Date }) {
     setGroups(idToGroup);
   }, [db]);
 
-  const dailyScheduleFilter = (
-    s: AssessmentSchedule | MedicineSchedule,
-  ): boolean => {
-    if (s.freq.intervalUnit === IntervalUnit.day) {
-      const dayDiff = dayDifference(date, s.startDate);
-      if (dayDiff % s.freq.intervalLength !== 0) {
-        return true;
+  const dailyScheduleFilter = React.useCallback(
+    (s: AssessmentSchedule | MedicineSchedule): boolean => {
+      if (s.freq.intervalUnit === IntervalUnit.day) {
+        const dayDiff = dayDifference(date, s.startDate);
+        if (dayDiff % s.freq.intervalLength !== 0) {
+          return true;
+        }
       }
-    }
-    return false;
-  };
+      return false;
+    },
+    [date],
+  );
 
-  const weeklyScheduleFilter = (
-    s: AssessmentSchedule | MedicineSchedule,
-    offset: number,
-  ) => {
-    if (s.freq.intervalUnit === IntervalUnit.week) {
-      if (offset !== weekday) {
-        return true;
+  const weeklyScheduleFilter = React.useCallback(
+    (s: AssessmentSchedule | MedicineSchedule, offset: number) => {
+      if (s.freq.intervalUnit === IntervalUnit.week) {
+        if (offset !== weekday) {
+          return true;
+        }
       }
-    }
-    return false;
-  };
+      return false;
+    },
+    [weekday],
+  );
 
   const loadScheduledDosages = React.useCallback(async () => {
     const result = await dbGetMedicineSchedules(db);
@@ -604,7 +605,7 @@ export function Home({ date }: { date: Date }) {
     setScheduledDosages(newScheduledDosages);
     if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
-  }, [date, db]);
+  }, [date, db, dailyScheduleFilter, weeklyScheduleFilter]);
 
   const loadScheduledMeasurments = React.useCallback(async () => {
     const result = await dbGetAssessmentSchedules(db);
@@ -669,7 +670,7 @@ export function Home({ date }: { date: Date }) {
     setScheduledMeasurments(newScheduledMeasurments);
     if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
-  }, [date, db]);
+  }, [date, db, dailyScheduleFilter, weeklyScheduleFilter]);
 
   const loadUnscheduledDosageRecords = React.useCallback(async () => {
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(
