@@ -33,7 +33,7 @@ import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
 import { AssessmentListScreen } from "./screens/AssessmentListScreen";
 import { AssessmentSchedulesListScreen } from "./screens/AssessmentsSchedulesListScreen";
 import { SelectEntryTypeScreen } from "./screens/SelectEntryTypeScreen";
-import { EditCustomFrequencyScreen } from "./screens/EditCustomFrequencyScreen";
+import { EditCustomFrequencyScreen } from "./screens/ScheduleScreens/EditCustomFrequencyScreen";
 import { Frequency } from "../models/Frequency";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
@@ -169,8 +169,7 @@ export type RootStackParamList = {
     assessment: AssessmentParam;
     customFrequency?: {
       freq: Frequency;
-      doesurementOffsets: number[];
-      label: string;
+      offsetsMultiplier: number[] | null;
     };
   };
   PartiallyEditAnyScheduleScreen: {

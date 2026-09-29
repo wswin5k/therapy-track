@@ -9,12 +9,6 @@ declare module "*.jpg" {
 }
 
 declare global {
-  declare namespace Intl {
-    interface Locale {
-      /** Stage 3 / ES2023 proposal property */
-      firstDay?: number;
-    }
-  }
   namespace ReactNavigation {
     interface Theme {
       dark: boolean;

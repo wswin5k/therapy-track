@@ -30,15 +30,24 @@ import {
 } from "../../../models/dbAccess";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../../components/DropdownPicker";
-import {
-  baseUnitToDoseHeader,
-  frequencySelectionToDisplayForm,
-} from "../../enumMappings";
+import { baseUnitToDoseHeader } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
 import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
 import { assingDefaultGroups } from "./common";
+
+export function frequencySelectionToDisplayForm(key: FrequencySelection) {
+  const mapping = {
+    OnceDaily: "Once daily",
+    TwiceDaily: "Twice daily",
+    ThriceDaily: "Three times daily",
+    OnceWeekly: "Weekly",
+    OnceBiweekly: "Every two weeks",
+    Custom: "Custom frequency",
+  };
+  return mapping[key];
+}
 
 const frequencySelectionMap: { [key: string]: Frequency } = {
   OnceDaily: new Frequency(IntervalUnit.day, 1, 1),

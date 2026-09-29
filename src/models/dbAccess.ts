@@ -297,7 +297,7 @@ function parseMedicineScheduleWithMedicineRow(
   );
   const dosages = row.dosages.map(
     (dd: DosageRow) =>
-      new Dosage(dd.amount, dd.index_, dd.offset, dd.group_, dd.id),
+      new Dosage(dd.amount, dd.index_, dd.offset ?? 0, dd.group_, dd.id),
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(
@@ -330,7 +330,7 @@ function parseAssessmentScheduleWithAssessmentRow(
   );
   const measurments = row.measurments.map(
     (dd: MeasurmentRow) =>
-      new Measurment(dd.index_, dd.offset, dd.group_, dd.id),
+      new Measurment(dd.index_, dd.offset ?? 0, dd.group_, dd.id),
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(

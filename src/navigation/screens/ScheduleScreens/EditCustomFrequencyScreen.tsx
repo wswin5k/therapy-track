@@ -7,14 +7,15 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useNavigation, useTheme } from "@react-navigation/native";
-import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonConsts";
+import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
+import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../../commonConsts";
 import { useTranslation } from "react-i18next";
-import SmallNumberStepper from "../../components/SmallNumberStepper";
-import { mixColors } from "../utils";
-import { eStyles } from "../../commonStyles";
+import SmallNumberStepper from "../../../components/SmallNumberStepper";
+import { mixColors } from "../../utils";
+import { eStyles } from "../../../commonStyles";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { Frequency, IntervalUnit } from "../../models/Frequency";
+import { Frequency, IntervalUnit } from "../../../models/Frequency";
+import { getWeekdays } from "./common";
 
 export const TEXT_MAX_LENGTH = 200;
 
@@ -41,32 +42,7 @@ export function EditCustomFrequencyScreen() {
   const [selectedWeekdaysError, setSelectedWeekdaysError] =
     React.useState<boolean>(false);
   const weekdays = React.useMemo(() => {
-    const language = i18n.resolvedLanguage || i18n.language;
-    const localeObj = new Intl.Locale(language);
-
-    // first day of week 1 = Mon,weekdaysSelectionContainer ..., 7 = Sun
-    const firstDayOfWeek =
-      (localeObj.getWeekInfo?.()?.firstDay ?? localeObj.firstDay ?? 7) % 7;
-
-    // Sunday, Jan 4, 2026
-    const baseDate = new Date(2026, 0, 4);
-    const formatterNarrow = new Intl.DateTimeFormat(language, {
-      weekday: "narrow",
-    });
-    const formatterShort = new Intl.DateTimeFormat(language, {
-      weekday: "short",
-    });
-
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(baseDate);
-      const dayIndex = (firstDayOfWeek + i) % 7;
-      date.setDate(baseDate.getDate() + dayIndex);
-      return {
-        nameNarrow: formatterNarrow.format(date),
-        nameShort: formatterShort.format(date),
-        index: dayIndex,
-      };
-    });
+    return getWeekdays(i18n.resolvedLanguage || i18n.language);
   }, [i18n.resolvedLanguage, i18n.language]);
 
   const handleApply = () => {
@@ -85,29 +61,27 @@ export function EditCustomFrequencyScreen() {
       case CustomFrequencyType.XTimesADay:
         customFrequency = {
           freq: new Frequency(IntervalUnit.day, 1, timesADay),
-          doesurementOffsets: Array.from({ length: timesADay }, () => 0),
-          label: `${timesADay} times a day`,
+          offsetsMultiplier: Array.from({ length: timesADay }, () => 0),
         };
         break;
       case CustomFrequencyType.EveryXDays:
         customFrequency = {
           freq: new Frequency(IntervalUnit.day, daysNumber, 1),
-          doesurementOffsets: [0],
-          label: `every ${daysNumber} ${t("day", { count: daysNumber })}`,
+          offsetsMultiplier: [0],
         };
         break;
       case CustomFrequencyType.EveryXWeeks:
         customFrequency = {
           freq: new Frequency(IntervalUnit.week, weeksNumber, 1),
-          doesurementOffsets: [0],
-          label: `every ${daysNumber} ${t("week", { count: weeksNumber })}`,
+          offsetsMultiplier: null,
         };
         break;
       case CustomFrequencyType.SpecificDaysOfTheWeek:
+        // Mon-Sun: 1-7 -> 0-6
+        const offsetsMultiplier = selectedWeekdays.map((w) => (w + 6) % 7);
         customFrequency = {
           freq: new Frequency(IntervalUnit.week, 1, selectedWeekdays.length),
-          doesurementOffsets: selectedWeekdays,
-          label: `every ${selectedWeekdays.map((idx) => weekdays.find((el) => el.index === idx)?.nameShort).join(", ")}`,
+          offsetsMultiplier: offsetsMultiplier,
         };
         break;
     }

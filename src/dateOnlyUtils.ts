@@ -71,3 +71,8 @@ export function deserializeDateOnlyNullable(value: string | null): Date | null {
     return null;
   }
 }
+
+export function getWeekday(date: Date): number {
+  // Mon = 0 ... Sun = 6
+  return (date.getDay() + 6) % 7;
+}

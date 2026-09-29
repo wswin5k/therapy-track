@@ -12,7 +12,11 @@ import RNDateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { Group, IntervalUnit } from "../../../models/Frequency";
 import { Frequency } from "../../../models/Frequency";
-import { FrequencySelection } from "./common";
+import {
+  FrequencySelection,
+  frequencyToDisplayForm,
+  getWeekdays,
+} from "./common";
 import {
   useFocusEffect,
   useNavigation,
@@ -36,8 +40,13 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { UnscheduledMeasurmentRecord } from "../../../models/Records";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
-import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
+import {
+  getTodayDateOnly,
+  getWeekday,
+  toDisplayConcise,
+} from "../../../dateOnlyUtils";
 import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { frequencySelectionToPickerLabels } from "./common";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -65,10 +74,10 @@ export default function EditAssessmentScheduleScreen() {
   const measurementIdxToGroupId = React.useRef<(number | null)[]>(
     Array.from({ length: nMeasurements }, () => null),
   );
-  // offsets for the measurment
+  // offsets for the measurement
   // value other than one is used only
   // with "specific weekdays" custom frequency
-  // the measurments will be cartesian-multiplied with it
+  // the measurements will be cartesian-multiplied with it
   const offsetsMultiplier = React.useRef<number[]>([0]);
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
@@ -101,16 +110,12 @@ export default function EditAssessmentScheduleScreen() {
     setExistingUnscheduledMeasurementRecords,
   ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
 
-  const frequencySelectionToPickerLabels =
+  const weekdays = React.useMemo(() => {
+    return getWeekdays(i18n.resolvedLanguage || i18n.language);
+  }, [i18n.resolvedLanguage, i18n.language]);
+
+  const frequencySelectionToPickerLabelsExt =
     (specialCustomLabel: boolean) => (key: FrequencySelection) => {
-      const mapping = {
-        OnceDaily: "Once daily",
-        TwiceDaily: "Twice daily",
-        ThriceDaily: "Three times daily",
-        OnceWeekly: "Weekly",
-        OnceBiweekly: "Every two weeks",
-        Custom: "Custom...",
-      };
       if (
         specialCustomLabel &&
         key === FrequencySelection.Custom &&
@@ -118,7 +123,7 @@ export default function EditAssessmentScheduleScreen() {
       ) {
         return customFreqLabel;
       }
-      return mapping[key];
+      return frequencySelectionToPickerLabels(key);
     };
 
   useFocusEffect(
@@ -129,7 +134,7 @@ export default function EditAssessmentScheduleScreen() {
           scheduleId?: number;
           customFrequency?: {
             freq: Frequency;
-            doesurementOffsets: number[];
+            offsetsMultiplier: number[];
             label: string;
           };
         };
@@ -145,14 +150,18 @@ export default function EditAssessmentScheduleScreen() {
             freq.intervalLength === 1
           ) {
             offsetsMultiplier.current =
-              params.customFrequency.doesurementOffsets;
+              params.customFrequency.offsetsMultiplier;
           } else {
             newNMeasurements = freq.numberOfDosages;
           }
+          const frequencyLabel = frequencyToDisplayForm(
+            t,
+            weekdays,
+            freq,
+            params.customFrequency.offsetsMultiplier,
+          );
           setCustomFreqLabel(
-            params.customFrequency
-              ? `Custom: ` + params.customFrequency?.label
-              : null,
+            params.customFrequency ? `Custom: ` + frequencyLabel : null,
           );
           navigation.setParams({ customFrequency: undefined });
         }
@@ -268,13 +277,18 @@ export default function EditAssessmentScheduleScreen() {
     }
 
     let measurements = [];
-    for (const [mIdx, m] of measurementIdxToGroupId.current.entries()) {
-      for (const [oIdx, o] of offsetsMultiplier.current.entries()) {
-        measurements.push({
-          groupId: m,
-          index: mIdx * offsetsMultiplier.current.length + oIdx,
-          offset: o,
-        });
+    if (startDate) {
+      const offsetsMultiplierValidated = offsetsMultiplier.current ?? [
+        getWeekday(startDate),
+      ];
+      for (const [mIdx, m] of measurementIdxToGroupId.current.entries()) {
+        for (const [oIdx, o] of offsetsMultiplierValidated.entries()) {
+          measurements.push({
+            groupId: m,
+            index: mIdx * offsetsMultiplier.current.length + oIdx,
+            offset: o,
+          });
+        }
       }
     }
 
@@ -360,6 +374,7 @@ export default function EditAssessmentScheduleScreen() {
       return;
     }
     setFreqSelection(item);
+    setFreqSelectionError(false);
     const freq = frequencySelectionMap[item];
     freqRef.current = freq;
     if (freq.numberOfDosages !== nMeasurements) {
@@ -388,8 +403,8 @@ export default function EditAssessmentScheduleScreen() {
             values={Object.values(FrequencySelection)}
             selectedValue={freqSelection}
             onValueChange={handleFrequencyPicker}
-            getLabel={frequencySelectionToPickerLabels(false)}
-            getPressableLabel={frequencySelectionToPickerLabels(true)}
+            getLabel={frequencySelectionToPickerLabelsExt(false)}
+            getPressableLabel={frequencySelectionToPickerLabelsExt(true)}
             placeholder="Select frequency"
             pressableStyle={eStyles.fullWidthPickerPressable}
             error={freqSelectionError}

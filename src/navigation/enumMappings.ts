@@ -1,11 +1,7 @@
 import i18next from "i18next";
 import { BaseUnit, IngredientAmountUnit } from "../models/MedicineSchedule";
 import { ValueType } from "../models/AssessmentSchedule";
-import { FrequencySelection } from "./screens/ScheduleScreens/common";
-
-function capitalizeFirstLetter(val: string) {
-  return String(val).charAt(0).toUpperCase() + String(val).slice(1);
-}
+import { capitalizeFirstLetter } from "./utils";
 
 export const baseUnitToSingularShortForm: { [key: string]: string } = {
   Tablet: "tablet",
@@ -53,30 +49,6 @@ export function baseUnitToDoseHeader(key: BaseUnit): string {
 
 export function baseUnitShorFormPlural(key: BaseUnit): string {
   return i18next.t(baseUnitToSingularShortForm[key], { count: 2 });
-}
-
-export function frequencySelectionToDisplayForm(key: FrequencySelection) {
-  const mapping = {
-    OnceDaily: "Once daily",
-    TwiceDaily: "Twice daily",
-    ThriceDaily: "Three times daily",
-    OnceWeekly: "Weekly",
-    OnceBiweekly: "Every two weeks",
-    Custom: "Custom frequency",
-  };
-  return mapping[key];
-}
-
-export function frequencySelectionToPickerLabels(key: FrequencySelection) {
-  const mapping = {
-    OnceDaily: "Once daily",
-    TwiceDaily: "Twice daily",
-    ThriceDaily: "Three times daily",
-    OnceWeekly: "Weekly",
-    OnceBiweekly: "Every two weeks",
-    Custom: "Custom...",
-  };
-  return mapping[key];
 }
 
 export function assessmentTypeToDisplayForm(key: ValueType) {

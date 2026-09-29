@@ -38,7 +38,7 @@ export class Assessment {
 export class Measurment {
   constructor(
     public index: number,
-    public offset: number | null,
+    public offset: number,
     public groupId: number | null,
     public dbId: number,
   ) {}
