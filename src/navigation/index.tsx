@@ -164,6 +164,10 @@ export type RootStackParamList = {
     { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
   EditMedicineScheduleScreen: {
     medicine: MedicineParam;
+    customFrequency?: {
+      freq: Frequency;
+      offsetsMultiplier: number[] | null;
+    };
   };
   EditAssessmentScheduleScreen: {
     assessment: AssessmentParam;

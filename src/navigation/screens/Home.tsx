@@ -637,7 +637,6 @@ export function Home({ date }: { date: Date }) {
       if (dailyScheduleFilter(s)) {
         continue;
       }
-      console.log(s);
       for (const measurement of s.measurments) {
         if (weeklyScheduleFilter(s, measurement.offset)) {
           continue;

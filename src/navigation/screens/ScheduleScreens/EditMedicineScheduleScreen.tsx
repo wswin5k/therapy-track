@@ -13,7 +13,13 @@ import RNDateTimePicker, {
 import SmallNumberStepper from "../../../components/SmallNumberStepper";
 import { Group } from "../../../models/Frequency";
 import { Frequency, IntervalUnit } from "../../../models/Frequency";
-import { FrequencySelection } from "./common";
+import {
+  FrequencySelection,
+  frequencySelectionMap,
+  frequencySelectionToPickerLabels,
+  frequencyToDisplayForm,
+  getWeekdays,
+} from "./common";
 import {
   useFocusEffect,
   useNavigation,
@@ -34,29 +40,12 @@ import { baseUnitToDoseHeader } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
 import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { ERROR_BORDER_WIDTH } from "../../commonConsts";
-import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
+import {
+  getTodayDateOnly,
+  getWeekday,
+  toDisplayConcise,
+} from "../../../dateOnlyUtils";
 import { assingDefaultGroups } from "./common";
-
-export function frequencySelectionToDisplayForm(key: FrequencySelection) {
-  const mapping = {
-    OnceDaily: "Once daily",
-    TwiceDaily: "Twice daily",
-    ThriceDaily: "Three times daily",
-    OnceWeekly: "Weekly",
-    OnceBiweekly: "Every two weeks",
-    Custom: "Custom frequency",
-  };
-  return mapping[key];
-}
-
-const frequencySelectionMap: { [key: string]: Frequency } = {
-  OnceDaily: new Frequency(IntervalUnit.day, 1, 1),
-  TwiceDaily: new Frequency(IntervalUnit.day, 1, 2),
-  ThriceDaily: new Frequency(IntervalUnit.day, 1, 3),
-  OnceWeekly: new Frequency(IntervalUnit.week, 1, 1),
-  OnceBiweekly: new Frequency(IntervalUnit.week, 2, 1),
-  Custom: new Frequency(IntervalUnit.week, 2, 1),
-};
 
 type EditMedicineScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -70,17 +59,26 @@ export default function EditMedicineScheduleScreen() {
   const route = useRoute();
   const db = useSQLiteContext();
 
-  const [freq, setFreq] = React.useState<FrequencySelection | null>(null);
+  const [freqSelection, setFreqSelection] =
+    React.useState<FrequencySelection | null>(null);
   const freqRef = React.useRef<Frequency | null>(null);
-  const [freqError, setFreqError] = React.useState<boolean>(false);
+  const [freqSelectionError, setFreqSelectionError] =
+    React.useState<boolean>(false);
+  const [customFreqLabel, setCustomFreqLabel] = React.useState<string | null>(
+    null,
+  );
 
-  const [nDosages, setNDosages] = React.useState<number>(1);
-  const amountsRef = React.useRef<number[]>(
-    Array.from({ length: nDosages }, () => 1),
-  );
-  const dosageIdxToGroupId = React.useRef<(number | null)[]>(
-    Array.from({ length: nDosages }, () => null),
-  );
+  const [dosageIdxToAmount, setDosageIdxToAmount] = React.useState<number[]>([
+    1,
+  ]);
+  const [dosageIdxToGroupId, setDosageIdxToGroupId] = React.useState<
+    (number | null)[]
+  >([null]);
+  // offsets for the measurement
+  // more than one values are used only
+  // with "specific weekdays" custom frequency
+  // the measurements will be cartesian-multiplied with it
+  const offsetsMultiplier = React.useRef<number[] | null>([0]);
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
     React.useState<boolean>(false);
@@ -95,44 +93,110 @@ export default function EditMedicineScheduleScreen() {
   const [groupsMap, setGroupsMap] = React.useState<Map<number, Group>>(
     new Map(),
   );
-  const [dosageIdxToDefaultGroupId, setDosageIdxToDefaultGroupIdx] =
-    React.useState<Map<number, number>>(new Map());
+  const dosageIdxToDefaultGroupId = React.useRef<Map<number, number>>(
+    new Map(),
+  );
   const groupsIds = React.useMemo(
     () => [-1, ...Array.from(groupsMap.values()).map((g) => g.dbId)],
     [groupsMap],
   );
 
-  const updateGroupsRefWithDefaults = React.useCallback(() => {
-    for (let i = 0; i < nDosages; i++) {
-      dosageIdxToGroupId.current[i] = dosageIdxToDefaultGroupId.get(i) ?? null;
-    }
-  }, [dosageIdxToDefaultGroupId, nDosages]);
+  const weekdays = React.useMemo(() => {
+    return getWeekdays(i18n.resolvedLanguage || i18n.language);
+  }, [i18n.resolvedLanguage, i18n.language]);
 
-  useFocusEffect(
-    React.useCallback(
-      () => updateGroupsRefWithDefaults(),
-      [updateGroupsRefWithDefaults],
-    ),
-  );
+  const frequencySelectionToPickerLabelsExt =
+    (specialCustomLabel: boolean) => (key: FrequencySelection | null) => {
+      if (specialCustomLabel && key === FrequencySelection.Custom) {
+        return customFreqLabel;
+      }
+      return key ? frequencySelectionToPickerLabels(key) : null;
+    };
+  const resetMeasurementGroups = (count: number) => {
+    setDosageIdxToGroupId(
+      Array.from(
+        { length: count },
+        (_, idx) => dosageIdxToDefaultGroupId.current.get(idx) ?? null,
+      ),
+    );
+    setDosageIdxToAmount(Array.from({ length: count }, () => 1));
+  };
+
+  const loadData = React.useCallback(async () => {
+    const groups = await dbGetGroups(db);
+    const newGroupsMap = new Map();
+    groups.forEach((g) => newGroupsMap.set(g.dbId, g));
+    setGroupsMap(newGroupsMap);
+    dosageIdxToDefaultGroupId.current = assingDefaultGroups(groups);
+    resetMeasurementGroups(dosageIdxToGroupId.length);
+
+    const params = route.params as {
+      medicine: MedicineParam;
+      scheduleId?: number;
+      customFrequency?: {
+        freq: Frequency;
+        offsetsMultiplier: number[];
+      };
+    };
+    setMedicine(params.medicine);
+
+    if (params.customFrequency) {
+      freqRef.current = params.customFrequency?.freq ?? null;
+      const freq = params.customFrequency.freq;
+      offsetsMultiplier.current = params.customFrequency.offsetsMultiplier;
+      const newNMeasurements =
+        freq.intervalUnit === IntervalUnit.week && freq.intervalLength === 1
+          ? 1
+          : freq.numberOfDosages;
+      resetMeasurementGroups(newNMeasurements);
+
+      const frequencyLabel = frequencyToDisplayForm(
+        t,
+        weekdays,
+        freq,
+        params.customFrequency.offsetsMultiplier,
+      );
+      setCustomFreqLabel("Custom: " + frequencyLabel);
+      setFreqSelectionError(false);
+      navigation.setParams({ customFrequency: undefined });
+    }
+  }, [db, navigation, route.params, t, weekdays, dosageIdxToGroupId.length]);
 
   useFocusEffect(
     React.useCallback(() => {
-      const setData = async () => {
-        const params = route.params as {
-          medicine: MedicineParam;
-          scheduleId?: number;
-        };
-        setMedicine(params.medicine);
-
-        const groups = await dbGetGroups(db);
-        const newGroupsMap = new Map();
-        groups.forEach((g) => newGroupsMap.set(g.dbId, g));
-        setGroupsMap(newGroupsMap);
-        setDosageIdxToDefaultGroupIdx(assingDefaultGroups(groups));
-      };
-      setData();
-    }, [db, route.params]),
+      loadData();
+    }, [loadData]),
   );
+
+  const handleFrequencyPicker = (item: FrequencySelection | null) => {
+    setCustomFreqLabel(null);
+
+    if (!item) {
+      freqRef.current = null;
+      setFreqSelection(null);
+      resetMeasurementGroups(1);
+      return;
+    }
+
+    setFreqSelection(item);
+
+    if (item === FrequencySelection.Custom) {
+      freqRef.current = null;
+      resetMeasurementGroups(1);
+      navigation.navigate("EditCustomFrequencyScreen");
+      return;
+    }
+
+    setFreqSelectionError(false);
+    const freq = frequencySelectionMap[item];
+    freqRef.current = freq;
+    if (freq.intervalUnit === IntervalUnit.week) {
+      offsetsMultiplier.current = null;
+    } else {
+      offsetsMultiplier.current = [0];
+    }
+    resetMeasurementGroups(freq.numberOfDosages);
+  };
 
   const handleSelectStartDate = () => {
     setIsStartDatePickerOpened(true);
@@ -178,9 +242,9 @@ export default function EditMedicineScheduleScreen() {
 
     if (!freqRef.current) {
       isDataValid = false;
-      setFreqError(true);
+      setFreqSelectionError(true);
     } else {
-      setFreqError(false);
+      setFreqSelectionError(false);
     }
 
     if (!startDate) {
@@ -213,13 +277,22 @@ export default function EditMedicineScheduleScreen() {
       return;
     }
 
-    const dosages = Array.from(
-      amountsRef.current.entries(),
-      ([index, amount]) => {
-        const groupId = dosageIdxToGroupId.current[index];
-        return { amount, index, offset: null, groupId };
-      },
-    );
+    let dosages = [];
+    if (startDate) {
+      const offsetsMultiplierValidated = offsetsMultiplier.current ?? [
+        getWeekday(startDate),
+      ];
+      for (const [dIdx, gId] of dosageIdxToGroupId.entries()) {
+        for (const [oIdx, o] of offsetsMultiplierValidated.entries()) {
+          dosages.push({
+            groupId: gId,
+            index: dIdx * offsetsMultiplierValidated.length + oIdx,
+            offset: o,
+            amount: dosageIdxToAmount[dIdx],
+          });
+        }
+      }
+    }
 
     if (medicine && medicine.dbId) {
       await dbInsertMedicineSchedule(db, medicine.dbId, {
@@ -242,36 +315,20 @@ export default function EditMedicineScheduleScreen() {
     }
   };
 
-  const handleFrequencyPicker = (item: FrequencySelection | null) => {
-    if (!item) {
-      freqRef.current = null;
-      setFreq(null);
-      return;
-    }
-    if (item === FrequencySelection.Custom) {
-      //navigation.navigate("EditCustomFrequencyScreen");
-      freqRef.current = null;
-      setFreq(null);
-      return;
-    }
-    setFreq(item);
-    const freq = frequencySelectionMap[item];
-    freqRef.current = freq;
-    if (freq.numberOfDosages !== nDosages) {
-      setNDosages(freq.numberOfDosages);
-      updateGroupsRefWithDefaults();
-    }
-  };
-
   const createDosagesInputHandler = (idx: number) => {
-    return (value: number) => {
-      amountsRef.current[idx] = value;
+    return (newValue: number) => {
+      setDosageIdxToAmount((current) =>
+        current.map((value, dIdx) => (dIdx === idx ? newValue : value)),
+      );
     };
   };
 
   const createGroupInputHandler = (idx: number) => {
-    return (groupIdx: number) => {
-      dosageIdxToGroupId.current[idx] = groupIdx === -1 ? null : groupIdx;
+    return (newGroupId: number) => {
+      const newGroupIdNormalized = newGroupId === -1 ? null : newGroupId;
+      setDosageIdxToGroupId((current) =>
+        current.map((gId, dIdx) => (dIdx === idx ? newGroupIdNormalized : gId)),
+      );
     };
   };
 
@@ -288,12 +345,13 @@ export default function EditMedicineScheduleScreen() {
         <View style={[styles.rowFrequencyPicker]}>
           <ModalPicker
             values={Object.values(FrequencySelection)}
-            selectedValue={freq}
+            selectedValue={freqSelection}
             onValueChange={handleFrequencyPicker}
-            getLabel={frequencySelectionToDisplayForm}
+            getLabel={frequencySelectionToPickerLabelsExt(false)}
+            getPressableLabel={frequencySelectionToPickerLabelsExt(true)}
             placeholder="Select frequency"
             pressableStyle={eStyles.fullWidthPickerPressable}
-            error={freqError}
+            error={freqSelectionError}
           />
         </View>
 
@@ -311,23 +369,23 @@ export default function EditMedicineScheduleScreen() {
         </View>
 
         <View style={styles.dosagesContainer}>
-          {Array.from({ length: nDosages }, (_, idx) => (
+          {dosageIdxToGroupId.map((gId, dIdx) => (
             <View
               // complex key to re-render when there is a change in initialValue
-              key={idx * 10 + (dosageIdxToDefaultGroupId.get(idx) ?? -1)}
+              key={dIdx * 10 + (gId ?? -1)}
               style={styles.rowDosage}
             >
               <View style={styles.dosageAmountContainer}>
                 <SmallNumberStepper
-                  onChange={createDosagesInputHandler(idx)}
+                  onChange={createDosagesInputHandler(dIdx)}
                   defaultValue={1}
                 />
               </View>
               <View style={[styles.dosageGroupPickerContainer]}>
                 <DropdownPicker
                   options={groupsIds}
-                  initialValue={dosageIdxToDefaultGroupId.get(idx) ?? -1}
-                  onValueChange={createGroupInputHandler(idx)}
+                  initialValue={gId ?? -1}
+                  onValueChange={createGroupInputHandler(dIdx)}
                   getLabel={(gIdx) =>
                     gIdx === -1 ? "None" : (groupsMap.get(gIdx)?.name ?? "")
                   }

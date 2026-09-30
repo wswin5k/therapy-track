@@ -411,7 +411,7 @@ export async function dbInsertMedicineSchedule(
     dosages: {
       amount: number;
       index: number;
-      offset: number | null;
+      offset: number;
       groupId: number | null;
     }[];
     freq: Frequency;
@@ -487,7 +487,7 @@ export async function dbInsertMedicineScheduleWithMedicine(
     dosages: {
       amount: number;
       index: number;
-      offset: number | null;
+      offset: number;
       groupId: number | null;
     }[];
     freq: Frequency;
