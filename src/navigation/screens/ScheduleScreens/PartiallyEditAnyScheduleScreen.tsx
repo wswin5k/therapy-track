@@ -28,7 +28,7 @@ import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
-import { ERROR_BORDER_WIDTH } from "../../commonConsts";
+import { ERROR_BORDER_WIDTH } from "../../../commonStyles";
 
 export default function PartiallyEditAnyScheduleScreen() {
   const { t, i18n } = useTranslation();

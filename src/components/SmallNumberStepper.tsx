@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { eStyles } from "../commonStyles";
-import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
+import { ERROR_BORDER_WIDTH } from "../commonStyles";
 
 function isClose(a: number, b: number) {
   return Math.abs(a - b) < 1e-5;

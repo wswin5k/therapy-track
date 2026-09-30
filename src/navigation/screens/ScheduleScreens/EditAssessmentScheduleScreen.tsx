@@ -39,7 +39,7 @@ import { assingDefaultGroups, frequencySelectionMap } from "./common";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
 import { UnscheduledMeasurmentRecord } from "../../../models/Records";
-import { ERROR_BORDER_WIDTH } from "../../commonConsts";
+import { ERROR_BORDER_WIDTH } from "../../../commonStyles";
 import {
   getTodayDateOnly,
   getWeekday,
@@ -274,7 +274,7 @@ export default function EditAssessmentScheduleScreen() {
     endDate: Date | null;
     measurements: {
       index: number;
-      offset: number | null;
+      offset: number;
       groupId: number | null;
     }[];
   } | null => {

@@ -39,7 +39,7 @@ import { DropdownPicker } from "../../../components/DropdownPicker";
 import { baseUnitToDoseHeader } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
 import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
-import { ERROR_BORDER_WIDTH } from "../../commonConsts";
+import { ERROR_BORDER_WIDTH } from "../../../commonStyles";
 import {
   getTodayDateOnly,
   getWeekday,

@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useNavigation, useTheme } from "@react-navigation/native";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
-import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../../commonConsts";
+import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../../../commonStyles";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../../components/SmallNumberStepper";
 import { mixColors } from "../../utils";

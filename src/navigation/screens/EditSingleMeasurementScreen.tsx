@@ -47,7 +47,7 @@ import {
   toDisplayConcise,
 } from "../../dateOnlyUtils";
 import { eStyles } from "../../commonStyles";
-import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { ERROR_BORDER_WIDTH } from "../../commonStyles";
 
 type EditSingleMeasurementScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,

@@ -36,7 +36,7 @@ import {
   ingredientAmountUnitEnumToDisplayForm,
 } from "../enumMappings";
 import { ModalPicker } from "../../components/ModalPicker";
-import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { ERROR_BORDER_WIDTH } from "../../commonStyles";
 import { isEqualLowerCase } from "../utils";
 import { DEFAULT_BORDER_RADIUS, eStyles } from "../../commonStyles";
 

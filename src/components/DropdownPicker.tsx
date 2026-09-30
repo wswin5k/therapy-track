@@ -12,7 +12,7 @@ import {
   TextStyle,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { ERROR_BORDER_WIDTH } from "../navigation/commonConsts";
+import { ERROR_BORDER_WIDTH } from "../commonStyles";
 import { eStyles } from "../commonStyles";
 
 interface ModalDropdownPickerProps<T> {

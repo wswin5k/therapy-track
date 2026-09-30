@@ -981,7 +981,7 @@ export async function dbInsertAssessmentSchedule(
     endDate: Date | null;
     measurments: {
       index: number;
-      offset: number | null;
+      offset: number;
       groupId: number | null;
     }[];
     freq: Frequency;
@@ -1021,7 +1021,7 @@ export async function dbInsertAssessmentScheduleWithAssessment(
     endDate: Date | null;
     measurments: {
       index: number;
-      offset: number | null;
+      offset: number;
       groupId: number | null;
     }[];
     freq: Frequency;
