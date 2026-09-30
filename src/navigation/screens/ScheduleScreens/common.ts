@@ -41,6 +41,8 @@ class Weekday {
   constructor(
     public nameNarrow: string,
     public nameShort: string,
+    // 0 - Mon... 6 - Sun
+    // order depends on locale
     public index: number,
   ) {}
 }
@@ -51,8 +53,8 @@ export function getWeekdays(language: string): Weekday[] {
   // 1 = Mon,..., 7 = Sun
   const firstDayOfWeek = localeObj.getWeekInfo?.()?.firstDay ?? 1;
 
-  // Sunday, Jan 4, 2026
-  const baseDate = new Date(2026, 0, 4);
+  // Monday, Jan 5, 2026
+  const baseDate = new Date(2026, 0, 5);
   const formatterNarrow = new Intl.DateTimeFormat(language, {
     weekday: "narrow",
   });
@@ -62,7 +64,7 @@ export function getWeekdays(language: string): Weekday[] {
 
   return Array.from({ length: 7 }, (_, i) => {
     const date = new Date(baseDate);
-    const dayIndex = (firstDayOfWeek + i) % 7;
+    const dayIndex = (firstDayOfWeek + i - 1) % 7;
     date.setDate(baseDate.getDate() + dayIndex);
     return new Weekday(
       formatterNarrow.format(date),
@@ -97,7 +99,13 @@ export function frequencyToDisplayForm(
       if (length === 2) return "Every two weeks";
       return `every ${length} ${t("week", { count: length })}`;
     } else if (length === 1) {
-      return `every ${offsets.map((idx) => weekdays.find((el) => el.index === idx)?.nameShort).join(", ")}`;
+      const selectedWeekdays = offsets
+        .map((idx) => weekdays.find((el) => el.index === idx))
+        .filter((w) => w instanceof Weekday);
+      selectedWeekdays.sort(
+        (a, b) => weekdays.indexOf(a) - weekdays.indexOf(b),
+      );
+      return `every ${selectedWeekdays.map((w) => w.nameShort).join(", ")}`;
     }
   }
   return "Custom...";

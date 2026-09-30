@@ -51,6 +51,7 @@ import {
 import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
 import {
   dayDifference,
+  getShiftedDateOnly,
   getWeekday,
   isEqualDateOnly,
   normalizeToDateOnly,
@@ -518,8 +519,6 @@ export function Home({ date }: { date: Date }) {
     null,
   );
 
-  const weekday = React.useMemo(() => getWeekday(date), [date]);
-
   const loadGroups = React.useCallback(async () => {
     const groups = await dbGetGroups(db);
     const idToGroup = new Map();
@@ -545,13 +544,19 @@ export function Home({ date }: { date: Date }) {
   const weeklyScheduleFilter = React.useCallback(
     (s: AssessmentSchedule | MedicineSchedule, offset: number) => {
       if (s.freq.intervalUnit === IntervalUnit.week) {
-        if (offset !== weekday) {
+        const startDayWeekday = getWeekday(s.startDate);
+        const startDayWeekStart = getShiftedDateOnly(
+          s.startDate,
+          -startDayWeekday,
+        );
+        const dayDiff = dayDifference(date, startDayWeekStart);
+        if ((dayDiff - offset) % (7 * s.freq.intervalLength) !== 0) {
           return true;
         }
       }
       return false;
     },
-    [weekday],
+    [date],
   );
 
   const loadScheduledDosages = React.useCallback(async () => {
@@ -632,7 +637,7 @@ export function Home({ date }: { date: Date }) {
       if (dailyScheduleFilter(s)) {
         continue;
       }
-
+      console.log(s);
       for (const measurement of s.measurments) {
         if (weeklyScheduleFilter(s, measurement.offset)) {
           continue;

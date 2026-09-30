@@ -72,12 +72,12 @@ export default function EditAssessmentScheduleScreen() {
 
   const [measurementIdxToGroupId, setMeasurementIdxToGroupId] = React.useState<
     (number | null)[]
-  >([]);
+  >([null]);
   // offsets for the measurement
-  // value other than one is used only
+  // more than one values are used only
   // with "specific weekdays" custom frequency
   // the measurements will be cartesian-multiplied with it
-  const offsetsMultiplier = React.useRef<number[]>([0]);
+  const offsetsMultiplier = React.useRef<number[] | null>([0]);
 
   const [isStartDatePickerOpened, setIsStartDatePickerOpened] =
     React.useState<boolean>(false);
@@ -94,8 +94,9 @@ export default function EditAssessmentScheduleScreen() {
   const [groupsMap, setGroupsMap] = React.useState<Map<number, Group>>(
     new Map(),
   );
-  const [measurementIdxToDefaultGroupId, setMeasurementIdxToDefaultGroupIdx] =
-    React.useState<Map<number, number>>(new Map());
+  const measurementIdxToDefaultGroupId = React.useRef<Map<number, number>>(
+    new Map(),
+  );
   const groupsIds = React.useMemo(
     () => [-1, ...Array.from(groupsMap.values()).map((g) => g.dbId)],
     [groupsMap],
@@ -114,18 +115,29 @@ export default function EditAssessmentScheduleScreen() {
   }, [i18n.resolvedLanguage, i18n.language]);
 
   const frequencySelectionToPickerLabelsExt =
-    (specialCustomLabel: boolean) => (key: FrequencySelection) => {
-      if (
-        specialCustomLabel &&
-        key === FrequencySelection.Custom &&
-        customFreqLabel
-      ) {
+    (specialCustomLabel: boolean) => (key: FrequencySelection | null) => {
+      if (specialCustomLabel && key === FrequencySelection.Custom) {
         return customFreqLabel;
       }
-      return frequencySelectionToPickerLabels(key);
+      return key ? frequencySelectionToPickerLabels(key) : null;
     };
+  const resetMeasurementGroups = (count: number) => {
+    setMeasurementIdxToGroupId(
+      Array.from(
+        { length: count },
+        (_, idx) => measurementIdxToDefaultGroupId.current.get(idx) ?? null,
+      ),
+    );
+  };
 
-  const loadParams = React.useCallback(async () => {
+  const loadData = React.useCallback(async () => {
+    const groups = await dbGetGroups(db);
+    const newGroupsMap = new Map();
+    groups.forEach((g) => newGroupsMap.set(g.dbId, g));
+    setGroupsMap(newGroupsMap);
+    measurementIdxToDefaultGroupId.current = assingDefaultGroups(groups);
+    resetMeasurementGroups(measurementIdxToGroupId.length);
+
     const params = route.params as {
       assessment: AssessmentParam;
       scheduleId?: number;
@@ -139,21 +151,13 @@ export default function EditAssessmentScheduleScreen() {
     if (params.customFrequency) {
       freqRef.current = params.customFrequency?.freq ?? null;
       const freq = params.customFrequency.freq;
-      let newNMeasurements = 1;
-      if (
-        freq.intervalUnit === IntervalUnit.week &&
-        freq.intervalLength === 1
-      ) {
-        offsetsMultiplier.current = params.customFrequency.offsetsMultiplier;
-      } else {
-        newNMeasurements = freq.numberOfDosages;
-      }
-      setMeasurementIdxToGroupId(
-        Array.from(
-          { length: newNMeasurements },
-          (_, idx) => measurementIdxToDefaultGroupId.get(idx) ?? null,
-        ),
-      );
+      offsetsMultiplier.current = params.customFrequency.offsetsMultiplier;
+      const newNMeasurements =
+        freq.intervalUnit === IntervalUnit.week && freq.intervalLength === 1
+          ? 1
+          : freq.numberOfDosages;
+      resetMeasurementGroups(newNMeasurements);
+
       setGroupsErrors(Array.from({ length: newNMeasurements }, () => false));
       const frequencyLabel = frequencyToDisplayForm(
         t,
@@ -162,6 +166,7 @@ export default function EditAssessmentScheduleScreen() {
         params.customFrequency.offsetsMultiplier,
       );
       setCustomFreqLabel("Custom: " + frequencyLabel);
+      setFreqSelectionError(false);
       navigation.setParams({ customFrequency: undefined });
     }
 
@@ -173,7 +178,6 @@ export default function EditAssessmentScheduleScreen() {
         a.assessment.dbId === params.assessment.dbId,
     );
     setExistingAssessmentSchedules(newExistingAssessmentSchedules);
-
     const newExistingUnscheduledMeasurementRecords = (
       await dbGetUnscheduledMeasurmentRecords(db)
     ).filter(
@@ -186,27 +190,48 @@ export default function EditAssessmentScheduleScreen() {
     );
   }, [
     db,
-    measurementIdxToDefaultGroupId,
     navigation,
     route.params,
     t,
     weekdays,
+    measurementIdxToGroupId.length,
   ]);
-
-  const loadaGroupsData = React.useCallback(async () => {
-    const groups = await dbGetGroups(db);
-    const newGroupsMap = new Map();
-    groups.forEach((g) => newGroupsMap.set(g.dbId, g));
-    setGroupsMap(newGroupsMap);
-    setMeasurementIdxToDefaultGroupIdx(assingDefaultGroups(groups));
-  }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadaGroupsData();
-      loadParams();
-    }, [loadaGroupsData, loadParams]),
+      loadData();
+    }, [loadData]),
   );
+
+  const handleFrequencyPicker = (item: FrequencySelection | null) => {
+    setCustomFreqLabel(null);
+
+    if (!item) {
+      freqRef.current = null;
+      setFreqSelection(null);
+      resetMeasurementGroups(1);
+      return;
+    }
+
+    setFreqSelection(item);
+
+    if (item === FrequencySelection.Custom) {
+      freqRef.current = null;
+      resetMeasurementGroups(1);
+      navigation.navigate("EditCustomFrequencyScreen");
+      return;
+    }
+
+    setFreqSelectionError(false);
+    const freq = frequencySelectionMap[item];
+    freqRef.current = freq;
+    if (freq.intervalUnit === IntervalUnit.week) {
+      offsetsMultiplier.current = null;
+    } else {
+      offsetsMultiplier.current = [0];
+    }
+    resetMeasurementGroups(freq.numberOfDosages);
+  };
 
   const handleSelectStartDate = () => {
     setIsStartDatePickerOpened(true);
@@ -358,30 +383,6 @@ export default function EditAssessmentScheduleScreen() {
     } else {
       throw Error("Medicine has not been provided");
     }
-  };
-
-  const handleFrequencyPicker = (item: FrequencySelection | null) => {
-    if (!item) {
-      freqRef.current = null;
-      setFreqSelection(null);
-      return;
-    }
-    if (item === FrequencySelection.Custom) {
-      freqRef.current = null;
-      setFreqSelection(item);
-      navigation.navigate("EditCustomFrequencyScreen");
-      return;
-    }
-    setFreqSelection(item);
-    setFreqSelectionError(false);
-    const freq = frequencySelectionMap[item];
-    freqRef.current = freq;
-    setMeasurementIdxToGroupId(
-      Array.from(
-        { length: freq.numberOfDosages },
-        (_, idx) => measurementIdxToDefaultGroupId.get(idx) ?? null,
-      ),
-    );
   };
 
   const createGroupInputHandler = (idx: number) => {

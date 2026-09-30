@@ -60,7 +60,7 @@ export function EditCustomFrequencyScreen() {
       case CustomFrequencyType.XTimesADay:
         customFrequency = {
           freq: new Frequency(IntervalUnit.day, 1, timesADay),
-          offsetsMultiplier: Array.from({ length: timesADay }, () => 0),
+          offsetsMultiplier: [0],
         };
         break;
       case CustomFrequencyType.EveryXDays:
@@ -76,13 +76,10 @@ export function EditCustomFrequencyScreen() {
         };
         break;
       case CustomFrequencyType.SpecificDaysOfTheWeek:
-        // Mon-Sun: 1-7 -> 0-6
-        const offsetsMultiplier = selectedWeekdays.map(
-          (wIdx) => (weekdays[wIdx].index + 6) % 7,
-        );
+        selectedWeekdays.sort();
         customFrequency = {
           freq: new Frequency(IntervalUnit.week, 1, selectedWeekdays.length),
-          offsetsMultiplier: offsetsMultiplier,
+          offsetsMultiplier: selectedWeekdays,
         };
         break;
     }
@@ -126,7 +123,7 @@ export function EditCustomFrequencyScreen() {
             ? "radio-button-on-outline"
             : "radio-button-off"
         }
-        style={[styles.radioButton, { color: theme.colors.textSecondary }]}
+        style={[styles.radioButton, { color: theme.colors.text }]}
         onPress={() => handleFrequencyTypeChange(type)}
       />
     );
@@ -320,7 +317,7 @@ const styles = StyleSheet.create({
   },
   frequencyItemContainer: {
     flexDirection: "row",
-    marginBottom: 28,
+    marginBottom: 44,
     alignItems: "center",
   },
   frequencyItemLabelContainer: {

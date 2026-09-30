@@ -27,8 +27,8 @@ import {
 interface ModalPickerProps<T> {
   values: T[];
   onValueChange: (value: T) => void;
-  getLabel: (value: T) => string;
-  getPressableLabel?: (value: T) => string;
+  getLabel: (value: T) => string | null;
+  getPressableLabel?: (value: T | null) => string | null;
   selectedValue: T | null;
   placeholder?: string;
   pressableStyle?: StyleProp<ViewStyle>;
@@ -79,13 +79,20 @@ export function ModalPicker<T>({
   };
 
   const getLabelSafe = (value: T | null): string => {
-    return value ? getLabel(value) : placeholder;
+    return value ? (getLabel(value) ?? placeholder) : placeholder;
   };
 
   const getPressableLabelSafe = (value: T | null): string => {
-    const getPressableLabelSafeFunction = getPressableLabel ?? getLabel;
-    return value ? getPressableLabelSafeFunction(value) : placeholder;
+    if (getPressableLabel) {
+      return getPressableLabel(value) ?? placeholder;
+    } else if (value) {
+      return getLabel(value) ?? placeholder;
+    } else {
+      return placeholder;
+    }
   };
+
+  const pressableLabel = getPressableLabelSafe(selectedValue);
 
   const renderTitle = () => {
     return (
@@ -139,13 +146,13 @@ export function ModalPicker<T>({
           style={[
             styles.pressableText,
             { color: theme.colors.text },
-            (!selectedValue || disabled) && {
+            (pressableLabel === placeholder || disabled) && {
               color: theme.colors.textTertiary,
             },
           ]}
           numberOfLines={1}
         >
-          {getPressableLabelSafe(selectedValue)}
+          {pressableLabel}
         </Text>
         <Text
           style={[
