@@ -26,9 +26,13 @@ import {
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
-import { BaseUnit, Medicine } from "../../models/MedicineSchedule";
+import {
+  BaseUnit,
+  Medicine,
+  MedicineSchedule,
+} from "../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { Group } from "../../models/Frequency";
+import { Group, IntervalUnit } from "../../models/Frequency";
 import {
   cancelGroupNotification,
   scheduleGroupNotification,
@@ -42,10 +46,13 @@ import {
   Assessment,
   ValueType,
   ValueDomain,
+  AssessmentSchedule,
 } from "../../models/AssessmentSchedule";
 import { AssessmentInputDialog } from "../../components/AssessmentInputDialog";
 import {
   dayDifference,
+  getShiftedDateOnly,
+  getWeekday,
   isEqualDateOnly,
   normalizeToDateOnly,
 } from "../../dateOnlyUtils";
@@ -521,21 +528,43 @@ export function Home({ date }: { date: Date }) {
     setGroups(idToGroup);
   }, [db]);
 
-  const loadScheduledDosages = React.useCallback(async () => {
-    const result = await dbGetMedicineSchedules(db);
-    const schedulesToday = result.filter((s) => {
-      const timeMatch =
-        s.startDate <= date && (!s.endDate || (s.endDate && date <= s.endDate));
-
-      let dayFreqMatch = true;
-      if (s.freq.intervalUnit === "week") {
+  const dailyScheduleFilter = React.useCallback(
+    (s: AssessmentSchedule | MedicineSchedule): boolean => {
+      if (s.freq.intervalUnit === IntervalUnit.day) {
         const dayDiff = dayDifference(date, s.startDate);
-        if (dayDiff % (s.freq.intervalLength * 7) !== 0) {
-          dayFreqMatch = false;
+        if (dayDiff % s.freq.intervalLength !== 0) {
+          return true;
         }
       }
+      return false;
+    },
+    [date],
+  );
 
-      return timeMatch && dayFreqMatch;
+  const weeklyScheduleFilter = React.useCallback(
+    (s: AssessmentSchedule | MedicineSchedule, offset: number) => {
+      if (s.freq.intervalUnit === IntervalUnit.week) {
+        const startDayWeekday = getWeekday(s.startDate);
+        const startDayWeekStart = getShiftedDateOnly(
+          s.startDate,
+          -startDayWeekday,
+        );
+        const dayDiff = dayDifference(date, startDayWeekStart);
+        if ((dayDiff - offset) % (7 * s.freq.intervalLength) !== 0) {
+          return true;
+        }
+      }
+      return false;
+    },
+    [date],
+  );
+
+  const loadScheduledDosages = React.useCallback(async () => {
+    const result = await dbGetMedicineSchedules(db);
+    const schedulesOverlapping = result.filter((s) => {
+      const timeMatch =
+        s.startDate <= date && (!s.endDate || (s.endDate && date <= s.endDate));
+      return timeMatch;
     });
 
     let newIsEmpty = true;
@@ -544,8 +573,15 @@ export function Home({ date }: { date: Date }) {
     const dosageRecords = await dbGetScheduledDosageRecords(db, date, date);
 
     let newScheduledDosages = new Map<number | null, DosageInfo[]>();
-    for (const s of schedulesToday) {
+    for (const s of schedulesOverlapping) {
+      if (dailyScheduleFilter(s)) {
+        continue;
+      }
+
       for (const dosage of s.dosages) {
+        if (weeklyScheduleFilter(s, dosage.offset)) {
+          continue;
+        }
         const groupId = dosage.groupId;
         const groupDosages = newScheduledDosages.get(groupId) || [];
         const dosageRecord = dosageRecords.find(
@@ -574,29 +610,20 @@ export function Home({ date }: { date: Date }) {
     setScheduledDosages(newScheduledDosages);
     if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
-  }, [date, db]);
+  }, [date, db, dailyScheduleFilter, weeklyScheduleFilter]);
 
   const loadScheduledMeasurments = React.useCallback(async () => {
     const result = await dbGetAssessmentSchedules(db);
-    const schedulesToday = result.filter((s) => {
+    const schedulesOverlapping = result.filter((s) => {
       const timeMatch =
         s.startDate <= date && (!s.endDate || (s.endDate && date <= s.endDate));
-
-      let dayFreqMatch = true;
-      if (s.freq.intervalUnit === "week") {
-        const dayDiff = dayDifference(date, s.startDate);
-        if (dayDiff % (s.freq.intervalLength * 7) !== 0) {
-          dayFreqMatch = false;
-        }
-      }
-
-      return timeMatch && dayFreqMatch;
+      return timeMatch;
     });
 
     let newIsEmpty = true;
     let newAreGroupsEmpty = true;
 
-    const measurmentRecords = await dbGetScheduledMeasurmentRecords(
+    const measurementRecords = await dbGetScheduledMeasurmentRecords(
       db,
       date,
       date,
@@ -606,27 +633,34 @@ export function Home({ date }: { date: Date }) {
       number | null,
       ScheduledMeasurmentInfo[]
     >();
-    for (const s of schedulesToday) {
-      for (const measurment of s.measurments) {
-        const groupId = measurment.groupId;
-        const groupMeasurments = newScheduledMeasurments.get(groupId) || [];
-        const measurmentRecord = measurmentRecords.find(
+    for (const s of schedulesOverlapping) {
+      if (dailyScheduleFilter(s)) {
+        continue;
+      }
+      for (const measurement of s.measurments) {
+        if (weeklyScheduleFilter(s, measurement.offset)) {
+          continue;
+        }
+
+        const groupId = measurement.groupId;
+        const groupMeasurements = newScheduledMeasurments.get(groupId) || [];
+        const measurementRecord = measurementRecords.find(
           (mr) =>
             mr.assessmentScheduleId === s.dbId &&
-            mr.measurmentIndex === measurment.index,
+            mr.measurmentIndex === measurement.index,
         );
-        const measurmentRecordId = measurmentRecord
-          ? measurmentRecord.dbId
+        const measurementRecordId = measurementRecord
+          ? measurementRecord.dbId
           : null;
-        groupMeasurments.push(
+        groupMeasurements.push(
           new ScheduledMeasurmentInfo(
             s.assessment.name,
             s.assessment.type,
-            measurmentRecord ? measurmentRecord.value : null,
+            measurementRecord ? measurementRecord.value : null,
             s.assessment.valueDomain,
-            measurment.index,
+            measurement.index,
             s.dbId,
-            measurmentRecordId,
+            measurementRecordId,
             groupId,
           ),
         );
@@ -634,13 +668,13 @@ export function Home({ date }: { date: Date }) {
         if (groupId !== null) {
           newAreGroupsEmpty = false;
         }
-        newScheduledMeasurments.set(groupId, groupMeasurments);
+        newScheduledMeasurments.set(groupId, groupMeasurements);
       }
     }
     setScheduledMeasurments(newScheduledMeasurments);
     if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
-  }, [date, db]);
+  }, [date, db, dailyScheduleFilter, weeklyScheduleFilter]);
 
   const loadUnscheduledDosageRecords = React.useCallback(async () => {
     const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(

@@ -1,11 +1,3 @@
-export enum FrequencySelection {
-  OnceDaily = "OnceDaily",
-  TwiceDaily = "TwiceDaily",
-  ThriceDaily = "ThriceDaily",
-  OnceWeekly = "OnceWeekly",
-  OnceBiweekly = "OnceBiweekly",
-}
-
 export enum IntervalUnit {
   day = "day",
   week = "week",
@@ -25,22 +17,6 @@ export class Frequency {
     this.intervalUnit = intervalUnit;
     this.intervalLength = intervalLength;
     this.numberOfDosages = numberOfDosages;
-  }
-
-  getFrequencyLabel(): FrequencySelection {
-    const unit = this.intervalUnit;
-    const length = this.intervalLength;
-    const dosages = this.numberOfDosages;
-
-    if (unit === "day" && length === 1) {
-      if (dosages === 1) return FrequencySelection.OnceDaily;
-      if (dosages === 2) return FrequencySelection.TwiceDaily;
-      if (dosages === 3) return FrequencySelection.ThriceDaily;
-    } else if (unit === "week" && dosages === 1) {
-      if (length === 1) return FrequencySelection.OnceWeekly;
-      if (length === 2) return FrequencySelection.OnceBiweekly;
-    }
-    throw Error("Wrong frequency data.");
   }
 }
 

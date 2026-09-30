@@ -37,7 +37,7 @@ import {
   dbInsertAssessment,
   dbUpdateAssessment,
 } from "../../models/dbAccess";
-import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonConsts";
+import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../../commonStyles";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import { isEqualLowerCase } from "../utils";
@@ -481,7 +481,7 @@ export function EditAssessmentScreen() {
             placeholder="Assessment Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              eStyles.pressableTextInput,
+              eStyles.fullWidthTextInputPressable,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,

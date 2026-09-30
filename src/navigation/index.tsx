@@ -33,6 +33,8 @@ import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
 import { AssessmentListScreen } from "./screens/AssessmentListScreen";
 import { AssessmentSchedulesListScreen } from "./screens/AssessmentsSchedulesListScreen";
 import { SelectEntryTypeScreen } from "./screens/SelectEntryTypeScreen";
+import { EditCustomFrequencyScreen } from "./screens/ScheduleScreens/EditCustomFrequencyScreen";
+import { Frequency } from "../models/Frequency";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
   screens: {
@@ -162,9 +164,17 @@ export type RootStackParamList = {
     { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
   EditMedicineScheduleScreen: {
     medicine: MedicineParam;
+    customFrequency?: {
+      freq: Frequency;
+      offsetsMultiplier: number[] | null;
+    };
   };
   EditAssessmentScheduleScreen: {
     assessment: AssessmentParam;
+    customFrequency?: {
+      freq: Frequency;
+      offsetsMultiplier: number[] | null;
+    };
   };
   PartiallyEditAnyScheduleScreen: {
     scheduleId: number;
@@ -196,6 +206,7 @@ export type RootStackParamList = {
       dbId: number;
     };
   };
+  EditCustomFrequencyScreen: undefined;
   NotFound: undefined;
 };
 
@@ -292,6 +303,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Edit group",
+      },
+    },
+    EditCustomFrequencyScreen: {
+      screen: EditCustomFrequencyScreen,
+      options: {
+        presentation: "modal",
+        title: "Create custom frequency",
       },
     },
     NotFound: {

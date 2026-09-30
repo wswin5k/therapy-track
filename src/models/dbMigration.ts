@@ -16,6 +16,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   if (currentDbVersion >= DATABASE_VERSION) {
     return;
   }
+  // todo: offset not null
   if (currentDbVersion === 0) {
     await db.execAsync(`
       PRAGMA journal_mode = 'wal';

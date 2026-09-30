@@ -35,7 +35,7 @@ import {
 } from "../../services/notificationService";
 import { isEqualLowerCase } from "../utils";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
-import { ERROR_BORDER_WIDTH } from "../commonConsts";
+import { ERROR_BORDER_WIDTH } from "../../commonStyles";
 import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../commonStyles";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
@@ -231,7 +231,7 @@ export function EditGroupScreen() {
             placeholder="Group Name"
             placeholderTextColor={theme.colors.textTertiary}
             style={[
-              eStyles.pressableTextInput,
+              eStyles.fullWidthTextInputPressable,
               {
                 borderColor: theme.colors.border,
                 color: theme.colors.text,

@@ -62,34 +62,20 @@ export function maxWeightUnit(
 }
 
 export class ActiveIngredient {
-  name: string;
-  amount: number;
-  unit: IngredientAmountUnit;
-
-  constructor(name: string, amount: number, unit: IngredientAmountUnit) {
-    this.name = name;
-    this.amount = amount;
-    this.unit = unit;
-  }
+  constructor(
+    public name: string,
+    public amount: number,
+    public unit: IngredientAmountUnit,
+  ) {}
 }
 
 export class Medicine {
-  name: string;
-  baseUnit: BaseUnit;
-  activeIngredients: ActiveIngredient[];
-  dbId: number;
-
   constructor(
-    name: string,
-    baseUnit: BaseUnit,
-    activeIngredients: ActiveIngredient[],
-    dbId: number,
-  ) {
-    this.name = name;
-    this.baseUnit = baseUnit;
-    this.activeIngredients = activeIngredients;
-    this.dbId = dbId;
-  }
+    public name: string,
+    public baseUnit: BaseUnit,
+    public activeIngredients: ActiveIngredient[],
+    public dbId: number,
+  ) {}
 
   activeIngredientsString(): string[] {
     return this.activeIngredients.map(
@@ -100,48 +86,22 @@ export class Medicine {
 }
 
 export class Dosage {
-  amount: number;
-  index: number;
-  offset: number | null;
-  groupId: number | null;
-  dbId: number;
-
   constructor(
-    amount: number,
-    index: number,
-    offset: number | null,
-    groupId: number | null = null,
-    dbId: number,
-  ) {
-    this.amount = amount;
-    this.index = index;
-    this.offset = offset;
-    this.groupId = groupId;
-    this.dbId = dbId;
-  }
+    public amount: number,
+    public index: number,
+    public offset: number,
+    public groupId: number | null = null,
+    public dbId: number,
+  ) {}
 }
 
 export class MedicineSchedule {
-  medicine: Medicine;
-  startDate: Date;
-  endDate: Date | null;
-  freq: Frequency;
-  dosages: Dosage[];
-  dbId: number;
-
   constructor(
-    medicine: Medicine,
-    startDate: Date,
-    endDate: Date | null,
-    freq: Frequency,
-    dosages: Dosage[],
-    dbId: number,
-  ) {
-    this.medicine = medicine;
-    this.startDate = startDate;
-    this.endDate = endDate;
-    this.freq = freq;
-    this.dosages = dosages;
-    this.dbId = dbId;
-  }
+    public medicine: Medicine,
+    public startDate: Date,
+    public endDate: Date | null,
+    public freq: Frequency,
+    public dosages: Dosage[],
+    public dbId: number,
+  ) {}
 }

@@ -22,11 +22,10 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import {
-  assessmentTypeToDisplayForm,
-  frequencySelectionToDisplayForm,
-} from "../enumMappings";
+import { assessmentTypeToDisplayForm } from "../enumMappings";
+import { frequencyToDisplayForm, getWeekdays } from "./ScheduleScreens/common";
 import { AssessmentSchedule } from "../../models/AssessmentSchedule";
+import { capitalizeFirstLetter } from "../utils";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -51,6 +50,10 @@ function ScheduleListItem({
   const navigation = useNavigation<EditMedicineScreenNavigationProp>();
   const theme = useTheme();
   const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
+
+  const weekdays = React.useMemo(() => {
+    return getWeekdays(i18n.resolvedLanguage || i18n.language);
+  }, [i18n.resolvedLanguage, i18n.language]);
 
   const handleDelete = () => {
     setDeleteDialogVisible(true);
@@ -86,9 +89,15 @@ function ScheduleListItem({
     });
   };
 
-  const frequencyLabel = frequencySelectionToDisplayForm(
-    schedule.freq.getFrequencyLabel(),
+  const frequencyLabel = capitalizeFirstLetter(
+    frequencyToDisplayForm(
+      t,
+      weekdays,
+      schedule.freq,
+      schedule.measurments.map((m) => m.offset),
+    ),
   );
+
   const dateRange = schedule.endDate
     ? `${formatDate(schedule.startDate)} - ${formatDate(schedule.endDate)}`
     : `${formatDate(schedule.startDate)} - ${t("No end date")}`;

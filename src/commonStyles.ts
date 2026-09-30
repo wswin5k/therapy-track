@@ -1,5 +1,7 @@
 import { StyleSheet } from "react-native";
 
+export const ERROR_BORDER_WIDTH: number = 1.5;
+export const DISABLED_OPACITY: number = 0.4;
 export const DEFAULT_BORDER_RADIUS: number = 8;
 export const PRESSABLE_PADDING_HORIZONTAL: number = 12;
 
@@ -22,7 +24,7 @@ export const eStyles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "400",
   },
-  pressableTextInput: {
+  fullWidthTextInputPressable: {
     height: EDIT_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,

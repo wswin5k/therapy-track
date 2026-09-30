@@ -13,10 +13,7 @@ import {
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import {
-  DISABLED_OPACITY,
-  ERROR_BORDER_WIDTH,
-} from "../navigation/commonConsts";
+import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonStyles";
 import {
   EDIT_PRESSABLE_HEIGHT,
   PRESSABLE_PADDING_HORIZONTAL,
@@ -27,7 +24,8 @@ import {
 interface ModalPickerProps<T> {
   values: T[];
   onValueChange: (value: T) => void;
-  getLabel: (value: T) => string;
+  getLabel: (value: T) => string | null;
+  getPressableLabel?: (value: T | null) => string | null;
   selectedValue: T | null;
   placeholder?: string;
   pressableStyle?: StyleProp<ViewStyle>;
@@ -41,6 +39,7 @@ export function ModalPicker<T>({
   values,
   onValueChange,
   getLabel,
+  getPressableLabel = undefined,
   selectedValue = null,
   placeholder = "Select an option",
   pressableStyle,
@@ -77,10 +76,20 @@ export function ModalPicker<T>({
   };
 
   const getLabelSafe = (value: T | null): string => {
-    return value ? getLabel(value) : placeholder;
+    return value ? (getLabel(value) ?? placeholder) : placeholder;
   };
 
-  const selectedLabel = getLabelSafe(selectedValue);
+  const getPressableLabelSafe = (value: T | null): string => {
+    if (getPressableLabel) {
+      return getPressableLabel(value) ?? placeholder;
+    } else if (value) {
+      return getLabel(value) ?? placeholder;
+    } else {
+      return placeholder;
+    }
+  };
+
+  const pressableLabel = getPressableLabelSafe(selectedValue);
 
   const renderTitle = () => {
     return (
@@ -132,15 +141,15 @@ export function ModalPicker<T>({
       >
         <Text
           style={[
-            eStyles.pressableText,
+            styles.pressableText,
             { color: theme.colors.text },
-            (!selectedValue || disabled) && {
+            (pressableLabel === placeholder || disabled) && {
               color: theme.colors.textTertiary,
             },
           ]}
           numberOfLines={1}
         >
-          {selectedLabel}
+          {pressableLabel}
         </Text>
         <Text
           style={[
@@ -240,10 +249,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pressableText: {
+    ...eStyles.pressableText,
+    flex: 1,
   },
   chevron: {
     fontSize: 12,
     marginLeft: 8,
+    flexShrink: 0,
   },
   modalOverlay: {
     flex: 1,
