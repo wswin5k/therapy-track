@@ -135,6 +135,8 @@ export function HomeSwipeable() {
         targetIndex = INIITIAL_INDEX + days;
       } else if (newDate < today) {
         targetIndex = INIITIAL_INDEX - days;
+      } else {
+        targetIndex = INIITIAL_INDEX;
       }
       if (targetIndex && listRef.current) {
         setCurrentIndex(targetIndex);

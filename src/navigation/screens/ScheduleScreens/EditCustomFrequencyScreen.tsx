@@ -86,8 +86,8 @@ export function EditCustomFrequencyScreen() {
     const state = navigation.getState();
     if (state && customFrequency) {
       const previousRoute = state.routes[state.index - 1];
-      const previousRouteName =
-        previousRoute.name as "EditAssessmentScheduleScreen";
+      const previousRouteName = previousRoute.name as
+        "EditAssessmentScheduleScreen" | "EditMedicineScheduleScreen";
       if (previousRoute) {
         navigation.navigate(
           previousRouteName,
