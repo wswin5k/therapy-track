@@ -10,7 +10,6 @@ import {
   BaseUnit,
   IngredientAmountUnit,
   Medicine,
-  strKeyOfBaseUnit,
 } from "./MedicineSchedule";
 import {
   AssessmentValue,
@@ -35,6 +34,7 @@ import {
   serializeDateOnly,
   serializeDateOnlyNullable,
 } from "../dateOnlyUtils";
+import { Settings, ThemeSelection } from "./Settings";
 
 interface MedicineScheduleWithMedicineRow {
   id: number;
@@ -134,6 +134,11 @@ interface ScheduledMeasurmentRecordRow {
   assessment_type: ValueType;
 }
 
+interface SettingsRow {
+  id: number;
+  theme: string;
+}
+
 function serializeRecordDatetime(value: Date): string {
   return value.toISOString();
 }
@@ -145,7 +150,11 @@ function deserializeRecordDatetime(value: string): Date {
 function parseActiveIngredients(json: string) {
   const aiData = JSON.parse(json);
   return aiData.map((ai: { name: string; amount: number; unit: string }) => {
-    if (!Object.keys(IngredientAmountUnit).includes(ai.unit)) {
+    if (
+      !Object.values(IngredientAmountUnit).includes(
+        ai.unit as IngredientAmountUnit,
+      )
+    ) {
       throw Error(`${ai.unit} is not a valid IngredientAmountUnit enum value.`);
     }
     return new ActiveIngredient(
@@ -238,7 +247,7 @@ export async function dbUpdateMedicine(
     SET name = ?, base_unit = ?, active_ingredients = ?
     WHERE id = ?`,
     medicine.name,
-    strKeyOfBaseUnit(medicine.baseUnit),
+    medicine.baseUnit,
     activeIngredientsStr,
     medicine.dbId,
   );
@@ -277,7 +286,7 @@ export async function dbInsertMedicine(
   const db_insert = await db.runAsync(
     "INSERT INTO medicines (name, base_unit, active_ingredients) VALUES (?, ?, ?)",
     medicine.name,
-    strKeyOfBaseUnit(medicine.baseUnit),
+    medicine.baseUnit,
     activeIngredientsStr,
   );
   return db_insert.lastInsertRowId;
@@ -1090,4 +1099,33 @@ export async function dbGetAssessmentSchedule(
   }
   row.measurments = measurmentsRows;
   return parseAssessmentScheduleWithAssessmentRow(row);
+}
+
+export async function dbGetSettings(db: SQLiteDatabase): Promise<Settings> {
+  const row = await db.getFirstAsync<SettingsRow>(`
+      SELECT id, theme
+      FROM settings
+      WHERE id = 1
+    `);
+  if (row === null) {
+    throw Error("No settings in the database.");
+  }
+  if (!Object.values(ThemeSelection).includes(row.theme as ThemeSelection)) {
+    throw Error(`${row.theme} is not a valid IngredientAmountUnit enum value.`);
+  }
+  return new Settings(row.theme as ThemeSelection);
+}
+
+export async function dbUpdateSettings(
+  db: SQLiteDatabase,
+  settings: {
+    theme: ThemeSelection;
+  },
+) {
+  await db.runAsync(
+    `UPDATE settings
+    SET theme = ?
+    WHERE id = 1`,
+    settings.theme,
+  );
 }

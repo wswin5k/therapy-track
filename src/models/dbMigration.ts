@@ -114,6 +114,20 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     `);
     currentDbVersion = 1;
   }
+
+  if (currentDbVersion === 1) {
+    await db.execAsync(`
+      PRAGMA journal_mode = 'wal';
+
+      CREATE TABLE settings (
+      id INTEGER PRIMARY KEY NOT NULL,
+      theme TEXT NOT NULL);
+
+      INSERT INTO settings (id, theme) VALUES (1, "Auto");
+      `);
+    currentDbVersion = 2;
+  }
+
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 

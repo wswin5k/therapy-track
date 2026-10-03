@@ -18,10 +18,6 @@ export enum BaseUnit {
   Dose = "Dose",
 }
 
-export function strKeyOfBaseUnit(x: BaseUnit) {
-  return Object.keys(BaseUnit)[Object.values(BaseUnit).indexOf(x)];
-}
-
 export enum IngredientAmountUnit {
   Milligram = "Milligram",
   Gram = "Gram",
