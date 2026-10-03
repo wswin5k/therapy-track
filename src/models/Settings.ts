@@ -18,18 +18,6 @@ export function themeSelectionToColorSchemeName(
   }
 }
 
-export function colorSchemeNameToThemeSelection(
-  value: ColorSchemeName,
-): ThemeSelection {
-  if (value === "light") {
-    return ThemeSelection.Light;
-  } else if (value === "dark") {
-    return ThemeSelection.Dark;
-  } else {
-    return ThemeSelection.Auto;
-  }
-}
-
 export class Settings {
   constructor(public theme: ThemeSelection) {}
 }

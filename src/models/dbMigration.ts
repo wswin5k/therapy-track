@@ -117,8 +117,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
   if (currentDbVersion === 1) {
     await db.execAsync(`
-      PRAGMA journal_mode = 'wal';
-
       CREATE TABLE settings (
       id INTEGER PRIMARY KEY NOT NULL,
       theme TEXT NOT NULL);
