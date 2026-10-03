@@ -35,6 +35,7 @@ import { AssessmentSchedulesListScreen } from "./screens/AssessmentsSchedulesLis
 import { SelectEntryTypeScreen } from "./screens/SelectEntryTypeScreen";
 import { EditCustomFrequencyScreen } from "./screens/ScheduleScreens/EditCustomFrequencyScreen";
 import { Frequency } from "../models/Frequency";
+import { SettingsScreen } from "./screens/SettingsScreen";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
   screens: {
@@ -73,6 +74,12 @@ const DrawerTabs = createDrawerNavigator({
     drawerInactiveTintColor: theme.colors.text,
     drawerStyle: {
       backgroundColor: theme.colors.card,
+    },
+    drawerContentContainerStyle: {
+      flexGrow: 1,
+    },
+    drawerLabelStyle: {
+      fontSize: 16,
     },
     headerStyle: {
       backgroundColor: theme.colors.card,
@@ -140,6 +147,18 @@ const DrawerTabs = createDrawerNavigator({
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
           <Ionicons name="receipt" size={size} color={color} />
         ),
+      },
+    },
+    SettingsScreen: {
+      screen: SettingsScreen,
+      options: {
+        title: "Settings",
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Ionicons name="settings" size={size} color={color} />
+        ),
+        drawerItemStyle: {
+          marginTop: "auto",
+        },
       },
     },
   },
