@@ -1111,7 +1111,7 @@ export async function dbGetSettings(db: SQLiteDatabase): Promise<Settings> {
     throw Error("No settings in the database.");
   }
   if (!Object.values(ThemeSelection).includes(row.theme as ThemeSelection)) {
-    throw Error(`${row.theme} is not a valid IngredientAmountUnit enum value.`);
+    throw Error(`${row.theme} is not a valid ThemeSelection enum value.`);
   }
   return new Settings(row.theme as ThemeSelection);
 }
@@ -1128,4 +1128,16 @@ export async function dbUpdateSettings(
     WHERE id = 1`,
     settings.theme,
   );
+}
+
+export function dbGetSettings2(db: SQLiteDatabase) {
+  const row = db.getFirstSync<SettingsRow>(`
+      SELECT id, theme
+      FROM settings2
+      WHERE id = 1
+    `);
+  if (row === null) {
+    throw Error("No settings in the database.");
+  }
+  return row.theme;
 }

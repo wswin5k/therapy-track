@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   clearButton: {
-    borderWidth: 1.2,
+    borderWidth: 1.5,
   },
   buttonText: {
     fontSize: 17,

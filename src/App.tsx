@@ -3,7 +3,10 @@ import { createURL } from "expo-linking";
 import { Appearance, ColorSchemeName, useColorScheme } from "react-native";
 import { Navigation } from "./navigation";
 import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
-import { DATABASE_NAME, migrateDbIfNeeded } from "./models/dbMigration";
+import {
+  DATABASE_NAME_WITH_EXT,
+  migrateDbIfNeeded,
+} from "./models/dbMigration";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
@@ -102,7 +105,10 @@ function AppNavigation() {
 
 export function App() {
   return (
-    <SQLiteProvider databaseName={DATABASE_NAME} onInit={migrateDbIfNeeded}>
+    <SQLiteProvider
+      databaseName={DATABASE_NAME_WITH_EXT}
+      onInit={migrateDbIfNeeded}
+    >
       <SafeAreaProvider>
         <AppNavigation />
       </SafeAreaProvider>

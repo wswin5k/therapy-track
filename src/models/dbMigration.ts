@@ -1,8 +1,8 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-export async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 2;
+export const APP_DATABASE_VERSION = 2;
 
+export async function getDbVersion(db: SQLiteDatabase) {
   const pragma_user_version = await db.getFirstAsync<{
     user_version: number;
   }>("PRAGMA user_version");
@@ -11,11 +11,16 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     throw Error("Invalid database file.");
   }
 
-  let currentDbVersion = pragma_user_version.user_version;
+  return pragma_user_version.user_version;
+}
 
-  if (currentDbVersion >= DATABASE_VERSION) {
+export async function migrateDbIfNeeded(db: SQLiteDatabase) {
+  let currentDbVersion = await getDbVersion(db);
+
+  if (currentDbVersion >= APP_DATABASE_VERSION) {
     return;
   }
+
   // todo: offset not null
   if (currentDbVersion === 0) {
     await db.execAsync(`
@@ -126,7 +131,8 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     currentDbVersion = 2;
   }
 
-  await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
+  await db.execAsync(`PRAGMA user_version = ${APP_DATABASE_VERSION}`);
 }
 
-export const DATABASE_NAME: string = "main.db";
+export const DATABASE_NAME: string = "main";
+export const DATABASE_NAME_WITH_EXT: string = `${DATABASE_NAME}.db`;
