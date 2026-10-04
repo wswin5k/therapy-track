@@ -1129,15 +1129,3 @@ export async function dbUpdateSettings(
     settings.theme,
   );
 }
-
-export function dbGetSettings2(db: SQLiteDatabase) {
-  const row = db.getFirstSync<SettingsRow>(`
-      SELECT id, theme
-      FROM settings2
-      WHERE id = 1
-    `);
-  if (row === null) {
-    throw Error("No settings in the database.");
-  }
-  return row.theme;
-}
