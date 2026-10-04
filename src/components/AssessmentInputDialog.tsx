@@ -102,7 +102,7 @@ export function AssessmentInputDialog({
                   onPress={onClear}
                 >
                   <Text
-                    style={[styles.buttonText, { color: theme.colors.text }]}
+                    style={[styles.buttonText, { color: theme.colors.primary }]}
                   >
                     {t("Clear")}
                   </Text>
