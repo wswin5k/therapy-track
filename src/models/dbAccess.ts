@@ -1111,7 +1111,7 @@ export async function dbGetSettings(db: SQLiteDatabase): Promise<Settings> {
     throw Error("No settings in the database.");
   }
   if (!Object.values(ThemeSelection).includes(row.theme as ThemeSelection)) {
-    throw Error(`${row.theme} is not a valid IngredientAmountUnit enum value.`);
+    throw Error(`${row.theme} is not a valid ThemeSelection enum value.`);
   }
   return new Settings(row.theme as ThemeSelection);
 }

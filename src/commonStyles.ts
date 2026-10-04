@@ -7,6 +7,7 @@ export const PRESSABLE_PADDING_HORIZONTAL: number = 12;
 
 //styles for edit screens
 export const EDIT_PRESSABLE_HEIGHT: number = 54;
+export const SECONDARY_EDIT_PRESSABLE_HEIGHT: number = 50;
 
 export const eStyles = StyleSheet.create({
   editMainScrollContainer: {

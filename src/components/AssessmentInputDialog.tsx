@@ -102,7 +102,7 @@ export function AssessmentInputDialog({
                   onPress={onClear}
                 >
                   <Text
-                    style={[styles.buttonText, { color: theme.colors.text }]}
+                    style={[styles.buttonText, { color: theme.colors.primary }]}
                   >
                     {t("Clear")}
                   </Text>
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   clearButton: {
-    borderWidth: 1.2,
+    borderWidth: 1.5,
   },
   buttonText: {
     fontSize: 17,
