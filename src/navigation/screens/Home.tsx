@@ -1067,7 +1067,7 @@ export function Home({ date }: { date: Date }) {
   );
 }
 
-const COMMON_CONTENT_TEXT: StyleProp<TextStyle>= {
+const COMMON_CONTENT_TEXT: StyleProp<TextStyle> = {
   fontSize: 16,
   fontWeight: 400,
 };
@@ -1126,17 +1126,6 @@ const styles = StyleSheet.create({
     ...COMMON_CONTENT_TEXT,
     marginBottom: 4,
     maxWidth: "100%",
-  },
-  checkIcon: {
-    borderRadius: 15,
-    height: 25,
-    width: 25,
-  },
-  checkButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    padding: 0,
   },
   emptyContainer: {
     alignItems: "center",
