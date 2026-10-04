@@ -1,7 +1,9 @@
 import {
   ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
+  TextStyle,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -1065,6 +1067,11 @@ export function Home({ date }: { date: Date }) {
   );
 }
 
+const COMMON_CONTENT_TEXT: StyleProp<TextStyle> = {
+  fontSize: 16,
+  fontWeight: 400,
+};
+
 const styles = StyleSheet.create({
   list: {
     padding: 18,
@@ -1111,38 +1118,14 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   contentText: {
-    fontSize: 15,
-    fontWeight: 400,
+    ...COMMON_CONTENT_TEXT,
     marginBottom: 4,
     maxWidth: "85%",
   },
   unscheduledContentText: {
-    fontSize: 15,
-    fontWeight: 400,
+    ...COMMON_CONTENT_TEXT,
     marginBottom: 4,
     maxWidth: "100%",
-  },
-  frequency: {
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  dosages: {
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  dateRange: {
-    fontSize: 13,
-  },
-  checkIcon: {
-    borderRadius: 15,
-    height: 25,
-    width: 25,
-  },
-  checkButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    padding: 0,
   },
   emptyContainer: {
     alignItems: "center",
