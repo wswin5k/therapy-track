@@ -24,6 +24,7 @@ import {
   dbGetUnscheduledDosageRecords,
   dbGetUnscheduledMeasurmentRecords,
   dbGetHistoryTableSettings,
+  dbUpdateHistoryTableSettings,
 } from "../../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import {
@@ -194,8 +195,9 @@ export function HistoryTableScreen() {
   const [cells, setCells] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
-  const [historyTableSettings, setHistoryTableSettings] =
-    React.useState<HistoryTableSettings>(defaultConfiguration());
+  const [settings, setSettings] = React.useState<HistoryTableSettings>(
+    defaultConfiguration(),
+  );
 
   function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
@@ -266,8 +268,9 @@ export function HistoryTableScreen() {
   }
 
   const getAssessmentData = React.useCallback(async (): Promise<TableData> => {
-    const scheuledMeasurmentRecrods = await dbGetScheduledMeasurmentRecords(db);
-    const unscheduledMeasurmentRecords =
+    const scheuledMeasurementRecrods =
+      await dbGetScheduledMeasurmentRecords(db);
+    const unscheduledMeasurementRecords =
       await dbGetUnscheduledMeasurmentRecords(db);
 
     const assessmentSchedules = await dbGetAssessmentSchedules(db);
@@ -298,7 +301,7 @@ export function HistoryTableScreen() {
       const group = groupId === null ? null : idToGroup.get(groupId);
       let groupLabel = "";
       if (group === undefined) {
-        throw Error("Measurment record has invalid group.");
+        throw Error("Measurement record has invalid group.");
       } else if (group === null) {
         groupLabel = "ungrouped";
       } else {
@@ -309,7 +312,7 @@ export function HistoryTableScreen() {
 
     const fullHeaderToValueType = new Map();
 
-    for (const r of unscheduledMeasurmentRecords) {
+    for (const r of unscheduledMeasurementRecords) {
       const dateStr = extractDate(r.date);
       const dailyRow =
         dayToHeaderToValues.get(extractDate(r.date)) ||
@@ -338,7 +341,7 @@ export function HistoryTableScreen() {
       fullHeaderToValueType.set(fullHeader, assessment.type);
     }
 
-    for (const r of scheuledMeasurmentRecrods) {
+    for (const r of scheuledMeasurementRecrods) {
       const dateStr = extractDate(r.date);
       const dailyRow =
         dayToHeaderToValues.get(dateStr) || new Map<string, string>();
@@ -349,9 +352,9 @@ export function HistoryTableScreen() {
       if (!assessmentSchedule) {
         throw Error("Record not connected to assessment schedule.");
       }
-      const measurment = assessmentSchedule.measurments[r.measurmentIndex];
+      const measurement = assessmentSchedule.measurments[r.measurmentIndex];
 
-      const groupLabel = getGroupLabel(measurment.groupId);
+      const groupLabel = getGroupLabel(measurement.groupId);
       const fullHeader = `${assessmentSchedule.assessment.name} – ${groupLabel}`;
       const shortHeader = assessmentSchedule.assessment.name;
 
@@ -424,12 +427,12 @@ export function HistoryTableScreen() {
       }
       const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
 
-      if (historyTableSettings.showActiveIngredients) {
+      if (settings.showActiveIngredients) {
         for (const ai of medicine.activeIngredients) {
           const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
           let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
           let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
-          if (historyTableSettings.mergeIngredientsWithDifferentForms) {
+          if (settings.mergeIngredientsWithDifferentForms) {
             fullHeader = shortHeader;
           }
 
@@ -437,7 +440,7 @@ export function HistoryTableScreen() {
           if (isWeightUnit(ai.unit)) {
             fullHeader = `${ai.name} – ${baseUnitLabel}`;
             shortHeader = `${ai.name}`;
-            if (historyTableSettings.mergeIngredientsWithDifferentForms) {
+            if (settings.mergeIngredientsWithDifferentForms) {
               fullHeader = shortHeader;
             }
             weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
@@ -461,7 +464,7 @@ export function HistoryTableScreen() {
         }
       }
 
-      if (historyTableSettings.showMedicines) {
+      if (settings.showMedicines) {
         const header = `${medicine.name} [${baseUnitLabel}]`;
         let amountTotal = dailyRow.get(header) || 0;
 
@@ -492,12 +495,12 @@ export function HistoryTableScreen() {
       const medicine = schedule.medicine;
       const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
 
-      if (historyTableSettings.showActiveIngredients) {
+      if (settings.showActiveIngredients) {
         for (const ai of medicine.activeIngredients) {
           const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
           let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
           let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
-          if (historyTableSettings.mergeIngredientsWithDifferentForms) {
+          if (settings.mergeIngredientsWithDifferentForms) {
             fullHeader = shortHeader;
           }
 
@@ -505,7 +508,7 @@ export function HistoryTableScreen() {
           if (isWeightUnit(ai.unit)) {
             fullHeader = `${ai.name} – ${baseUnitLabel}`;
             shortHeader = `${ai.name}`;
-            if (historyTableSettings.mergeIngredientsWithDifferentForms) {
+            if (settings.mergeIngredientsWithDifferentForms) {
               fullHeader = shortHeader;
             }
             weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
@@ -532,7 +535,7 @@ export function HistoryTableScreen() {
         }
       }
 
-      if (historyTableSettings.showMedicines) {
+      if (settings.showMedicines) {
         const header = `${medicine.name} [${baseUnitLabel}]`;
 
         updateHeaderCounter(
@@ -576,14 +579,14 @@ export function HistoryTableScreen() {
     );
   }, [
     db,
-    historyTableSettings.showActiveIngredients,
-    historyTableSettings.showMedicines,
-    historyTableSettings.mergeIngredientsWithDifferentForms,
+    settings.showActiveIngredients,
+    settings.showMedicines,
+    settings.mergeIngredientsWithDifferentForms,
   ]);
 
   const loadAndCombineDataForTable = React.useCallback(async () => {
     const medicineTableData = await getMedicineData();
-    const assessmentTableData = historyTableSettings.showAssessments
+    const assessmentTableData = settings.showAssessments
       ? await getAssessmentData()
       : new TableData([], new Map(), new Map(), new Map());
 
@@ -598,7 +601,7 @@ export function HistoryTableScreen() {
     ]);
     const days = Array.from(daysSet).sort();
     let dates = [];
-    if (historyTableSettings.showDaysWithoutEntries) {
+    if (settings.showDaysWithoutEntries) {
       const startDay = deserializeDateOnly(days[0]);
       const endDate = deserializeDateOnly(days[days.length - 1]);
 
@@ -640,7 +643,7 @@ export function HistoryTableScreen() {
       ...medicineTableData.fullHeaders,
       ...assessmentTableData.fullHeaders,
     );
-    headers.unshift("Date");
+    //headers.unshift("Date");
     setFullHeaders(headers);
 
     const types = new Map([
@@ -658,19 +661,23 @@ export function HistoryTableScreen() {
     setFullHeaderToDisplayHeader(headersMap);
 
     setRowHeaders(dates);
-
     setCells(newTableRows);
   }, [
     getAssessmentData,
     getMedicineData,
-    historyTableSettings.showAssessments,
-    historyTableSettings.showDaysWithoutEntries,
+    settings.showAssessments,
+    settings.showDaysWithoutEntries,
   ]);
 
   const loadSettings = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
-    setHistoryTableSettings(newSettings);
+    setSettings(newSettings);
   }, [db]);
+
+  const saveSettings = async (update: Partial<HistoryTableSettings>) => {
+    await dbUpdateHistoryTableSettings(db, { ...settings, ...update });
+    loadSettings();
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -761,6 +768,16 @@ export function HistoryTableScreen() {
     </View>
   );
 
+  const isTableDataReady = () => {
+    return !(
+      fullHeaders.length === 0 ||
+      fullHeaderToValueType.size === 0 ||
+      fullHeaderToDisplayHeader.size === 0 ||
+      rowHeaders.length === 0 ||
+      cells.length === 0
+    );
+  };
+
   return (
     <DefaultMainContainer>
       <MenuModal
@@ -769,7 +786,7 @@ export function HistoryTableScreen() {
         handleSaveToCSV={handleSaveToCSV}
         handleOpenConfiguration={handleOpenConfiguration}
       ></MenuModal>
-      {cells.length === 0 ? (
+      {!isTableDataReady() ? (
         renderEmptyState()
       ) : (
         <View style={[styles.mainContainer]}>
@@ -779,7 +796,9 @@ export function HistoryTableScreen() {
             fullHeaderToDisplayHeader={fullHeaderToDisplayHeader}
             rowHeaders={rowHeaders}
             data={cells}
-            expandCells={historyTableSettings.expandAllRows}
+            expandCells={settings.expandAllRows}
+            settingsColumnWidths={settings.columnWidths}
+            saveSettings={saveSettings}
           />
         </View>
       )}

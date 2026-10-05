@@ -13,6 +13,8 @@ import React from "react";
 import { ValueType } from "../../../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
 import { dayDifference } from "../../../dateOnlyUtils";
+import { HistoryTableSettings } from "../../../models/Settings";
+import { t } from "i18next";
 
 const TABLE_RADIUS = 10;
 const DELTA_WIDTH_BUFFER = 10;
@@ -46,6 +48,8 @@ type HistoryTableProps = {
   rowHeaders: Date[];
   data: string[][];
   expandCells: boolean;
+  settingsColumnWidths: Map<string, number>;
+  saveSettings: (update: Partial<HistoryTableSettings>) => Promise<void>;
 };
 
 export default function HistoryTable({
@@ -55,6 +59,8 @@ export default function HistoryTable({
   rowHeaders,
   data,
   expandCells,
+  settingsColumnWidths,
+  saveSettings,
 }: HistoryTableProps) {
   const theme = useTheme();
 
@@ -93,21 +99,26 @@ export default function HistoryTable({
 
   const [columnWidthsFromHeaderLayout, setColumnWidthsFromHeaderLayout] =
     React.useState<(ColumnFitWidths | null)[]>(
-      Array.from({ length: fullHeaders.length - 1 }, () => null),
+      Array.from({ length: fullHeaders.length }, () => null),
     );
   const [columnWidthsFromCellLayout, setColumnWidthsFromCellLayout] =
     React.useState<(number | null)[]>(
-      Array.from({ length: fullHeaders.length - 1 }, () => null),
+      Array.from({ length: fullHeaders.length }, () => null),
     );
   const columnWidthsCycles = React.useRef(
     Array.from({ length: fullHeaders.length }, () => cycle([MID_CELL_WIDTH])),
   );
-  const [intermediateColumnWidths, setIntermediateColumnsWidths] =
-    React.useState<number[]>(
-      Array.from({ length: fullHeaders.length }, () => MID_CELL_WIDTH),
+
+  const fillInitialColumnWidths = () => {
+    return Array.from(
+      { length: fullHeaders.length },
+      (_, idx) => settingsColumnWidths.get(fullHeaders[idx]) ?? MID_CELL_WIDTH,
     );
+  };
+  const [intermediateColumnWidths, setIntermediateColumnsWidths] =
+    React.useState<number[]>(fillInitialColumnWidths());
   const [columnWidths, setColumnsWidths] = React.useState<number[]>(
-    Array.from({ length: fullHeaders.length }, () => MID_CELL_WIDTH),
+    fillInitialColumnWidths(),
   );
 
   const scrollX = useSharedValue(0);
@@ -127,7 +138,7 @@ export default function HistoryTable({
     },
   });
 
-  // Sync the "scroll" position of the headers with the body
+  // Sync the scroll position of the headers with the body
   useDerivedValue(() => {
     scrollTo(columnHeaderRef, scrollX.value, 0, false);
   });
@@ -244,9 +255,9 @@ export default function HistoryTable({
     linesLength: number,
   ) => {
     // effectively called on initial mount
-
     // if the content does not fit in 6 lines adds MID_CELL_WIDTH as one
     // of the columns widths
+
     setColumnWidthsFromCellLayout((current) =>
       current.map((el, idx) => {
         const elOrMin = el ?? MIN_CELL_WIDTH;
@@ -291,7 +302,7 @@ export default function HistoryTable({
     );
   };
 
-  const handleIntermediateCellLayout = (
+  const handleIntermediateCellLayout = async (
     rowIndex: number,
     columnIndex: number,
     fittingHeight: number,
@@ -396,12 +407,29 @@ export default function HistoryTable({
           startingWidth = coalescedWidths[1];
           cycleOptions = [coalescedWidths[0], coalescedWidths[1]];
         }
+
+        // update start and cycles based on saved column widths in settings
+        const settingsWidth = settingsColumnWidths.get(fullHeaders[idx]);
+        if (settingsWidth) {
+          const cycleOptionsDiffs = cycleOptions.map((el) =>
+            Math.abs(el - settingsWidth),
+          );
+          const settingsWidthIdx = cycleOptionsDiffs.indexOf(
+            Math.min(...cycleOptionsDiffs),
+          );
+          cycleOptions = Array.prototype.concat(
+            cycleOptions.slice(settingsWidthIdx + 1),
+            cycleOptions.slice(0, settingsWidthIdx + 1),
+          );
+          startingWidth = settingsWidth;
+        }
+
         columnWidthsCycles.current[idx] = cycle(cycleOptions);
         newColumnWidths.push(startingWidth);
       }
       setIntermediateColumnsWidths(newColumnWidths);
     },
-    [],
+    [fullHeaders, settingsColumnWidths],
   );
 
   useFocusEffect(
@@ -455,23 +483,27 @@ export default function HistoryTable({
     relevantColumnForRowHeight.current[rowIndex] = columnIndex;
   };
 
-  const handleToggleColumnWidth = (index: number) => {
+  const handleToggleColumnWidth = async (index: number) => {
     // this triggers a layout event handler that updates the actual column width
+    const nextWidth = columnWidthsCycles.current[index].next().value;
     setIntermediateColumnsWidths((current) =>
       current.map((el, idx) => {
         if (index === idx) {
-          return columnWidthsCycles.current[index].next().value;
+          return nextWidth;
         } else {
           return el;
         }
       }),
     );
+    let newSettingsColumnWidths = new Map(settingsColumnWidths);
+    newSettingsColumnWidths.set(fullHeaders[index], nextWidth);
+    await saveSettings({ columnWidths: newSettingsColumnWidths });
   };
 
   return (
     <View style={styles.container}>
       {/* Hidden column headers for measuring purposes */}
-      {fullHeaders.slice(1).map((columnHeader, index) => (
+      {fullHeaders.map((columnHeader, index) => (
         <View
           key={index}
           style={[
@@ -557,7 +589,7 @@ export default function HistoryTable({
           ]}
         >
           <Text style={[styles.headerText, { color: theme.colors.text }]}>
-            {fullHeaderToDisplayHeader.get(fullHeaders[0])}
+            {t("Date")}
           </Text>
         </View>
 
@@ -570,13 +602,13 @@ export default function HistoryTable({
             showsHorizontalScrollIndicator={false}
             scrollEnabled={false}
           >
-            {fullHeaders.slice(1).map((columnHeader, index) => (
+            {fullHeaders.map((columnHeader, index) => (
               <View key={index}>
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.columnHeaderCell,
-                    computeColumnHeaderStyles(index, fullHeaders.length - 2),
+                    computeColumnHeaderStyles(index, fullHeaders.length - 1),
                     {
                       borderColor: theme.colors.border,
                       backgroundColor: theme.colors.primary,
