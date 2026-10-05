@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-export const APP_DATABASE_VERSION = 2;
+export const APP_DATABASE_VERSION = 3;
 
 export async function getDbVersion(db: SQLiteDatabase) {
   const pragma_user_version = await db.getFirstAsync<{
@@ -129,6 +129,27 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       INSERT INTO settings (id, theme) VALUES (1, "Auto");
       `);
     currentDbVersion = 2;
+  }
+
+  if (currentDbVersion === 2) {
+    await db.execAsync(`
+      CREATE TABLE history_table_settings (
+      id INTEGER PRIMARY KEY NOT NULL,
+      expand_all_rows BOOLEAN NOT NULL,
+      show_days_without_entries BOOLEAN NOT NULL,
+      merge_ingredients_with_different_forms BOOLEAN NOT NULL,
+      column_widths TEXT NOT NULL
+      );
+
+      INSERT INTO history_table_settings 
+      (id, 
+      expand_all_rows, 
+      show_days_without_entries, 
+      merge_ingredients_with_different_forms,
+      column_widths) 
+      VALUES (1, 1, 0, 1, "{}");
+      `);
+    currentDbVersion = 3;
   }
 
   await db.execAsync(`PRAGMA user_version = ${APP_DATABASE_VERSION}`);

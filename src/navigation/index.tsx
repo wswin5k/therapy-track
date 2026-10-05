@@ -16,7 +16,7 @@ import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
-import { RecordHistoryScreen } from "./screens/RecordHistoryScreen";
+import { HistoryTableScreen } from "./screens/HistoryTable/HistoryTableScreen";
 import PartiallyEditAnyScheduleScreen from "./screens/ScheduleScreens/PartiallyEditAnyScheduleScreen";
 import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
@@ -36,6 +36,7 @@ import { SelectEntryTypeScreen } from "./screens/SelectEntryTypeScreen";
 import { EditCustomFrequencyScreen } from "./screens/ScheduleScreens/EditCustomFrequencyScreen";
 import { Frequency } from "../models/Frequency";
 import { SettingsScreen } from "./screens/SettingsScreen";
+import { EditHistoryTableSettingsScreen } from "./screens/HistoryTable/EditHistoryTableSettingsScreen";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
   screens: {
@@ -141,9 +142,9 @@ const DrawerTabs = createDrawerNavigator({
       },
     },
     RecordHistoryScreen: {
-      screen: RecordHistoryScreen,
+      screen: HistoryTableScreen,
       options: {
-        title: "History",
+        title: "History Table",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
           <Ionicons name="receipt" size={size} color={color} />
         ),
@@ -226,6 +227,7 @@ export type RootStackParamList = {
     };
   };
   EditCustomFrequencyScreen: undefined;
+  EditRecordHistoryConfigurationScreen: undefined;
   NotFound: undefined;
 };
 
@@ -329,6 +331,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Create custom frequency",
+      },
+    },
+    EditRecordHistoryConfigurationScreen: {
+      screen: EditHistoryTableSettingsScreen,
+      options: {
+        presentation: "modal",
+        title: "History table configuration",
       },
     },
     NotFound: {

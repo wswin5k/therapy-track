@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { DefaultMainContainer } from "../../components/DefaultMainContainer";
+import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import {
   useFocusEffect,
   useNavigation,
@@ -23,7 +23,8 @@ import {
   dbGetMedicineSchedules,
   dbGetUnscheduledDosageRecords,
   dbGetUnscheduledMeasurmentRecords,
-} from "../../models/dbAccess";
+  dbGetHistoryTableSettings,
+} from "../../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import {
   IngredientAmountUnit,
@@ -31,53 +32,35 @@ import {
   maxWeightUnit,
   MedicineSchedule,
   weightUnitToGramsMultiplier,
-} from "../../models/MedicineSchedule";
+} from "../../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
-import { Medicine } from "../../models/MedicineSchedule";
+import { Medicine } from "../../../models/MedicineSchedule";
 import { useTranslation } from "react-i18next";
 import {
   Assessment,
   AssessmentSchedule,
   ValueType,
-} from "../../models/AssessmentSchedule";
-import { Group } from "../../models/Frequency";
+} from "../../../models/AssessmentSchedule";
+import { Group } from "../../../models/Frequency";
 import {
   baseUnitShorFormPlural,
   ingredientAmountUnitEnumToDisplayForm,
-} from "../enumMappings";
-import RecordHistoryTable from "../../components/RecordHistoryTable";
+} from "../../enumMappings";
+import HistoryTable from "./HistoryTable";
 import {
   deserializeDateOnly,
   getShiftedDateOnly,
   getTodayDateOnly,
   serializeDateOnly,
-} from "../../dateOnlyUtils";
-import { getOrThrow, castToStringArray } from "../utils";
-import { AssessmentValue } from "../../models/Records";
+} from "../../../dateOnlyUtils";
+import { getOrThrow, castToStringArray } from "../../utils";
+import { AssessmentValue } from "../../../models/Records";
+import { HistoryTableSettings } from "../../../models/Settings";
 
-class MovingAverage {
-  constructor(
-    public columnName: string,
-    public numberOfDays: number,
-  ) {}
-}
-export class RecordHistoryConfiguration {
-  constructor(
-    public showActiveIngredients: boolean,
-    public showMedicines: boolean,
-    public showAssessments: boolean,
-    public expandCells: boolean,
-    public showDaysWithoutEntries: boolean,
-    public mergeIngredientsWithDifferentForms: boolean,
-    public columnWidths: Map<string, number>,
-    public movingAverages: MovingAverage[],
-  ) {}
-}
-
-function defaultConfiguration(): RecordHistoryConfiguration {
-  return new RecordHistoryConfiguration(
+function defaultConfiguration(): HistoryTableSettings {
+  return new HistoryTableSettings(
     true,
     true,
     true,
@@ -85,7 +68,6 @@ function defaultConfiguration(): RecordHistoryConfiguration {
     false,
     true,
     new Map(),
-    [],
   );
 }
 
@@ -196,7 +178,7 @@ class TableData {
   ) {}
 }
 
-export function RecordHistoryScreen() {
+export function HistoryTableScreen() {
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
@@ -212,8 +194,8 @@ export function RecordHistoryScreen() {
   const [cells, setCells] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
-  const [recordHistoryConfiguration, setRecordHistoryConfiguration] =
-    React.useState<RecordHistoryConfiguration>(defaultConfiguration());
+  const [historyTableSettings, setHistoryTableSettings] =
+    React.useState<HistoryTableSettings>(defaultConfiguration());
 
   function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
@@ -442,12 +424,12 @@ export function RecordHistoryScreen() {
       }
       const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
 
-      if (recordHistoryConfiguration.showActiveIngredients) {
+      if (historyTableSettings.showActiveIngredients) {
         for (const ai of medicine.activeIngredients) {
           const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
           let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
           let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
-          if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+          if (historyTableSettings.mergeIngredientsWithDifferentForms) {
             fullHeader = shortHeader;
           }
 
@@ -455,7 +437,7 @@ export function RecordHistoryScreen() {
           if (isWeightUnit(ai.unit)) {
             fullHeader = `${ai.name} – ${baseUnitLabel}`;
             shortHeader = `${ai.name}`;
-            if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+            if (historyTableSettings.mergeIngredientsWithDifferentForms) {
               fullHeader = shortHeader;
             }
             weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
@@ -479,7 +461,7 @@ export function RecordHistoryScreen() {
         }
       }
 
-      if (recordHistoryConfiguration.showMedicines) {
+      if (historyTableSettings.showMedicines) {
         const header = `${medicine.name} [${baseUnitLabel}]`;
         let amountTotal = dailyRow.get(header) || 0;
 
@@ -510,12 +492,12 @@ export function RecordHistoryScreen() {
       const medicine = schedule.medicine;
       const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
 
-      if (recordHistoryConfiguration.showActiveIngredients) {
+      if (historyTableSettings.showActiveIngredients) {
         for (const ai of medicine.activeIngredients) {
           const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
           let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
           let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
-          if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+          if (historyTableSettings.mergeIngredientsWithDifferentForms) {
             fullHeader = shortHeader;
           }
 
@@ -523,7 +505,7 @@ export function RecordHistoryScreen() {
           if (isWeightUnit(ai.unit)) {
             fullHeader = `${ai.name} – ${baseUnitLabel}`;
             shortHeader = `${ai.name}`;
-            if (recordHistoryConfiguration.mergeIngredientsWithDifferentForms) {
+            if (historyTableSettings.mergeIngredientsWithDifferentForms) {
               fullHeader = shortHeader;
             }
             weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
@@ -550,7 +532,7 @@ export function RecordHistoryScreen() {
         }
       }
 
-      if (recordHistoryConfiguration.showMedicines) {
+      if (historyTableSettings.showMedicines) {
         const header = `${medicine.name} [${baseUnitLabel}]`;
 
         updateHeaderCounter(
@@ -594,14 +576,14 @@ export function RecordHistoryScreen() {
     );
   }, [
     db,
-    recordHistoryConfiguration.showActiveIngredients,
-    recordHistoryConfiguration.showMedicines,
-    recordHistoryConfiguration.mergeIngredientsWithDifferentForms,
+    historyTableSettings.showActiveIngredients,
+    historyTableSettings.showMedicines,
+    historyTableSettings.mergeIngredientsWithDifferentForms,
   ]);
 
   const loadAndCombineDataForTable = React.useCallback(async () => {
     const medicineTableData = await getMedicineData();
-    const assessmentTableData = recordHistoryConfiguration.showAssessments
+    const assessmentTableData = historyTableSettings.showAssessments
       ? await getAssessmentData()
       : new TableData([], new Map(), new Map(), new Map());
 
@@ -616,7 +598,7 @@ export function RecordHistoryScreen() {
     ]);
     const days = Array.from(daysSet).sort();
     let dates = [];
-    if (recordHistoryConfiguration.showDaysWithoutEntries) {
+    if (historyTableSettings.showDaysWithoutEntries) {
       const startDay = deserializeDateOnly(days[0]);
       const endDate = deserializeDateOnly(days[days.length - 1]);
 
@@ -681,19 +663,20 @@ export function RecordHistoryScreen() {
   }, [
     getAssessmentData,
     getMedicineData,
-    recordHistoryConfiguration.showAssessments,
-    recordHistoryConfiguration.showDaysWithoutEntries,
+    historyTableSettings.showAssessments,
+    historyTableSettings.showDaysWithoutEntries,
   ]);
 
-  const loadConfiguration = React.useCallback(async () => {
-    setRecordHistoryConfiguration(defaultConfiguration());
-  }, []);
+  const loadSettings = React.useCallback(async () => {
+    const newSettings = await dbGetHistoryTableSettings(db);
+    setHistoryTableSettings(newSettings);
+  }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
       loadAndCombineDataForTable();
-      loadConfiguration();
-    }, [loadAndCombineDataForTable, loadConfiguration]),
+      loadSettings();
+    }, [loadAndCombineDataForTable, loadSettings]),
   );
 
   const handleMenuToggle = React.useCallback(() => {
@@ -749,8 +732,9 @@ export function RecordHistoryScreen() {
   }, [cells, fullHeaders]);
 
   const handleOpenConfiguration = React.useCallback(() => {
+    navigation.navigate("EditRecordHistoryConfigurationScreen");
     setIsMenuOpen(false);
-  }, []);
+  }, [navigation]);
 
   React.useEffect(() => {
     navigation.setOptions({
@@ -789,13 +773,13 @@ export function RecordHistoryScreen() {
         renderEmptyState()
       ) : (
         <View style={[styles.mainContainer]}>
-          <RecordHistoryTable
+          <HistoryTable
             fullHeaders={fullHeaders}
             fullHeaderToValueType={fullHeaderToValueType}
             fullHeaderToDisplayHeader={fullHeaderToDisplayHeader}
             rowHeaders={rowHeaders}
             data={cells}
-            expandCells={recordHistoryConfiguration.expandCells}
+            expandCells={historyTableSettings.expandAllRows}
           />
         </View>
       )}
