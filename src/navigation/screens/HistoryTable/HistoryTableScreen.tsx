@@ -660,8 +660,8 @@ export function HistoryTableScreen() {
     headersMap.set("Date", "Date");
     setFullHeaderToDisplayHeader(headersMap);
 
-    setRowHeaders(dates.splice(0, 10));
-    setCells(newTableRows.splice(0, 10));
+    setRowHeaders(dates);
+    setCells(newTableRows);
   }, [
     getAssessmentData,
     getMedicineData,
