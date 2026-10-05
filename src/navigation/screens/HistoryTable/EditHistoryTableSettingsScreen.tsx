@@ -103,14 +103,14 @@ export function EditHistoryTableSettingsScreen() {
             <View style={styles.rowContainer}>
               <View style={styles.labelContainer}>
                 <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-                  {t("Merge ingredients in different forms")}
+                  {t("Show each ingredient form in a separate column")}
                 </Text>
               </View>
               <Switch
-                value={historyTableSettings.mergeIngredientsWithDifferentForms}
+                value={!historyTableSettings.mergeIngredientsWithDifferentForms}
                 onValueChange={(value: boolean) =>
                   handleUpdateHistoryTableSettings({
-                    mergeIngredientsWithDifferentForms: value,
+                    mergeIngredientsWithDifferentForms: !value,
                   })
                 }
                 trackColor={{
