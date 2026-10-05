@@ -34,7 +34,7 @@ import {
   serializeDateOnly,
   serializeDateOnlyNullable,
 } from "../dateOnlyUtils";
-import { Settings, ThemeSelection } from "./Settings";
+import { HistoryTableSettings, Settings, ThemeSelection } from "./Settings";
 
 interface MedicineScheduleWithMedicineRow {
   id: number;
@@ -139,6 +139,14 @@ interface SettingsRow {
   theme: string;
 }
 
+interface HistoryTableSettingsRow {
+  id: number;
+  expand_all_rows: number;
+  show_days_without_entries: number;
+  merge_ingredients_with_different_forms: number;
+  column_widths: string;
+}
+
 function serializeRecordDatetime(value: Date): string {
   return value.toISOString();
 }
@@ -209,6 +217,14 @@ function parseAssessmentValue(
     default:
       return value;
   }
+}
+
+function deserializeBoolean(value: number): boolean {
+  return value !== 0;
+}
+
+function serializeBoolean(value: boolean): string {
+  return value ? "1" : "0";
 }
 
 function getDateFilterClause(startDate?: Date, endDate?: Date): string {
@@ -1127,5 +1143,45 @@ export async function dbUpdateSettings(
     SET theme = ?
     WHERE id = 1`,
     settings.theme,
+  );
+}
+
+export async function dbGetHistoryTableSettings(
+  db: SQLiteDatabase,
+): Promise<HistoryTableSettings> {
+  const row = await db.getFirstAsync<HistoryTableSettingsRow>(`
+      SELECT *
+      FROM history_table_settings
+      WHERE id = 1
+    `);
+  if (row === null) {
+    throw Error("No history_table_settings in the database.");
+  }
+  return new HistoryTableSettings(
+    true,
+    true,
+    true,
+    deserializeBoolean(row.expand_all_rows),
+    deserializeBoolean(row.show_days_without_entries),
+    deserializeBoolean(row.merge_ingredients_with_different_forms),
+    new Map(),
+  );
+}
+
+export async function dbUpdateHistoryTableSettings(
+  db: SQLiteDatabase,
+  settings: HistoryTableSettings,
+) {
+  await db.runAsync(
+    `UPDATE history_table_settings
+    SET expand_all_rows = ?,
+    show_days_without_entries = ?, 
+    merge_ingredients_with_different_forms = ?,
+    column_widths = ?
+    WHERE id = 1`,
+    serializeBoolean(settings.expandAllRows),
+    serializeBoolean(settings.showDaysWithoutEntries),
+    serializeBoolean(settings.mergeIngredientsWithDifferentForms),
+    JSON.stringify(settings.columnWidths),
   );
 }

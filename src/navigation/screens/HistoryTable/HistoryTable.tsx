@@ -8,11 +8,11 @@ import Animated, {
   useAnimatedScrollHandler,
 } from "react-native-reanimated";
 import type { ReanimatedScrollEvent } from "react-native-reanimated/lib/typescript/hook/commonTypes";
-import { cycle, mixColors } from "../navigation/utils";
+import { cycle, mixColors } from "../../utils";
 import React from "react";
-import { ValueType } from "../models/AssessmentSchedule";
+import { ValueType } from "../../../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
-import { dayDifference } from "../dateOnlyUtils";
+import { dayDifference } from "../../../dateOnlyUtils";
 
 const TABLE_RADIUS = 10;
 const DELTA_WIDTH_BUFFER = 10;
@@ -37,7 +37,7 @@ class ColumnFitWidths {
   ) {}
 }
 
-type RecordHistoryTableProps = {
+type HistoryTableProps = {
   fullHeaders: string[];
   fullHeaderToDisplayHeader: Map<string, string>;
   // todo possbily take the cells in the following types
@@ -48,14 +48,14 @@ type RecordHistoryTableProps = {
   expandCells: boolean;
 };
 
-export default function RecordHistoryTable({
+export default function HistoryTable({
   fullHeaders,
   fullHeaderToDisplayHeader,
   fullHeaderToValueType,
   rowHeaders,
   data,
   expandCells,
-}: RecordHistoryTableProps) {
+}: HistoryTableProps) {
   const theme = useTheme();
 
   const { i18n } = useTranslation();
@@ -112,8 +112,8 @@ export default function RecordHistoryTable({
 
   const scrollX = useSharedValue(0);
   const scrollY = useSharedValue(0);
-  const columnHeaderRef = useAnimatedRef();
-  const rowHeaderRef = useAnimatedRef();
+  const columnHeaderRef = useAnimatedRef<Animated.ScrollView>();
+  const rowHeaderRef = useAnimatedRef<Animated.ScrollView>();
 
   // Runs on the UI thread
   const scrollHandlerX = useAnimatedScrollHandler({

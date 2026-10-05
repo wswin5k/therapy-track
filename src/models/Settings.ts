@@ -21,3 +21,15 @@ export function themeSelectionToColorSchemeName(
 export class Settings {
   constructor(public theme: ThemeSelection) {}
 }
+
+export class HistoryTableSettings {
+  constructor(
+    public showActiveIngredients: boolean,
+    public showMedicines: boolean,
+    public showAssessments: boolean,
+    public expandAllRows: boolean,
+    public showDaysWithoutEntries: boolean,
+    public mergeIngredientsWithDifferentForms: boolean,
+    public columnWidths: Map<string, number>,
+  ) {}
+}
