@@ -227,6 +227,28 @@ function serializeBoolean(value: boolean): string {
   return value ? "1" : "0";
 }
 
+function deserializeColumnWidths(value: string): Map<string, number> {
+  const obj: unknown = JSON.parse(value);
+
+  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
+    throw new Error("Expected a JSON object");
+  }
+
+  const entries = Object.entries(obj);
+
+  if (!entries.every(([, value]) => typeof value === "number")) {
+    throw new Error("Expected all values to be numbers");
+  }
+
+  const rsult = new Map(entries);
+  return rsult;
+}
+
+function serializeColumnWidths(value: Map<string, number>): string {
+  const result = JSON.stringify(Object.fromEntries(value));
+  return result;
+}
+
 function getDateFilterClause(startDate?: Date, endDate?: Date): string {
   if (startDate && endDate) {
     const startDateStr = serializeDateOnly(startDate);
@@ -1164,7 +1186,7 @@ export async function dbGetHistoryTableSettings(
     deserializeBoolean(row.expand_all_rows),
     deserializeBoolean(row.show_days_without_entries),
     deserializeBoolean(row.merge_ingredients_with_different_forms),
-    new Map(),
+    deserializeColumnWidths(row.column_widths),
   );
 }
 
@@ -1182,6 +1204,6 @@ export async function dbUpdateHistoryTableSettings(
     serializeBoolean(settings.expandAllRows),
     serializeBoolean(settings.showDaysWithoutEntries),
     serializeBoolean(settings.mergeIngredientsWithDifferentForms),
-    JSON.stringify(settings.columnWidths),
+    serializeColumnWidths(settings.columnWidths),
   );
 }
