@@ -268,8 +268,9 @@ export function HistoryTableScreen() {
   }
 
   const getAssessmentData = React.useCallback(async (): Promise<TableData> => {
-    const scheuledMeasurmentRecrods = await dbGetScheduledMeasurmentRecords(db);
-    const unscheduledMeasurmentRecords =
+    const scheuledMeasurementRecrods =
+      await dbGetScheduledMeasurmentRecords(db);
+    const unscheduledMeasurementRecords =
       await dbGetUnscheduledMeasurmentRecords(db);
 
     const assessmentSchedules = await dbGetAssessmentSchedules(db);
@@ -300,7 +301,7 @@ export function HistoryTableScreen() {
       const group = groupId === null ? null : idToGroup.get(groupId);
       let groupLabel = "";
       if (group === undefined) {
-        throw Error("Measurment record has invalid group.");
+        throw Error("Measurement record has invalid group.");
       } else if (group === null) {
         groupLabel = "ungrouped";
       } else {
@@ -311,7 +312,7 @@ export function HistoryTableScreen() {
 
     const fullHeaderToValueType = new Map();
 
-    for (const r of unscheduledMeasurmentRecords) {
+    for (const r of unscheduledMeasurementRecords) {
       const dateStr = extractDate(r.date);
       const dailyRow =
         dayToHeaderToValues.get(extractDate(r.date)) ||
@@ -340,7 +341,7 @@ export function HistoryTableScreen() {
       fullHeaderToValueType.set(fullHeader, assessment.type);
     }
 
-    for (const r of scheuledMeasurmentRecrods) {
+    for (const r of scheuledMeasurementRecrods) {
       const dateStr = extractDate(r.date);
       const dailyRow =
         dayToHeaderToValues.get(dateStr) || new Map<string, string>();
@@ -351,9 +352,9 @@ export function HistoryTableScreen() {
       if (!assessmentSchedule) {
         throw Error("Record not connected to assessment schedule.");
       }
-      const measurment = assessmentSchedule.measurments[r.measurmentIndex];
+      const measurement = assessmentSchedule.measurments[r.measurmentIndex];
 
-      const groupLabel = getGroupLabel(measurment.groupId);
+      const groupLabel = getGroupLabel(measurement.groupId);
       const fullHeader = `${assessmentSchedule.assessment.name} – ${groupLabel}`;
       const shortHeader = assessmentSchedule.assessment.name;
 

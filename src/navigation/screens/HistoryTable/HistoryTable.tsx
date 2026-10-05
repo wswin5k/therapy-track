@@ -429,7 +429,7 @@ export default function HistoryTable({
       }
       setIntermediateColumnsWidths(newColumnWidths);
     },
-    [],
+    [fullHeaders, settingsColumnWidths],
   );
 
   useFocusEffect(
