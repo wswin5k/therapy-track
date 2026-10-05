@@ -408,6 +408,7 @@ export default function HistoryTable({
           cycleOptions = [coalescedWidths[0], coalescedWidths[1]];
         }
 
+        // update start and cycles based on saved column widths in settings
         const settingsWidth = settingsColumnWidths.get(fullHeaders[idx]);
         if (settingsWidth) {
           const cycleOptionsDiffs = cycleOptions.map((el) =>
@@ -420,11 +421,10 @@ export default function HistoryTable({
             cycleOptions.slice(settingsWidthIdx + 1),
             cycleOptions.slice(0, settingsWidthIdx + 1),
           );
+          startingWidth = settingsWidth;
         }
 
         columnWidthsCycles.current[idx] = cycle(cycleOptions);
-        startingWidth =
-          settingsColumnWidths.get(fullHeaders[idx]) ?? startingWidth;
         newColumnWidths.push(startingWidth);
       }
       setIntermediateColumnsWidths(newColumnWidths);
