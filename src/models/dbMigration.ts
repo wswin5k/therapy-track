@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-export const APP_DATABASE_VERSION = 3;
+export const APP_DATABASE_VERSION = 1;
 
 export async function getDbVersion(db: SQLiteDatabase) {
   const pragma_user_version = await db.getFirstAsync<{
@@ -21,7 +21,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     return;
   }
 
-  // todo: offset not null
   if (currentDbVersion === 0) {
     await db.execAsync(`
       PRAGMA journal_mode = 'wal';
@@ -34,7 +33,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       CREATE TABLE dosages (id INTEGER PRIMARY KEY NOT NULL,
       amount REAL NOT NULL,
       index_ INTEGER NOT NULL,
-      offset INTEGER,
+      offset INTEGER NOT NULL,
       group_ INTEGER,
       medicine_schedule INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
@@ -82,9 +81,9 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       type TEXT NOT NULL,
       value_domain TEXT );
 
-      CREATE TABLE measurments (id INTEGER PRIMARY KEY NOT NULL,
+      CREATE TABLE measurements (id INTEGER PRIMARY KEY NOT NULL,
       index_ INTEGER NOT NULL,
-      offset INTEGER,
+      offset INTEGER NOT NULL,
       group_ INTEGER,
       assessment_schedule INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
@@ -98,16 +97,16 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       freq TEXT NOT NULL,
       FOREIGN KEY(assessment) REFERENCES assessments(id) ON DELETE CASCADE);
     
-      CREATE TABLE scheduled_measurment_records (
+      CREATE TABLE scheduled_measurement_records (
       id INTEGER PRIMARY KEY NOT NULL,
       record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,
       assessment_schedule INTEGER,
-      measurment_index INTEGER,
+      measurement_index INTEGER,
       value TEXT NOT NULL,
       FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
 
-      CREATE TABLE unscheduled_measurment_records (
+      CREATE TABLE unscheduled_measurement_records (
       id INTEGER PRIMARY KEY NOT NULL,
       record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,
@@ -116,23 +115,13 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       group_ INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(assessment) REFERENCES assessments(id));
-    `);
-    currentDbVersion = 1;
-  }
 
-  if (currentDbVersion === 1) {
-    await db.execAsync(`
       CREATE TABLE settings (
       id INTEGER PRIMARY KEY NOT NULL,
       theme TEXT NOT NULL);
 
       INSERT INTO settings (id, theme) VALUES (1, "Auto");
-      `);
-    currentDbVersion = 2;
-  }
 
-  if (currentDbVersion === 2) {
-    await db.execAsync(`
       CREATE TABLE history_table_settings (
       id INTEGER PRIMARY KEY NOT NULL,
       expand_all_rows BOOLEAN NOT NULL,
@@ -149,7 +138,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       column_widths) 
       VALUES (1, 1, 0, 1, "{}");
       `);
-    currentDbVersion = 3;
+    currentDbVersion = 1;
   }
 
   await db.execAsync(`PRAGMA user_version = ${APP_DATABASE_VERSION}`);

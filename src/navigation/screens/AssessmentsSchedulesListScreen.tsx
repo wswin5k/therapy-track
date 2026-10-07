@@ -15,7 +15,7 @@ import {
 } from "@react-navigation/native";
 import {
   dbDeleteAssessmentSchedule,
-  dbDeleteScheduledMeasurmentRecordsForAssessmentSchedule,
+  dbDeleteScheduledMeasurementRecordsForAssessmentSchedule,
   dbGetAssessmentSchedules,
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
@@ -60,7 +60,7 @@ function ScheduleListItem({
   };
 
   const confirmDelete = async () => {
-    await dbDeleteScheduledMeasurmentRecordsForAssessmentSchedule(
+    await dbDeleteScheduledMeasurementRecordsForAssessmentSchedule(
       db,
       schedule.dbId,
     );
@@ -94,7 +94,7 @@ function ScheduleListItem({
       t,
       weekdays,
       schedule.freq,
-      schedule.measurments.map((m) => m.offset),
+      schedule.measurements.map((m) => m.offset),
     ),
   );
 
@@ -165,7 +165,7 @@ function ScheduleListItem({
         title={t("Delete confirmation")}
         message={t(
           "This action is going to pernamently delete the schedule and " +
-            "all of its associated measurment records. Do you want to proceed?",
+            "all of its associated measurement records. Do you want to proceed?",
         )}
         confirmText={t("Delete")}
         cancelText={t("Cancel")}

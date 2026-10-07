@@ -14,9 +14,9 @@ import { useTranslation } from "react-i18next";
 import {
   dbGetAssessmentSchedules,
   dbGetGroups,
-  dbGetUnscheduledMeasurmentRecords,
+  dbGetUnscheduledMeasurementRecords,
   dbInsertAssessment,
-  dbInsertUnscheduledMeasurmentRecord,
+  dbInsertUnscheduledMeasurementRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import {
@@ -30,8 +30,8 @@ import { Group } from "../../models/Frequency";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import {
   AssessmentValue,
-  sortArrayMeasurmentValue,
-  UnscheduledMeasurmentRecord,
+  sortArrayMeasurementValue,
+  UnscheduledMeasurementRecord,
 } from "../../models/Records";
 import {
   AssessmentInput,
@@ -75,7 +75,7 @@ export function EditSingleMeasurementScreen() {
   const [
     existingUnscheduledMeasurementRecords,
     setExistingUnscheduledMeasurementRecords,
-  ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
+  ] = React.useState<UnscheduledMeasurementRecord[]>([]);
 
   const [assessment, setAssessment] = React.useState<AssessmentParam | null>(
     null,
@@ -109,7 +109,7 @@ export function EditSingleMeasurementScreen() {
         setExistingAssessmentSchedules(newExistingAssessmentSchedules);
 
         const newExistingUnscheduledMeasurementRecords = (
-          await dbGetUnscheduledMeasurmentRecords(db)
+          await dbGetUnscheduledMeasurementRecords(db)
         ).filter(
           (a) =>
             params.assessment.dbId !== undefined &&
@@ -165,7 +165,7 @@ export function EditSingleMeasurementScreen() {
               );
             if (
               !existingAssessemtnSchedulesWithinDate.some((as) =>
-                as.measurments.some((m) => m.groupId === groupId),
+                as.measurements.some((m) => m.groupId === groupId),
               ) &&
               !existingUnscheduledMeasurementRecordsWithinDate.some(
                 (mr) => mr.groupId === groupId,
@@ -200,11 +200,11 @@ export function EditSingleMeasurementScreen() {
       dataValidated.assessment.dbId ??
       (await dbInsertAssessment(db, dataValidated.assessment));
 
-    sortArrayMeasurmentValue(
+    sortArrayMeasurementValue(
       dataValidated.value,
       dataValidated.assessment.valueDomain,
     );
-    await dbInsertUnscheduledMeasurmentRecord(db, {
+    await dbInsertUnscheduledMeasurementRecord(db, {
       date: dataValidated.date,
       assessmentId: assessmentId,
       value: dataValidated.value,

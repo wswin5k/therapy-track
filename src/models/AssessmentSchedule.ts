@@ -35,7 +35,7 @@ export class Assessment {
   ) {}
 }
 
-export class Measurment {
+export class Measurement {
   constructor(
     public index: number,
     public offset: number,
@@ -50,7 +50,7 @@ export class AssessmentSchedule {
     public startDate: Date,
     public endDate: Date | null,
     public freq: Frequency,
-    public measurments: Measurment[],
+    public measurements: Measurement[],
     public dbId: number,
   ) {}
 }

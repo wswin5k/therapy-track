@@ -14,15 +14,15 @@ import {
 import {
   AssessmentValue,
   ScheduledDosageRecord,
-  ScheduledMeasurmentRecord,
+  ScheduledMeasurementRecord,
   UnscheduledDosageRecord,
-  UnscheduledMeasurmentRecord,
+  UnscheduledMeasurementRecord,
 } from "./Records";
 import {
   Assessment,
   AssessmentSchedule,
   ValueType,
-  Measurment,
+  Measurement,
   NumericValueDomain,
   SelectValueDomain,
   TextValueDomain,
@@ -76,7 +76,7 @@ interface DosageRow {
   id: number;
   amount: number;
   index_: number;
-  offset: number | null;
+  offset: number;
   group_: number | null;
 }
 
@@ -95,7 +95,7 @@ interface AssessmentRow {
   value_domain: string | null;
 }
 
-interface UncheduledMeasurmentRecordRow {
+interface UncheduledMeasurementRecordRow {
   id: number;
   record_datetime: string;
   date: string;
@@ -113,23 +113,23 @@ interface AssessmentScheduleWithAssessmentRow {
   assessment_value_domain: string | null;
   start_date: string;
   end_date: string | null;
-  measurments: MeasurmentRow[];
+  measurements: MeasurementRow[];
   freq: string;
 }
 
-interface MeasurmentRow {
+interface MeasurementRow {
   id: number;
   index_: number;
-  offset: number | null;
+  offset: number;
   group_: number | null;
 }
 
-interface ScheduledMeasurmentRecordRow {
+interface ScheduledMeasurementRecordRow {
   id: number;
   record_datetime: string;
   date: string;
   assessment_schedule: number;
-  measurment_index: number;
+  measurement_index: number;
   value: string;
   assessment_type: ValueType;
 }
@@ -344,7 +344,7 @@ function parseMedicineScheduleWithMedicineRow(
   );
   const dosages = row.dosages.map(
     (dd: DosageRow) =>
-      new Dosage(dd.amount, dd.index_, dd.offset ?? 0, dd.group_, dd.id),
+      new Dosage(dd.amount, dd.index_, dd.offset, dd.group_, dd.id),
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(
@@ -375,9 +375,9 @@ function parseAssessmentScheduleWithAssessmentRow(
     assessmentValueDomain,
     row.assessment,
   );
-  const measurments = row.measurments.map(
-    (dd: MeasurmentRow) =>
-      new Measurment(dd.index_, dd.offset ?? 0, dd.group_, dd.id),
+  const measurements = row.measurements.map(
+    (dd: MeasurementRow) =>
+      new Measurement(dd.index_, dd.offset, dd.group_, dd.id),
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(
@@ -391,7 +391,7 @@ function parseAssessmentScheduleWithAssessmentRow(
     deserializeDateOnly(row.start_date),
     deserializeDateOnlyNullable(row.end_date),
     frequency,
-    measurments,
+    measurements,
     row.id,
   );
 }
@@ -604,28 +604,28 @@ export async function dbGetScheduledDosageRecords(
   );
 }
 
-export async function dbGetScheduledMeasurmentRecords(
+export async function dbGetScheduledMeasurementRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
-): Promise<ScheduledMeasurmentRecord[]> {
+): Promise<ScheduledMeasurementRecord[]> {
   let queryStr = `SELECT r.*, a.type as assessment_type
-  FROM scheduled_measurment_records as r
+  FROM scheduled_measurement_records as r
   JOIN assessment_schedules as s ON r.assessment_schedule = s.id
   JOIN assessments as a ON s.assessment = a.id
   `;
 
   queryStr += getDateFilterClause(startDate, endDate);
 
-  const rows = await db.getAllAsync<ScheduledMeasurmentRecordRow>(queryStr);
+  const rows = await db.getAllAsync<ScheduledMeasurementRecordRow>(queryStr);
   return rows.map(
     (row) =>
-      new ScheduledMeasurmentRecord(
+      new ScheduledMeasurementRecord(
         row.id,
         deserializeRecordDatetime(row.record_datetime),
         deserializeDateOnly(row.date),
         row.assessment_schedule,
-        row.measurment_index,
+        row.measurement_index,
         parseAssessmentValue(row.value, row.assessment_type),
       ),
   );
@@ -686,12 +686,12 @@ export async function dbGetUnscheduledDosageRecords(
   );
 }
 
-export async function dbDeleteScheduledMeasurmentRecordsForAssessmentSchedule(
+export async function dbDeleteScheduledMeasurementRecordsForAssessmentSchedule(
   db: SQLiteDatabase,
   assessmentScheduleId: number,
 ) {
   await db.runAsync(
-    "DELETE FROM scheduled_measurment_records WHERE assessment_schedule = ?",
+    "DELETE FROM scheduled_measurement_records WHERE assessment_schedule = ?",
     assessmentScheduleId,
   );
 }
@@ -701,7 +701,7 @@ export async function dbDeleteAssessmentSchedule(
   id: number,
 ) {
   await db.runAsync(
-    "DELETE FROM measurments WHERE assessment_schedule = ?",
+    "DELETE FROM measurements WHERE assessment_schedule = ?",
     id,
   );
   await db.runAsync("DELETE FROM assessment_schedules WHERE id = ?", id);
@@ -730,7 +730,7 @@ async function dbInsertDosages(
   dosages: {
     amount: number;
     index: number;
-    offset: number | null;
+    offset: number;
     groupId: number | null;
   }[],
 ): Promise<number[]> {
@@ -807,7 +807,7 @@ export async function dbDeleteGroup(db: SQLiteDatabase, id: number) {
   await db.runAsync("DELETE FROM groups WHERE id = ?", id);
 }
 
-export async function dbGroupHasDosagesOrMeasurments(
+export async function dbGroupHasDosagesOrMeasurements(
   db: SQLiteDatabase,
   groupId: number,
 ): Promise<boolean> {
@@ -815,11 +815,13 @@ export async function dbGroupHasDosagesOrMeasurments(
     "SELECT COUNT(*) as count FROM dosages WHERE group_ = ?",
     groupId,
   );
-  const resultMeasurments = await db.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM measurments WHERE group_ = ?",
+  const resultMeasurements = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM measurements WHERE group_ = ?",
     groupId,
   );
-  return (resultDosages?.count ?? 0) > 0 || (resultMeasurments?.count ?? 0) > 0;
+  return (
+    (resultDosages?.count ?? 0) > 0 || (resultMeasurements?.count ?? 0) > 0
+  );
 }
 
 export async function dbGroupHasUnscheduledRecords(
@@ -830,11 +832,13 @@ export async function dbGroupHasUnscheduledRecords(
     "SELECT COUNT(*) as count FROM unscheduled_dosage_records WHERE group_ = ?",
     groupId,
   );
-  const resultMeasurments = await db.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM unscheduled_measurment_records WHERE group_ = ?",
+  const resultMeasurements = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM unscheduled_measurement_records WHERE group_ = ?",
     groupId,
   );
-  return (resultDosages?.count ?? 0) > 0 || (resultMeasurments?.count ?? 0) > 0;
+  return (
+    (resultDosages?.count ?? 0) > 0 || (resultMeasurements?.count ?? 0) > 0
+  );
 }
 
 export async function dbInsertAssessment(
@@ -859,7 +863,7 @@ export async function dbDeleteAssessment(db: SQLiteDatabase, id: number) {
   await db.runAsync("DELETE FROM assessments WHERE id = ?", id);
 }
 
-export async function dbInsertUnscheduledMeasurmentRecord(
+export async function dbInsertUnscheduledMeasurementRecord(
   db: SQLiteDatabase,
   record: {
     date: Date;
@@ -871,7 +875,7 @@ export async function dbInsertUnscheduledMeasurmentRecord(
   // array values should be sorted according to value domain order
   const valueStr = strigifyAssessmentValue(record.value);
   const result = await db.runAsync(
-    `INSERT INTO unscheduled_measurment_records 
+    `INSERT INTO unscheduled_measurement_records 
     (record_datetime, date, assessment, value, group_) 
     VALUES (?, ?, ?, ?, ?)`,
     serializeRecordDatetime(new Date()),
@@ -883,24 +887,24 @@ export async function dbInsertUnscheduledMeasurmentRecord(
   return result.lastInsertRowId;
 }
 
-export async function dbGetUnscheduledMeasurmentRecords(
+export async function dbGetUnscheduledMeasurementRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
-): Promise<UnscheduledMeasurmentRecord[]> {
+): Promise<UnscheduledMeasurementRecord[]> {
   let queryStr = `SELECT r.*, a.type as assessment_type
-  FROM unscheduled_measurment_records as r
+  FROM unscheduled_measurement_records as r
   JOIN assessments as a ON r.assessment = a.id`;
 
   queryStr += getDateFilterClause(startDate, endDate);
 
-  const rows = await db.getAllAsync<UncheduledMeasurmentRecordRow>(queryStr);
+  const rows = await db.getAllAsync<UncheduledMeasurementRecordRow>(queryStr);
   return rows.map((row) => {
     const value = parseAssessmentValue(
       row.value,
       ValueType[row.assessment_type],
     );
-    return new UnscheduledMeasurmentRecord(
+    return new UnscheduledMeasurementRecord(
       row.id,
       deserializeRecordDatetime(row.record_datetime),
       deserializeDateOnly(row.date),
@@ -911,12 +915,12 @@ export async function dbGetUnscheduledMeasurmentRecords(
   });
 }
 
-export async function dbInsertScheduledMeasurmentRecord(
+export async function dbInsertScheduledMeasurementRecord(
   db: SQLiteDatabase,
   record: {
     date: Date;
     assessmentScheduleId: number;
-    measurmentIndex: number;
+    measurementIndex: number;
     value: AssessmentValue;
   },
 ): Promise<number> {
@@ -924,24 +928,24 @@ export async function dbInsertScheduledMeasurmentRecord(
   const valueStr = strigifyAssessmentValue(record.value);
 
   const result = await db.runAsync(
-    `INSERT INTO scheduled_measurment_records 
-    (record_datetime, date, assessment_schedule, measurment_index, value) 
+    `INSERT INTO scheduled_measurement_records 
+    (record_datetime, date, assessment_schedule, measurement_index, value) 
     VALUES (?, ?, ?, ?, ?)`,
     serializeRecordDatetime(new Date()),
     serializeDateOnly(record.date),
     record.assessmentScheduleId,
-    record.measurmentIndex,
+    record.measurementIndex,
     valueStr,
   );
   return result.lastInsertRowId;
 }
 
-export async function dbDeleteScheduledMeasurmentRecord(
+export async function dbDeleteScheduledMeasurementRecord(
   db: SQLiteDatabase,
   id: number,
 ) {
   await db.runAsync(
-    "DELETE FROM scheduled_measurment_records WHERE id = ?",
+    "DELETE FROM scheduled_measurement_records WHERE id = ?",
     id,
   );
 }
@@ -985,29 +989,29 @@ export async function dbGetAssessments(
   });
 }
 
-export async function dbDeleteUnscheduledMeasurmentRecord(
+export async function dbDeleteUnscheduledMeasurementRecord(
   db: SQLiteDatabase,
   recordId: number,
 ) {
   await db.runAsync(
-    "DELETE FROM unscheduled_measurment_records WHERE id = ?",
+    "DELETE FROM unscheduled_measurement_records WHERE id = ?",
     recordId,
   );
 }
 
-async function dbInsertMeasurments(
+async function dbInsertMeasurements(
   db: SQLiteDatabase,
   assessmentScheduleId: number,
-  measurments: {
+  measurements: {
     index: number;
-    offset: number | null;
+    offset: number;
     groupId: number | null;
   }[],
 ): Promise<number[]> {
   const ids = [];
-  for (const m of measurments) {
+  for (const m of measurements) {
     const result = await db.runAsync(
-      `INSERT INTO measurments 
+      `INSERT INTO measurements 
       (index_, offset, group_, assessment_schedule) 
       VALUES (?, ?, ?, ?)`,
       m.index,
@@ -1026,7 +1030,7 @@ export async function dbInsertAssessmentSchedule(
   assessmentSchedule: {
     startDate: Date;
     endDate: Date | null;
-    measurments: {
+    measurements: {
       index: number;
       offset: number;
       groupId: number | null;
@@ -1049,10 +1053,10 @@ export async function dbInsertAssessmentSchedule(
   );
 
   const assessmentScheduleId = result.lastInsertRowId;
-  await dbInsertMeasurments(
+  await dbInsertMeasurements(
     db,
     assessmentScheduleId,
-    assessmentSchedule.measurments,
+    assessmentSchedule.measurements,
   );
 }
 
@@ -1066,7 +1070,7 @@ export async function dbInsertAssessmentScheduleWithAssessment(
   assessmentSchedule: {
     startDate: Date;
     endDate: Date | null;
-    measurments: {
+    measurements: {
       index: number;
       offset: number;
       groupId: number | null;
@@ -1078,12 +1082,12 @@ export async function dbInsertAssessmentScheduleWithAssessment(
   await dbInsertAssessmentSchedule(db, assessmentId, assessmentSchedule);
 }
 
-async function dbGetMeasurments(
+async function dbGetMeasurements(
   db: SQLiteDatabase,
   assessmentScheduleId: number,
-): Promise<MeasurmentRow[]> {
-  return await db.getAllAsync<MeasurmentRow>(
-    `SELECT * FROM measurments WHERE assessment_schedule = ?`,
+): Promise<MeasurementRow[]> {
+  return await db.getAllAsync<MeasurementRow>(
+    `SELECT * FROM measurements WHERE assessment_schedule = ?`,
     assessmentScheduleId,
   );
 }
@@ -1106,7 +1110,7 @@ export async function dbGetAssessmentSchedules(
       ORDER BY s.start_date DESC
     `);
   for (const row of rows) {
-    row.measurments = await dbGetMeasurments(db, row.id);
+    row.measurements = await dbGetMeasurements(db, row.id);
   }
   return rows.map(parseAssessmentScheduleWithAssessmentRow);
 }
@@ -1130,12 +1134,12 @@ export async function dbGetAssessmentSchedule(
       WHERE s.id = ${assessmentScheduleId}
     `);
 
-  const measurmentsRows = await dbGetMeasurments(db, assessmentScheduleId);
+  const measurementsRows = await dbGetMeasurements(db, assessmentScheduleId);
 
   if (row === null) {
     throw Error("No schedule with given id.");
   }
-  row.measurments = measurmentsRows;
+  row.measurements = measurementsRows;
   return parseAssessmentScheduleWithAssessmentRow(row);
 }
 

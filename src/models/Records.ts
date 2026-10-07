@@ -23,7 +23,7 @@ export class UnscheduledDosageRecord {
 
 export type AssessmentValue = number | string | boolean | string[];
 
-export function sortArrayMeasurmentValue(
+export function sortArrayMeasurementValue(
   value: AssessmentValue,
   valueDomain: ValueDomain,
 ) {
@@ -35,18 +35,18 @@ export function sortArrayMeasurmentValue(
   }
 }
 
-export class ScheduledMeasurmentRecord {
+export class ScheduledMeasurementRecord {
   constructor(
     public dbId: number,
     public record_datetime: Date,
     public date: Date,
     public assessmentScheduleId: number,
-    public measurmentIndex: number,
+    public measurementIndex: number,
     public value: AssessmentValue,
   ) {}
 }
 
-export class UnscheduledMeasurmentRecord {
+export class UnscheduledMeasurementRecord {
   constructor(
     public dbId: number,
     public record_datetime: Date,

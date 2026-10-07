@@ -28,7 +28,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import {
   dbGetAssessmentSchedules,
   dbGetGroups,
-  dbGetUnscheduledMeasurmentRecords,
+  dbGetUnscheduledMeasurementRecords,
   dbInsertAssessmentSchedule,
   dbInsertAssessmentScheduleWithAssessment,
 } from "../../../models/dbAccess";
@@ -38,7 +38,7 @@ import { ModalPicker } from "../../../components/ModalPicker";
 import { assingDefaultGroups, frequencySelectionMap } from "./common";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
-import { UnscheduledMeasurmentRecord } from "../../../models/Records";
+import { UnscheduledMeasurementRecord } from "../../../models/Records";
 import { ERROR_BORDER_WIDTH } from "../../../commonStyles";
 import {
   getTodayDateOnly,
@@ -108,7 +108,7 @@ export default function EditAssessmentScheduleScreen() {
   const [
     existingUnscheduledMeasurementRecords,
     setExistingUnscheduledMeasurementRecords,
-  ] = React.useState<UnscheduledMeasurmentRecord[]>([]);
+  ] = React.useState<UnscheduledMeasurementRecord[]>([]);
 
   const weekdays = React.useMemo(() => {
     return getWeekdays(i18n.resolvedLanguage || i18n.language);
@@ -179,7 +179,7 @@ export default function EditAssessmentScheduleScreen() {
     );
     setExistingAssessmentSchedules(newExistingAssessmentSchedules);
     const newExistingUnscheduledMeasurementRecords = (
-      await dbGetUnscheduledMeasurmentRecords(db)
+      await dbGetUnscheduledMeasurementRecords(db)
     ).filter(
       (a) =>
         params.assessment.dbId !== undefined &&
@@ -336,7 +336,7 @@ export default function EditAssessmentScheduleScreen() {
     const newGroupsErros = measurements.map(
       ({ groupId }) =>
         existingAssessemtnSchedulesWithinDate.some((as) =>
-          as.measurments.some((m) => m.groupId === groupId),
+          as.measurements.some((m) => m.groupId === groupId),
         ) ||
         existingUnscheduledMeasurementRecordsWithinDate.some(
           (mr) => mr.groupId === groupId,
@@ -369,7 +369,7 @@ export default function EditAssessmentScheduleScreen() {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        measurments: validatedData.measurements,
+        measurements: validatedData.measurements,
       });
       navigation.popToTop();
     } else if (assessment) {
@@ -377,7 +377,7 @@ export default function EditAssessmentScheduleScreen() {
         startDate: validatedData.startDate,
         endDate: validatedData.endDate,
         freq: validatedData.freq,
-        measurments: validatedData.measurements,
+        measurements: validatedData.measurements,
       });
       navigation.popToTop();
     } else {

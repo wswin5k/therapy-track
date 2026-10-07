@@ -19,10 +19,10 @@ import {
   dbGetGroups,
   dbGetMedicines,
   dbGetScheduledDosageRecords,
-  dbGetScheduledMeasurmentRecords,
+  dbGetScheduledMeasurementRecords,
   dbGetMedicineSchedules,
   dbGetUnscheduledDosageRecords,
-  dbGetUnscheduledMeasurmentRecords,
+  dbGetUnscheduledMeasurementRecords,
   dbGetHistoryTableSettings,
   dbUpdateHistoryTableSettings,
 } from "../../../models/dbAccess";
@@ -271,9 +271,9 @@ export function HistoryTableScreen() {
 
   const getAssessmentData = React.useCallback(async (): Promise<TableData> => {
     const scheuledMeasurementRecrods =
-      await dbGetScheduledMeasurmentRecords(db);
+      await dbGetScheduledMeasurementRecords(db);
     const unscheduledMeasurementRecords =
-      await dbGetUnscheduledMeasurmentRecords(db);
+      await dbGetUnscheduledMeasurementRecords(db);
 
     const assessmentSchedules = await dbGetAssessmentSchedules(db);
     const idToAssessmentSchedule = new Map<number, AssessmentSchedule>();
@@ -354,7 +354,7 @@ export function HistoryTableScreen() {
       if (!assessmentSchedule) {
         throw Error("Record not connected to assessment schedule.");
       }
-      const measurement = assessmentSchedule.measurments[r.measurmentIndex];
+      const measurement = assessmentSchedule.measurements[r.measurementIndex];
 
       const groupLabel = getGroupLabel(measurement.groupId);
       const fullHeader = `${assessmentSchedule.assessment.name} – ${groupLabel}`;
