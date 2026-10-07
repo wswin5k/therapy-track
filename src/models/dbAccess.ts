@@ -330,7 +330,9 @@ export async function dbInsertMedicine(
 ): Promise<number> {
   const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
   const db_insert = await db.runAsync(
-    "INSERT INTO medicines (created_at, name, base_unit, active_ingredients) VALUES (?, ?, ?)",
+    `INSERT INTO medicines
+    (created_at, name, base_unit, active_ingredients)
+    VALUES (?, ?, ?, ?)`,
     serializeDatetime(new Date()),
     medicine.name,
     medicine.baseUnit,

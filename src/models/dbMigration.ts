@@ -78,7 +78,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       INSERT INTO groups (name, created_at, color) VALUES ("Morning", "2026-01-01T00:00:00.000Z", "#ffff64ff");
       INSERT INTO groups (name, created_at, color) VALUES ("Afternoon", "2026-01-01T00:00:00.000Z", "#30c82dff");
-      INSERT INTO groups (name, cteated_at, color) VALUES ("Evening", "2026-01-01T00:00:00.000Z", "#2f39c9ff");
+      INSERT INTO groups (name, created_at, color) VALUES ("Evening", "2026-01-01T00:00:00.000Z", "#2f39c9ff");
 
       CREATE TABLE assessments (
       id INTEGER PRIMARY KEY NOT NULL,
