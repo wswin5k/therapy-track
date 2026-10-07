@@ -59,6 +59,8 @@ import {
 import { getOrThrow, castToStringArray } from "../../utils";
 import { AssessmentValue } from "../../../models/Records";
 import { HistoryTableSettings } from "../../../models/Settings";
+import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
+import { t } from "i18next";
 
 function defaultConfiguration(): HistoryTableSettings {
   return new HistoryTableSettings(
@@ -153,7 +155,7 @@ export function MenuModal({
             onPress={handleSaveToCSV}
           >
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              Save to CSV
+              {t("Save to CSV")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -161,7 +163,7 @@ export function MenuModal({
             onPress={handleOpenConfiguration}
           >
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              Configure columns
+              {t("Configure")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -293,7 +295,7 @@ export function HistoryTableScreen() {
 
     const dayToHeaderToValues = new Map<string, Map<string, string>>();
 
-    /* to handle shortening of header labels*/
+    /* to handle shortening of header labels */
     const fullHeaderToShortHeader = new Map<string, string>();
     const shortHeaderCounts = new Map<string, number>();
 
@@ -643,7 +645,6 @@ export function HistoryTableScreen() {
       ...medicineTableData.fullHeaders,
       ...assessmentTableData.fullHeaders,
     );
-    //headers.unshift("Date");
     setFullHeaders(headers);
 
     const types = new Map([
@@ -796,7 +797,7 @@ export function HistoryTableScreen() {
             fullHeaderToDisplayHeader={fullHeaderToDisplayHeader}
             rowHeaders={rowHeaders}
             data={cells}
-            expandCells={settings.expandAllRows}
+            expandAllRows={settings.expandAllRows}
             settingsColumnWidths={settings.columnWidths}
             saveSettings={saveSettings}
           />
@@ -821,22 +822,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  tableHeader: {
-    margin: 0,
-  },
-  headerText: {
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  tableRow: {},
-  tableCell: {
-    borderWidth: 1,
-    minHeight: 48,
-    padding: 10,
-  },
-  cellText: {
-    fontSize: 14,
-  },
   overlay: {
     position: "absolute",
     top: 0,
@@ -856,14 +841,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
+    borderBottomLeftRadius: DEFAULT_BORDER_RADIUS,
   },
   menuItem: {
     alignContent: "flex-start",
-    padding: 20,
-    borderBottomWidth: 2,
+    padding: 18,
+    borderBottomWidth: 1,
     width: "100%",
   },
   menuText: {
     alignItems: "center",
+    fontSize: 16,
+    fontWeight: "400",
   },
 });

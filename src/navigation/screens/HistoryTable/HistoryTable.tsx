@@ -26,7 +26,7 @@ const MIN_CELL_LINES_LENGTH = 2;
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
 const MID_CELL_WIDTH = 150;
 
-const ROW_HEADER_WIDTH = 106;
+const ROW_HEADER_WIDTH = 114;
 
 function isSizeClose(a: number, b: number): boolean {
   return Math.abs(a - b) < DELTA_WIDTH_BUFFER;
@@ -47,7 +47,7 @@ type HistoryTableProps = {
   fullHeaderToValueType: Map<string, ValueType>;
   rowHeaders: Date[];
   data: string[][];
-  expandCells: boolean;
+  expandAllRows: boolean;
   settingsColumnWidths: Map<string, number>;
   saveSettings: (update: Partial<HistoryTableSettings>) => Promise<void>;
 };
@@ -58,12 +58,13 @@ export default function HistoryTable({
   fullHeaderToValueType,
   rowHeaders,
   data,
-  expandCells,
+  expandAllRows,
   settingsColumnWidths,
   saveSettings,
 }: HistoryTableProps) {
-  const theme = useTheme();
+  console.log("HistoryTable render");
 
+  const theme = useTheme();
   const { i18n } = useTranslation();
 
   const formatDate = React.useCallback(
@@ -209,7 +210,7 @@ export default function HistoryTable({
     styles.height = rowHeights[rowIndex];
 
     if (
-      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) ===
+      fullHeaderToValueType.get(fullHeaders[columnIndex]) ===
       ValueType.MultiSelect
     ) {
       styles.alignItems = "flex-start";
@@ -220,7 +221,7 @@ export default function HistoryTable({
 
   const calculateMultiSelectFitWidth = (columnIndex: number): number | null => {
     if (
-      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) !==
+      fullHeaderToValueType.get(fullHeaders[columnIndex]) !==
       ValueType.MultiSelect
     ) {
       return null;
@@ -286,7 +287,7 @@ export default function HistoryTable({
     setRowsNumberOfLines((current) =>
       current.map((el, idx) => {
         if (rowIndex === idx) {
-          if (expandCells) {
+          if (expandAllRows) {
             return 1000;
           } else if (el === MIN_CELL_LINES_LENGTH) {
             return MIN_CELL_LINES_LENGTH;
@@ -319,7 +320,7 @@ export default function HistoryTable({
     setRowHeights((current) =>
       current.map((el, idx) => {
         if (rowIndex === idx) {
-          if (expandCells) {
+          if (expandAllRows) {
             const maxFittingHeight = Math.max(
               ...fittingCellHeights.current[rowIndex],
             );
@@ -447,7 +448,7 @@ export default function HistoryTable({
 
   const handleCellPress = (rowIndex: number, columnIndex: number) => {
     // toggles row height
-    if (expandCells) {
+    if (expandAllRows) {
       return;
     }
     setRowHeights((current) =>
@@ -588,7 +589,9 @@ export default function HistoryTable({
             computeRowHeaderStyles(0, rowHeaders.length - 1),
           ]}
         >
-          <Text style={[styles.headerText, { color: theme.colors.text }]}>
+          <Text
+            style={[styles.headerText, { color: theme.colors.textOnPrimary }]}
+          >
             {t("Date")}
           </Text>
         </View>
@@ -619,7 +622,10 @@ export default function HistoryTable({
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="middle"
-                    style={[styles.headerText, { color: theme.colors.text }]}
+                    style={[
+                      styles.headerText,
+                      { color: theme.colors.textOnPrimary },
+                    ]}
                   >
                     {fullHeaderToDisplayHeader.get(columnHeader)}
                   </Text>
@@ -675,7 +681,7 @@ export default function HistoryTable({
                 {row.map((cell, columnIndex) => (
                   <TouchableOpacity
                     key={columnIndex}
-                    disabled={expandCells}
+                    disabled={expandAllRows}
                     onPress={() => handleCellPress(rowIndex, columnIndex)}
                     style={[
                       styles.cell,
@@ -725,11 +731,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   headerText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 500,
   },
   cellText: {
-    fontSize: 14,
+    fontSize: 15,
   },
   cornerCell: {
     justifyContent: "center",
