@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../../components/SmallNumberStepper";
 import { mixColors } from "../../utils";
 import { eStyles } from "../../../commonStyles";
-import Ionicons from "@react-native-vector-icons/ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Frequency, IntervalUnit } from "../../../models/Frequency";
 import { getWeekdays } from "./common";
 import { MAX_DOEASUREMENTS } from "../../../validationConstants";

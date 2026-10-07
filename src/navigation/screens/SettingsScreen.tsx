@@ -27,7 +27,6 @@ import {
   ThemeSelection,
   themeSelectionToColorSchemeName,
 } from "../../models/Settings";
-import Ionicons from "@react-native-vector-icons/ionicons";
 import {
   APP_DATABASE_VERSION,
   DATABASE_NAME,
@@ -37,6 +36,7 @@ import {
 import { File, Paths, Directory } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
+import { Lucide } from "@react-native-vector-icons/lucide/static";
 
 function themeSelectionToLabel(selection: ThemeSelection): string {
   switch (selection) {
@@ -262,11 +262,7 @@ export function SettingsScreen() {
               },
             ]}
           >
-            <Ionicons
-              name="download-outline"
-              color={theme.colors.primary}
-              size={28}
-            />
+            <Lucide name="download" color={theme.colors.primary} size={24} />
           </TouchableOpacity>
         </View>
         <View style={[styles.rowContainer]}>
@@ -285,12 +281,7 @@ export function SettingsScreen() {
               },
             ]}
           >
-            <Ionicons
-              name="download-outline"
-              color={theme.colors.primary}
-              size={28}
-              style={styles.loadBackupIcon}
-            />
+            <Lucide name="upload" color={theme.colors.primary} size={24} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -322,9 +313,6 @@ const styles = StyleSheet.create({
     height: SECONDARY_EDIT_PRESSABLE_HEIGHT,
     maxWidth: "50%",
     overflow: "hidden",
-    borderWidth: 1.5,
-  },
-  loadBackupIcon: {
-    transform: [{ rotate: "180deg" }],
+    borderWidth: 1.2,
   },
 });
