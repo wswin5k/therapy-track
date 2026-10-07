@@ -38,7 +38,9 @@ import { HistoryTableSettings, Settings, ThemeSelection } from "./Settings";
 
 interface MedicineScheduleWithMedicineRow {
   id: number;
+  created_at: string;
   medicine: number;
+  medicine_created_at: string;
   medicine_name: string;
   medicine_base_unit: keyof typeof BaseUnit;
   medicine_active_ingredients: string;
@@ -50,6 +52,7 @@ interface MedicineScheduleWithMedicineRow {
 
 interface MedicineRow {
   id: number;
+  created_at: string;
   name: string;
   base_unit: keyof typeof BaseUnit;
   active_ingredients: string;
@@ -82,6 +85,7 @@ interface DosageRow {
 
 interface GroupRow {
   id: number;
+  created_at: string;
   name: string;
   color: string;
   is_reminder_on: number;
@@ -90,6 +94,7 @@ interface GroupRow {
 
 interface AssessmentRow {
   id: number;
+  created_at: string;
   name: string;
   type: ValueType;
   value_domain: string | null;
@@ -107,7 +112,9 @@ interface UncheduledMeasurementRecordRow {
 
 interface AssessmentScheduleWithAssessmentRow {
   id: number;
+  created_at: string;
   assessment: number;
+  assessment_created_at: string;
   assessment_name: string;
   assessment_type: ValueType;
   assessment_value_domain: string | null;
@@ -147,11 +154,11 @@ interface HistoryTableSettingsRow {
   column_widths: string;
 }
 
-function serializeRecordDatetime(value: Date): string {
+function serializeDatetime(value: Date): string {
   return value.toISOString();
 }
 
-function deserializeRecordDatetime(value: string): Date {
+function deserializeDatetime(value: string): Date {
   return new Date(value);
 }
 
@@ -223,8 +230,8 @@ function deserializeBoolean(value: number): boolean {
   return value !== 0;
 }
 
-function serializeBoolean(value: boolean): string {
-  return value ? "1" : "0";
+function serializeBoolean(value: boolean): number {
+  return value ? 1 : 0;
 }
 
 function deserializeColumnWidths(value: string): Map<string, number> {
@@ -303,6 +310,7 @@ export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
       row.name,
       BaseUnit[row.base_unit],
       active_ingredients,
+      deserializeDatetime(row.created_at),
       row.id,
     );
   });
@@ -322,7 +330,10 @@ export async function dbInsertMedicine(
 ): Promise<number> {
   const activeIngredientsStr = JSON.stringify(medicine.activeIngredients);
   const db_insert = await db.runAsync(
-    "INSERT INTO medicines (name, base_unit, active_ingredients) VALUES (?, ?, ?)",
+    `INSERT INTO medicines
+    (created_at, name, base_unit, active_ingredients)
+    VALUES (?, ?, ?, ?)`,
+    serializeDatetime(new Date()),
     medicine.name,
     medicine.baseUnit,
     activeIngredientsStr,
@@ -340,6 +351,7 @@ function parseMedicineScheduleWithMedicineRow(
     row.medicine_name,
     BaseUnit[row.medicine_base_unit],
     active_ingredients,
+    deserializeDatetime(row.medicine_created_at),
     row.medicine,
   );
   const dosages = row.dosages.map(
@@ -359,6 +371,7 @@ function parseMedicineScheduleWithMedicineRow(
     deserializeDateOnlyNullable(row.end_date),
     frequency,
     dosages,
+    deserializeDatetime(row.created_at),
     row.id,
   );
 }
@@ -373,6 +386,7 @@ function parseAssessmentScheduleWithAssessmentRow(
     row.assessment_name,
     row.assessment_type,
     assessmentValueDomain,
+    deserializeDatetime(row.assessment_created_at),
     row.assessment,
   );
   const measurements = row.measurements.map(
@@ -392,6 +406,7 @@ function parseAssessmentScheduleWithAssessmentRow(
     deserializeDateOnlyNullable(row.end_date),
     frequency,
     measurements,
+    deserializeDatetime(row.created_at),
     row.id,
   );
 }
@@ -403,7 +418,9 @@ export async function dbGetMedicineSchedule(
   const row = await db.getFirstAsync<MedicineScheduleWithMedicineRow>(`
       SELECT
         s.id,
+        s.created_at,
         s.medicine, 
+        m.created_at as medicine_created_at,
         m.name as medicine_name,
         m.base_unit as medicine_base_unit,
         m.active_ingredients as medicine_active_ingredients,
@@ -430,7 +447,9 @@ export async function dbGetMedicineSchedules(
   const rows = await db.getAllAsync<MedicineScheduleWithMedicineRow>(`
       SELECT
         s.id,
+        s.created_at,
         s.medicine, 
+        m.created_at as medicine_created_at,
         m.name as medicine_name,
         m.base_unit as medicine_base_unit,
         m.active_ingredients as medicine_active_ingredients,
@@ -469,7 +488,10 @@ export async function dbInsertMedicineSchedule(
   const endDateStr = serializeDateOnlyNullable(medicineSchedule.endDate);
 
   const result = await db.runAsync(
-    "INSERT INTO medicine_schedules (medicine, start_date, end_date, freq) VALUES (?, ?, ?, ?)",
+    `INSERT INTO medicine_schedules 
+    (created_at, medicine, start_date, end_date, freq) 
+    VALUES (?, ?, ?, ?, ?)`,
+    serializeDatetime(new Date()),
     medicineId,
     startDateStr,
     endDateStr,
@@ -557,7 +579,7 @@ export async function dbInsertScheduledDosageRecord(
     `INSERT INTO scheduled_dosage_records 
     (record_datetime, date, medicine_schedule, dosage_index) 
     VALUES (?, ?, ?, ?)`,
-    serializeRecordDatetime(new Date()),
+    serializeDatetime(new Date()),
     serializeDateOnly(record.date),
     record.medicineScheduleId,
     record.dosageIndex,
@@ -596,7 +618,7 @@ export async function dbGetScheduledDosageRecords(
     (row) =>
       new ScheduledDosageRecord(
         row.id,
-        deserializeRecordDatetime(row.record_datetime),
+        deserializeDatetime(row.record_datetime),
         deserializeDateOnly(row.date),
         row.medicine_schedule,
         row.dosage_index,
@@ -622,7 +644,7 @@ export async function dbGetScheduledMeasurementRecords(
     (row) =>
       new ScheduledMeasurementRecord(
         row.id,
-        deserializeRecordDatetime(row.record_datetime),
+        deserializeDatetime(row.record_datetime),
         deserializeDateOnly(row.date),
         row.assessment_schedule,
         row.measurement_index,
@@ -644,7 +666,7 @@ export async function dbInsertUnscheduledDosageRecord(
     `INSERT INTO unscheduled_dosage_records 
     (record_datetime, date, medicine, dosage_amount, group_) 
     VALUES (?, ?, ?, ?, ?)`,
-    serializeRecordDatetime(new Date()),
+    serializeDatetime(new Date()),
     serializeDateOnly(record.date),
     record.medicineId,
     record.dosageAmount,
@@ -677,7 +699,7 @@ export async function dbGetUnscheduledDosageRecords(
     (row) =>
       new UnscheduledDosageRecord(
         row.id,
-        deserializeRecordDatetime(row.record_datetime),
+        deserializeDatetime(row.record_datetime),
         deserializeDateOnly(row.date),
         row.medicine,
         row.dosage_amount,
@@ -709,7 +731,7 @@ export async function dbDeleteAssessmentSchedule(
 
 export async function dbGetGroups(db: SQLiteDatabase): Promise<Group[]> {
   const rows = await db.getAllAsync<GroupRow>(`
-      SELECT id, name, color, is_reminder_on, reminder_time
+      SELECT id, created_at, name, color, is_reminder_on, reminder_time
       FROM groups
     `);
 
@@ -719,6 +741,7 @@ export async function dbGetGroups(db: SQLiteDatabase): Promise<Group[]> {
       row.color,
       row.is_reminder_on !== 0,
       row.reminder_time,
+      deserializeDatetime(row.created_at),
       row.id,
     );
   });
@@ -772,10 +795,12 @@ export async function dbInsertGroup(
 ): Promise<number> {
   const db_insert = await db.runAsync(
     `INSERT INTO groups 
-    (name, color, is_reminder_on, reminder_time) VALUES (?, ?, ?, ?)`,
+    (created_at, name, color, is_reminder_on, reminder_time) 
+    VALUES (?, ?, ?, ?, ?)`,
+    serializeDatetime(new Date()),
     group.name,
     group.color,
-    group.isReminderOn ? 1 : 0,
+    serializeBoolean(group.isReminderOn),
     group.reminderTime,
   );
   return db_insert.lastInsertRowId;
@@ -797,7 +822,7 @@ export async function dbUpdateGroup(
     WHERE id = ?`,
     group.name,
     group.color,
-    group.isReminderOn ? 1 : 0,
+    serializeBoolean(group.isReminderOn),
     group.reminderTime,
     group.dbId,
   );
@@ -851,7 +876,10 @@ export async function dbInsertAssessment(
 ): Promise<number> {
   const valueDomainStr = JSON.stringify(assessment.valueDomain);
   const db_insert = await db.runAsync(
-    "INSERT INTO assessments (name, type, value_domain) VALUES (?, ?, ?)",
+    `INSERT INTO assessments 
+    (created_at, name, type, value_domain) 
+    VALUES (?, ?, ?, ?)`,
+    serializeDatetime(new Date()),
     assessment.name,
     assessment.type,
     valueDomainStr,
@@ -878,7 +906,7 @@ export async function dbInsertUnscheduledMeasurementRecord(
     `INSERT INTO unscheduled_measurement_records 
     (record_datetime, date, assessment, value, group_) 
     VALUES (?, ?, ?, ?, ?)`,
-    serializeRecordDatetime(new Date()),
+    serializeDatetime(new Date()),
     serializeDateOnly(record.date),
     record.assessmentId,
     valueStr,
@@ -906,7 +934,7 @@ export async function dbGetUnscheduledMeasurementRecords(
     );
     return new UnscheduledMeasurementRecord(
       row.id,
-      deserializeRecordDatetime(row.record_datetime),
+      deserializeDatetime(row.record_datetime),
       deserializeDateOnly(row.date),
       row.assessment,
       value,
@@ -931,7 +959,7 @@ export async function dbInsertScheduledMeasurementRecord(
     `INSERT INTO scheduled_measurement_records 
     (record_datetime, date, assessment_schedule, measurement_index, value) 
     VALUES (?, ?, ?, ?, ?)`,
-    serializeRecordDatetime(new Date()),
+    serializeDatetime(new Date()),
     serializeDateOnly(record.date),
     record.assessmentScheduleId,
     record.measurementIndex,
@@ -977,7 +1005,7 @@ export async function dbGetAssessments(
   db: SQLiteDatabase,
 ): Promise<Assessment[]> {
   const rows = await db.getAllAsync<AssessmentRow>(`
-      SELECT id, name, type, value_domain
+      SELECT id, created_at, name, type, value_domain
       FROM assessments
     `);
   return rows.map((row) => {
@@ -985,7 +1013,13 @@ export async function dbGetAssessments(
     const valueDomain = row.value_domain
       ? parseValueDomain(row.value_domain, assessmentType)
       : null;
-    return new Assessment(row.name, assessmentType, valueDomain, row.id);
+    return new Assessment(
+      row.name,
+      assessmentType,
+      valueDomain,
+      deserializeDatetime(row.created_at),
+      row.id,
+    );
   });
 }
 
@@ -1044,8 +1078,9 @@ export async function dbInsertAssessmentSchedule(
 
   const result = await db.runAsync(
     `INSERT INTO assessment_schedules 
-    (assessment, start_date, end_date, freq) 
-    VALUES (?, ?, ?, ?)`,
+    (created_at, assessment, start_date, end_date, freq) 
+    VALUES (?, ?, ?, ?, ?)`,
+    serializeDatetime(new Date()),
     assessmentId,
     startDateStr,
     endDateStr,
@@ -1098,7 +1133,9 @@ export async function dbGetAssessmentSchedules(
   const rows = await db.getAllAsync<AssessmentScheduleWithAssessmentRow>(`
       SELECT
         s.id,
+        s.created_at,
         s.assessment,
+        a.created_at as assessment_created_at,
         a.name as assessment_name,
         a.type as assessment_type,
         a.value_domain as assessment_value_domain,
@@ -1122,7 +1159,9 @@ export async function dbGetAssessmentSchedule(
   const row = await db.getFirstAsync<AssessmentScheduleWithAssessmentRow>(`
       SELECT
         s.id,
+        s.created_at,
         s.assessment,
+        a.created_at as assessment_created_at,
         a.name as assessment_name,
         a.type as assessment_type,
         a.value_domain as assessment_value_domain,

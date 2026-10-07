@@ -70,6 +70,7 @@ export class Medicine {
     public name: string,
     public baseUnit: BaseUnit,
     public activeIngredients: ActiveIngredient[],
+    public createdAt: Date,
     public dbId: number,
   ) {}
 
@@ -98,6 +99,7 @@ export class MedicineSchedule {
     public endDate: Date | null,
     public freq: Frequency,
     public dosages: Dosage[],
+    public createdAt: Date,
     public dbId: number,
   ) {}
 }

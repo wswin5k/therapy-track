@@ -18,6 +18,7 @@ export class Group {
     public color: string,
     public isReminderOn: boolean,
     public reminderTime: string | null,
+    public createdAt: Date,
     public dbId: number,
   ) {}
 }
