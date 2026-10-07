@@ -59,6 +59,7 @@ import {
 import { getOrThrow, castToStringArray } from "../../utils";
 import { AssessmentValue } from "../../../models/Records";
 import { HistoryTableSettings } from "../../../models/Settings";
+import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 
 function defaultConfiguration(): HistoryTableSettings {
   return new HistoryTableSettings(
@@ -180,6 +181,7 @@ class TableData {
 }
 
 export function HistoryTableScreen() {
+  console.log("HistoryTableScreen render");
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
@@ -293,7 +295,7 @@ export function HistoryTableScreen() {
 
     const dayToHeaderToValues = new Map<string, Map<string, string>>();
 
-    /* to handle shortening of header labels*/
+    /* to handle shortening of header labels */
     const fullHeaderToShortHeader = new Map<string, string>();
     const shortHeaderCounts = new Map<string, number>();
 
@@ -643,7 +645,6 @@ export function HistoryTableScreen() {
       ...medicineTableData.fullHeaders,
       ...assessmentTableData.fullHeaders,
     );
-    //headers.unshift("Date");
     setFullHeaders(headers);
 
     const types = new Map([
@@ -672,6 +673,7 @@ export function HistoryTableScreen() {
   const loadSettings = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
     setSettings(newSettings);
+    console.log("settings loaded", newSettings);
   }, [db]);
 
   const saveSettings = async (update: Partial<HistoryTableSettings>) => {
@@ -796,7 +798,7 @@ export function HistoryTableScreen() {
             fullHeaderToDisplayHeader={fullHeaderToDisplayHeader}
             rowHeaders={rowHeaders}
             data={cells}
-            expandCells={settings.expandAllRows}
+            expandAllRows={settings.expandAllRows}
             settingsColumnWidths={settings.columnWidths}
             saveSettings={saveSettings}
           />
@@ -821,22 +823,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  tableHeader: {
-    margin: 0,
-  },
-  headerText: {
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  tableRow: {},
-  tableCell: {
-    borderWidth: 1,
-    minHeight: 48,
-    padding: 10,
-  },
-  cellText: {
-    fontSize: 14,
-  },
   overlay: {
     position: "absolute",
     top: 0,
@@ -856,6 +842,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
   },
   menuItem: {
     alignContent: "flex-start",
