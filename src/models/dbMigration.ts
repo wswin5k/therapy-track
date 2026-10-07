@@ -21,7 +21,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     return;
   }
 
-  // todo: offset not null
   if (currentDbVersion === 0) {
     await db.execAsync(`
       PRAGMA journal_mode = 'wal';
@@ -34,7 +33,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       CREATE TABLE dosages (id INTEGER PRIMARY KEY NOT NULL,
       amount REAL NOT NULL,
       index_ INTEGER NOT NULL,
-      offset INTEGER,
+      offset INTEGER NOT NULL,
       group_ INTEGER,
       medicine_schedule INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
@@ -84,7 +83,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE measurements (id INTEGER PRIMARY KEY NOT NULL,
       index_ INTEGER NOT NULL,
-      offset INTEGER,
+      offset INTEGER NOT NULL,
       group_ INTEGER,
       assessment_schedule INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),

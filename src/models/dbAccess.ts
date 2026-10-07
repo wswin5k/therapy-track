@@ -76,7 +76,7 @@ interface DosageRow {
   id: number;
   amount: number;
   index_: number;
-  offset: number | null;
+  offset: number;
   group_: number | null;
 }
 
@@ -120,7 +120,7 @@ interface AssessmentScheduleWithAssessmentRow {
 interface MeasurementRow {
   id: number;
   index_: number;
-  offset: number | null;
+  offset: number;
   group_: number | null;
 }
 
@@ -344,7 +344,7 @@ function parseMedicineScheduleWithMedicineRow(
   );
   const dosages = row.dosages.map(
     (dd: DosageRow) =>
-      new Dosage(dd.amount, dd.index_, dd.offset ?? 0, dd.group_, dd.id),
+      new Dosage(dd.amount, dd.index_, dd.offset, dd.group_, dd.id),
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(
@@ -377,7 +377,7 @@ function parseAssessmentScheduleWithAssessmentRow(
   );
   const measurements = row.measurements.map(
     (dd: MeasurementRow) =>
-      new Measurement(dd.index_, dd.offset ?? 0, dd.group_, dd.id),
+      new Measurement(dd.index_, dd.offset, dd.group_, dd.id),
   );
   const freqData = JSON.parse(row.freq);
   const frequency = new Frequency(
@@ -730,7 +730,7 @@ async function dbInsertDosages(
   dosages: {
     amount: number;
     index: number;
-    offset: number | null;
+    offset: number;
     groupId: number | null;
   }[],
 ): Promise<number[]> {
@@ -1004,7 +1004,7 @@ async function dbInsertMeasurements(
   assessmentScheduleId: number,
   measurements: {
     index: number;
-    offset: number | null;
+    offset: number;
     groupId: number | null;
   }[],
 ): Promise<number[]> {
