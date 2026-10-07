@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-export const APP_DATABASE_VERSION = 3;
+export const APP_DATABASE_VERSION = 1;
 
 export async function getDbVersion(db: SQLiteDatabase) {
   const pragma_user_version = await db.getFirstAsync<{
@@ -116,23 +116,13 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       group_ INTEGER,
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(assessment) REFERENCES assessments(id));
-    `);
-    currentDbVersion = 1;
-  }
 
-  if (currentDbVersion === 1) {
-    await db.execAsync(`
       CREATE TABLE settings (
       id INTEGER PRIMARY KEY NOT NULL,
       theme TEXT NOT NULL);
 
       INSERT INTO settings (id, theme) VALUES (1, "Auto");
-      `);
-    currentDbVersion = 2;
-  }
 
-  if (currentDbVersion === 2) {
-    await db.execAsync(`
       CREATE TABLE history_table_settings (
       id INTEGER PRIMARY KEY NOT NULL,
       expand_all_rows BOOLEAN NOT NULL,
@@ -149,7 +139,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       column_widths) 
       VALUES (1, 1, 0, 1, "{}");
       `);
-    currentDbVersion = 3;
+    currentDbVersion = 1;
   }
 
   await db.execAsync(`PRAGMA user_version = ${APP_DATABASE_VERSION}`);
