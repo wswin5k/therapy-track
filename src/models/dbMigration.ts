@@ -25,10 +25,12 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     await db.execAsync(`
       PRAGMA journal_mode = 'wal';
 
-      CREATE TABLE medicines (id INTEGER PRIMARY KEY NOT NULL,
+      CREATE TABLE medicines (
+      id INTEGER PRIMARY KEY NOT NULL,
+      created_at TEXT NOT NULL,
       name TEXT NOT NULL,
       base_unit TEXT NOT NULL,
-      active_ingredients TEXT NOT NULL );
+      active_ingredients TEXT NOT NULL);
 
       CREATE TABLE dosages (id INTEGER PRIMARY KEY NOT NULL,
       amount REAL NOT NULL,
@@ -41,6 +43,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE medicine_schedules (
       id INTEGER PRIMARY KEY NOT NULL,
+      created_at TEXT NOT NULL,
       medicine INTEGER,
       start_date TEXT NOT NULL,
       end_date TEXT,
@@ -57,6 +60,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE groups (
       id INTEGER PRIMARY KEY NOT NULL,
+      created_at TEXT NOT NULL,
       name TEXT NOT NULL,
       color TEXT NOT NULL,
       is_reminder_on BOOLEAN NOT NULL DEFAULT FALSE,
@@ -72,14 +76,16 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       FOREIGN KEY(group_) REFERENCES groups(id),
       FOREIGN KEY(medicine) REFERENCES medicines(id));
 
-      INSERT INTO groups (name, color) VALUES ("Morning", "#ffff64ff");
-      INSERT INTO groups (name, color) VALUES ("Afternoon", "#30c82dff");
-      INSERT INTO groups (name, color) VALUES ("Evening", "#2f39c9ff");
+      INSERT INTO groups (name, created_at, color) VALUES ("Morning", "2026-01-01T00:00:00.000Z", "#ffff64ff");
+      INSERT INTO groups (name, created_at, color) VALUES ("Afternoon", "2026-01-01T00:00:00.000Z", "#30c82dff");
+      INSERT INTO groups (name, cteated_at, color) VALUES ("Evening", "2026-01-01T00:00:00.000Z", "#2f39c9ff");
 
-      CREATE TABLE assessments (id INTEGER PRIMARY KEY NOT NULL,
+      CREATE TABLE assessments (
+      id INTEGER PRIMARY KEY NOT NULL,
+      created_at TEXT NOT NULL,
       name TEXT NOT NULL,
       type TEXT NOT NULL,
-      value_domain TEXT );
+      value_domain TEXT);
 
       CREATE TABLE measurements (id INTEGER PRIMARY KEY NOT NULL,
       index_ INTEGER NOT NULL,
@@ -91,6 +97,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE assessment_schedules (
       id INTEGER PRIMARY KEY NOT NULL,
+      created_at TEXT NOT NULL,
       assessment INTEGER,
       start_date TEXT NOT NULL,
       end_date TEXT,

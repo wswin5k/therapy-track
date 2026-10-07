@@ -31,6 +31,7 @@ export class Assessment {
     public name: string,
     public type: ValueType,
     public valueDomain: ValueDomain,
+    public createdAt: Date,
     public dbId: number,
   ) {}
 }
@@ -51,6 +52,7 @@ export class AssessmentSchedule {
     public endDate: Date | null,
     public freq: Frequency,
     public measurements: Measurement[],
+    public createdAt: Date,
     public dbId: number,
   ) {}
 }
