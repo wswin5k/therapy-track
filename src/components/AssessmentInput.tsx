@@ -18,7 +18,7 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
-import Ionicons from "@react-native-vector-icons/ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import React from "react";
 import { TEXT_MAX_LENGTH } from "../navigation/screens/EditAssessmentScreen";
 import { DEFAULT_BORDER_RADIUS } from "../commonStyles";

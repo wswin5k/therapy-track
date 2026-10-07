@@ -12,7 +12,7 @@ import type {
   Medicine,
 } from "../models/MedicineSchedule";
 import EditMedicineScheduleScreen from "./screens/ScheduleScreens/EditMedicineScheduleScreen";
-import { Ionicons } from "@react-native-vector-icons/ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
 import { MedicineListScreen } from "./screens/MedicineListScreen";
 import { EditSingleDosageScreen } from "./screens/EditSingleDosageScreen";
@@ -27,7 +27,7 @@ import {
 } from "../models/AssessmentSchedule";
 import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
 import { EditSingleMeasurementScreen } from "./screens/EditSingleMeasurementScreen";
-import EditAssessmentScheduleScreen from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
+import { EditAssessmentScheduleScreen } from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
 import { HomeSwipeable } from "./screens/HomeSwipeable";
 import { SelectAssessmentScreen } from "./screens/SelectAssessmentScreen";
 import { AssessmentListScreen } from "./screens/AssessmentListScreen";
@@ -37,6 +37,7 @@ import { EditCustomFrequencyScreen } from "./screens/ScheduleScreens/EditCustomF
 import { Frequency } from "../models/Frequency";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { EditHistoryTableSettingsScreen } from "./screens/HistoryTable/EditHistoryTableSettingsScreen";
+import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid/static";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
   screens: {
@@ -101,7 +102,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         drawerLabel: "Home",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="home" size={size} color={color} />
+          <Ionicons name="home-sharp" size={size} color={color} />
         ),
       },
     },
@@ -110,7 +111,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         title: "Medicines",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="server" size={size} color={color} />
+          <FontAwesomeFreeSolid name="pills" size={size} color={color} />
         ),
       },
     },
@@ -119,7 +120,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         title: "Assessments",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="podium" size={size} color={color} />
+          <FontAwesomeFreeSolid name="ruler" size={size} color={color} />
         ),
       },
     },
@@ -137,7 +138,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         title: "Groups and Notifications",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="folder" size={size} color={color} />
+          <FontAwesomeFreeSolid name="bell" size={size} color={color} />
         ),
       },
     },
@@ -155,7 +156,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         title: "Settings",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="settings" size={size} color={color} />
+          <Ionicons name="settings-sharp" size={size} color={color} />
         ),
         drawerItemStyle: {
           marginTop: "auto",

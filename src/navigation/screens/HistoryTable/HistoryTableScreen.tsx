@@ -34,7 +34,7 @@ import {
   MedicineSchedule,
   weightUnitToGramsMultiplier,
 } from "../../../models/MedicineSchedule";
-import Ionicons from "@react-native-vector-icons/ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import * as FileSystem from "expo-file-system/legacy";
 import { shareAsync } from "expo-sharing";
 import { Medicine } from "../../../models/MedicineSchedule";

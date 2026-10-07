@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
-import Ionicons from "@react-native-vector-icons/ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -73,7 +73,7 @@ export function HomeSwipeable() {
           onPress={() => setIsDatePickerOpened(true)}
           style={{ marginLeft: 16, marginRight: 20 }}
         >
-          <Ionicons name="calendar" size={28} color={theme.colors.text} />
+          <Ionicons name="calendar-clear" size={28} color={theme.colors.text} />
         </TouchableOpacity>
       ),
     });

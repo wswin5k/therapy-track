@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import Ionicons from "@react-native-vector-icons/ionicons";
+import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonStyles";
 import {
   EDIT_PRESSABLE_HEIGHT,

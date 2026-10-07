@@ -53,7 +53,7 @@ type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   "EditAssessmentScheduleScreen"
 >;
 
-export default function EditAssessmentScheduleScreen() {
+export function EditAssessmentScheduleScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const navigation =
