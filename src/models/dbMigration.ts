@@ -82,7 +82,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       type TEXT NOT NULL,
       value_domain TEXT );
 
-      CREATE TABLE measurments (id INTEGER PRIMARY KEY NOT NULL,
+      CREATE TABLE measurements (id INTEGER PRIMARY KEY NOT NULL,
       index_ INTEGER NOT NULL,
       offset INTEGER,
       group_ INTEGER,
@@ -98,16 +98,16 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       freq TEXT NOT NULL,
       FOREIGN KEY(assessment) REFERENCES assessments(id) ON DELETE CASCADE);
     
-      CREATE TABLE scheduled_measurment_records (
+      CREATE TABLE scheduled_measurement_records (
       id INTEGER PRIMARY KEY NOT NULL,
       record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,
       assessment_schedule INTEGER,
-      measurment_index INTEGER,
+      measurement_index INTEGER,
       value TEXT NOT NULL,
       FOREIGN KEY(assessment_schedule) REFERENCES assessment_schedules(id));
 
-      CREATE TABLE unscheduled_measurment_records (
+      CREATE TABLE unscheduled_measurement_records (
       id INTEGER PRIMARY KEY NOT NULL,
       record_datetime TEXT NOT NULL,
       date TEXT NOT NULL,

@@ -18,13 +18,13 @@ import {
   dbInsertScheduledDosageRecord,
   dbGetGroups,
   dbDeleteUnscheduledDosageRecord,
-  dbGetUnscheduledMeasurmentRecords,
+  dbGetUnscheduledMeasurementRecords,
   dbGetAssessments,
-  dbDeleteUnscheduledMeasurmentRecord,
+  dbDeleteUnscheduledMeasurementRecord,
   dbGetAssessmentSchedules,
-  dbGetScheduledMeasurmentRecords,
-  dbInsertScheduledMeasurmentRecord,
-  dbDeleteScheduledMeasurmentRecord,
+  dbGetScheduledMeasurementRecords,
+  dbInsertScheduledMeasurementRecord,
+  dbDeleteScheduledMeasurementRecord,
 } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { useTranslation } from "react-i18next";
@@ -42,7 +42,7 @@ import {
 import { baseUnitToSingularShortForm } from "../enumMappings";
 import {
   AssessmentValue,
-  sortArrayMeasurmentValue,
+  sortArrayMeasurementValue,
 } from "../../models/Records";
 import {
   Assessment,
@@ -109,16 +109,16 @@ class UnscheduledDosageInfo {
   }
 }
 
-class UnscheduledMeasurmentInfo {
+class UnscheduledMeasurementInfo {
   constructor(
     public assessmentName: string,
     public value: AssessmentValue,
     public valueDomain: ValueDomain,
-    public measurmentRecordId: number,
+    public measurementRecordId: number,
   ) {}
 }
 
-class ScheduledMeasurmentInfo {
+class ScheduledMeasurementInfo {
   constructor(
     public assessmentName: string,
     public assessmentType: ValueType,
@@ -126,7 +126,7 @@ class ScheduledMeasurmentInfo {
     public valueDomain: ValueDomain,
     public index: number,
     public assessmentScheduleId: number,
-    public measurmentRecordId: number | null,
+    public measurementRecordId: number | null,
     public groupId: number | null,
   ) {}
 }
@@ -242,13 +242,13 @@ function UnscheduledDosage({
   );
 }
 
-function UnscheduledMeasurment({
-  measurment,
+function UnscheduledMeasurement({
+  measurement,
   bottomBorder,
   loadUnscheduledRecords,
   isDisabled,
 }: {
-  measurment: UnscheduledMeasurmentInfo;
+  measurement: UnscheduledMeasurementInfo;
   bottomBorder: boolean;
   loadUnscheduledRecords: () => void;
   isDisabled: boolean;
@@ -264,9 +264,9 @@ function UnscheduledMeasurment({
   };
 
   const handleDelete = async () => {
-    await dbDeleteUnscheduledMeasurmentRecord(
+    await dbDeleteUnscheduledMeasurementRecord(
       db,
-      measurment.measurmentRecordId,
+      measurement.measurementRecordId,
     );
     loadUnscheduledRecords();
   };
@@ -312,7 +312,7 @@ function UnscheduledMeasurment({
     <View>
       {optionsOpened && renderOptions()}
       <TouchableOpacity
-        key={measurment.measurmentRecordId}
+        key={measurement.measurementRecordId}
         style={[
           styles.scheduleItem,
           {
@@ -339,7 +339,7 @@ function UnscheduledMeasurment({
             ]}
             numberOfLines={1}
           >
-            {measurment.assessmentName}
+            {measurement.assessmentName}
             {"  –  "}
             {t("assessment")}
           </Text>
@@ -417,17 +417,17 @@ function ScheduledDosage({
   );
 }
 
-function ScheduledMeasurment({
-  measurment,
+function ScheduledMeasurement({
+  measurement,
   isDone,
   bottomBorder,
   handleClick,
   isDisabled,
 }: {
-  measurment: ScheduledMeasurmentInfo;
+  measurement: ScheduledMeasurementInfo;
   isDone: boolean;
   bottomBorder: boolean;
-  handleClick: (measurment: ScheduledMeasurmentInfo) => void;
+  handleClick: (measurement: ScheduledMeasurementInfo) => void;
   isDisabled: boolean;
 }) {
   const { t } = useTranslation();
@@ -446,7 +446,7 @@ function ScheduledMeasurment({
         if (isDisabled) {
           e.stopPropagation();
         } else {
-          handleClick(measurment);
+          handleClick(measurement);
         }
       }}
     >
@@ -460,7 +460,7 @@ function ScheduledMeasurment({
           ]}
           numberOfLines={1}
         >
-          {measurment.assessmentName}
+          {measurement.assessmentName}
           {"  –  "}
           {t("assessment")}
         </Text>
@@ -500,15 +500,15 @@ export function Home({ date }: { date: Date }) {
   const [unscheduledDosages, setUnscheduledDosages] = React.useState<
     Map<number | null, UnscheduledDosageInfo[]>
   >(new Map());
-  const [unscheduledMeasurements, setUnscheduledMeasurments] = React.useState<
-    Map<number | null, UnscheduledMeasurmentInfo[]>
+  const [unscheduledMeasurements, setUnscheduledMeasurements] = React.useState<
+    Map<number | null, UnscheduledMeasurementInfo[]>
   >(new Map());
-  const [scheduledMeasurments, setScheduledMeasurments] = React.useState<
-    Map<number | null, ScheduledMeasurmentInfo[]>
+  const [scheduledMeasurements, setScheduledMeasurements] = React.useState<
+    Map<number | null, ScheduledMeasurementInfo[]>
   >(new Map());
 
-  const [clickedScheduledMeasurment, setClickedScheduledMeasurment] =
-    React.useState<ScheduledMeasurmentInfo | null>(null);
+  const [clickedScheduledMeasurement, setClickedScheduledMeasurement] =
+    React.useState<ScheduledMeasurementInfo | null>(null);
 
   const [isScheduledEmpty, setIsScheduledEmpty] = React.useState<boolean>(true);
   const [isUnscheduledEmpty, setIsUnscheduledEmpty] =
@@ -614,7 +614,7 @@ export function Home({ date }: { date: Date }) {
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
   }, [date, db, dailyScheduleFilter, weeklyScheduleFilter]);
 
-  const loadScheduledMeasurments = React.useCallback(async () => {
+  const loadScheduledMeasurements = React.useCallback(async () => {
     const result = await dbGetAssessmentSchedules(db);
     const schedulesOverlapping = result.filter((s) => {
       const timeMatch =
@@ -625,37 +625,37 @@ export function Home({ date }: { date: Date }) {
     let newIsEmpty = true;
     let newAreGroupsEmpty = true;
 
-    const measurementRecords = await dbGetScheduledMeasurmentRecords(
+    const measurementRecords = await dbGetScheduledMeasurementRecords(
       db,
       date,
       date,
     );
 
-    let newScheduledMeasurments = new Map<
+    let newScheduledMeasurements = new Map<
       number | null,
-      ScheduledMeasurmentInfo[]
+      ScheduledMeasurementInfo[]
     >();
     for (const s of schedulesOverlapping) {
       if (dailyScheduleFilter(s)) {
         continue;
       }
-      for (const measurement of s.measurments) {
+      for (const measurement of s.measurements) {
         if (weeklyScheduleFilter(s, measurement.offset)) {
           continue;
         }
 
         const groupId = measurement.groupId;
-        const groupMeasurements = newScheduledMeasurments.get(groupId) || [];
+        const groupMeasurements = newScheduledMeasurements.get(groupId) || [];
         const measurementRecord = measurementRecords.find(
           (mr) =>
             mr.assessmentScheduleId === s.dbId &&
-            mr.measurmentIndex === measurement.index,
+            mr.measurementIndex === measurement.index,
         );
         const measurementRecordId = measurementRecord
           ? measurementRecord.dbId
           : null;
         groupMeasurements.push(
-          new ScheduledMeasurmentInfo(
+          new ScheduledMeasurementInfo(
             s.assessment.name,
             s.assessment.type,
             measurementRecord ? measurementRecord.value : null,
@@ -670,10 +670,10 @@ export function Home({ date }: { date: Date }) {
         if (groupId !== null) {
           newAreGroupsEmpty = false;
         }
-        newScheduledMeasurments.set(groupId, groupMeasurements);
+        newScheduledMeasurements.set(groupId, groupMeasurements);
       }
     }
-    setScheduledMeasurments(newScheduledMeasurments);
+    setScheduledMeasurements(newScheduledMeasurements);
     if (!newIsEmpty) setIsScheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
   }, [date, db, dailyScheduleFilter, weeklyScheduleFilter]);
@@ -715,9 +715,9 @@ export function Home({ date }: { date: Date }) {
     setUnscheduledDosages(newUnscheduledDosageInfos);
   }, [date, db]);
 
-  const loadUnscheduledMeasurmentRecords = React.useCallback(async () => {
-    const unscheduledMeasurmentRecords =
-      await dbGetUnscheduledMeasurmentRecords(db, date, date);
+  const loadUnscheduledMeasurementRecords = React.useCallback(async () => {
+    const unscheduledMeasurementRecords =
+      await dbGetUnscheduledMeasurementRecords(db, date, date);
 
     const assessmentsMap = new Map<number, Assessment>();
     const assessments = await dbGetAssessments(db);
@@ -727,13 +727,13 @@ export function Home({ date }: { date: Date }) {
 
     let newIsEmpty = true;
     let newAreGroupsEmpty = true;
-    const newUnscheduledMeasurmentInfos = new Map();
-    unscheduledMeasurmentRecords.map((mr) => {
-      const groupDosages = newUnscheduledMeasurmentInfos.get(mr.groupId) || [];
+    const newUnscheduledMeasurementInfos = new Map();
+    unscheduledMeasurementRecords.map((mr) => {
+      const groupDosages = newUnscheduledMeasurementInfos.get(mr.groupId) || [];
       const a = assessmentsMap.get(mr.assessmentId);
       if (a) {
         groupDosages.push(
-          new UnscheduledMeasurmentInfo(
+          new UnscheduledMeasurementInfo(
             a?.name,
             mr.value,
             a.valueDomain,
@@ -745,13 +745,13 @@ export function Home({ date }: { date: Date }) {
           newAreGroupsEmpty = false;
         }
       }
-      newUnscheduledMeasurmentInfos.set(mr.groupId, groupDosages);
+      newUnscheduledMeasurementInfos.set(mr.groupId, groupDosages);
     });
 
     if (!newIsEmpty) setIsUnscheduledEmpty(newIsEmpty);
     if (!newAreGroupsEmpty) setAreGroupsEmpty(newAreGroupsEmpty);
 
-    setUnscheduledMeasurments(newUnscheduledMeasurmentInfos);
+    setUnscheduledMeasurements(newUnscheduledMeasurementInfos);
   }, [date, db]);
 
   useFocusEffect(
@@ -759,14 +759,14 @@ export function Home({ date }: { date: Date }) {
       loadGroups();
       loadScheduledDosages();
       loadUnscheduledDosageRecords();
-      loadScheduledMeasurments();
-      loadUnscheduledMeasurmentRecords();
+      loadScheduledMeasurements();
+      loadUnscheduledMeasurementRecords();
     }, [
       loadGroups,
       loadScheduledDosages,
       loadUnscheduledDosageRecords,
-      loadScheduledMeasurments,
-      loadUnscheduledMeasurmentRecords,
+      loadScheduledMeasurements,
+      loadUnscheduledMeasurementRecords,
     ]),
   );
 
@@ -837,65 +837,65 @@ export function Home({ date }: { date: Date }) {
     }
   };
 
-  const handleMeasurmentClick = (measurment: ScheduledMeasurmentInfo) => {
-    setClickedScheduledMeasurment(measurment);
+  const handleMeasurementClick = (measurement: ScheduledMeasurementInfo) => {
+    setClickedScheduledMeasurement(measurement);
   };
 
-  const handleMeasurmentInputCancel = () => {
-    setClickedScheduledMeasurment(null);
+  const handleMeasurementInputCancel = () => {
+    setClickedScheduledMeasurement(null);
   };
 
-  const handleMeasurmentInputSave = async (value: AssessmentValue) => {
-    if (clickedScheduledMeasurment) {
-      if (clickedScheduledMeasurment.measurmentRecordId) {
-        await dbDeleteScheduledMeasurmentRecord(
+  const handleMeasurementInputSave = async (value: AssessmentValue) => {
+    if (clickedScheduledMeasurement) {
+      if (clickedScheduledMeasurement.measurementRecordId) {
+        await dbDeleteScheduledMeasurementRecord(
           db,
-          clickedScheduledMeasurment.measurmentRecordId,
+          clickedScheduledMeasurement.measurementRecordId,
         );
       }
-      sortArrayMeasurmentValue(value, clickedScheduledMeasurment.valueDomain);
-      await dbInsertScheduledMeasurmentRecord(db, {
+      sortArrayMeasurementValue(value, clickedScheduledMeasurement.valueDomain);
+      await dbInsertScheduledMeasurementRecord(db, {
         date,
-        assessmentScheduleId: clickedScheduledMeasurment.assessmentScheduleId,
-        measurmentIndex: clickedScheduledMeasurment.index,
+        assessmentScheduleId: clickedScheduledMeasurement.assessmentScheduleId,
+        measurementIndex: clickedScheduledMeasurement.index,
         value,
       });
     }
 
-    setClickedScheduledMeasurment(null);
-    await loadScheduledMeasurments();
+    setClickedScheduledMeasurement(null);
+    await loadScheduledMeasurements();
   };
 
-  const handleMeasurmentInputClear = async () => {
-    if (clickedScheduledMeasurment) {
-      if (clickedScheduledMeasurment.measurmentRecordId) {
-        await dbDeleteScheduledMeasurmentRecord(
+  const handleMeasurementInputClear = async () => {
+    if (clickedScheduledMeasurement) {
+      if (clickedScheduledMeasurement.measurementRecordId) {
+        await dbDeleteScheduledMeasurementRecord(
           db,
-          clickedScheduledMeasurment.measurmentRecordId,
+          clickedScheduledMeasurement.measurementRecordId,
         );
       }
     }
 
-    setClickedScheduledMeasurment(null);
-    await loadScheduledMeasurments();
+    setClickedScheduledMeasurement(null);
+    await loadScheduledMeasurements();
   };
 
   const getScheduledDosages = (groupId?: number) =>
     scheduledDosages.get(groupId ?? null);
-  const getScheduledMeasurments = (groupId?: number) =>
-    scheduledMeasurments.get(groupId ?? null);
+  const getScheduledMeasurements = (groupId?: number) =>
+    scheduledMeasurements.get(groupId ?? null);
 
   const renderScheduled = (group?: Group) => {
     const dosages = getScheduledDosages(group?.dbId);
-    const measurments = getScheduledMeasurments(group?.dbId);
-    const lastIdx = measurments
-      ? measurments.length - 1
+    const measurements = getScheduledMeasurements(group?.dbId);
+    const lastIdx = measurements
+      ? measurements.length - 1
       : dosages?.length
         ? dosages.length - 1
         : 0;
     return (
       <>
-        {(dosages || measurments) && (
+        {(dosages || measurements) && (
           <Text
             style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
           >
@@ -908,20 +908,20 @@ export function Home({ date }: { date: Date }) {
               <ScheduledDosage
                 dosage={di}
                 isDone={di.dosageRecordId !== null}
-                bottomBorder={!(!measurments && idx === lastIdx)}
+                bottomBorder={!(!measurements && idx === lastIdx)}
                 handleClick={handleDosageClick}
                 isDisabled={isFuture}
               />
             </View>
           ))}
-        {measurments &&
-          measurments.map((mi, idx) => (
+        {measurements &&
+          measurements.map((mi, idx) => (
             <View key={pair(mi.assessmentScheduleId, mi.index)}>
-              <ScheduledMeasurment
-                measurment={mi}
+              <ScheduledMeasurement
+                measurement={mi}
                 isDone={mi.value !== null}
                 bottomBorder={!(idx === lastIdx)}
-                handleClick={handleMeasurmentClick}
+                handleClick={handleMeasurementClick}
                 isDisabled={isFuture}
               />
             </View>
@@ -933,20 +933,20 @@ export function Home({ date }: { date: Date }) {
   const getUnscheduledDosages = (groupId?: number) =>
     unscheduledDosages.get(groupId ?? null);
 
-  const getUnscheduledMeasurments = (groupId?: number) =>
+  const getUnscheduledMeasurements = (groupId?: number) =>
     unscheduledMeasurements.get(groupId ?? null);
 
   const renderUnscheduled = (group?: Group) => {
     const dosages = getUnscheduledDosages(group?.dbId);
-    const measurments = getUnscheduledMeasurments(group?.dbId);
-    const lastIdx = measurments
-      ? measurments.length - 1
+    const measurements = getUnscheduledMeasurements(group?.dbId);
+    const lastIdx = measurements
+      ? measurements.length - 1
       : dosages?.length
         ? dosages.length - 1
         : 0;
     return (
       <>
-        {(dosages || measurments) && (
+        {(dosages || measurements) && (
           <Text
             style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
           >
@@ -958,19 +958,19 @@ export function Home({ date }: { date: Date }) {
             <View key={di.dosageRecordId}>
               <UnscheduledDosage
                 dosage={di}
-                bottomBorder={!(!measurments && idx === lastIdx)}
+                bottomBorder={!(!measurements && idx === lastIdx)}
                 loadUnscheduledRecords={loadUnscheduledDosageRecords}
                 isDisabled={isFuture}
               />
             </View>
           ))}
-        {measurments &&
-          measurments.map((di, idx) => (
-            <View key={di.measurmentRecordId}>
-              <UnscheduledMeasurment
-                measurment={di}
+        {measurements &&
+          measurements.map((di, idx) => (
+            <View key={di.measurementRecordId}>
+              <UnscheduledMeasurement
+                measurement={di}
                 bottomBorder={!(idx === lastIdx)}
-                loadUnscheduledRecords={loadUnscheduledMeasurmentRecords}
+                loadUnscheduledRecords={loadUnscheduledMeasurementRecords}
                 isDisabled={isFuture}
               />
             </View>
@@ -989,15 +989,15 @@ export function Home({ date }: { date: Date }) {
 
   return (
     <>
-      {clickedScheduledMeasurment && (
+      {clickedScheduledMeasurement && (
         <AssessmentInputDialog
-          title={clickedScheduledMeasurment.assessmentName}
-          assessmentType={clickedScheduledMeasurment.assessmentType}
-          valueDomain={clickedScheduledMeasurment.valueDomain}
-          initialValue={clickedScheduledMeasurment.value}
-          onCancel={handleMeasurmentInputCancel}
-          onSave={handleMeasurmentInputSave}
-          onClear={handleMeasurmentInputClear}
+          title={clickedScheduledMeasurement.assessmentName}
+          assessmentType={clickedScheduledMeasurement.assessmentType}
+          valueDomain={clickedScheduledMeasurement.valueDomain}
+          initialValue={clickedScheduledMeasurement.value}
+          onCancel={handleMeasurementInputCancel}
+          onSave={handleMeasurementInputSave}
+          onClear={handleMeasurementInputClear}
         />
       )}
 
@@ -1006,8 +1006,8 @@ export function Home({ date }: { date: Date }) {
           (group) =>
             (getUnscheduledDosages(group.dbId) ||
               getScheduledDosages(group.dbId) ||
-              getUnscheduledMeasurments(group.dbId) ||
-              getScheduledMeasurments(group.dbId)) && (
+              getUnscheduledMeasurements(group.dbId) ||
+              getScheduledMeasurements(group.dbId)) && (
               <FlickerView
                 flicker={group.dbId === flickerGroupId}
                 key={group.dbId}
@@ -1038,8 +1038,8 @@ export function Home({ date }: { date: Date }) {
         )}
         {(getUnscheduledDosages() ||
           getScheduledDosages() ||
-          getUnscheduledMeasurments() ||
-          getScheduledMeasurments()) && (
+          getUnscheduledMeasurements() ||
+          getScheduledMeasurements()) && (
           <FlickerView
             key={-1}
             style={[

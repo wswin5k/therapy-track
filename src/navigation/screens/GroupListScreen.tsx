@@ -16,7 +16,7 @@ import {
 import {
   dbDeleteGroup,
   dbGetGroups,
-  dbGroupHasDosagesOrMeasurments,
+  dbGroupHasDosagesOrMeasurements,
   dbGroupHasUnscheduledRecords,
 } from "../../models/dbAccess";
 import { Group } from "../../models/Frequency";
@@ -211,7 +211,7 @@ export function GroupListScreen() {
 
     const newGroupsWithUsages = new Set<number>();
     for (const group of groups) {
-      const hasDosages = await dbGroupHasDosagesOrMeasurments(db, group.dbId);
+      const hasDosages = await dbGroupHasDosagesOrMeasurements(db, group.dbId);
       const hasRecords = await dbGroupHasUnscheduledRecords(db, group.dbId);
       if (hasDosages || hasRecords) {
         newGroupsWithUsages.add(group.dbId);
