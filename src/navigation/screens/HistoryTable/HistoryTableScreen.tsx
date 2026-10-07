@@ -60,6 +60,7 @@ import { getOrThrow, castToStringArray } from "../../utils";
 import { AssessmentValue } from "../../../models/Records";
 import { HistoryTableSettings } from "../../../models/Settings";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
+import { t } from "i18next";
 
 function defaultConfiguration(): HistoryTableSettings {
   return new HistoryTableSettings(
@@ -154,7 +155,7 @@ export function MenuModal({
             onPress={handleSaveToCSV}
           >
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              Save to CSV
+              {t("Save to CSV")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -162,7 +163,7 @@ export function MenuModal({
             onPress={handleOpenConfiguration}
           >
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              Configure columns
+              {t("Configure")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -181,7 +182,6 @@ class TableData {
 }
 
 export function HistoryTableScreen() {
-  console.log("HistoryTableScreen render");
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
@@ -673,7 +673,6 @@ export function HistoryTableScreen() {
   const loadSettings = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
     setSettings(newSettings);
-    console.log("settings loaded", newSettings);
   }, [db]);
 
   const saveSettings = async (update: Partial<HistoryTableSettings>) => {
@@ -842,15 +841,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderRadius: DEFAULT_BORDER_RADIUS,
+    borderBottomLeftRadius: DEFAULT_BORDER_RADIUS,
   },
   menuItem: {
     alignContent: "flex-start",
-    padding: 20,
-    borderBottomWidth: 2,
+    padding: 18,
+    borderBottomWidth: 1,
     width: "100%",
   },
   menuText: {
     alignItems: "center",
+    fontSize: 16,
+    fontWeight: "400",
   },
 });

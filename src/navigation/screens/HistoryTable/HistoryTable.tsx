@@ -26,7 +26,7 @@ const MIN_CELL_LINES_LENGTH = 2;
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
 const MID_CELL_WIDTH = 150;
 
-const ROW_HEADER_WIDTH = 106;
+const ROW_HEADER_WIDTH = 114;
 
 function isSizeClose(a: number, b: number): boolean {
   return Math.abs(a - b) < DELTA_WIDTH_BUFFER;
@@ -210,7 +210,7 @@ export default function HistoryTable({
     styles.height = rowHeights[rowIndex];
 
     if (
-      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) ===
+      fullHeaderToValueType.get(fullHeaders[columnIndex]) ===
       ValueType.MultiSelect
     ) {
       styles.alignItems = "flex-start";
@@ -221,7 +221,7 @@ export default function HistoryTable({
 
   const calculateMultiSelectFitWidth = (columnIndex: number): number | null => {
     if (
-      fullHeaderToValueType.get(fullHeaders[columnIndex + 1]) !==
+      fullHeaderToValueType.get(fullHeaders[columnIndex]) !==
       ValueType.MultiSelect
     ) {
       return null;
@@ -731,11 +731,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   headerText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 500,
   },
   cellText: {
-    fontSize: 14,
+    fontSize: 15,
   },
   cornerCell: {
     justifyContent: "center",
