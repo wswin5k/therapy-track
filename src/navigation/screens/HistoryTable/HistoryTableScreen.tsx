@@ -57,22 +57,20 @@ import {
   serializeDateOnly,
 } from "../../../dateOnlyUtils";
 import { getOrThrow, castToStringArray } from "../../utils";
-import { AssessmentValue } from "../../../models/Records";
-import { HistoryTableSettings } from "../../../models/Settings";
+import {
+  AssessmentValue,
+  ScheduledDosageRecord,
+  ScheduledMeasurementRecord,
+  UnscheduledDosageRecord,
+  UnscheduledMeasurementRecord,
+} from "../../../models/Records";
+import {
+  ColumnConfig,
+  ColumnType,
+  HistoryTableSettings,
+} from "../../../models/Settings";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { t } from "i18next";
-
-function defaultConfiguration(): HistoryTableSettings {
-  return new HistoryTableSettings(
-    true,
-    true,
-    true,
-    false,
-    false,
-    true,
-    new Map(),
-  );
-}
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -181,6 +179,13 @@ class TableData {
   ) {}
 }
 
+class NewColumnConfig {
+  constructor(
+    public type: ColumnType,
+    public source_created_at: Date,
+  ) {}
+}
+
 export function HistoryTableScreen() {
   const { t } = useTranslation();
   const db = useSQLiteContext();
@@ -197,8 +202,14 @@ export function HistoryTableScreen() {
   const [cells, setCells] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
-  const [settings, setSettings] = React.useState<HistoryTableSettings>(
-    defaultConfiguration(),
+  const [settings, setSettings] = React.useState<HistoryTableSettings | null>(
+    null,
+  );
+  const [settingsColumnWidths, setSetingsColumnWidths] = React.useState<
+    Map<string, number>
+  >(new Map());
+  const newColumnConfigs = React.useRef<Map<string, NewColumnConfig>>(
+    new Map(),
   );
 
   function calculateHeaders(
@@ -269,328 +280,367 @@ export function HistoryTableScreen() {
     }
   }
 
-  const getAssessmentData = React.useCallback(async (): Promise<TableData> => {
-    const scheuledMeasurementRecrods =
-      await dbGetScheduledMeasurementRecords(db);
-    const unscheduledMeasurementRecords =
-      await dbGetUnscheduledMeasurementRecords(db);
+  const getAssessmentData = React.useCallback(
+    async (settings: HistoryTableSettings): Promise<TableData> => {
+      const scheuledMeasurementRecrods =
+        await dbGetScheduledMeasurementRecords(db);
+      const unscheduledMeasurementRecords =
+        await dbGetUnscheduledMeasurementRecords(db);
 
-    const assessmentSchedules = await dbGetAssessmentSchedules(db);
-    const idToAssessmentSchedule = new Map<number, AssessmentSchedule>();
-    assessmentSchedules.forEach((a) => {
-      idToAssessmentSchedule.set(a.dbId, a);
-    });
+      const assessmentSchedules = await dbGetAssessmentSchedules(db);
+      const idToAssessmentSchedule = new Map<number, AssessmentSchedule>();
+      assessmentSchedules.forEach((a) => {
+        idToAssessmentSchedule.set(a.dbId, a);
+      });
 
-    const groups = await dbGetGroups(db);
-    const idToGroup = new Map<number, Group>();
-    groups.forEach((g) => {
-      idToGroup.set(g.dbId, g);
-    });
+      const groups = await dbGetGroups(db);
+      const idToGroup = new Map<number, Group>();
+      groups.forEach((g) => {
+        idToGroup.set(g.dbId, g);
+      });
 
-    const assessments = await dbGetAssessments(db);
-    const idToAssessment = new Map<number, Assessment>();
-    assessments.forEach((a) => {
-      idToAssessment.set(a.dbId, a);
-    });
+      const assessments = await dbGetAssessments(db);
+      const idToAssessment = new Map<number, Assessment>();
+      assessments.forEach((a) => {
+        idToAssessment.set(a.dbId, a);
+      });
 
-    const dayToHeaderToValues = new Map<string, Map<string, string>>();
+      const dayToHeaderToValues = new Map<string, Map<string, string>>();
 
-    /* to handle shortening of header labels */
-    const fullHeaderToShortHeader = new Map<string, string>();
-    const shortHeaderCounts = new Map<string, number>();
+      /* to handle shortening of header labels */
+      const fullHeaderToShortHeader = new Map<string, string>();
+      const shortHeaderCounts = new Map<string, number>();
 
-    const getGroupLabel = (groupId: number | null): string => {
-      const group = groupId === null ? null : idToGroup.get(groupId);
-      let groupLabel = "";
-      if (group === undefined) {
-        throw Error("Measurement record has invalid group.");
-      } else if (group === null) {
-        groupLabel = "ungrouped";
+      const getGroupLabel = (groupId: number | null): string => {
+        const group = groupId === null ? null : idToGroup.get(groupId);
+        let groupLabel = "";
+        if (group === undefined) {
+          throw Error("Measurement record has invalid group.");
+        } else if (group === null) {
+          groupLabel = "ungrouped";
+        } else {
+          groupLabel = group?.name;
+        }
+        return groupLabel;
+      };
+
+      const fullHeaderToValueType = new Map();
+
+      const digestMeasurementRecord = (
+        record: ScheduledMeasurementRecord | UnscheduledMeasurementRecord,
+        assessment: Assessment,
+        groupLabel: string,
+      ) => {
+        const fullHeader = assessment.getLabel(groupLabel);
+        const shortHeader = assessment.name;
+
+        const columnConfig = settings.columnConfigs.get(fullHeader);
+        if (!columnConfig) {
+          newColumnConfigs.current.set(
+            fullHeader,
+            new NewColumnConfig(ColumnType.Assessment, assessment.createdAt),
+          );
+        }
+
+        // assessments by default are not shown
+        if (columnConfig === undefined || columnConfig.isShown) {
+          const dateStr = extractDate(record.date);
+          const dailyRow =
+            dayToHeaderToValues.get(dateStr) || new Map<string, string>();
+
+          updateHeaderCounter(
+            fullHeaderToShortHeader,
+            shortHeaderCounts,
+            fullHeader,
+            shortHeader,
+          );
+
+          dailyRow.set(
+            fullHeader,
+            formatAssessmentValue(record.value, assessment.type),
+          );
+          dayToHeaderToValues.set(dateStr, dailyRow);
+
+          fullHeaderToValueType.set(fullHeader, assessment.type);
+        }
+      };
+
+      for (const record of unscheduledMeasurementRecords) {
+        const assessment = idToAssessment.get(record.assessmentId);
+        if (!assessment) {
+          throw Error("Record not connected to assessment.");
+        }
+        const groupLabel = getGroupLabel(record.groupId);
+        digestMeasurementRecord(record, assessment, groupLabel);
+      }
+
+      for (const record of scheuledMeasurementRecrods) {
+        const assessmentSchedule = idToAssessmentSchedule.get(
+          record.assessmentScheduleId,
+        );
+        if (!assessmentSchedule) {
+          throw Error("Record not connected to assessment schedule.");
+        }
+        const assessment = assessmentSchedule.assessment;
+        const measurement =
+          assessmentSchedule.measurements[record.measurementIndex];
+        const groupLabel = getGroupLabel(measurement.groupId);
+
+        digestMeasurementRecord(record, assessment, groupLabel);
+      }
+
+      const headersMap = calculateHeaders(
+        fullHeaderToShortHeader,
+        shortHeaderCounts,
+      );
+
+      const fullHeaders = Array.from(fullHeaderToShortHeader.keys()).sort();
+
+      return new TableData(
+        fullHeaders,
+        headersMap,
+        fullHeaderToValueType,
+        dayToHeaderToValues,
+      );
+    },
+    [db],
+  );
+
+  const getMedicineData = React.useCallback(
+    async (settings: HistoryTableSettings): Promise<TableData> => {
+      const scheduledDosageRecords = await dbGetScheduledDosageRecords(db);
+      const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
+
+      const schedules = await dbGetMedicineSchedules(db);
+      const idToSchedule = new Map<number, MedicineSchedule>();
+      schedules.forEach((s) => {
+        idToSchedule.set(s.dbId, s);
+      });
+
+      const medicines = await dbGetMedicines(db);
+      const idToMedicine = new Map<number, Medicine>();
+      medicines.forEach((m) => {
+        idToMedicine.set(m.dbId, m);
+      });
+
+      const dayToHeaderToValues = new Map<string, Map<string, number>>();
+
+      /* to handle shortening of header labels*/
+      const fullHeaderToShortHeader = new Map<string, string>();
+      const shortHeaderCounts = new Map<string, number>();
+
+      const fullActiveIngredientHeaderToWeightUnits = new Map<
+        string,
+        Set<IngredientAmountUnit>
+      >();
+
+      const digestDosageRecord = (
+        record: ScheduledDosageRecord | UnscheduledDosageRecord,
+        medicineAmount: number,
+        medicine: Medicine,
+      ) => {
+        const dateStr = extractDate(record.date);
+        const dailyRow =
+          dayToHeaderToValues.get(dateStr) || new Map<string, number>();
+
+        const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
+
+        for (const ai of medicine.activeIngredients) {
+          let fullHeader = ai.getLabel(baseUnitLabel);
+          let shortHeader = ai.getShortLabel();
+
+          let weightUnitMultiplier = 1;
+          if (isWeightUnit(ai.unit)) {
+            fullHeader = ai.getLabelWithoutUnit(baseUnitLabel);
+            shortHeader = ai.getShortLabelWithoutUnit();
+            if (settings.mergeIngredientsWithDifferentForms) {
+              fullHeader = shortHeader;
+            }
+            weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
+            fullActiveIngredientHeaderToWeightUnits.set(
+              fullHeader,
+              (
+                fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
+                new Set()
+              ).add(ai.unit),
+            );
+          }
+
+          const ccFullHeader = settings.columnConfigs.get(fullHeader);
+          if (
+            !ccFullHeader ||
+            ccFullHeader._source_created_at > medicine.createdAt
+          ) {
+            newColumnConfigs.current.set(
+              fullHeader,
+              new NewColumnConfig(
+                ColumnType.ActiveIngredient,
+                medicine.createdAt,
+              ),
+            );
+          }
+          const ccShortHeader = settings.columnConfigs.get(shortHeader);
+          if (
+            !ccShortHeader ||
+            ccShortHeader._source_created_at > medicine.createdAt
+          ) {
+            newColumnConfigs.current.set(
+              shortHeader,
+              new NewColumnConfig(
+                ColumnType.ActiveIngredient,
+                medicine.createdAt,
+              ),
+            );
+          }
+          let columnConfig = ccFullHeader;
+          if (settings.mergeIngredientsWithDifferentForms) {
+            fullHeader = shortHeader;
+            columnConfig = ccShortHeader;
+          }
+
+          // active ingredients by default are shown
+          if (columnConfig === undefined || columnConfig.isShown) {
+            updateHeaderCounter(
+              fullHeaderToShortHeader,
+              shortHeaderCounts,
+              fullHeader,
+              shortHeader,
+            );
+            let amountTotal = dailyRow.get(fullHeader) || 0;
+            amountTotal += ai.amount * medicineAmount * weightUnitMultiplier;
+            dailyRow.set(fullHeader, amountTotal);
+          }
+        }
+
+        const header = medicine.getLabel();
+
+        const columnConfig = settings.columnConfigs.get(header);
+        if (!columnConfig) {
+          newColumnConfigs.current.set(
+            header,
+            new NewColumnConfig(ColumnType.Medicine, medicine.createdAt),
+          );
+        }
+        // medicines by default are not shown
+        // so if the config does not exists the column is omitted
+        if (columnConfig?.isShown === true) {
+          updateHeaderCounter(
+            fullHeaderToShortHeader,
+            shortHeaderCounts,
+            header,
+            header,
+          );
+
+          let amountTotal = dailyRow.get(header) || 0;
+          amountTotal += medicineAmount;
+          dailyRow.set(header, amountTotal);
+
+          dayToHeaderToValues.set(dateStr, dailyRow);
+        }
+      };
+
+      for (const record of unscheduledDosageRecords) {
+        const medicine = idToMedicine.get(record.medicineId);
+        if (!medicine) {
+          throw Error("Record not connected to medicine.");
+        }
+        digestDosageRecord(record, record.amount, medicine);
+      }
+
+      for (const record of scheduledDosageRecords) {
+        const schedule = idToSchedule.get(record.medicineScheduleId);
+        if (!schedule) {
+          throw Error("Record not connected to medicine schedule.");
+        }
+        digestDosageRecord(
+          record,
+          schedule.dosages[record.dosageIndex].amount,
+          schedule.medicine,
+        );
+      }
+
+      insertActiveIngredientWeightUnits(
+        dayToHeaderToValues,
+        fullHeaderToShortHeader,
+        shortHeaderCounts,
+        fullActiveIngredientHeaderToWeightUnits,
+      );
+
+      const headersMap = calculateHeaders(
+        fullHeaderToShortHeader,
+        shortHeaderCounts,
+      );
+
+      const fullHeaders = Array.from(fullHeaderToShortHeader.keys()).sort();
+
+      const fullHeaderToValueType = new Map();
+      fullHeaders.forEach((header) =>
+        fullHeaderToValueType.set(header, ValueType.Numeric),
+      );
+
+      return new TableData(
+        fullHeaders,
+        headersMap,
+        fullHeaderToValueType,
+        dayToHeaderToValues,
+      );
+    },
+    [db],
+  );
+
+  const insertNewColumnConfigs = async (
+    newColumnConfigs: Map<string, NewColumnConfig>,
+  ): Promise<Map<string, ColumnConfig>> => {
+    if (settings === null) {
+      return new Map();
+    }
+    const allColumnConfigs: ColumnConfig[] = [
+      ...Object.values(settings.columnConfigs),
+    ];
+    for (const [header, newCC] of newColumnConfigs) {
+      allColumnConfigs.push(
+        new ColumnConfig(
+          [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
+            newCC.type,
+          ),
+          null,
+          0,
+          newCC.type,
+          newCC.source_created_at,
+          header,
+        ),
+      );
+    }
+    allColumnConfigs.sort((a: ColumnConfig, b: ColumnConfig) => {
+      if (a._type !== b._type) {
+        return a._type - b._type;
       } else {
-        groupLabel = group?.name;
+        return a._source_created_at.getTime() - b._source_created_at.getTime();
       }
-      return groupLabel;
-    };
-
-    const fullHeaderToValueType = new Map();
-
-    for (const r of unscheduledMeasurementRecords) {
-      const dateStr = extractDate(r.date);
-      const dailyRow =
-        dayToHeaderToValues.get(extractDate(r.date)) ||
-        new Map<string, string>();
-
-      const assessment = idToAssessment.get(r.assessmentId);
-      if (!assessment) {
-        throw Error("Record not connected to assessment.");
-      }
-
-      const groupLabel = getGroupLabel(r.groupId);
-      const fullHeader = `${assessment.name} – ${groupLabel}`;
-      const shortHeader = assessment.name;
-
-      updateHeaderCounter(
-        fullHeaderToShortHeader,
-        shortHeaderCounts,
-        fullHeader,
-        shortHeader,
-      );
-
-      dailyRow.set(fullHeader, formatAssessmentValue(r.value, assessment.type));
-
-      dayToHeaderToValues.set(dateStr, dailyRow);
-
-      fullHeaderToValueType.set(fullHeader, assessment.type);
-    }
-
-    for (const r of scheuledMeasurementRecrods) {
-      const dateStr = extractDate(r.date);
-      const dailyRow =
-        dayToHeaderToValues.get(dateStr) || new Map<string, string>();
-
-      const assessmentSchedule = idToAssessmentSchedule.get(
-        r.assessmentScheduleId,
-      );
-      if (!assessmentSchedule) {
-        throw Error("Record not connected to assessment schedule.");
-      }
-      const measurement = assessmentSchedule.measurements[r.measurementIndex];
-
-      const groupLabel = getGroupLabel(measurement.groupId);
-      const fullHeader = `${assessmentSchedule.assessment.name} – ${groupLabel}`;
-      const shortHeader = assessmentSchedule.assessment.name;
-
-      updateHeaderCounter(
-        fullHeaderToShortHeader,
-        shortHeaderCounts,
-        fullHeader,
-        shortHeader,
-      );
-
-      dailyRow.set(
-        fullHeader,
-        formatAssessmentValue(r.value, assessmentSchedule.assessment.type),
-      );
-      dayToHeaderToValues.set(dateStr, dailyRow);
-
-      fullHeaderToValueType.set(fullHeader, assessmentSchedule.assessment.type);
-    }
-
-    const headersMap = calculateHeaders(
-      fullHeaderToShortHeader,
-      shortHeaderCounts,
-    );
-
-    const fullHeaders = Array.from(fullHeaderToShortHeader.keys()).sort();
-
-    return new TableData(
-      fullHeaders,
-      headersMap,
-      fullHeaderToValueType,
-      dayToHeaderToValues,
-    );
-  }, [db]);
-
-  const getMedicineData = React.useCallback(async (): Promise<TableData> => {
-    const scheduledDosageRecords = await dbGetScheduledDosageRecords(db);
-    const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
-
-    const schedules = await dbGetMedicineSchedules(db);
-    const idToSchedule = new Map<number, MedicineSchedule>();
-    schedules.forEach((s) => {
-      idToSchedule.set(s.dbId, s);
     });
 
-    const medicines = await dbGetMedicines(db);
-    const idToMedicine = new Map<number, Medicine>();
-    medicines.forEach((m) => {
-      idToMedicine.set(m.dbId, m);
+    const updatedColumnConfigs = new Map();
+    allColumnConfigs.forEach((cc, idx) => {
+      cc.ordinal = idx;
+      updatedColumnConfigs.set(cc._header, cc);
     });
+    await dbUpdateHistoryTableSettings(db, {
+      ...settings,
+      columnConfigs: updatedColumnConfigs,
+    });
+    loadSettings();
 
-    const dayToHeaderToValues = new Map<string, Map<string, number>>();
-
-    /* to handle shortening of header labels*/
-    const fullHeaderToShortHeader = new Map<string, string>();
-    const shortHeaderCounts = new Map<string, number>();
-
-    const fullActiveIngredientHeaderToWeightUnits = new Map<
-      string,
-      Set<IngredientAmountUnit>
-    >();
-
-    for (const r of unscheduledDosageRecords) {
-      const dateStr = extractDate(r.date);
-      const dailyRow =
-        dayToHeaderToValues.get(dateStr) || new Map<string, number>();
-
-      const medicine = idToMedicine.get(r.medicineId);
-      if (!medicine) {
-        throw Error("Record not connected to medicine.");
-      }
-      const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
-
-      if (settings.showActiveIngredients) {
-        for (const ai of medicine.activeIngredients) {
-          const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
-          let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
-          let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
-          if (settings.mergeIngredientsWithDifferentForms) {
-            fullHeader = shortHeader;
-          }
-
-          let weightUnitMultiplier = 1;
-          if (isWeightUnit(ai.unit)) {
-            fullHeader = `${ai.name} – ${baseUnitLabel}`;
-            shortHeader = `${ai.name}`;
-            if (settings.mergeIngredientsWithDifferentForms) {
-              fullHeader = shortHeader;
-            }
-            weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
-            fullActiveIngredientHeaderToWeightUnits.set(
-              fullHeader,
-              (
-                fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
-                new Set()
-              ).add(ai.unit),
-            );
-          }
-          updateHeaderCounter(
-            fullHeaderToShortHeader,
-            shortHeaderCounts,
-            fullHeader,
-            shortHeader,
-          );
-          let amountTotal = dailyRow.get(fullHeader) || 0;
-          amountTotal += ai.amount * r.amount * weightUnitMultiplier;
-          dailyRow.set(fullHeader, amountTotal);
-        }
-      }
-
-      if (settings.showMedicines) {
-        const header = `${medicine.name} [${baseUnitLabel}]`;
-        let amountTotal = dailyRow.get(header) || 0;
-
-        updateHeaderCounter(
-          fullHeaderToShortHeader,
-          shortHeaderCounts,
-          header,
-          header,
-        );
-
-        amountTotal += r.amount;
-        dailyRow.set(header, amountTotal);
-      }
-
-      dayToHeaderToValues.set(dateStr, dailyRow);
-    }
-
-    for (const r of scheduledDosageRecords) {
-      const dateStr = extractDate(r.date);
-      const dailyRow =
-        dayToHeaderToValues.get(dateStr) || new Map<string, number>();
-
-      const schedule = idToSchedule.get(r.medicineScheduleId);
-      if (!schedule) {
-        throw Error("Record not connected to medicine schedule.");
-      }
-
-      const medicine = schedule.medicine;
-      const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
-
-      if (settings.showActiveIngredients) {
-        for (const ai of medicine.activeIngredients) {
-          const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(ai.unit);
-          let fullHeader = `${ai.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
-          let shortHeader = `${ai.name} [${aiUnitDisplay}]`;
-          if (settings.mergeIngredientsWithDifferentForms) {
-            fullHeader = shortHeader;
-          }
-
-          let weightUnitMultiplier = 1;
-          if (isWeightUnit(ai.unit)) {
-            fullHeader = `${ai.name} – ${baseUnitLabel}`;
-            shortHeader = `${ai.name}`;
-            if (settings.mergeIngredientsWithDifferentForms) {
-              fullHeader = shortHeader;
-            }
-            weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
-            fullActiveIngredientHeaderToWeightUnits.set(
-              fullHeader,
-              (
-                fullActiveIngredientHeaderToWeightUnits.get(fullHeader) ||
-                new Set()
-              ).add(ai.unit),
-            );
-          }
-          updateHeaderCounter(
-            fullHeaderToShortHeader,
-            shortHeaderCounts,
-            fullHeader,
-            shortHeader,
-          );
-          let amountTotal = dailyRow.get(fullHeader) || 0;
-          amountTotal +=
-            ai.amount *
-            schedule.dosages[r.dosageIndex].amount *
-            weightUnitMultiplier;
-          dailyRow.set(fullHeader, amountTotal);
-        }
-      }
-
-      if (settings.showMedicines) {
-        const header = `${medicine.name} [${baseUnitLabel}]`;
-
-        updateHeaderCounter(
-          fullHeaderToShortHeader,
-          shortHeaderCounts,
-          header,
-          header,
-        );
-
-        let amountTotal = dailyRow.get(header) || 0;
-        amountTotal += schedule.dosages[r.dosageIndex].amount;
-        dailyRow.set(header, amountTotal);
-      }
-      dayToHeaderToValues.set(dateStr, dailyRow);
-    }
-
-    insertActiveIngredientWeightUnits(
-      dayToHeaderToValues,
-      fullHeaderToShortHeader,
-      shortHeaderCounts,
-      fullActiveIngredientHeaderToWeightUnits,
-    );
-
-    const headersMap = calculateHeaders(
-      fullHeaderToShortHeader,
-      shortHeaderCounts,
-    );
-
-    const fullHeaders = Array.from(fullHeaderToShortHeader.keys()).sort();
-
-    const fullHeaderToValueType = new Map();
-    fullHeaders.forEach((header) =>
-      fullHeaderToValueType.set(header, ValueType.Numeric),
-    );
-
-    return new TableData(
-      fullHeaders,
-      headersMap,
-      fullHeaderToValueType,
-      dayToHeaderToValues,
-    );
-  }, [
-    db,
-    settings.showActiveIngredients,
-    settings.showMedicines,
-    settings.mergeIngredientsWithDifferentForms,
-  ]);
+    return updatedColumnConfigs;
+  };
 
   const loadAndCombineDataForTable = React.useCallback(async () => {
-    const medicineTableData = await getMedicineData();
-    const assessmentTableData = settings.showAssessments
-      ? await getAssessmentData()
-      : new TableData([], new Map(), new Map(), new Map());
+    if (settings === null) {
+      return;
+    }
+    const medicineTableData = await getMedicineData(settings);
+    const assessmentTableData = await getAssessmentData(settings);
+
+    const columnConfigs = await insertNewColumnConfigs(newColumnConfigs.current);
 
     const newTableRows = new Array();
 
@@ -645,45 +695,65 @@ export function HistoryTableScreen() {
       ...medicineTableData.fullHeaders,
       ...assessmentTableData.fullHeaders,
     );
+
+    const getOrdinal = (header: string): number => {
+      const cc =  columnConfigs.get(header);
+      if(!cc) {
+        return 0;
+      } else {
+        return cc.ordinal;
+      }
+    }
+    headers.sort((a, b) => getOrdinal(a) - getOrdinal(b));
     setFullHeaders(headers);
 
     const types = new Map([
       ...medicineTableData.fullHeaderToValueType,
       ...assessmentTableData.fullHeaderToValueType,
     ]);
-    types.set("Date", ValueType.Text);
     setFullHeaderToValueType(types);
 
     const headersMap = new Map([
       ...medicineTableData.fullHeaderToDisplayHeader,
       ...assessmentTableData.fullHeaderToDisplayHeader,
     ]);
-    headersMap.set("Date", "Date");
     setFullHeaderToDisplayHeader(headersMap);
 
     setRowHeaders(dates);
     setCells(newTableRows);
-  }, [
-    getAssessmentData,
-    getMedicineData,
-    settings.showAssessments,
-    settings.showDaysWithoutEntries,
-  ]);
+  }, [getAssessmentData, getMedicineData]);
 
   const loadSettings = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
     setSettings(newSettings);
+    const newSettingsColumnWidths = new Map();
+    newSettings.columnConfigs.forEach((cc, fullHeader) =>
+      newSettingsColumnWidths.set(fullHeader, cc.width),
+    );
+    setSetingsColumnWidths(newSettingsColumnWidths);
   }, [db]);
 
-  const saveSettings = async (update: Partial<HistoryTableSettings>) => {
+  /*   const saveSettings = async (update: Partial<HistoryTableSettings>) => {
     await dbUpdateHistoryTableSettings(db, { ...settings, ...update });
     loadSettings();
+  }; */
+
+  const saveColumnWidth = async (fullHeader: string, width: number) => {
+    if (settings === null) {
+      return;
+    }
+    const columnConfig = settings.columnConfigs.get(fullHeader);
+    if (columnConfig) {
+      columnConfig.width = width;
+      await dbUpdateHistoryTableSettings(db, settings);
+      // not reloaded/out of sync (only theoretically) on purpose
+    }
   };
 
   useFocusEffect(
     React.useCallback(() => {
-      loadAndCombineDataForTable();
       loadSettings();
+      loadAndCombineDataForTable();
     }, [loadAndCombineDataForTable, loadSettings]),
   );
 
@@ -771,6 +841,7 @@ export function HistoryTableScreen() {
 
   const isTableDataReady = () => {
     return !(
+      settings === null ||
       fullHeaders.length === 0 ||
       fullHeaderToValueType.size === 0 ||
       fullHeaderToDisplayHeader.size === 0 ||
@@ -797,9 +868,9 @@ export function HistoryTableScreen() {
             fullHeaderToDisplayHeader={fullHeaderToDisplayHeader}
             rowHeaders={rowHeaders}
             data={cells}
-            expandAllRows={settings.expandAllRows}
-            settingsColumnWidths={settings.columnWidths}
-            saveSettings={saveSettings}
+            expandAllRows={settings?.expandAllRows == true}
+            settingsColumnWidths={settingsColumnWidths}
+            saveColumnWidth={saveColumnWidth}
           />
         </View>
       )}

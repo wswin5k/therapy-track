@@ -34,7 +34,12 @@ import {
   serializeDateOnly,
   serializeDateOnlyNullable,
 } from "../dateOnlyUtils";
-import { HistoryTableSettings, Settings, ThemeSelection } from "./Settings";
+import {
+  ColumnConfig,
+  HistoryTableSettings,
+  Settings,
+  ThemeSelection,
+} from "./Settings";
 
 interface MedicineScheduleWithMedicineRow {
   id: number;
@@ -151,7 +156,7 @@ interface HistoryTableSettingsRow {
   expand_all_rows: number;
   show_days_without_entries: number;
   merge_ingredients_with_different_forms: number;
-  column_widths: string;
+  column_configs: string;
 }
 
 function serializeDatetime(value: Date): string {
@@ -162,7 +167,7 @@ function deserializeDatetime(value: string): Date {
   return new Date(value);
 }
 
-function parseActiveIngredients(json: string) {
+function deserializeActiveIngredients(json: string) {
   const aiData = JSON.parse(json);
   return aiData.map((ai: { name: string; amount: number; unit: string }) => {
     if (
@@ -180,7 +185,10 @@ function parseActiveIngredients(json: string) {
   });
 }
 
-function parseValueDomain(json: string | null, assessmentType: ValueType) {
+function deserializeValueDomain(
+  json: string | null,
+  assessmentType: ValueType,
+) {
   if (!json) {
     return null;
   }
@@ -201,7 +209,7 @@ function parseValueDomain(json: string | null, assessmentType: ValueType) {
   }
 }
 
-function strigifyAssessmentValue(value: AssessmentValue): string {
+function serializeAssessmentValue(value: AssessmentValue): string {
   if (typeof value === "string") {
     return value;
   } else {
@@ -209,7 +217,7 @@ function strigifyAssessmentValue(value: AssessmentValue): string {
   }
 }
 
-function parseAssessmentValue(
+function deserializeAssessmentValue(
   value: string,
   assessmentType: ValueType,
 ): AssessmentValue {
@@ -254,6 +262,36 @@ function deserializeColumnWidths(value: string): Map<string, number> {
 function serializeColumnWidths(value: Map<string, number>): string {
   const result = JSON.stringify(Object.fromEntries(value));
   return result;
+}
+
+function serializeColumnConfigs(value: Map<string, ColumnConfig>): string {
+  const result = JSON.stringify(Object.fromEntries(value));
+  return result;
+}
+
+function deserializeColumnConfigs(value: string): Map<string, ColumnConfig> {
+  const obj: unknown = JSON.parse(value);
+
+  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
+    throw new Error("Expected a JSON object");
+  }
+
+  const entries = Object.entries(obj);
+
+  return entries.map((ai: { name: string; amount: number; unit: string }) => {
+    if (
+      !Object.values(IngredientAmountUnit).includes(
+        ai.unit as IngredientAmountUnit,
+      )
+    ) {
+      throw Error(`${ai.unit} is not a valid IngredientAmountUnit enum value.`);
+    }
+    return new ColumnConfig(
+      ai.name,
+      ai.amount,
+      ai.unit as IngredientAmountUnit,
+    );
+  });
 }
 
 function getDateFilterClause(startDate?: Date, endDate?: Date): string {
@@ -305,7 +343,9 @@ export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
     `);
 
   return rows.map((row) => {
-    const active_ingredients = parseActiveIngredients(row.active_ingredients);
+    const active_ingredients = deserializeActiveIngredients(
+      row.active_ingredients,
+    );
     return new Medicine(
       row.name,
       BaseUnit[row.base_unit],
@@ -318,6 +358,7 @@ export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
 
 export async function dbDeleteMedicine(db: SQLiteDatabase, id: number) {
   await db.runAsync("DELETE FROM medicines WHERE id = ?", id);
+  // todo remove labels from history table settings
 }
 
 export async function dbInsertMedicine(
@@ -344,7 +385,7 @@ export async function dbInsertMedicine(
 function parseMedicineScheduleWithMedicineRow(
   row: MedicineScheduleWithMedicineRow,
 ): MedicineSchedule {
-  const active_ingredients = parseActiveIngredients(
+  const active_ingredients = deserializeActiveIngredients(
     row.medicine_active_ingredients,
   );
   const medicineData = new Medicine(
@@ -380,7 +421,7 @@ function parseAssessmentScheduleWithAssessmentRow(
   row: AssessmentScheduleWithAssessmentRow,
 ): AssessmentSchedule {
   const assessmentValueDomain = row.assessment_value_domain
-    ? parseValueDomain(row.assessment_value_domain, row.assessment_type)
+    ? deserializeValueDomain(row.assessment_value_domain, row.assessment_type)
     : null;
   const assessment = new Assessment(
     row.assessment_name,
@@ -648,7 +689,7 @@ export async function dbGetScheduledMeasurementRecords(
         deserializeDateOnly(row.date),
         row.assessment_schedule,
         row.measurement_index,
-        parseAssessmentValue(row.value, row.assessment_type),
+        deserializeAssessmentValue(row.value, row.assessment_type),
       ),
   );
 }
@@ -889,6 +930,7 @@ export async function dbInsertAssessment(
 
 export async function dbDeleteAssessment(db: SQLiteDatabase, id: number) {
   await db.runAsync("DELETE FROM assessments WHERE id = ?", id);
+  // todo remove labels from history table settings
 }
 
 export async function dbInsertUnscheduledMeasurementRecord(
@@ -901,7 +943,7 @@ export async function dbInsertUnscheduledMeasurementRecord(
   },
 ): Promise<number> {
   // array values should be sorted according to value domain order
-  const valueStr = strigifyAssessmentValue(record.value);
+  const valueStr = serializeAssessmentValue(record.value);
   const result = await db.runAsync(
     `INSERT INTO unscheduled_measurement_records 
     (record_datetime, date, assessment, value, group_) 
@@ -928,7 +970,7 @@ export async function dbGetUnscheduledMeasurementRecords(
 
   const rows = await db.getAllAsync<UncheduledMeasurementRecordRow>(queryStr);
   return rows.map((row) => {
-    const value = parseAssessmentValue(
+    const value = deserializeAssessmentValue(
       row.value,
       ValueType[row.assessment_type],
     );
@@ -953,7 +995,7 @@ export async function dbInsertScheduledMeasurementRecord(
   },
 ): Promise<number> {
   // array values should be sorted according to value domain order
-  const valueStr = strigifyAssessmentValue(record.value);
+  const valueStr = serializeAssessmentValue(record.value);
 
   const result = await db.runAsync(
     `INSERT INTO scheduled_measurement_records 
@@ -1011,7 +1053,7 @@ export async function dbGetAssessments(
   return rows.map((row) => {
     const assessmentType = ValueType[row.type];
     const valueDomain = row.value_domain
-      ? parseValueDomain(row.value_domain, assessmentType)
+      ? deserializeValueDomain(row.value_domain, assessmentType)
       : null;
     return new Assessment(
       row.name,
@@ -1223,13 +1265,10 @@ export async function dbGetHistoryTableSettings(
     throw Error("No history_table_settings in the database.");
   }
   return new HistoryTableSettings(
-    true,
-    true,
-    true,
     deserializeBoolean(row.expand_all_rows),
     deserializeBoolean(row.show_days_without_entries),
     deserializeBoolean(row.merge_ingredients_with_different_forms),
-    deserializeColumnWidths(row.column_widths),
+    deserializeColumnConfigs(row.column_configs),
   );
 }
 
@@ -1242,11 +1281,11 @@ export async function dbUpdateHistoryTableSettings(
     SET expand_all_rows = ?,
     show_days_without_entries = ?, 
     merge_ingredients_with_different_forms = ?,
-    column_widths = ?
+    column_configs = ?
     WHERE id = 1`,
     serializeBoolean(settings.expandAllRows),
     serializeBoolean(settings.showDaysWithoutEntries),
     serializeBoolean(settings.mergeIngredientsWithDifferentForms),
-    serializeColumnWidths(settings.columnWidths),
+    serializeColumnConfigs(settings.columnConfigs),
   );
 }

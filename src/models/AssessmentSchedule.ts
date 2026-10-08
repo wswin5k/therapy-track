@@ -34,6 +34,10 @@ export class Assessment {
     public createdAt: Date,
     public dbId: number,
   ) {}
+
+  getLabel(groupLabel: string): string {
+    return `${this.name} – ${groupLabel}`;
+  }
 }
 
 export class Measurement {

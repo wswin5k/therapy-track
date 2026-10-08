@@ -48,8 +48,8 @@ type HistoryTableProps = {
   rowHeaders: Date[];
   data: string[][];
   expandAllRows: boolean;
-  settingsColumnWidths: Map<string, number>;
-  saveSettings: (update: Partial<HistoryTableSettings>) => Promise<void>;
+  settingsColumnWidths: Map<string, number | null>;
+  saveColumnWidth: (fullHeader: string, width: number) => Promise<void>;
 };
 
 export default function HistoryTable({
@@ -60,7 +60,7 @@ export default function HistoryTable({
   data,
   expandAllRows,
   settingsColumnWidths,
-  saveSettings,
+  saveColumnWidth,
 }: HistoryTableProps) {
   console.log("HistoryTable render");
 
@@ -496,9 +496,9 @@ export default function HistoryTable({
         }
       }),
     );
-    let newSettingsColumnWidths = new Map(settingsColumnWidths);
-    newSettingsColumnWidths.set(fullHeaders[index], nextWidth);
-    await saveSettings({ columnWidths: newSettingsColumnWidths });
+    //let newSettingsColumnWidths = new Map(settingsColumnWidths);
+    //newSettingsColumnWidths.set(fullHeaders[index], nextWidth);
+    await saveColumnWidth(fullHeaders[index], nextWidth);
   };
 
   return (
