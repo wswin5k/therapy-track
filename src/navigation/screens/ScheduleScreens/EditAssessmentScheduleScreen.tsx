@@ -47,6 +47,7 @@ import {
 } from "../../../dateOnlyUtils";
 import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { frequencySelectionToPickerLabels } from "./common";
+import { DefaultKeyboardAvoidingView } from "../../../components/DefaultKeyboardAvoidingView";
 
 type EditAssessmentScheduleScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -396,161 +397,167 @@ export function EditAssessmentScheduleScreen() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
-      >
-        <View style={[styles.rowFrequencyPicker]}>
-          <ModalPicker
-            values={Object.values(FrequencySelection)}
-            selectedValue={freqSelection}
-            onValueChange={handleFrequencyPicker}
-            getLabel={frequencySelectionToPickerLabelsExt(false)}
-            getPressableLabel={frequencySelectionToPickerLabelsExt(true)}
-            placeholder="Select frequency"
-            pressableStyle={eStyles.fullWidthPickerPressable}
-            error={freqSelectionError}
-          />
-        </View>
-
-        {measurementIdxToGroupId.length > 1 ? (
-          <View style={[styles.rowMeasurementsHeaders]}>
-            <View style={styles.measurementHeaderContainer}>
-              <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-                {t("Measurement")}
-              </Text>
-            </View>
-            <View style={styles.measurementHeaderContainer}>
-              <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-                {t("Group")}
-              </Text>
-            </View>
+      <DefaultKeyboardAvoidingView additionalOffset={0}>
+        <ScrollView
+          style={eStyles.editMainScrollContainer}
+          contentContainerStyle={eStyles.editMainScrollContentContainer}
+        >
+          <View style={[styles.rowFrequencyPicker]}>
+            <ModalPicker
+              values={Object.values(FrequencySelection)}
+              selectedValue={freqSelection}
+              onValueChange={handleFrequencyPicker}
+              getLabel={frequencySelectionToPickerLabelsExt(false)}
+              getPressableLabel={frequencySelectionToPickerLabelsExt(true)}
+              placeholder="Select frequency"
+              pressableStyle={eStyles.fullWidthPickerPressable}
+              error={freqSelectionError}
+            />
           </View>
-        ) : (
-          ""
-        )}
 
-        <View style={styles.measurementsContainer}>
-          {measurementIdxToGroupId.map((gId, mIdx) => (
-            <View
-              // complex key to re-render when there is a change in initialValue
-              key={mIdx * 10 + (gId ?? -1)}
-              style={styles.rowMeasurement}
-            >
-              {measurementIdxToGroupId.length > 1 ? (
-                <View style={styles.measurementOrdinalContainer}>
-                  <Text
-                    style={[
-                      styles.measurementText,
-                      { color: theme.colors.text },
-                    ]}
-                  >
-                    {t(`number_ordinal_${mIdx + 1}`)}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.measurementGroupContainer}>
-                  <Text
-                    style={[eStyles.labelText, { color: theme.colors.text }]}
-                  >
-                    {t("Group")}
-                  </Text>
-                </View>
-              )}
-              <View style={[styles.measurementGroupPickerContainer]}>
-                <DropdownPicker
-                  options={groupsIds}
-                  initialValue={gId ?? -1}
-                  onValueChange={createGroupInputHandler(mIdx)}
-                  getLabel={(gIdx) =>
-                    gIdx === -1 ? "None" : (groupsMap.get(gIdx)?.name ?? "")
-                  }
-                  placeholder="group"
-                  pressableStyle={{
-                    borderColor: theme.colors.border,
-                    backgroundColor: theme.colors.surface,
-                  }}
-                  error={groupsErrors[mIdx]}
-                />
+          {measurementIdxToGroupId.length > 1 ? (
+            <View style={[styles.rowMeasurementsHeaders]}>
+              <View style={styles.measurementHeaderContainer}>
+                <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
+                  {t("Measurement")}
+                </Text>
+              </View>
+              <View style={styles.measurementHeaderContainer}>
+                <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
+                  {t("Group")}
+                </Text>
               </View>
             </View>
-          ))}
-        </View>
+          ) : (
+            ""
+          )}
 
-        <View style={styles.rowDate}>
-          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-            {t("Start date")}
-          </Text>
-          <TouchableOpacity
-            onPress={handleSelectStartDate}
-            style={[
-              eStyles.datePressable,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-              startDateError && {
-                borderColor: theme.colors.error,
-                borderWidth: ERROR_BORDER_WIDTH,
-              },
-            ]}
-          >
-            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
-              {startDate
-                ? toDisplayConcise(startDate, i18n.resolvedLanguage)
-                : t("Select date")}
+          <View style={styles.measurementsContainer}>
+            {measurementIdxToGroupId.map((gId, mIdx) => (
+              <View
+                // complex key to re-render when there is a change in initialValue
+                key={mIdx * 10 + (gId ?? -1)}
+                style={styles.rowMeasurement}
+              >
+                {measurementIdxToGroupId.length > 1 ? (
+                  <View style={styles.measurementOrdinalContainer}>
+                    <Text
+                      style={[
+                        styles.measurementText,
+                        { color: theme.colors.text },
+                      ]}
+                    >
+                      {t(`number_ordinal_${mIdx + 1}`)}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.measurementGroupContainer}>
+                    <Text
+                      style={[eStyles.labelText, { color: theme.colors.text }]}
+                    >
+                      {t("Group")}
+                    </Text>
+                  </View>
+                )}
+                <View style={[styles.measurementGroupPickerContainer]}>
+                  <DropdownPicker
+                    options={groupsIds}
+                    initialValue={gId ?? -1}
+                    onValueChange={createGroupInputHandler(mIdx)}
+                    getLabel={(gIdx) =>
+                      gIdx === -1 ? "None" : (groupsMap.get(gIdx)?.name ?? "")
+                    }
+                    placeholder="group"
+                    pressableStyle={{
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surface,
+                    }}
+                    error={groupsErrors[mIdx]}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.rowDate}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
+              {t("Start date")}
             </Text>
-          </TouchableOpacity>
-        </View>
-        {isStartDatePickerOpened ? (
-          <RNDateTimePicker
-            mode="date"
-            value={startDate ?? getTodayDateOnly()}
-            onValueChange={handleStartDateChange}
-            onDismiss={handleStartDateDismiss}
-            neutralButton={{ label: "Clear", textColor: "" }}
-            onNeutralButtonPress={handleStartDateClear}
-          />
-        ) : (
-          ""
-        )}
+            <TouchableOpacity
+              onPress={handleSelectStartDate}
+              style={[
+                eStyles.datePressable,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+                startDateError && {
+                  borderColor: theme.colors.error,
+                  borderWidth: ERROR_BORDER_WIDTH,
+                },
+              ]}
+            >
+              <Text
+                style={[eStyles.pressableText, { color: theme.colors.text }]}
+              >
+                {startDate
+                  ? toDisplayConcise(startDate, i18n.resolvedLanguage)
+                  : t("Select date")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          {isStartDatePickerOpened ? (
+            <RNDateTimePicker
+              mode="date"
+              value={startDate ?? getTodayDateOnly()}
+              onValueChange={handleStartDateChange}
+              onDismiss={handleStartDateDismiss}
+              neutralButton={{ label: "Clear", textColor: "" }}
+              onNeutralButtonPress={handleStartDateClear}
+            />
+          ) : (
+            ""
+          )}
 
-        <View style={styles.rowDate}>
-          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-            {t("End date")}
-          </Text>
-          <TouchableOpacity
-            onPress={handleSelectEndDate}
-            style={[
-              eStyles.datePressable,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
-              {endDate
-                ? toDisplayConcise(endDate, i18n.resolvedLanguage)
-                : t("Infinitely")}
+          <View style={styles.rowDate}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
+              {t("End date")}
             </Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={handleSelectEndDate}
+              style={[
+                eStyles.datePressable,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+            >
+              <Text
+                style={[eStyles.pressableText, { color: theme.colors.text }]}
+              >
+                {endDate
+                  ? toDisplayConcise(endDate, i18n.resolvedLanguage)
+                  : t("Infinitely")}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        {isEndDatePickerOpened ? (
-          <RNDateTimePicker
-            mode="date"
-            value={endDate ?? getTodayDateOnly()}
-            minimumDate={startDate ? startDate : undefined}
-            onValueChange={handleEndDateChange}
-            onDismiss={handeEndDateDismiss}
-            neutralButton={{ label: "Clear", textColor: "" }}
-            onNeutralButtonPress={handeEndDateClear}
-          />
-        ) : (
-          ""
-        )}
-      </ScrollView>
+          {isEndDatePickerOpened ? (
+            <RNDateTimePicker
+              mode="date"
+              value={endDate ?? getTodayDateOnly()}
+              minimumDate={startDate ? startDate : undefined}
+              onValueChange={handleEndDateChange}
+              onDismiss={handeEndDateDismiss}
+              neutralButton={{ label: "Clear", textColor: "" }}
+              onNeutralButtonPress={handeEndDateClear}
+            />
+          ) : (
+            ""
+          )}
+        </ScrollView>
+      </DefaultKeyboardAvoidingView>
 
       <View
         style={[

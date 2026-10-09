@@ -39,6 +39,7 @@ import { ModalPicker } from "../../components/ModalPicker";
 import { ERROR_BORDER_WIDTH } from "../../commonStyles";
 import { isEqualLowerCase } from "../utils";
 import { DEFAULT_BORDER_RADIUS, eStyles } from "../../commonStyles";
+import { DefaultKeyboardAvoidingView } from "../../components/DefaultKeyboardAvoidingView";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -385,79 +386,83 @@ export function EditMedicineScreen() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
-      >
-        <View style={[styles.rowContainer]}>
-          <TextInput
-            placeholder="Medicine Name"
-            placeholderTextColor={theme.colors.textTertiary}
-            style={[
-              eStyles.fullWidthTextInputPressable,
-              {
-                borderColor: theme.colors.border,
-                color: theme.colors.text,
-                backgroundColor: theme.colors.surface,
-              },
-              nameError
-                ? {
-                    borderColor: theme.colors.error,
-                    borderWidth: ERROR_BORDER_WIDTH,
-                  }
-                : {},
-            ]}
-            onChangeText={(text: string) => {
-              setName(text);
-            }}
-            value={name}
-          />
-        </View>
-        <View style={styles.rowContainer}>
-          <ModalPicker
-            values={Object.values(BaseUnit)}
-            selectedValue={baseUnit}
-            onValueChange={(value) => {
-              setBaseUnit(value);
-            }}
-            getLabel={baseUnitToUnitSelectionLabel}
-            placeholder="Select base unit"
-            pressableStyle={eStyles.fullWidthPickerPressable}
-            error={baseUnitError}
-          />
-        </View>
-
-        <View style={styles.rowActiveIngredientsHeader}>
-          <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-            {t("Active ingredients per base unit")}
-          </Text>
-        </View>
-
-        <View>
-          {activeIngredientInfos.map((ing) => (
-            <ActiveIngredientRow
-              key={ing.elementKey}
-              activeIngredientInfo={ing}
-              updateCallback={(updates) =>
-                updateActiveIngredient(ing.elementKey, updates)
-              }
-              removeCallback={handleRemoveActiveIngredient(ing.elementKey)}
-              removeButton={activeIngredientInfos.length === 1 ? false : true}
-              errors={ingredientErrors[ing.elementKey]}
-              theme={theme}
-            />
-          ))}
-        </View>
-
-        <TouchableOpacity
-          onPress={handleAddActiveIngredient}
-          style={[styles.addButton, { borderColor: theme.colors.primary }]}
+      <DefaultKeyboardAvoidingView>
+        <ScrollView
+          style={eStyles.editMainScrollContainer}
+          contentContainerStyle={eStyles.editMainScrollContentContainer}
         >
-          <Text style={[styles.addButtonText, { color: theme.colors.primary }]}>
-            + Add Ingredient
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <View style={[styles.rowContainer]}>
+            <TextInput
+              placeholder="Medicine Name"
+              placeholderTextColor={theme.colors.textTertiary}
+              style={[
+                eStyles.fullWidthTextInputPressable,
+                {
+                  borderColor: theme.colors.border,
+                  color: theme.colors.text,
+                  backgroundColor: theme.colors.surface,
+                },
+                nameError
+                  ? {
+                      borderColor: theme.colors.error,
+                      borderWidth: ERROR_BORDER_WIDTH,
+                    }
+                  : {},
+              ]}
+              onChangeText={(text: string) => {
+                setName(text);
+              }}
+              value={name}
+            />
+          </View>
+          <View style={styles.rowContainer}>
+            <ModalPicker
+              values={Object.values(BaseUnit)}
+              selectedValue={baseUnit}
+              onValueChange={(value) => {
+                setBaseUnit(value);
+              }}
+              getLabel={baseUnitToUnitSelectionLabel}
+              placeholder="Select base unit"
+              pressableStyle={eStyles.fullWidthPickerPressable}
+              error={baseUnitError}
+            />
+          </View>
+
+          <View style={styles.rowActiveIngredientsHeader}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
+              {t("Active ingredients per base unit")}
+            </Text>
+          </View>
+
+          <View>
+            {activeIngredientInfos.map((ing) => (
+              <ActiveIngredientRow
+                key={ing.elementKey}
+                activeIngredientInfo={ing}
+                updateCallback={(updates) =>
+                  updateActiveIngredient(ing.elementKey, updates)
+                }
+                removeCallback={handleRemoveActiveIngredient(ing.elementKey)}
+                removeButton={activeIngredientInfos.length === 1 ? false : true}
+                errors={ingredientErrors[ing.elementKey]}
+                theme={theme}
+              />
+            ))}
+          </View>
+
+          <TouchableOpacity
+            onPress={handleAddActiveIngredient}
+            style={[styles.addButton, { borderColor: theme.colors.primary }]}
+          >
+            <Text
+              style={[styles.addButtonText, { color: theme.colors.primary }]}
+            >
+              + Add Ingredient
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </DefaultKeyboardAvoidingView>
 
       <View style={[eStyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity

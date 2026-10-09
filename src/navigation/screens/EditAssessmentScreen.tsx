@@ -46,6 +46,7 @@ import {
   eStyles,
   EDIT_PRESSABLE_HEIGHT,
 } from "../../commonStyles";
+import { DefaultKeyboardAvoidingView } from "../../components/DefaultKeyboardAvoidingView";
 
 export const TEXT_MAX_LENGTH = 200;
 const DEFAULT_NUMERIC_MAX = 10;
@@ -457,10 +458,12 @@ export function EditAssessmentScreen() {
   };
 
   let renderValueDomain = () => <View></View>;
+  let additionalKAVOffset = undefined;
 
   switch (assessmentType) {
     case ValueType.Numeric:
       renderValueDomain = renderNumericValueDomain;
+      additionalKAVOffset = 0;
       break;
     case ValueType.SingleSelect:
     case ValueType.MultiSelect:
@@ -469,54 +472,54 @@ export function EditAssessmentScreen() {
       }
       break;
   }
-
   return (
     <DefaultMainContainer>
-      <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
-      >
-        <View style={[styles.rowNameContainer]}>
-          <TextInput
-            placeholder="Assessment Name"
-            placeholderTextColor={theme.colors.textTertiary}
-            style={[
-              eStyles.fullWidthTextInputPressable,
-              {
-                borderColor: theme.colors.border,
-                color: theme.colors.text,
-                backgroundColor: theme.colors.surface,
-              },
-              nameError
-                ? {
-                    borderColor: theme.colors.error,
-                    borderWidth: ERROR_BORDER_WIDTH,
-                  }
-                : {},
-            ]}
-            onChangeText={(text: string) => {
-              setName(text);
-            }}
-            value={name}
-          />
-        </View>
-        <View style={styles.rowPickerContainer}>
-          <ModalPicker
-            values={Object.values(ValueType)}
-            selectedValue={assessmentType}
-            onValueChange={handleAssessmentTypePick}
-            getLabel={assessmentTypeToDisplayForm}
-            pressableStyle={eStyles.fullWidthPickerPressable}
-            error={assessmentTypeError}
-            disabled={typeInputDisabled}
-            disabledMessage={t(
-              "The type of an existing assessment cannot be modified.",
-            )}
-          />
-        </View>
-        {renderValueDomain()}
-      </ScrollView>
-
+      <DefaultKeyboardAvoidingView additionalOffset={additionalKAVOffset}>
+        <ScrollView
+          style={eStyles.editMainScrollContainer}
+          contentContainerStyle={eStyles.editMainScrollContentContainer}
+        >
+          <View style={[styles.rowNameContainer]}>
+            <TextInput
+              placeholder="Assessment Name"
+              placeholderTextColor={theme.colors.textTertiary}
+              style={[
+                eStyles.fullWidthTextInputPressable,
+                {
+                  borderColor: theme.colors.border,
+                  color: theme.colors.text,
+                  backgroundColor: theme.colors.surface,
+                },
+                nameError
+                  ? {
+                      borderColor: theme.colors.error,
+                      borderWidth: ERROR_BORDER_WIDTH,
+                    }
+                  : {},
+              ]}
+              onChangeText={(text: string) => {
+                setName(text);
+              }}
+              value={name}
+            />
+          </View>
+          <View style={styles.rowPickerContainer}>
+            <ModalPicker
+              values={Object.values(ValueType)}
+              selectedValue={assessmentType}
+              onValueChange={handleAssessmentTypePick}
+              getLabel={assessmentTypeToDisplayForm}
+              pressableStyle={eStyles.fullWidthPickerPressable}
+              error={assessmentTypeError}
+              disabled={typeInputDisabled}
+              disabledMessage={t(
+                "The type of an existing assessment cannot be modified.",
+              )}
+            />
+          </View>
+          {renderValueDomain()}
+        </ScrollView>
+      </DefaultKeyboardAvoidingView>
       <View style={[eStyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
           onPress={handleSave}

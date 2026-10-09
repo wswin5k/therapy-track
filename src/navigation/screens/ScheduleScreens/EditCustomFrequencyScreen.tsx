@@ -17,6 +17,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { Frequency, IntervalUnit } from "../../../models/Frequency";
 import { getWeekdays } from "./common";
 import { MAX_DOEASUREMENTS } from "../../../validationConstants";
+import { DefaultKeyboardAvoidingView } from "../../../components/DefaultKeyboardAvoidingView";
 
 export enum CustomFrequencyType {
   XTimesADay = "XTimesASay",
@@ -131,146 +132,151 @@ export function EditCustomFrequencyScreen() {
 
   return (
     <DefaultMainContainer>
-      <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
-      >
-        <View style={[styles.frequencyItemContainer]}>
-          {renderRadioButton(CustomFrequencyType.XTimesADay)}
-          <View
-            style={[
-              styles.frequencyItemLabelContainer,
-              frequencyType !== CustomFrequencyType.XTimesADay && {
-                opacity: DISABLED_OPACITY,
-              },
-            ]}
-          >
-            <View style={styles.xTimesStepperContainer}>
-              <SmallNumberStepper
-                defaultValue={timesADay}
-                onChange={(value) => setTimesADay(value)}
-                fractionalStepsBelowZero={false}
-                min={1}
-                max={MAX_DOEASUREMENTS}
-                disabled={frequencyType !== CustomFrequencyType.XTimesADay}
-              />
-            </View>
-            <Text style={[styles.labelText, { color: theme.colors.text }]}>
-              {t("times a day")}
-            </Text>
-          </View>
-        </View>
-
-        <View style={[styles.frequencyItemContainer]}>
-          {renderRadioButton(CustomFrequencyType.EveryXDays)}
-          <View
-            style={[
-              styles.frequencyItemLabelContainer,
-              frequencyType !== CustomFrequencyType.EveryXDays && {
-                opacity: DISABLED_OPACITY,
-              },
-            ]}
-          >
-            <Text style={[styles.labelText, { color: theme.colors.text }]}>
-              {t("every")}
-            </Text>
-            <View style={styles.everyXStepperContainer}>
-              <SmallNumberStepper
-                defaultValue={daysNumber}
-                onChange={(value) => setDaysNumber(value)}
-                fractionalStepsBelowZero={false}
-                min={1}
-                max={1000}
-                disabled={frequencyType !== CustomFrequencyType.EveryXDays}
-              />
-            </View>
-            <Text style={[styles.labelText, { color: theme.colors.text }]}>
-              {t("day", { count: daysNumber })}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.frequencyItemContainer]}>
-          {renderRadioButton(CustomFrequencyType.EveryXWeeks)}
-          <View
-            style={[
-              styles.frequencyItemLabelContainer,
-              frequencyType !== CustomFrequencyType.EveryXWeeks && {
-                opacity: DISABLED_OPACITY,
-              },
-            ]}
-          >
-            <Text style={[styles.labelText, { color: theme.colors.text }]}>
-              {t("every")}
-            </Text>
-            <View style={styles.everyXStepperContainer}>
-              <SmallNumberStepper
-                defaultValue={weeksNumber}
-                onChange={(value) => setWeeksNumber(value)}
-                fractionalStepsBelowZero={false}
-                min={1}
-                max={1000}
-                disabled={frequencyType !== CustomFrequencyType.EveryXWeeks}
-              />
-            </View>
-            <Text style={[styles.labelText, { color: theme.colors.text }]}>
-              {t("week", { count: weeksNumber })}
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.frequencyItemDoubleContainer]}>
-          <View style={[styles.weekdaysItemContainer]}>
-            {renderRadioButton(CustomFrequencyType.SpecificDaysOfTheWeek)}
-            <Text
+      <DefaultKeyboardAvoidingView additionalOffset={0}>
+        <ScrollView
+          style={eStyles.editMainScrollContainer}
+          contentContainerStyle={eStyles.editMainScrollContentContainer}
+        >
+          <View style={[styles.frequencyItemContainer]}>
+            {renderRadioButton(CustomFrequencyType.XTimesADay)}
+            <View
               style={[
-                styles.labelText,
-                { color: theme.colors.text },
+                styles.frequencyItemLabelContainer,
+                frequencyType !== CustomFrequencyType.XTimesADay && {
+                  opacity: DISABLED_OPACITY,
+                },
+              ]}
+            >
+              <View style={styles.xTimesStepperContainer}>
+                <SmallNumberStepper
+                  defaultValue={timesADay}
+                  onChange={(value) => setTimesADay(value)}
+                  fractionalStepsBelowZero={false}
+                  min={1}
+                  max={MAX_DOEASUREMENTS}
+                  disabled={frequencyType !== CustomFrequencyType.XTimesADay}
+                />
+              </View>
+              <Text style={[styles.labelText, { color: theme.colors.text }]}>
+                {t("times a day")}
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.frequencyItemContainer]}>
+            {renderRadioButton(CustomFrequencyType.EveryXDays)}
+            <View
+              style={[
+                styles.frequencyItemLabelContainer,
+                frequencyType !== CustomFrequencyType.EveryXDays && {
+                  opacity: DISABLED_OPACITY,
+                },
+              ]}
+            >
+              <Text style={[styles.labelText, { color: theme.colors.text }]}>
+                {t("every")}
+              </Text>
+              <View style={styles.everyXStepperContainer}>
+                <SmallNumberStepper
+                  defaultValue={daysNumber}
+                  onChange={(value) => setDaysNumber(value)}
+                  fractionalStepsBelowZero={false}
+                  min={1}
+                  max={1000}
+                  disabled={frequencyType !== CustomFrequencyType.EveryXDays}
+                />
+              </View>
+              <Text style={[styles.labelText, { color: theme.colors.text }]}>
+                {t("day", { count: daysNumber })}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.frequencyItemContainer]}>
+            {renderRadioButton(CustomFrequencyType.EveryXWeeks)}
+            <View
+              style={[
+                styles.frequencyItemLabelContainer,
+                frequencyType !== CustomFrequencyType.EveryXWeeks && {
+                  opacity: DISABLED_OPACITY,
+                },
+              ]}
+            >
+              <Text style={[styles.labelText, { color: theme.colors.text }]}>
+                {t("every")}
+              </Text>
+              <View style={styles.everyXStepperContainer}>
+                <SmallNumberStepper
+                  defaultValue={weeksNumber}
+                  onChange={(value) => setWeeksNumber(value)}
+                  fractionalStepsBelowZero={false}
+                  min={1}
+                  max={1000}
+                  disabled={frequencyType !== CustomFrequencyType.EveryXWeeks}
+                />
+              </View>
+              <Text style={[styles.labelText, { color: theme.colors.text }]}>
+                {t("week", { count: weeksNumber })}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.frequencyItemDoubleContainer]}>
+            <View style={[styles.weekdaysItemContainer]}>
+              {renderRadioButton(CustomFrequencyType.SpecificDaysOfTheWeek)}
+              <Text
+                style={[
+                  styles.labelText,
+                  { color: theme.colors.text },
+                  frequencyType !==
+                    CustomFrequencyType.SpecificDaysOfTheWeek && {
+                    opacity: DISABLED_OPACITY,
+                  },
+                ]}
+              >
+                {t("specific days of the week")}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.weekdaysSelectionContainer,
                 frequencyType !== CustomFrequencyType.SpecificDaysOfTheWeek && {
                   opacity: DISABLED_OPACITY,
                 },
               ]}
             >
-              {t("specific days of the week")}
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.weekdaysSelectionContainer,
-              frequencyType !== CustomFrequencyType.SpecificDaysOfTheWeek && {
-                opacity: DISABLED_OPACITY,
-              },
-            ]}
-          >
-            {weekdays.map((weekday) => (
-              <TouchableOpacity
-                style={[
-                  styles.dayOfWeekPressable,
-                  {
-                    backgroundColor: selectedWeekdays.includes(weekday.index)
-                      ? mixColors(theme.colors.surface, theme.colors.primary)
-                      : theme.colors.surface,
-                    borderColor: theme.colors.primary,
-                  },
-                  selectedWeekdaysError &&
-                    frequencyType ===
-                      CustomFrequencyType.SpecificDaysOfTheWeek && {
-                      borderColor: theme.colors.error,
-                      borderWidth: ERROR_BORDER_WIDTH,
+              {weekdays.map((weekday) => (
+                <TouchableOpacity
+                  style={[
+                    styles.dayOfWeekPressable,
+                    {
+                      backgroundColor: selectedWeekdays.includes(weekday.index)
+                        ? mixColors(theme.colors.surface, theme.colors.primary)
+                        : theme.colors.surface,
+                      borderColor: theme.colors.primary,
                     },
-                ]}
-                key={weekday.index}
-                onPress={() => handleWeekdayPress(weekday.index)}
-                disabled={
-                  frequencyType !== CustomFrequencyType.SpecificDaysOfTheWeek
-                }
-              >
-                <Text style={[styles.labelText, { color: theme.colors.text }]}>
-                  {weekday.nameNarrow}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                    selectedWeekdaysError &&
+                      frequencyType ===
+                        CustomFrequencyType.SpecificDaysOfTheWeek && {
+                        borderColor: theme.colors.error,
+                        borderWidth: ERROR_BORDER_WIDTH,
+                      },
+                  ]}
+                  key={weekday.index}
+                  onPress={() => handleWeekdayPress(weekday.index)}
+                  disabled={
+                    frequencyType !== CustomFrequencyType.SpecificDaysOfTheWeek
+                  }
+                >
+                  <Text
+                    style={[styles.labelText, { color: theme.colors.text }]}
+                  >
+                    {weekday.nameNarrow}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </DefaultKeyboardAvoidingView>
 
       <View style={[eStyles.footer, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity
