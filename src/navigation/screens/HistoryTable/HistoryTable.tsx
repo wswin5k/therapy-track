@@ -493,8 +493,6 @@ export default function HistoryTable({
         }
       }),
     );
-    //let newSettingsColumnWidths = new Map(settingsColumnWidths);
-    //newSettingsColumnWidths.set(fullHeaders[index], nextWidth);
     await saveColumnWidth(fullHeaders[index], nextWidth);
   };
 
