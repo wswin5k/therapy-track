@@ -44,7 +44,7 @@ import {
   AssessmentSchedule,
   ValueType,
 } from "../../../models/AssessmentSchedule";
-import { Group } from "../../../models/Frequency";
+import { Group, NOT_IN_GROUP_LABEL } from "../../../models/Frequency";
 import {
   baseUnitShorFormPlural,
   ingredientAmountUnitEnumToDisplayForm,
@@ -319,7 +319,7 @@ export function HistoryTableScreen() {
         if (group === undefined) {
           throw Error("Measurement record has invalid group.");
         } else if (group === null) {
-          groupLabel = "ungrouped";
+          groupLabel = NOT_IN_GROUP_LABEL;
         } else {
           groupLabel = group?.name;
         }
