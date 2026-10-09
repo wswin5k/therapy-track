@@ -174,6 +174,7 @@ class TableData {
   constructor(
     public fullHeaders: string[],
     public fullHeaderToDisplayHeader: Map<string, string>,
+    public fullHeadersToSettingsHeader: Map<string, string>,
     public fullHeaderToValueType: Map<string, ValueType>,
     public dayToFullHeaderToValue: Map<string, Map<string, string | number>>,
     public newColumnConfigs: Map<string, NewColumnConfig>,
@@ -245,6 +246,7 @@ export function HistoryTableScreen() {
     fullHeaderToShortHeader: Map<string, string>,
     shortHeaderCounts: Map<string, number>,
     fullHeaderToWeightUnits: Map<string, Set<IngredientAmountUnit>>,
+    fullHeaderToSettingsHeader: Map<string, string>,
   ) {
     for (const [fullHeader, weightUnits] of fullHeaderToWeightUnits) {
       const weightUnit = maxWeightUnit([...weightUnits]);
@@ -258,6 +260,8 @@ export function HistoryTableScreen() {
 
       fullHeaderToShortHeader.set(newFullHeader, newShortHeader);
       fullHeaderToShortHeader.delete(fullHeader);
+
+      fullHeaderToSettingsHeader.set(newFullHeader, fullHeader);
 
       if (shortHeaderCounts.has(shortHeader)) {
         shortHeaderCounts.set(
@@ -394,10 +398,13 @@ export function HistoryTableScreen() {
       );
 
       const fullHeaders = Array.from(fullHeaderToShortHeader.keys()).sort();
+      const fullHeadersToSettingsHeader = new Map();
+      fullHeaders.forEach((h) => fullHeadersToSettingsHeader.set(h, h));
 
       return new TableData(
         fullHeaders,
         headersMap,
+        fullHeadersToSettingsHeader,
         fullHeaderToValueType,
         dayToHeaderToValues,
         newColumnConfigs,
@@ -559,11 +566,14 @@ export function HistoryTableScreen() {
         );
       }
 
+      const fullHeadersToSettingsHeader = new Map();
+
       insertActiveIngredientWeightUnits(
         dayToHeaderToValues,
         fullHeaderToShortHeader,
         shortHeaderCounts,
         fullActiveIngredientHeaderToWeightUnits,
+        fullHeadersToSettingsHeader,
       );
 
       const headersMap = calculateHeaders(
@@ -581,6 +591,7 @@ export function HistoryTableScreen() {
       return new TableData(
         fullHeaders,
         headersMap,
+        fullHeadersToSettingsHeader,
         fullHeaderToValueType,
         dayToHeaderToValues,
         newColumnConfigs,
@@ -594,7 +605,7 @@ export function HistoryTableScreen() {
     existingColumnConfigs: Map<string, ColumnConfig>,
   ): Promise<Map<string, ColumnConfig>> => {
     const allColumnConfigs: ColumnConfig[] = [
-      ...Object.values(existingColumnConfigs),
+      ...existingColumnConfigs.values(),
     ];
     for (const [header, newCC] of newColumnConfigs) {
       allColumnConfigs.push(
@@ -652,7 +663,11 @@ export function HistoryTableScreen() {
       );
 
       const getOrdinal = (header: string): number => {
-        const cc = columnConfigs.get(header);
+        const settingsHeader =
+          medicineTableData.fullHeadersToSettingsHeader.get(header) ??
+          assessmentTableData.fullHeadersToSettingsHeader.get(header) ??
+          header;
+        const cc = columnConfigs.get(settingsHeader);
         if (!cc) {
           return 0;
         } else {

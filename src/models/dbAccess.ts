@@ -3,7 +3,7 @@ import {
   MedicineSchedule as MedicineSchedule,
   Dosage,
 } from "./MedicineSchedule";
-import { Group } from "./Frequency";
+import { Group, NOT_IN_GROUP_LABEL } from "./Frequency";
 import { Frequency, IntervalUnit } from "./Frequency";
 import {
   ActiveIngredient,
@@ -41,6 +41,7 @@ import {
   Settings,
   ThemeSelection,
 } from "./Settings";
+import { baseUnitShorFormPlural } from "../navigation/enumMappings";
 
 interface MedicineScheduleWithMedicineRow {
   id: number;
@@ -244,7 +245,7 @@ function serializeBoolean(value: boolean): number {
 }
 
 function serializeColumnConfigs(value: Map<string, ColumnConfig>): string {
-  const result = JSON.stringify(Object.values(value));
+  const result = JSON.stringify(Array.from(value.values()));
   return result;
 }
 
@@ -327,7 +328,7 @@ export async function dbUpdateMedicine(
 
 export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
   const rows = await db.getAllAsync<MedicineRow>(`
-      SELECT id, name, base_unit, active_ingredients
+      SELECT id, created_at, name, base_unit, active_ingredients
       FROM medicines
     `);
 
@@ -345,9 +346,25 @@ export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
   });
 }
 
-export async function dbDeleteMedicine(db: SQLiteDatabase, id: number) {
-  await db.runAsync("DELETE FROM medicines WHERE id = ?", id);
-  // todo remove labels from history table settings
+async function removeMedicineLabelsFromHistoryTableSettings(
+  db: SQLiteDatabase,
+  medicine: Medicine,
+) {
+  const settings = await dbGetHistoryTableSettings(db);
+  const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
+  medicine.activeIngredients.forEach((ai) => {
+    settings.columnConfigs.delete(ai.getLabel(baseUnitLabel));
+    settings.columnConfigs.delete(ai.getLabelWithoutUnit(baseUnitLabel));
+    settings.columnConfigs.delete(ai.getShortLabel());
+    settings.columnConfigs.delete(ai.getShortLabelWithoutUnit());
+  });
+  settings.columnConfigs.delete(medicine.getLabel());
+  dbUpdateHistoryTableSettings(db, settings);
+}
+
+export async function dbDeleteMedicine(db: SQLiteDatabase, medicine: Medicine) {
+  await removeMedicineLabelsFromHistoryTableSettings(db, medicine);
+  await db.runAsync("DELETE FROM medicines WHERE id = ?", medicine.dbId);
 }
 
 export async function dbInsertMedicine(
@@ -917,9 +934,25 @@ export async function dbInsertAssessment(
   return db_insert.lastInsertRowId;
 }
 
-export async function dbDeleteAssessment(db: SQLiteDatabase, id: number) {
-  await db.runAsync("DELETE FROM assessments WHERE id = ?", id);
-  // todo remove labels from history table settings
+async function removeAssessmentLabelsFromHistoryTableSettings(
+  db: SQLiteDatabase,
+  assessment: Assessment,
+) {
+  const settings = await dbGetHistoryTableSettings(db);
+  const groups = await dbGetGroups(db);
+  groups.forEach((g) =>
+    settings.columnConfigs.delete(assessment.getLabel(g.name)),
+  );
+  settings.columnConfigs.delete(assessment.getLabel(NOT_IN_GROUP_LABEL));
+  dbUpdateHistoryTableSettings(db, settings);
+}
+
+export async function dbDeleteAssessment(
+  db: SQLiteDatabase,
+  assessment: Assessment,
+) {
+  await removeAssessmentLabelsFromHistoryTableSettings(db, assessment);
+  await db.runAsync("DELETE FROM assessments WHERE id = ?", assessment.dbId);
 }
 
 export async function dbInsertUnscheduledMeasurementRecord(
@@ -1038,7 +1071,7 @@ export async function dbGetAssessments(
   const rows = await db.getAllAsync<AssessmentRow>(`
       SELECT id, created_at, name, type, value_domain
       FROM assessments
-    `);
+  `);
   return rows.map((row) => {
     const assessmentType = ValueType[row.type];
     const valueDomain = row.value_domain

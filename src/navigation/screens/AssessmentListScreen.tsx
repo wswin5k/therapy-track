@@ -56,7 +56,7 @@ function AssessmentListItem({
   };
 
   const confirmDelete = async () => {
-    await dbDeleteAssessment(db, assessment.dbId);
+    await dbDeleteAssessment(db, assessment);
     setDeleteDialogVisible(false);
     await loadData();
   };
