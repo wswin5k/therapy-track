@@ -219,7 +219,7 @@ export function AssessmentInput({
                     styles.selectInputCheckmark,
                     { color: theme.colors.primary },
                   ]}
-                  name="checkmark"
+                  name="checkmark-sharp"
                 ></Ionicons>
               )}
             </TouchableOpacity>
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   selectInputCheckmark: {
-    fontSize: 20,
+    fontSize: 22,
   },
   switchInput: {
     height: 50,
