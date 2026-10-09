@@ -227,7 +227,7 @@ export function ModalPicker<T>({
                           styles.checkmark,
                           { color: theme.colors.primary },
                         ]}
-                        name="checkmark"
+                        name="checkmark-sharp"
                       ></Ionicons>
                     )}
                   </TouchableOpacity>
@@ -309,6 +309,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   checkmark: {
-    fontSize: 20,
+    fontSize: 24,
   },
 });

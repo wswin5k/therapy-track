@@ -25,6 +25,7 @@ import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Lucide from "@react-native-vector-icons/lucide/static";
 type HomeNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "HomeSwipeable"
@@ -73,7 +74,11 @@ export function HomeSwipeable() {
           onPress={() => setIsDatePickerOpened(true)}
           style={{ marginLeft: 16, marginRight: 20 }}
         >
-          <Ionicons name="calendar-clear" size={28} color={theme.colors.text} />
+          <Lucide
+            name="calendar-search"
+            size={25}
+            color={theme.colors.textSecondary}
+          />
         </TouchableOpacity>
       ),
     });

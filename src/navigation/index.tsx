@@ -38,6 +38,9 @@ import { Frequency } from "../models/Frequency";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { EditHistoryTableSettingsScreen } from "./screens/HistoryTable/EditHistoryTableSettingsScreen";
 import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid/static";
+import { Entypo } from "@react-native-vector-icons/entypo/static";
+import { Octicons } from "@react-native-vector-icons/octicons/static";
+import Lucide from "@react-native-vector-icons/lucide/static";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
   screens: {
@@ -102,7 +105,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         drawerLabel: "Home",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="home-sharp" size={size} color={color} />
+          <Octicons name="home-fill" size={size} color={color} />
         ),
       },
     },
@@ -120,7 +123,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         title: "Assessments",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <FontAwesomeFreeSolid name="ruler" size={size} color={color} />
+          <Entypo name="ruler" size={size} color={color} />
         ),
       },
     },
@@ -129,7 +132,7 @@ const DrawerTabs = createDrawerNavigator({
       options: {
         title: "Schedules",
         drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="calendar" size={size} color={color} />
+          <Lucide name="calendar-range" size={size} color={color} />
         ),
       },
     },
