@@ -3,7 +3,7 @@ import {
   MedicineSchedule as MedicineSchedule,
   Dosage,
 } from "./MedicineSchedule";
-import { Group } from "./Frequency";
+import { Group, NOT_IN_GROUP_LABEL } from "./Frequency";
 import { Frequency, IntervalUnit } from "./Frequency";
 import {
   ActiveIngredient,
@@ -34,7 +34,14 @@ import {
   serializeDateOnly,
   serializeDateOnlyNullable,
 } from "../dateOnlyUtils";
-import { HistoryTableSettings, Settings, ThemeSelection } from "./Settings";
+import {
+  ColumnConfig,
+  ColumnType,
+  HistoryTableSettings,
+  Settings,
+  ThemeSelection,
+} from "./Settings";
+import { baseUnitShorFormPlural } from "../navigation/enumMappings";
 
 interface MedicineScheduleWithMedicineRow {
   id: number;
@@ -151,7 +158,7 @@ interface HistoryTableSettingsRow {
   expand_all_rows: number;
   show_days_without_entries: number;
   merge_ingredients_with_different_forms: number;
-  column_widths: string;
+  column_configs: string;
 }
 
 function serializeDatetime(value: Date): string {
@@ -162,7 +169,7 @@ function deserializeDatetime(value: string): Date {
   return new Date(value);
 }
 
-function parseActiveIngredients(json: string) {
+function deserializeActiveIngredients(json: string) {
   const aiData = JSON.parse(json);
   return aiData.map((ai: { name: string; amount: number; unit: string }) => {
     if (
@@ -180,7 +187,10 @@ function parseActiveIngredients(json: string) {
   });
 }
 
-function parseValueDomain(json: string | null, assessmentType: ValueType) {
+function deserializeValueDomain(
+  json: string | null,
+  assessmentType: ValueType,
+) {
   if (!json) {
     return null;
   }
@@ -201,7 +211,7 @@ function parseValueDomain(json: string | null, assessmentType: ValueType) {
   }
 }
 
-function strigifyAssessmentValue(value: AssessmentValue): string {
+function serializeAssessmentValue(value: AssessmentValue): string {
   if (typeof value === "string") {
     return value;
   } else {
@@ -209,7 +219,7 @@ function strigifyAssessmentValue(value: AssessmentValue): string {
   }
 }
 
-function parseAssessmentValue(
+function deserializeAssessmentValue(
   value: string,
   assessmentType: ValueType,
 ): AssessmentValue {
@@ -234,25 +244,43 @@ function serializeBoolean(value: boolean): number {
   return value ? 1 : 0;
 }
 
-function deserializeColumnWidths(value: string): Map<string, number> {
-  const obj: unknown = JSON.parse(value);
-
-  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
-    throw new Error("Expected a JSON object");
-  }
-
-  const entries = Object.entries(obj);
-
-  if (!entries.every(([, value]) => typeof value === "number")) {
-    throw new Error("Expected all values to be numbers");
-  }
-
-  const rsult = new Map(entries);
-  return rsult;
+function serializeColumnConfigs(value: Map<string, ColumnConfig>): string {
+  const result = JSON.stringify(Array.from(value.values()));
+  return result;
 }
 
-function serializeColumnWidths(value: Map<string, number>): string {
-  const result = JSON.stringify(Object.fromEntries(value));
+function deserializeColumnConfigs(value: string): Map<string, ColumnConfig> {
+  const obj = JSON.parse(value);
+
+  const result = new Map();
+
+  obj.forEach(
+    (cc: {
+      isShown: boolean;
+      width: number;
+      ordinal: number;
+      _type: number;
+      _source_created_at: string;
+      _header: string;
+    }) => {
+      if (!Object.values(ColumnType).includes(cc._type as ColumnType)) {
+        throw Error(
+          `${cc._type} is not a valid IngredientAmountUnit enum value.`,
+        );
+      }
+      result.set(
+        cc._header,
+        new ColumnConfig(
+          cc.isShown,
+          cc.width,
+          cc.ordinal,
+          cc._type,
+          new Date(cc._source_created_at),
+          cc._header,
+        ),
+      );
+    },
+  );
   return result;
 }
 
@@ -300,12 +328,14 @@ export async function dbUpdateMedicine(
 
 export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
   const rows = await db.getAllAsync<MedicineRow>(`
-      SELECT id, name, base_unit, active_ingredients
+      SELECT id, created_at, name, base_unit, active_ingredients
       FROM medicines
     `);
 
   return rows.map((row) => {
-    const active_ingredients = parseActiveIngredients(row.active_ingredients);
+    const active_ingredients = deserializeActiveIngredients(
+      row.active_ingredients,
+    );
     return new Medicine(
       row.name,
       BaseUnit[row.base_unit],
@@ -316,8 +346,25 @@ export async function dbGetMedicines(db: SQLiteDatabase): Promise<Medicine[]> {
   });
 }
 
-export async function dbDeleteMedicine(db: SQLiteDatabase, id: number) {
-  await db.runAsync("DELETE FROM medicines WHERE id = ?", id);
+async function removeMedicineLabelsFromHistoryTableSettings(
+  db: SQLiteDatabase,
+  medicine: Medicine,
+) {
+  const settings = await dbGetHistoryTableSettings(db);
+  const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
+  medicine.activeIngredients.forEach((ai) => {
+    settings.columnConfigs.delete(ai.getLabel(baseUnitLabel));
+    settings.columnConfigs.delete(ai.getLabelWithoutUnit(baseUnitLabel));
+    settings.columnConfigs.delete(ai.getShortLabel());
+    settings.columnConfigs.delete(ai.getShortLabelWithoutUnit());
+  });
+  settings.columnConfigs.delete(medicine.getLabel());
+  dbUpdateHistoryTableSettings(db, settings);
+}
+
+export async function dbDeleteMedicine(db: SQLiteDatabase, medicine: Medicine) {
+  await removeMedicineLabelsFromHistoryTableSettings(db, medicine);
+  await db.runAsync("DELETE FROM medicines WHERE id = ?", medicine.dbId);
 }
 
 export async function dbInsertMedicine(
@@ -344,7 +391,7 @@ export async function dbInsertMedicine(
 function parseMedicineScheduleWithMedicineRow(
   row: MedicineScheduleWithMedicineRow,
 ): MedicineSchedule {
-  const active_ingredients = parseActiveIngredients(
+  const active_ingredients = deserializeActiveIngredients(
     row.medicine_active_ingredients,
   );
   const medicineData = new Medicine(
@@ -380,7 +427,7 @@ function parseAssessmentScheduleWithAssessmentRow(
   row: AssessmentScheduleWithAssessmentRow,
 ): AssessmentSchedule {
   const assessmentValueDomain = row.assessment_value_domain
-    ? parseValueDomain(row.assessment_value_domain, row.assessment_type)
+    ? deserializeValueDomain(row.assessment_value_domain, row.assessment_type)
     : null;
   const assessment = new Assessment(
     row.assessment_name,
@@ -648,7 +695,7 @@ export async function dbGetScheduledMeasurementRecords(
         deserializeDateOnly(row.date),
         row.assessment_schedule,
         row.measurement_index,
-        parseAssessmentValue(row.value, row.assessment_type),
+        deserializeAssessmentValue(row.value, row.assessment_type),
       ),
   );
 }
@@ -887,8 +934,25 @@ export async function dbInsertAssessment(
   return db_insert.lastInsertRowId;
 }
 
-export async function dbDeleteAssessment(db: SQLiteDatabase, id: number) {
-  await db.runAsync("DELETE FROM assessments WHERE id = ?", id);
+async function removeAssessmentLabelsFromHistoryTableSettings(
+  db: SQLiteDatabase,
+  assessment: Assessment,
+) {
+  const settings = await dbGetHistoryTableSettings(db);
+  const groups = await dbGetGroups(db);
+  groups.forEach((g) =>
+    settings.columnConfigs.delete(assessment.getLabel(g.name)),
+  );
+  settings.columnConfigs.delete(assessment.getLabel(NOT_IN_GROUP_LABEL));
+  dbUpdateHistoryTableSettings(db, settings);
+}
+
+export async function dbDeleteAssessment(
+  db: SQLiteDatabase,
+  assessment: Assessment,
+) {
+  await removeAssessmentLabelsFromHistoryTableSettings(db, assessment);
+  await db.runAsync("DELETE FROM assessments WHERE id = ?", assessment.dbId);
 }
 
 export async function dbInsertUnscheduledMeasurementRecord(
@@ -901,7 +965,7 @@ export async function dbInsertUnscheduledMeasurementRecord(
   },
 ): Promise<number> {
   // array values should be sorted according to value domain order
-  const valueStr = strigifyAssessmentValue(record.value);
+  const valueStr = serializeAssessmentValue(record.value);
   const result = await db.runAsync(
     `INSERT INTO unscheduled_measurement_records 
     (record_datetime, date, assessment, value, group_) 
@@ -928,7 +992,7 @@ export async function dbGetUnscheduledMeasurementRecords(
 
   const rows = await db.getAllAsync<UncheduledMeasurementRecordRow>(queryStr);
   return rows.map((row) => {
-    const value = parseAssessmentValue(
+    const value = deserializeAssessmentValue(
       row.value,
       ValueType[row.assessment_type],
     );
@@ -953,7 +1017,7 @@ export async function dbInsertScheduledMeasurementRecord(
   },
 ): Promise<number> {
   // array values should be sorted according to value domain order
-  const valueStr = strigifyAssessmentValue(record.value);
+  const valueStr = serializeAssessmentValue(record.value);
 
   const result = await db.runAsync(
     `INSERT INTO scheduled_measurement_records 
@@ -1007,11 +1071,11 @@ export async function dbGetAssessments(
   const rows = await db.getAllAsync<AssessmentRow>(`
       SELECT id, created_at, name, type, value_domain
       FROM assessments
-    `);
+  `);
   return rows.map((row) => {
     const assessmentType = ValueType[row.type];
     const valueDomain = row.value_domain
-      ? parseValueDomain(row.value_domain, assessmentType)
+      ? deserializeValueDomain(row.value_domain, assessmentType)
       : null;
     return new Assessment(
       row.name,
@@ -1223,13 +1287,10 @@ export async function dbGetHistoryTableSettings(
     throw Error("No history_table_settings in the database.");
   }
   return new HistoryTableSettings(
-    true,
-    true,
-    true,
     deserializeBoolean(row.expand_all_rows),
     deserializeBoolean(row.show_days_without_entries),
     deserializeBoolean(row.merge_ingredients_with_different_forms),
-    deserializeColumnWidths(row.column_widths),
+    deserializeColumnConfigs(row.column_configs),
   );
 }
 
@@ -1242,11 +1303,11 @@ export async function dbUpdateHistoryTableSettings(
     SET expand_all_rows = ?,
     show_days_without_entries = ?, 
     merge_ingredients_with_different_forms = ?,
-    column_widths = ?
+    column_configs = ?
     WHERE id = 1`,
     serializeBoolean(settings.expandAllRows),
     serializeBoolean(settings.showDaysWithoutEntries),
     serializeBoolean(settings.mergeIngredientsWithDifferentForms),
-    serializeColumnWidths(settings.columnWidths),
+    serializeColumnConfigs(settings.columnConfigs),
   );
 }

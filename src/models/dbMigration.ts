@@ -134,16 +134,15 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       expand_all_rows BOOLEAN NOT NULL,
       show_days_without_entries BOOLEAN NOT NULL,
       merge_ingredients_with_different_forms BOOLEAN NOT NULL,
-      column_widths TEXT NOT NULL
-      );
+      column_configs TEXT NOT NULL);
 
       INSERT INTO history_table_settings 
       (id, 
       expand_all_rows, 
       show_days_without_entries, 
       merge_ingredients_with_different_forms,
-      column_widths) 
-      VALUES (1, 1, 0, 1, "{}");
+      column_configs) 
+      VALUES (1, 1, 0, 1, "[]");
       `);
     currentDbVersion = 1;
   }

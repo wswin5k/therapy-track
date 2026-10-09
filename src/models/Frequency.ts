@@ -1,3 +1,5 @@
+export const NOT_IN_GROUP_LABEL = "ungrouped";
+
 export enum IntervalUnit {
   day = "day",
   week = "week",

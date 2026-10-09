@@ -13,7 +13,6 @@ import React from "react";
 import { ValueType } from "../../../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
 import { dayDifference } from "../../../dateOnlyUtils";
-import { HistoryTableSettings } from "../../../models/Settings";
 import { t } from "i18next";
 
 const TABLE_RADIUS = 10;
@@ -48,8 +47,8 @@ type HistoryTableProps = {
   rowHeaders: Date[];
   data: string[][];
   expandAllRows: boolean;
-  settingsColumnWidths: Map<string, number>;
-  saveSettings: (update: Partial<HistoryTableSettings>) => Promise<void>;
+  settingsColumnWidths: Map<string, number | null>;
+  saveColumnWidth: (fullHeader: string, width: number) => Promise<void>;
 };
 
 export default function HistoryTable({
@@ -60,10 +59,8 @@ export default function HistoryTable({
   data,
   expandAllRows,
   settingsColumnWidths,
-  saveSettings,
+  saveColumnWidth,
 }: HistoryTableProps) {
-  console.log("HistoryTable render");
-
   const theme = useTheme();
   const { i18n } = useTranslation();
 
@@ -496,9 +493,7 @@ export default function HistoryTable({
         }
       }),
     );
-    let newSettingsColumnWidths = new Map(settingsColumnWidths);
-    newSettingsColumnWidths.set(fullHeaders[index], nextWidth);
-    await saveSettings({ columnWidths: newSettingsColumnWidths });
+    await saveColumnWidth(fullHeaders[index], nextWidth);
   };
 
   return (

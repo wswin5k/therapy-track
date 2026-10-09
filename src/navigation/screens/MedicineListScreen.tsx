@@ -56,7 +56,7 @@ function MedicineListItem({
   };
 
   const confirmDelete = async () => {
-    await dbDeleteMedicine(db, medicine.dbId);
+    await dbDeleteMedicine(db, medicine);
     setDeleteDialogVisible(false);
     await loadData();
   };

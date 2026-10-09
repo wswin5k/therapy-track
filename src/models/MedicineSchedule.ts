@@ -1,4 +1,7 @@
-import { ingredientAmountUnitEnumToDisplayForm } from "../navigation/enumMappings";
+import {
+  baseUnitShorFormPlural,
+  ingredientAmountUnitEnumToDisplayForm,
+} from "../navigation/enumMappings";
 import { Frequency } from "./Frequency";
 
 export enum BaseUnit {
@@ -63,6 +66,21 @@ export class ActiveIngredient {
     public amount: number,
     public unit: IngredientAmountUnit,
   ) {}
+
+  getLabel(baseUnitLabel: string): string {
+    const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(this.unit);
+    return `${this.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
+  }
+  getShortLabel(): string {
+    const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(this.unit);
+    return `${this.name} [${aiUnitDisplay}]`;
+  }
+  getLabelWithoutUnit(baseUnitLabel: string): string {
+    return `${this.name} – ${baseUnitLabel}`;
+  }
+  getShortLabelWithoutUnit(): string {
+    return `${this.name}`;
+  }
 }
 
 export class Medicine {
@@ -79,6 +97,11 @@ export class Medicine {
       (ai) =>
         `${ai.name} ${ai.amount}${ingredientAmountUnitEnumToDisplayForm(ai.unit)}`,
     );
+  }
+
+  getLabel(): string {
+    const baseUnitLabel = baseUnitShorFormPlural(this.baseUnit);
+    return `${this.name} [${baseUnitLabel}]`;
   }
 }
 
