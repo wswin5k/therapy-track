@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
