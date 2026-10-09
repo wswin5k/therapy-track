@@ -115,7 +115,7 @@ function formatAssessmentValue(
       return value.toString();
     case ValueType.MultiSelect:
       // uses no-break space U+00A0
-      return value ? "" : " • " + castToStringArray(value).join("\n • ");
+      return " • " + castToStringArray(value).join("\n • ");
   }
 }
 
