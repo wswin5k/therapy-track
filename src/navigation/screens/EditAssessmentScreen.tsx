@@ -329,7 +329,7 @@ export function EditAssessmentScreen() {
                         ),
                       );
                     }}
-                    defaultValue={"kkk"}
+                    defaultValue={v}
                     autoCapitalize="none"
                     editable={editable}
                   />
