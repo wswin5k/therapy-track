@@ -142,7 +142,7 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       show_days_without_entries, 
       merge_ingredients_with_different_forms,
       column_configs) 
-      VALUES (1, 1, 0, 1, "{}");
+      VALUES (1, 1, 0, 1, "[]");
       `);
     currentDbVersion = 1;
   }

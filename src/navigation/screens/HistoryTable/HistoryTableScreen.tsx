@@ -176,6 +176,7 @@ class TableData {
     public fullHeaderToDisplayHeader: Map<string, string>,
     public fullHeaderToValueType: Map<string, ValueType>,
     public dayToFullHeaderToValue: Map<string, Map<string, string | number>>,
+    public newColumnConfigs: Map<string, NewColumnConfig>,
   ) {}
 }
 
@@ -208,9 +209,6 @@ export function HistoryTableScreen() {
   const [settingsColumnWidths, setSetingsColumnWidths] = React.useState<
     Map<string, number>
   >(new Map());
-  const newColumnConfigs = React.useRef<Map<string, NewColumnConfig>>(
-    new Map(),
-  );
 
   function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
@@ -325,6 +323,7 @@ export function HistoryTableScreen() {
       };
 
       const fullHeaderToValueType = new Map();
+      const newColumnConfigs = new Map();
 
       const digestMeasurementRecord = (
         record: ScheduledMeasurementRecord | UnscheduledMeasurementRecord,
@@ -336,7 +335,7 @@ export function HistoryTableScreen() {
 
         const columnConfig = settings.columnConfigs.get(fullHeader);
         if (!columnConfig) {
-          newColumnConfigs.current.set(
+          newColumnConfigs.set(
             fullHeader,
             new NewColumnConfig(ColumnType.Assessment, assessment.createdAt),
           );
@@ -401,6 +400,7 @@ export function HistoryTableScreen() {
         headersMap,
         fullHeaderToValueType,
         dayToHeaderToValues,
+        newColumnConfigs,
       );
     },
     [db],
@@ -433,6 +433,7 @@ export function HistoryTableScreen() {
         string,
         Set<IngredientAmountUnit>
       >();
+      const newColumnConfigs = new Map();
 
       const digestDosageRecord = (
         record: ScheduledDosageRecord | UnscheduledDosageRecord,
@@ -471,7 +472,7 @@ export function HistoryTableScreen() {
             !ccFullHeader ||
             ccFullHeader._source_created_at > medicine.createdAt
           ) {
-            newColumnConfigs.current.set(
+            newColumnConfigs.set(
               fullHeader,
               new NewColumnConfig(
                 ColumnType.ActiveIngredient,
@@ -484,7 +485,7 @@ export function HistoryTableScreen() {
             !ccShortHeader ||
             ccShortHeader._source_created_at > medicine.createdAt
           ) {
-            newColumnConfigs.current.set(
+            newColumnConfigs.set(
               shortHeader,
               new NewColumnConfig(
                 ColumnType.ActiveIngredient,
@@ -516,7 +517,7 @@ export function HistoryTableScreen() {
 
         const columnConfig = settings.columnConfigs.get(header);
         if (!columnConfig) {
-          newColumnConfigs.current.set(
+          newColumnConfigs.set(
             header,
             new NewColumnConfig(ColumnType.Medicine, medicine.createdAt),
           );
@@ -534,9 +535,8 @@ export function HistoryTableScreen() {
           let amountTotal = dailyRow.get(header) || 0;
           amountTotal += medicineAmount;
           dailyRow.set(header, amountTotal);
-
-          dayToHeaderToValues.set(dateStr, dailyRow);
         }
+        dayToHeaderToValues.set(dateStr, dailyRow);
       };
 
       for (const record of unscheduledDosageRecords) {
@@ -583,19 +583,18 @@ export function HistoryTableScreen() {
         headersMap,
         fullHeaderToValueType,
         dayToHeaderToValues,
+        newColumnConfigs,
       );
     },
     [db],
   );
 
-  const insertNewColumnConfigs = async (
+  const combineColumnConfigs = async (
     newColumnConfigs: Map<string, NewColumnConfig>,
+    existingColumnConfigs: Map<string, ColumnConfig>,
   ): Promise<Map<string, ColumnConfig>> => {
-    if (settings === null) {
-      return new Map();
-    }
     const allColumnConfigs: ColumnConfig[] = [
-      ...Object.values(settings.columnConfigs),
+      ...Object.values(existingColumnConfigs),
     ];
     for (const [header, newCC] of newColumnConfigs) {
       allColumnConfigs.push(
@@ -624,104 +623,105 @@ export function HistoryTableScreen() {
       cc.ordinal = idx;
       updatedColumnConfigs.set(cc._header, cc);
     });
-    await dbUpdateHistoryTableSettings(db, {
-      ...settings,
-      columnConfigs: updatedColumnConfigs,
-    });
-    loadSettings();
 
     return updatedColumnConfigs;
   };
 
-  const loadAndCombineDataForTable = React.useCallback(async () => {
-    if (settings === null) {
-      return;
-    }
-    const medicineTableData = await getMedicineData(settings);
-    const assessmentTableData = await getAssessmentData(settings);
+  const loadAndCombineDataForTable = React.useCallback(
+    async (initialSettings: HistoryTableSettings) => {
+      const medicineTableData = await getMedicineData(initialSettings);
+      const assessmentTableData = await getAssessmentData(initialSettings);
 
-    const columnConfigs = await insertNewColumnConfigs(newColumnConfigs.current);
+      const allNewColumnConfigs = new Map([
+        ...medicineTableData.newColumnConfigs,
+        ...assessmentTableData.newColumnConfigs,
+      ]);
 
-    const newTableRows = new Array();
+      const columnConfigs = await combineColumnConfigs(
+        allNewColumnConfigs,
+        initialSettings.columnConfigs,
+      );
+      await dbUpdateHistoryTableSettings(db, {
+        ...initialSettings,
+        columnConfigs,
+      });
 
-    const medicinesHistory = medicineTableData.dayToFullHeaderToValue;
-    const assessmentsHistory = assessmentTableData.dayToFullHeaderToValue;
+      const headers = new Array(
+        ...medicineTableData.fullHeaders,
+        ...assessmentTableData.fullHeaders,
+      );
 
-    const daysSet = new Set([
-      ...medicinesHistory.keys(),
-      ...assessmentsHistory.keys(),
-    ]);
-    const days = Array.from(daysSet).sort();
-    let dates = [];
-    if (settings.showDaysWithoutEntries) {
-      const startDay = deserializeDateOnly(days[0]);
-      const endDate = deserializeDateOnly(days[days.length - 1]);
-
-      for (
-        let date = endDate;
-        date >= startDay;
-        date = getShiftedDateOnly(date, -1)
-      ) {
-        dates.push(date);
-      }
-    } else {
-      dates = days.map((d) => deserializeDateOnly(d)).toReversed();
-    }
-
-    for (const date of dates) {
-      const day = serializeDateOnly(date);
-
-      const record = [];
-      for (const header of medicineTableData.fullHeaders) {
-        const value = medicinesHistory.get(day)?.get(header);
-        if (value) {
-          record.push(value.toString());
+      const getOrdinal = (header: string): number => {
+        const cc = columnConfigs.get(header);
+        if (!cc) {
+          return 0;
         } else {
-          record.push("");
+          return cc.ordinal;
         }
-      }
-      for (const header of assessmentTableData.fullHeaders) {
-        const value = assessmentsHistory.get(day)?.get(header);
-        if (value) {
-          record.push(value);
-        } else {
-          record.push("");
+      };
+      headers.sort((a, b) => getOrdinal(a) - getOrdinal(b));
+      setFullHeaders(headers);
+
+      const newTableRows = new Array();
+
+      const medicinesHistory = medicineTableData.dayToFullHeaderToValue;
+      const assessmentsHistory = assessmentTableData.dayToFullHeaderToValue;
+
+      const daysSet = new Set([
+        ...medicinesHistory.keys(),
+        ...assessmentsHistory.keys(),
+      ]);
+      const days = Array.from(daysSet).sort();
+      let dates = [];
+      if (initialSettings.showDaysWithoutEntries) {
+        const startDay = deserializeDateOnly(days[0]);
+        const endDate = deserializeDateOnly(days[days.length - 1]);
+
+        for (
+          let date = endDate;
+          date >= startDay;
+          date = getShiftedDateOnly(date, -1)
+        ) {
+          dates.push(date);
         }
-      }
-      newTableRows.push(record);
-    }
-
-    const headers = new Array(
-      ...medicineTableData.fullHeaders,
-      ...assessmentTableData.fullHeaders,
-    );
-
-    const getOrdinal = (header: string): number => {
-      const cc =  columnConfigs.get(header);
-      if(!cc) {
-        return 0;
       } else {
-        return cc.ordinal;
+        dates = days.map((d) => deserializeDateOnly(d)).toReversed();
       }
-    }
-    headers.sort((a, b) => getOrdinal(a) - getOrdinal(b));
-    setFullHeaders(headers);
 
-    const types = new Map([
-      ...medicineTableData.fullHeaderToValueType,
-      ...assessmentTableData.fullHeaderToValueType,
-    ]);
-    setFullHeaderToValueType(types);
+      for (const date of dates) {
+        const day = serializeDateOnly(date);
 
-    const headersMap = new Map([
-      ...medicineTableData.fullHeaderToDisplayHeader,
-      ...assessmentTableData.fullHeaderToDisplayHeader,
-    ]);
-    setFullHeaderToDisplayHeader(headersMap);
+        const record = [];
+        for (const header of headers) {
+          const value =
+            medicinesHistory.get(day)?.get(header) ??
+            assessmentsHistory.get(day)?.get(header);
+          if (value) {
+            record.push(value.toString());
+          } else {
+            record.push("");
+          }
+        }
+        newTableRows.push(record);
+      }
 
-    setRowHeaders(dates);
-    setCells(newTableRows);
-  }, [getAssessmentData, getMedicineData]);
+      const types = new Map([
+        ...medicineTableData.fullHeaderToValueType,
+        ...assessmentTableData.fullHeaderToValueType,
+      ]);
+      setFullHeaderToValueType(types);
+
+      const headersMap = new Map([
+        ...medicineTableData.fullHeaderToDisplayHeader,
+        ...assessmentTableData.fullHeaderToDisplayHeader,
+      ]);
+      setFullHeaderToDisplayHeader(headersMap);
+
+      setRowHeaders(dates);
+      setCells(newTableRows);
+    },
+    [db, getAssessmentData, getMedicineData],
+  );
 
   const loadSettings = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
@@ -733,28 +733,30 @@ export function HistoryTableScreen() {
     setSetingsColumnWidths(newSettingsColumnWidths);
   }, [db]);
 
-  /*   const saveSettings = async (update: Partial<HistoryTableSettings>) => {
-    await dbUpdateHistoryTableSettings(db, { ...settings, ...update });
-    loadSettings();
-  }; */
-
-  const saveColumnWidth = async (fullHeader: string, width: number) => {
-    if (settings === null) {
-      return;
-    }
-    const columnConfig = settings.columnConfigs.get(fullHeader);
-    if (columnConfig) {
-      columnConfig.width = width;
-      await dbUpdateHistoryTableSettings(db, settings);
-      // not reloaded/out of sync (only theoretically) on purpose
-    }
-  };
+  const saveColumnWidth = React.useCallback(
+    async (fullHeader: string, width: number) => {
+      if (settings === null) {
+        return;
+      }
+      const columnConfig = settings.columnConfigs.get(fullHeader);
+      if (columnConfig) {
+        columnConfig.width = width;
+        await dbUpdateHistoryTableSettings(db, settings);
+        // not reloaded/out of sync (only theoretically) on purpose
+      }
+    },
+    [db, settings],
+  );
 
   useFocusEffect(
     React.useCallback(() => {
-      loadSettings();
-      loadAndCombineDataForTable();
-    }, [loadAndCombineDataForTable, loadSettings]),
+      const setUp = async () => {
+        const initialSettings = await dbGetHistoryTableSettings(db);
+        await loadAndCombineDataForTable(initialSettings);
+        await loadSettings();
+      };
+      setUp();
+    }, [db, loadAndCombineDataForTable, loadSettings]),
   );
 
   const handleMenuToggle = React.useCallback(() => {
@@ -868,7 +870,7 @@ export function HistoryTableScreen() {
             fullHeaderToDisplayHeader={fullHeaderToDisplayHeader}
             rowHeaders={rowHeaders}
             data={cells}
-            expandAllRows={settings?.expandAllRows == true}
+            expandAllRows={settings?.expandAllRows === true}
             settingsColumnWidths={settingsColumnWidths}
             saveColumnWidth={saveColumnWidth}
           />

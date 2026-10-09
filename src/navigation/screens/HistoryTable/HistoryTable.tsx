@@ -13,7 +13,6 @@ import React from "react";
 import { ValueType } from "../../../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
 import { dayDifference } from "../../../dateOnlyUtils";
-import { HistoryTableSettings } from "../../../models/Settings";
 import { t } from "i18next";
 
 const TABLE_RADIUS = 10;
@@ -62,8 +61,6 @@ export default function HistoryTable({
   settingsColumnWidths,
   saveColumnWidth,
 }: HistoryTableProps) {
-  console.log("HistoryTable render");
-
   const theme = useTheme();
   const { i18n } = useTranslation();
 

@@ -36,6 +36,7 @@ import {
 } from "../dateOnlyUtils";
 import {
   ColumnConfig,
+  ColumnType,
   HistoryTableSettings,
   Settings,
   ThemeSelection,
@@ -242,56 +243,44 @@ function serializeBoolean(value: boolean): number {
   return value ? 1 : 0;
 }
 
-function deserializeColumnWidths(value: string): Map<string, number> {
-  const obj: unknown = JSON.parse(value);
-
-  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
-    throw new Error("Expected a JSON object");
-  }
-
-  const entries = Object.entries(obj);
-
-  if (!entries.every(([, value]) => typeof value === "number")) {
-    throw new Error("Expected all values to be numbers");
-  }
-
-  const rsult = new Map(entries);
-  return rsult;
-}
-
-function serializeColumnWidths(value: Map<string, number>): string {
-  const result = JSON.stringify(Object.fromEntries(value));
-  return result;
-}
-
 function serializeColumnConfigs(value: Map<string, ColumnConfig>): string {
-  const result = JSON.stringify(Object.fromEntries(value));
+  const result = JSON.stringify(Object.values(value));
   return result;
 }
 
 function deserializeColumnConfigs(value: string): Map<string, ColumnConfig> {
-  const obj: unknown = JSON.parse(value);
+  const obj = JSON.parse(value);
 
-  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
-    throw new Error("Expected a JSON object");
-  }
+  const result = new Map();
 
-  const entries = Object.entries(obj);
-
-  return entries.map((ai: { name: string; amount: number; unit: string }) => {
-    if (
-      !Object.values(IngredientAmountUnit).includes(
-        ai.unit as IngredientAmountUnit,
-      )
-    ) {
-      throw Error(`${ai.unit} is not a valid IngredientAmountUnit enum value.`);
-    }
-    return new ColumnConfig(
-      ai.name,
-      ai.amount,
-      ai.unit as IngredientAmountUnit,
-    );
-  });
+  obj.forEach(
+    (cc: {
+      isShown: boolean;
+      width: number;
+      ordinal: number;
+      _type: number;
+      _source_created_at: string;
+      _header: string;
+    }) => {
+      if (!Object.values(ColumnType).includes(cc._type as ColumnType)) {
+        throw Error(
+          `${cc._type} is not a valid IngredientAmountUnit enum value.`,
+        );
+      }
+      result.set(
+        cc._header,
+        new ColumnConfig(
+          cc.isShown,
+          cc.width,
+          cc.ordinal,
+          cc._type,
+          new Date(cc._source_created_at),
+          cc._header,
+        ),
+      );
+    },
+  );
+  return result;
 }
 
 function getDateFilterClause(startDate?: Date, endDate?: Date): string {
