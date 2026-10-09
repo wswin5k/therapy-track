@@ -7,7 +7,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  KeyboardAvoidingView,
 } from "react-native";
 import {
   useRoute,

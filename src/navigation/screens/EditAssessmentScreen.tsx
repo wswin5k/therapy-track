@@ -6,7 +6,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  KeyboardAvoidingView,
 } from "react-native";
 import {
   useRoute,
@@ -47,7 +46,6 @@ import {
   eStyles,
   EDIT_PRESSABLE_HEIGHT,
 } from "../../commonStyles";
-import { useHeaderHeight } from "@react-navigation/elements";
 import { DefaultKeyboardAvoidingView } from "../../components/DefaultKeyboardAvoidingView";
 
 export const TEXT_MAX_LENGTH = 200;
@@ -81,7 +79,6 @@ export function EditAssessmentScreen() {
   const navigation = useNavigation<EditAssessmentScreenNavigationProp>();
   const theme = useTheme();
   const db = useSQLiteContext();
-  const height = useHeaderHeight();
 
   const [assessmentId, setAssessmentId] = React.useState<number | null>(null);
   const [name, setName] = React.useState("");
@@ -475,7 +472,6 @@ export function EditAssessmentScreen() {
       }
       break;
   }
-  console.log(height);
   return (
     <DefaultMainContainer>
       <DefaultKeyboardAvoidingView additionalOffset={additionalKAVOffset}>
