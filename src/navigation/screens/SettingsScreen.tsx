@@ -37,6 +37,8 @@ import { File, Paths, Directory } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { Lucide } from "@react-native-vector-icons/lucide/static";
+import { Toast, ToastType } from "../../components/Toast";
+import { getDisplayDirectoryName } from "../utils";
 
 function themeSelectionToLabel(selection: ThemeSelection): string {
   switch (selection) {
@@ -56,6 +58,10 @@ export function SettingsScreen() {
 
   const [themeSelection, setThemeSelection] =
     React.useState<ThemeSelection | null>(null);
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [toastType, setToastType] = React.useState<ToastType>(
+    ToastType.Success,
+  );
 
   const [
     loadBackupConfirmationDialogOpen,
@@ -82,6 +88,11 @@ export function SettingsScreen() {
   };
 
   const handleCreateBackupFile = async (): Promise<void> => {
+    const showErrorToast = () => {
+      setToastType(ToastType.Error);
+      setToastMessage(t("Failed to export the backup file."));
+    };
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `therapy-track-backup-${timestamp}.db`;
 
@@ -103,12 +114,14 @@ export function SettingsScreen() {
         destDatabaseName: DATABASE_NAME,
       });
     } catch {
+      showErrorToast();
       return;
     } finally {
       await backupDb.closeAsync();
     }
     if (!backupFile.exists || backupFile.size === 0) {
-      throw new Error("Failed to create database backup.");
+      showErrorToast();
+      return;
     }
 
     try {
@@ -118,12 +131,19 @@ export function SettingsScreen() {
           return;
         }
         await backupFile.copy(directory);
+        const directoryDisplayName = getDisplayDirectoryName(directory.uri);
+        const message =
+          directoryDisplayName === null
+            ? "Backup file exported successfully."
+            : `Backup file saved in ${directoryDisplayName}.`;
+        setToastType(ToastType.Success);
+        setToastMessage(message);
       } else if (Platform.OS === "ios") {
         const canShare = await Sharing.isAvailableAsync();
         if (!canShare) {
-          throw new Error("File sharing is not available on this device.");
+          showErrorToast();
+          return;
         }
-
         await Sharing.shareAsync(backupFile.uri, {
           dialogTitle: "Export backup file",
           mimeType: "application/x-sqlite3",
@@ -131,6 +151,7 @@ export function SettingsScreen() {
         });
       }
     } catch {
+      showErrorToast();
     } finally {
       if (backupFile.exists) {
         backupFile.delete();
@@ -158,9 +179,9 @@ export function SettingsScreen() {
     const newImportedFile = new File(Paths.cache.uri, importedFilename);
     await selectedFile.copy(newImportedFile, { overwrite: true });
     if (!newImportedFile.exists) {
-      throw new Error(
-        "Could not copy the selected backup file to cache directory.",
-      );
+      setToastType(ToastType.Error);
+      setToastMessage(t("Failed to load the backup file."));
+      return;
     }
 
     setImportedBackupFile(newImportedFile);
@@ -168,8 +189,14 @@ export function SettingsScreen() {
   }
 
   const handleFinishLoadingBackup = async () => {
+    const showErrorToast = () => {
+      setToastType(ToastType.Error);
+      setToastMessage(t("Failed to load the backup file."));
+    };
+
     setLoadBackupConfirmationDialogOpen(false);
     if (importedBackupFile === null) {
+      showErrorToast();
       return;
     }
 
@@ -181,9 +208,13 @@ export function SettingsScreen() {
     const importedDbVersion = await getDbVersion(importedDb);
 
     if (importedDbVersion > APP_DATABASE_VERSION) {
-      throw new Error(
-        "The database file is from a newer, not compatible version of the application.",
+      setToastType(ToastType.Error);
+      setToastMessage(
+        t(
+          "Load failed. The database file is from a newer version of the application.",
+        ),
       );
+      return;
     }
     await migrateDbIfNeeded(importedDb);
 
@@ -194,6 +225,11 @@ export function SettingsScreen() {
         destDatabase: db,
         destDatabaseName: DATABASE_NAME,
       });
+      setToastType(ToastType.Success);
+      setToastMessage("Backup loaded successfully.");
+    } catch {
+      showErrorToast();
+      return;
     } finally {
       await importedDb.closeAsync();
       if (importedBackupFile.exists) {
@@ -210,6 +246,13 @@ export function SettingsScreen() {
 
   return (
     <DefaultMainContainer>
+      <Toast
+        message={toastMessage ?? ""}
+        visible={toastMessage !== null}
+        duration={4000}
+        onHide={() => setToastMessage(null)}
+        type={toastType}
+      />
       <ConfirmationDialog
         visible={loadBackupConfirmationDialogOpen}
         title={t("Confirm data override")}

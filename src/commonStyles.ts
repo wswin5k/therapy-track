@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 
 export const ERROR_BORDER_WIDTH: number = 1.5;
 export const DISABLED_OPACITY: number = 0.4;
-export const DEFAULT_BORDER_RADIUS: number = 8;
+export const DEFAULT_BORDER_RADIUS: number = 10;
 export const PRESSABLE_PADDING_HORIZONTAL: number = 12;
 
 //styles for edit screens

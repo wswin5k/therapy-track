@@ -1,5 +1,4 @@
 import {
-  Alert,
   Platform,
   StyleSheet,
   Text,
@@ -56,7 +55,11 @@ import {
   getTodayDateOnly,
   serializeDateOnly,
 } from "../../../dateOnlyUtils";
-import { getOrThrow, castToStringArray } from "../../utils";
+import {
+  getOrThrow,
+  castToStringArray,
+  getDisplayDirectoryName,
+} from "../../utils";
 import {
   AssessmentValue,
   ScheduledDosageRecord,
@@ -71,6 +74,7 @@ import {
 } from "../../../models/Settings";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { t } from "i18next";
+import { Toast, ToastType } from "../../../components/Toast";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -115,7 +119,8 @@ function formatAssessmentValue(
       return value.toString();
     case ValueType.MultiSelect:
       // uses no-break space U+00A0
-      return " • " + castToStringArray(value).join("\n • ");
+      const valueArray = castToStringArray(value);
+      return valueArray.length === 0 ? "" : " • " + valueArray.join("\n • ");
   }
 }
 
@@ -210,6 +215,10 @@ export function HistoryTableScreen() {
   const [settingsColumnWidths, setSetingsColumnWidths] = React.useState<
     Map<string, number>
   >(new Map());
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [toastType, setToastType] = React.useState<ToastType>(
+    ToastType.Success,
+  );
 
   function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
@@ -775,6 +784,7 @@ export function HistoryTableScreen() {
   );
 
   const handleMenuToggle = React.useCallback(() => {
+    setToastMessage(null);
     setIsMenuOpen(!isMenuOpen);
   }, [isMenuOpen]);
 
@@ -806,25 +816,26 @@ export function HistoryTableScreen() {
           await FileSystem.writeAsStringAsync(fileUri, csvContent, {
             encoding: FileSystem.EncodingType.UTF8,
           });
+          const directoryDisplayName = getDisplayDirectoryName(directoryUri);
+          const message =
+            directoryDisplayName === null
+              ? "File exported successfully."
+              : `File saved in ${directoryDisplayName}.`;
+          setToastType(ToastType.Success);
+          setToastMessage(message);
         }
-        /*
-        else {
-          await shareAsync(tempFileUri, {
-            mimeType: "text/csv",
-            dialogTitle: "Share CSV File",
-          });
-        } */
       } else {
         await shareAsync(tempFileUri, {
           UTI: ".csv",
           mimeType: "text/csv",
         });
       }
-    } catch (error) {
-      Alert.alert("Error", `Failed to save the file ${error}`);
+    } catch {
+      setToastType(ToastType.Error);
+      setToastMessage(t("Failed to export the file."));
     }
     setIsMenuOpen(false);
-  }, [cells, fullHeaders]);
+  }, [cells, fullHeaders, t]);
 
   const handleOpenConfiguration = React.useCallback(() => {
     navigation.navigate("EditRecordHistoryConfigurationScreen");
@@ -875,6 +886,14 @@ export function HistoryTableScreen() {
         handleSaveToCSV={handleSaveToCSV}
         handleOpenConfiguration={handleOpenConfiguration}
       ></MenuModal>
+
+      <Toast
+        message={toastMessage ?? ""}
+        visible={toastMessage !== null}
+        duration={4000}
+        onHide={() => setToastMessage(null)}
+        type={toastType}
+      />
       {!isTableDataReady() ? (
         renderEmptyState()
       ) : (
