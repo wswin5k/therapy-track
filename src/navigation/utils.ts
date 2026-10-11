@@ -1,3 +1,5 @@
+import { Paths } from "expo-file-system";
+
 export function mixColors(
   color1: string,
   color2: string,
@@ -67,4 +69,38 @@ export function castToStringArray(value: any): string[] {
 
 export function capitalizeFirstLetter(val: string) {
   return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+
+export function getDisplayDirectoryName(uri: string): string | null {
+  // internal app paths
+  if (uri.includes(Paths.document.uri)) {
+    const relativePath = uri
+      .replace(Paths.document.uri, "")
+      .replace(/^\/+/, "");
+    return relativePath ? `App Documents/${relativePath}` : "App Documents";
+  }
+
+  if (uri.includes(Paths.cache.uri)) {
+    const relativePath = uri.replace(Paths.cache.uri, "").replace(/^\/+/, "");
+    return relativePath ? `App Cache/${relativePath}` : "App Cache";
+  }
+
+  // external URIs
+  if (uri.startsWith("content://")) {
+    try {
+      const decoded = decodeURIComponent(uri);
+      // Extracts path segments after the storage provider identifier (e.g., primary:Documents/MyFolder)
+      const match = decoded.match(/tree\/[^:]+:(.+)/);
+      if (match && match[1]) {
+        return match[1]
+          .replace(/%2F/g, "/")
+          .replace(/\//g, "/")
+          .replace(/\/$/, "");
+      }
+    } catch (e) {
+      console.warn("Failed to parse content URI:", e);
+    }
+  }
+
+  return null;
 }

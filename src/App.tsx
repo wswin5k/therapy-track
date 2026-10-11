@@ -41,8 +41,9 @@ const CustomLightTheme: ReactNavigation.Theme = {
     textSecondary: "#666666",
     textTertiary: "#999999",
     textOnPrimary: "#ffffff",
+    backgroundToast: "#999999",
     success: "#5bc864",
-    error: "#ff544bff",
+    error: "#ff544b",
   },
 };
 
@@ -59,8 +60,9 @@ const CustomDarkTheme: ReactNavigation.Theme = {
     textSecondary: "#c1c1c5ff",
     textTertiary: "#bdbdc2ff",
     textOnPrimary: "#ffffff",
+    backgroundToast: "#999999",
     success: "#5bc864",
-    error: "#ff544bff",
+    error: "#ff544b",
   },
 };
 
