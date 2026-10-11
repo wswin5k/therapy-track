@@ -16,6 +16,7 @@ import {
 import {
   dbDeleteAssessmentSchedule,
   dbDeleteScheduledMeasurementRecordsForAssessmentSchedule,
+  dbGetAssessments,
   dbGetAssessmentSchedules,
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
@@ -26,6 +27,7 @@ import { assessmentTypeToDisplayForm } from "../enumMappings";
 import { frequencyToDisplayForm, getWeekdays } from "./ScheduleScreens/common";
 import { AssessmentSchedule } from "../../models/AssessmentSchedule";
 import { capitalizeFirstLetter } from "../utils";
+import { lStyles } from "../../commonStyles";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -220,30 +222,41 @@ export function AssessmentSchedulesListScreen() {
 
   const [schedules, setSchedules] = React.useState<AssessmentSchedule[]>([]);
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
+  const [areAssessmentsEmpty, setAreAssessmentsEmpty] =
+    React.useState<boolean>(false);
 
-  const loadSchedules = React.useCallback(async () => {
+  const loadData = React.useCallback(async () => {
     const result = await dbGetAssessmentSchedules(db);
     setSchedules(result);
     setOptionsOpened(Array.from({ length: result.length }, () => false));
+    const assessments = await dbGetAssessments(db);
+    if (assessments.length > 0) {
+      setAreAssessmentsEmpty(false);
+    } else {
+      setAreAssessmentsEmpty(true);
+    }
   }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadSchedules();
-    }, [loadSchedules]),
+      loadData();
+    }, [loadData]),
   );
 
   const handleAddSchedule = () => {
-    navigation.navigate("SelectAssessmentScreen", { mode: "schedule" });
+    if (areAssessmentsEmpty) {
+      navigation.navigate("EditAssessmentScreen", { mode: "schedule" });
+    } else {
+      navigation.navigate("SelectAssessmentScreen", {
+        mode: "schedule",
+      });
+    }
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No assessments schedules added yet.")}
-      </Text>
-      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Add an assessment schedule from the Home screen.")}
+    <View style={lStyles.emptyContainer}>
+      <Text style={[lStyles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("No assessments schedules added yet")}
       </Text>
     </View>
   );
@@ -277,7 +290,7 @@ export function AssessmentSchedulesListScreen() {
               key={idx}
               schedule={s}
               optionsOpened={optionsOpened[idx]}
-              loadSchedules={loadSchedules}
+              loadSchedules={loadData}
               onPress={handleOptionsOff}
               handleOptionsToggle={createHandleOptionsToggle(idx)}
             />
@@ -362,19 +375,5 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     fontWeight: "600",
-  },
-  emptyContainer: {
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
   },
 });

@@ -23,6 +23,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
 import { baseUnitToSingularShortForm } from "../enumMappings";
+import { lStyles } from "../../commonStyles";
 
 function MedicineListItem({
   medicine,
@@ -229,12 +230,9 @@ export function MedicineListScreen() {
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No medicines added yet.")}
-      </Text>
-      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Add a medicine from the Home screen.")}
+    <View style={lStyles.emptyContainer}>
+      <Text style={[lStyles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("No medicines added yet")}
       </Text>
     </View>
   );
@@ -321,19 +319,6 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 15,
     marginBottom: 2,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
   },
   addButton: {
     padding: 12,

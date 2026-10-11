@@ -119,3 +119,21 @@ export const sStyles = StyleSheet.create({
     alignSelf: "center",
   },
 });
+
+export const lStyles = StyleSheet.create({
+  emptyContainer: {
+    alignItems: "center",
+    padding: 24,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  emptySubtext: {
+    fontSize: 15,
+    textAlign: "center",
+    marginTop: 10,
+  },
+});

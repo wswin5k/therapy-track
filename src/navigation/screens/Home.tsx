@@ -982,7 +982,7 @@ export function Home({ date }: { date: Date }) {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textTertiary }]}>
-        {t("Nothing planned for selected day.")}
+        {t("Nothing planned for selected day")}
       </Text>
     </View>
   );
@@ -1132,9 +1132,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyText: {
-    fontSize: 17,
-    fontWeight: "400",
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "500",
   },
   optionsOverlay: {
     ...StyleSheet.absoluteFill,

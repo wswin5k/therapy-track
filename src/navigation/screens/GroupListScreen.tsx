@@ -24,6 +24,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
 import { cancelGroupNotification } from "../../services/notificationService";
+import { lStyles } from "../../commonStyles";
 
 function GroupListItem({
   group,
@@ -233,12 +234,16 @@ export function GroupListScreen() {
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+    <View style={lStyles.emptyContainer}>
+      <Text style={[lStyles.emptyText, { color: theme.colors.textSecondary }]}>
         {t("No groups yet")}
       </Text>
-      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Create groups to organize your medications")}
+      <Text
+        style={[lStyles.emptySubtext, { color: theme.colors.textTertiary }]}
+      >
+        {t(
+          "Create groups to organize measurments and dosages, and to manage reminders",
+        )}
       </Text>
     </View>
   );
@@ -321,21 +326,6 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 15,
     marginBottom: 2,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
   },
   addButton: {
     padding: 12,
