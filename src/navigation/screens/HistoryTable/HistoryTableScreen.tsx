@@ -830,8 +830,7 @@ export function HistoryTableScreen() {
           mimeType: "text/csv",
         });
       }
-    } catch (error) {
-      console.log(error);
+    } catch {
       setToastType(ToastType.Error);
       setToastMessage(t("Failed to export the file."));
     }

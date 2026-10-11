@@ -181,6 +181,7 @@ export function SettingsScreen() {
     if (!newImportedFile.exists) {
       setToastType(ToastType.Error);
       setToastMessage(t("Failed to load the backup file."));
+      return;
     }
 
     setImportedBackupFile(newImportedFile);
