@@ -16,6 +16,7 @@ import {
 import {
   dbDeleteMedicineSchedule,
   dbDeleteScheduledDosageRecordsForSchedule,
+  dbGetMedicines,
   dbGetMedicineSchedules,
 } from "../../models/dbAccess";
 import { MedicineSchedule } from "../../models/MedicineSchedule";
@@ -26,6 +27,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { baseUnitToSingularShortForm } from "../enumMappings";
 import { frequencyToDisplayForm, getWeekdays } from "./ScheduleScreens/common";
 import { capitalizeFirstLetter } from "../utils";
+import { lStyles } from "../../commonStyles";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -219,30 +221,41 @@ export function MedicineSchedulesListScreen() {
 
   const [schedules, setSchedules] = React.useState<MedicineSchedule[]>([]);
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
+  const [areMedicinesEmpty, setAreMedicinesEmpty] =
+    React.useState<boolean>(false);
 
-  const loadSchedules = React.useCallback(async () => {
+  const loadData = React.useCallback(async () => {
     const result = await dbGetMedicineSchedules(db);
     setSchedules(result);
     setOptionsOpened(Array.from({ length: result.length }, () => false));
+    const medicines = await dbGetMedicines(db);
+    if (medicines.length > 0) {
+      setAreMedicinesEmpty(false);
+    } else {
+      setAreMedicinesEmpty(true);
+    }
   }, [db]);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadSchedules();
-    }, [loadSchedules]),
+      loadData();
+    }, [loadData]),
   );
 
   const handleAddSchedule = () => {
-    navigation.navigate("SelectMedicineScreen", { mode: "schedule" });
+    if (areMedicinesEmpty) {
+      navigation.navigate("EditMedicineScreen", { mode: "schedule" });
+    } else {
+      navigation.navigate("SelectMedicineScreen", {
+        mode: "schedule",
+      });
+    }
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No medicine schedules added yet.")}
-      </Text>
-      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Add a medicine schedule from the Home screen.")}
+    <View style={lStyles.emptyContainer}>
+      <Text style={[lStyles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("No medicine schedules added yet")}
       </Text>
     </View>
   );
@@ -276,7 +289,7 @@ export function MedicineSchedulesListScreen() {
               key={idx}
               schedule={s}
               optionsOpened={optionsOpened[idx]}
-              loadSchedules={loadSchedules}
+              loadSchedules={loadData}
               onPress={handleOptionsOff}
               handleOptionsToggle={createHandleOptionsToggle(idx)}
             />
@@ -360,19 +373,5 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     fontWeight: "600",
-  },
-  emptyContainer: {
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
   },
 });

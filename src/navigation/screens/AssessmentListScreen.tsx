@@ -23,6 +23,7 @@ import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
 import { Assessment } from "../../models/AssessmentSchedule";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
+import { lStyles } from "../../commonStyles";
 
 function AssessmentListItem({
   assessment,
@@ -225,12 +226,9 @@ export function AssessmentListScreen() {
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No assessments added yet.")}
-      </Text>
-      <Text style={[styles.emptySubtext, { color: theme.colors.textTertiary }]}>
-        {t("Add an assessment from the Home screen.")}
+    <View style={lStyles.emptyContainer}>
+      <Text style={[lStyles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("No assessments added yet")}
       </Text>
     </View>
   );
@@ -317,19 +315,6 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 15,
     marginBottom: 2,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: "center",
   },
   addButton: {
     padding: 12,
