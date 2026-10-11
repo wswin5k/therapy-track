@@ -33,16 +33,12 @@ export function Toast({
 }: ToastProps) {
   const opacity = useAnimatedValue(0);
   const theme = useTheme();
-  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
     let animation: Animated.CompositeAnimation | undefined;
 
     if (visible) {
-      setMounted(true);
-      opacity.setValue(0);
-
       animation = Animated.timing(opacity, {
         toValue: 1,
         duration: 700,
@@ -61,15 +57,18 @@ export function Toast({
 
           animation.start(({ finished: fadedOut }) => {
             if (fadedOut) {
-              setMounted(false);
               onHide();
             }
           });
         }, duration);
       });
     } else {
-      opacity.setValue(0);
-      setMounted(false);
+      animation = Animated.timing(opacity, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      });
+      animation.start();
     }
 
     return () => {
@@ -88,9 +87,7 @@ export function Toast({
     }
   }, [theme.colors, type]);
 
-  if (!mounted) return null;
-
-  return (
+  return visible ? (
     <View pointerEvents="none" style={[styles.container]}>
       <Animated.View
         style={[
@@ -107,6 +104,8 @@ export function Toast({
         </Text>
       </Animated.View>
     </View>
+  ) : (
+    ""
   );
 }
 
