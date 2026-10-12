@@ -157,22 +157,21 @@ export const lStyles = StyleSheet.create({
     height: "100%",
     width: "100%",
   },
-  optionsOverlay: {
+  optionsContainer: {
     ...StyleSheet.absoluteFill,
     flexDirection: "row",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: "rgba(255, 0, 0, 0.0)",
     justifyContent: "space-evenly",
     alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    zIndex: 1,
   },
   optionsButton: {
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 40,
-    //minWidth: "25%",
-    height: 46,
+    height: 44,
     width: 90,
     maxWidth: "30%",
     justifyContent: "center",
@@ -182,6 +181,9 @@ export const lStyles = StyleSheet.create({
     fontWeight: "500",
     textAlign: "center",
     textAlignVertical: "center",
+  },
+  optionsOpened: {
+    filter: "blur(4px)",
   },
   addButton: {
     padding: 12,

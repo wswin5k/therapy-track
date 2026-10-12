@@ -77,7 +77,7 @@ function MedicineListItem({
 
   const renderOptions = () => (
     <TouchableOpacity
-      style={[lStyles.optionsOverlay, { zIndex: 1, position: "absolute" }]}
+      style={lStyles.optionsContainer}
       onLongPress={handleOptionsToggle}
     >
       <TouchableOpacity
@@ -144,15 +144,15 @@ function MedicineListItem({
       <TouchableOpacity
         onPress={onPress}
         onLongPress={handleOptionsToggle}
+        disabled={atLeastOneOptionsOpened}
         style={[
           lStyles.itemContainer,
           {
             backgroundColor: theme.colors.card,
             borderColor: theme.colors.border,
-            filter: optionsOpened ? "blur(4px)" : "none",
           },
+          optionsOpened && lStyles.optionsOpened,
         ]}
-        disabled={atLeastOneOptionsOpened}
       >
         <View style={lStyles.itemContent}>
           <Text style={[lStyles.itemTitle, { color: theme.colors.text }]}>
@@ -211,11 +211,7 @@ export function MedicineListScreen() {
   );
 
   const handleAddMedicine = () => {
-    if (atLeastOneOptionsOpened) {
-      handleOptionsOff();
-    } else {
-      navigation.navigate("EditMedicineScreen", { mode: "save-and-go-back" });
-    }
+    navigation.navigate("EditMedicineScreen", { mode: "save-and-go-back" });
   };
 
   const renderEmptyState = () => (
@@ -256,6 +252,7 @@ export function MedicineListScreen() {
           style={lStyles.mainScrollContainer}
           contentContainerStyle={lStyles.mainScrollContentContainer}
         >
+          {medicines.length === 0 && renderEmptyState()}
           {medicines.map((m, idx) => {
             return (
               <MedicineListItem
@@ -270,7 +267,6 @@ export function MedicineListScreen() {
               />
             );
           })}
-          {medicines.length === 0 && renderEmptyState()}
           <TouchableOpacity
             onPress={handleAddMedicine}
             style={[lStyles.addButton, { borderColor: theme.colors.primary }]}
