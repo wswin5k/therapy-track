@@ -36,7 +36,7 @@ import {
 import { isEqualLowerCase } from "../utils";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { ERROR_BORDER_WIDTH } from "../../commonStyles";
-import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../commonStyles";
+import { eStyles, PRESSABLE_HEIGHT } from "../../commonStyles";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -223,8 +223,8 @@ export function EditGroupScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
+        style={eStyles.mainScrollContainer}
+        contentContainerStyle={eStyles.mainScrollContentContainer}
       >
         <View style={[styles.rowContainer]}>
           <TextInput
@@ -344,6 +344,6 @@ const styles = StyleSheet.create({
   },
   switch: {
     transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
   },
 });

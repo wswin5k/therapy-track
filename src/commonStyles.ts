@@ -2,18 +2,18 @@ import { StyleSheet } from "react-native";
 
 export const ERROR_BORDER_WIDTH: number = 1.5;
 export const DISABLED_OPACITY: number = 0.4;
-export const DEFAULT_BORDER_RADIUS: number = 10;
+export const DEFAULT_BORDER_RADIUS: number = 12;
 export const PRESSABLE_PADDING_HORIZONTAL: number = 12;
+export const PRESSABLE_HEIGHT: number = 54;
 
 //styles for edit screens
-export const EDIT_PRESSABLE_HEIGHT: number = 54;
 export const SECONDARY_EDIT_PRESSABLE_HEIGHT: number = 50;
 
 export const eStyles = StyleSheet.create({
-  editMainScrollContainer: {
+  mainScrollContainer: {
     flex: 1,
   },
-  editMainScrollContentContainer: {
+  mainScrollContentContainer: {
     paddingTop: 30,
     padding: 22,
   },
@@ -26,7 +26,7 @@ export const eStyles = StyleSheet.create({
     fontWeight: "400",
   },
   fullWidthTextInputPressable: {
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -34,7 +34,7 @@ export const eStyles = StyleSheet.create({
     width: "100%",
   },
   pressable: {
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -43,7 +43,7 @@ export const eStyles = StyleSheet.create({
     justifyContent: "space-between",
   },
   datePressable: {
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -51,7 +51,7 @@ export const eStyles = StyleSheet.create({
     alignItems: "flex-end",
   },
   timePressable: {
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: 14,
@@ -59,7 +59,7 @@ export const eStyles = StyleSheet.create({
     alignItems: "flex-end",
   },
   fullWidthPickerPressable: {
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -72,12 +72,12 @@ export const eStyles = StyleSheet.create({
   },
   nextButton: {
     paddingVertical: 15,
-    borderRadius: 10,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     alignItems: "center",
   },
   nextButtonText: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
 });
 
@@ -121,6 +121,81 @@ export const sStyles = StyleSheet.create({
 });
 
 export const lStyles = StyleSheet.create({
+  mainScrollContainer: {
+    flex: 1,
+  },
+  mainScrollContentContainer: {
+    padding: 22,
+  },
+  bottomMarginContainer: {
+    height: 40,
+    width: "100%",
+  },
+  itemContainer: {
+    flexDirection: "row",
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  itemContent: {
+    flex: 1,
+  },
+  itemTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
+  itemText: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  overlay: {
+    flex: 1,
+    height: "100%",
+    width: "100%",
+  },
+  optionsContainer: {
+    ...StyleSheet.absoluteFill,
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    zIndex: 1,
+  },
+  optionsButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 40,
+    height: 44,
+    minWidth: 90,
+    maxWidth: "50%",
+    justifyContent: "center",
+  },
+  optionsButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
+    textAlignVertical: "center",
+  },
+  optionsOpened: {
+    filter: "blur(4px)",
+  },
+  addButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    borderStyle: "dashed",
+    alignItems: "center",
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
   emptyContainer: {
     alignItems: "center",
     padding: 24,

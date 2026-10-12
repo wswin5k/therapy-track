@@ -44,7 +44,7 @@ import { isEqualLowerCase } from "../utils";
 import {
   DEFAULT_BORDER_RADIUS,
   eStyles,
-  EDIT_PRESSABLE_HEIGHT,
+  PRESSABLE_HEIGHT,
 } from "../../commonStyles";
 import { DefaultKeyboardAvoidingView } from "../../components/DefaultKeyboardAvoidingView";
 
@@ -476,8 +476,8 @@ export function EditAssessmentScreen() {
     <DefaultMainContainer>
       <DefaultKeyboardAvoidingView additionalOffset={additionalKAVOffset}>
         <ScrollView
-          style={eStyles.editMainScrollContainer}
-          contentContainerStyle={eStyles.editMainScrollContentContainer}
+          style={eStyles.mainScrollContainer}
+          contentContainerStyle={eStyles.mainScrollContentContainer}
         >
           <View style={[styles.rowNameContainer]}>
             <TextInput
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   },
   numberStepperInput: {
     width: "50%",
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
   },
   rowActiveIngredientsHeader: {
     marginBottom: 12,

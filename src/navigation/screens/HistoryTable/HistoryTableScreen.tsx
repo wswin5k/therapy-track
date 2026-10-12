@@ -862,7 +862,7 @@ export function HistoryTableScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No dosage records found.")}
+        {t("No records found")}
       </Text>
     </View>
   );
@@ -917,12 +917,14 @@ export function HistoryTableScreen() {
 const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: "center",
-    padding: 36,
+    padding: 24,
+    marginBottom: 8,
+    marginTop: 14,
   },
   emptyText: {
     fontSize: 18,
     fontWeight: "500",
-    marginBottom: 8,
+    textAlign: "center",
   },
   mainContainer: {
     padding: 6,

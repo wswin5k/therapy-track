@@ -222,8 +222,8 @@ export function EditSingleMeasurementScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
+        style={eStyles.mainScrollContainer}
+        contentContainerStyle={eStyles.mainScrollContentContainer}
       >
         {assessment ? (
           [ValueType.Boolean, ValueType.Numeric].includes(assessment.type) ? (

@@ -38,7 +38,7 @@ import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { DropdownPicker } from "../../../components/DropdownPicker";
 import { baseUnitToDoseHeader } from "../../enumMappings";
 import { ModalPicker } from "../../../components/ModalPicker";
-import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { eStyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { ERROR_BORDER_WIDTH } from "../../../commonStyles";
 import {
   getTodayDateOnly,
@@ -341,8 +341,8 @@ export default function EditMedicineScheduleScreen() {
     <DefaultMainContainer>
       <DefaultKeyboardAvoidingView additionalOffset={0}>
         <ScrollView
-          style={eStyles.editMainScrollContainer}
-          contentContainerStyle={eStyles.editMainScrollContentContainer}
+          style={eStyles.mainScrollContainer}
+          contentContainerStyle={eStyles.mainScrollContentContainer}
         >
           <View style={[styles.rowFrequencyPicker]}>
             <ModalPicker
@@ -461,7 +461,7 @@ export default function EditMedicineScheduleScreen() {
               >
                 {endDate
                   ? toDisplayConcise(endDate, i18n.resolvedLanguage)
-                  : t("Infinitely")}
+                  : t("No end date")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     marginBottom: 6,
   },
   dosageHeaderContainer: {
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   },
   dosageAmountContainer: {
     width: "45%",
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
   },
   dosageGroupPickerContainer: {
     justifyContent: "center",
