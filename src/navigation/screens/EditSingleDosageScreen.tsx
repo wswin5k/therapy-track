@@ -146,8 +146,8 @@ export function EditSingleDosageScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
+        style={eStyles.mainScrollContainer}
+        contentContainerStyle={eStyles.mainScrollContentContainer}
       >
         <View style={[styles.rowContainer]}>
           <Text style={[eStyles.labelText, { color: theme.colors.text }]}>

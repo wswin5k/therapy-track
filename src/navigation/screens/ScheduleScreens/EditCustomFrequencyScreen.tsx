@@ -134,8 +134,8 @@ export function EditCustomFrequencyScreen() {
     <DefaultMainContainer>
       <DefaultKeyboardAvoidingView additionalOffset={0}>
         <ScrollView
-          style={eStyles.editMainScrollContainer}
-          contentContainerStyle={eStyles.editMainScrollContentContainer}
+          style={eStyles.mainScrollContainer}
+          contentContainerStyle={eStyles.mainScrollContentContainer}
         >
           <View style={[styles.frequencyItemContainer]}>
             {renderRadioButton(CustomFrequencyType.XTimesADay)}

@@ -26,7 +26,7 @@ import {
 } from "../../../models/dbAccess";
 import { DefaultMainContainer } from "../../../components/DefaultMainContainer";
 import { AssessmentSchedule } from "../../../models/AssessmentSchedule";
-import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { eStyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { getTodayDateOnly, toDisplayConcise } from "../../../dateOnlyUtils";
 import { ERROR_BORDER_WIDTH } from "../../../commonStyles";
 
@@ -143,8 +143,8 @@ export default function PartiallyEditAnyScheduleScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
+        style={eStyles.mainScrollContainer}
+        contentContainerStyle={eStyles.mainScrollContentContainer}
       >
         <View style={styles.rowContainer}>
           <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     marginBottom: 20,
   },
 });

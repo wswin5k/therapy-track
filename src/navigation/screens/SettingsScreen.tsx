@@ -18,7 +18,7 @@ import { Appearance } from "react-native";
 import { dbGetSettings, dbUpdateSettings } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import {
-  EDIT_PRESSABLE_HEIGHT,
+  PRESSABLE_HEIGHT,
   eStyles,
   SECONDARY_EDIT_PRESSABLE_HEIGHT,
 } from "../../commonStyles";
@@ -265,8 +265,8 @@ export function SettingsScreen() {
         onCancel={abortLoadingBackup}
       />
       <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
+        style={eStyles.mainScrollContainer}
+        contentContainerStyle={eStyles.mainScrollContentContainer}
       >
         <View style={[styles.rowContainer]}>
           <View style={styles.themeSelectionLabel}>
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   themeSelectionLabel: {
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     justifyContent: "center",
     alignItems: "flex-start",
   },

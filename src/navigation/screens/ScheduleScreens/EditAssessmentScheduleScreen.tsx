@@ -45,7 +45,7 @@ import {
   getWeekday,
   toDisplayConcise,
 } from "../../../dateOnlyUtils";
-import { eStyles, EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { eStyles, PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { frequencySelectionToPickerLabels } from "./common";
 import { DefaultKeyboardAvoidingView } from "../../../components/DefaultKeyboardAvoidingView";
 
@@ -399,8 +399,8 @@ export function EditAssessmentScheduleScreen() {
     <DefaultMainContainer>
       <DefaultKeyboardAvoidingView additionalOffset={0}>
         <ScrollView
-          style={eStyles.editMainScrollContainer}
-          contentContainerStyle={eStyles.editMainScrollContentContainer}
+          style={eStyles.mainScrollContainer}
+          contentContainerStyle={eStyles.mainScrollContentContainer}
         >
           <View style={[styles.rowFrequencyPicker]}>
             <ModalPicker
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     marginBottom: 6,
   },
   measurementHeaderContainer: {
@@ -616,13 +616,13 @@ const styles = StyleSheet.create({
   },
   measurementOrdinalContainer: {
     width: "45%",
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
   },
   measurementGroupContainer: {
     width: "45%",
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     justifyContent: "center",
     alignItems: "flex-start",
   },

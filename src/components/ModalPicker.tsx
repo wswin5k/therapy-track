@@ -15,7 +15,7 @@ import { useTheme } from "@react-navigation/native";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../commonStyles";
 import {
-  EDIT_PRESSABLE_HEIGHT,
+  PRESSABLE_HEIGHT,
   PRESSABLE_PADDING_HORIZONTAL,
   DEFAULT_BORDER_RADIUS,
   eStyles,
@@ -243,7 +243,7 @@ export function ModalPicker<T>({
 
 const styles = StyleSheet.create({
   defaultPressableStyle: {
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,

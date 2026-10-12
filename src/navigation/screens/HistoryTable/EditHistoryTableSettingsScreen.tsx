@@ -19,7 +19,7 @@ import {
   dbUpdateHistoryTableSettings,
 } from "../../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
-import { EDIT_PRESSABLE_HEIGHT } from "../../../commonStyles";
+import { PRESSABLE_HEIGHT } from "../../../commonStyles";
 import { eStyles } from "../../../commonStyles";
 import { HistoryTableSettings } from "../../../models/Settings";
 
@@ -59,8 +59,8 @@ export function EditHistoryTableSettingsScreen() {
   return (
     <DefaultMainContainer>
       <ScrollView
-        style={eStyles.editMainScrollContainer}
-        contentContainerStyle={eStyles.editMainScrollContentContainer}
+        style={eStyles.mainScrollContainer}
+        contentContainerStyle={eStyles.mainScrollContentContainer}
       >
         {historyTableSettings && (
           <>
@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
   },
   switch: {
     transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
-    height: EDIT_PRESSABLE_HEIGHT,
+    height: PRESSABLE_HEIGHT,
   },
 });

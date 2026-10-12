@@ -388,8 +388,8 @@ export function EditMedicineScreen() {
     <DefaultMainContainer>
       <DefaultKeyboardAvoidingView>
         <ScrollView
-          style={eStyles.editMainScrollContainer}
-          contentContainerStyle={eStyles.editMainScrollContentContainer}
+          style={eStyles.mainScrollContainer}
+          contentContainerStyle={eStyles.mainScrollContentContainer}
         >
           <View style={[styles.rowContainer]}>
             <TextInput
