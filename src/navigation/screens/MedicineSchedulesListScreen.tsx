@@ -94,8 +94,8 @@ function ScheduleListItem({
   );
 
   const dateRange = schedule.endDate
-    ? `${formatDate(schedule.startDate)} - ${formatDate(schedule.endDate)}`
-    : `${formatDate(schedule.startDate)} - ${t("No end date")}`;
+    ? `${formatDate(schedule.startDate)} – ${formatDate(schedule.endDate)}`
+    : `${formatDate(schedule.startDate)} – ${t("No end date")}`;
 
   const renderOptions = () => (
     <TouchableOpacity

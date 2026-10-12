@@ -201,7 +201,7 @@ export default function PartiallyEditAnyScheduleScreen() {
             <Text style={[eStyles.pressableText, { color: theme.colors.text }]}>
               {endDate
                 ? toDisplayConcise(endDate, i18n.resolvedLanguage)
-                : t("Infinitely")}
+                : t("No end date")}
             </Text>
           </TouchableOpacity>
         </View>

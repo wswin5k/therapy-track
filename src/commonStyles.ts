@@ -168,7 +168,7 @@ export const lStyles = StyleSheet.create({
     zIndex: 1,
   },
   optionsButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 40,
     height: 44,

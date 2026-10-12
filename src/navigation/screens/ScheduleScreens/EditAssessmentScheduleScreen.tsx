@@ -538,7 +538,7 @@ export function EditAssessmentScheduleScreen() {
               >
                 {endDate
                   ? toDisplayConcise(endDate, i18n.resolvedLanguage)
-                  : t("Infinitely")}
+                  : t("No end date")}
               </Text>
             </TouchableOpacity>
           </View>
