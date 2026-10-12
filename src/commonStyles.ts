@@ -149,7 +149,7 @@ export const lStyles = StyleSheet.create({
     marginBottom: 6,
   },
   itemText: {
-    fontSize: 17,
+    fontSize: 16,
     marginBottom: 4,
   },
   overlay: {
@@ -172,8 +172,8 @@ export const lStyles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 40,
     height: 44,
-    width: 90,
-    maxWidth: "30%",
+    minWidth: 90,
+    maxWidth: "50%",
     justifyContent: "center",
   },
   optionsButtonText: {

@@ -43,6 +43,9 @@ import { Octicons } from "@react-native-vector-icons/octicons/static";
 import Lucide from "@react-native-vector-icons/lucide/static";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
+  screenOptions: {
+    tabBarLabelStyle: { fontSize: 16 },
+  },
   screens: {
     SchedulesTabsMedicine: {
       screen: MedicineSchedulesListScreen,
