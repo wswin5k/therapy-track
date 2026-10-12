@@ -77,7 +77,7 @@ export const eStyles = StyleSheet.create({
   },
   nextButtonText: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
 });
 
@@ -136,7 +136,7 @@ export const lStyles = StyleSheet.create({
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginBottom: 14,
+    marginBottom: 16,
     alignItems: "center",
     borderWidth: 1,
   },
@@ -149,23 +149,11 @@ export const lStyles = StyleSheet.create({
     marginBottom: 6,
   },
   itemText: {
-    fontSize: 16,
+    fontSize: 17,
     marginBottom: 4,
-  },
-  addButton: {
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: DEFAULT_BORDER_RADIUS,
-    borderStyle: "dashed",
-    alignItems: "center",
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
   },
   overlay: {
     flex: 1,
-    //backgroundColor: "rgba(0, 0, 0, 0.85)",
     height: "100%",
     width: "100%",
   },
@@ -182,13 +170,29 @@ export const lStyles = StyleSheet.create({
   optionsButton: {
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: DEFAULT_BORDER_RADIUS,
-    minWidth: "25%",
+    borderRadius: 40,
+    //minWidth: "25%",
+    height: 46,
+    width: 90,
+    maxWidth: "30%",
+    justifyContent: "center",
   },
   optionsButtonText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "500",
     textAlign: "center",
+    textAlignVertical: "center",
+  },
+  addButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+    borderStyle: "dashed",
+    alignItems: "center",
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   emptyContainer: {
     alignItems: "center",
