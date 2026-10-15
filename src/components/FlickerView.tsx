@@ -28,17 +28,17 @@ export function FlickerView({
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
-          toValue: 0.4,
-          duration: 120,
+          toValue: 0.5,
+          duration: 500,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 120,
+          duration: 500,
           useNativeDriver: true,
         }),
       ]),
-      { iterations: 10 },
+      { iterations: 1 },
     );
 
     animation.start();
@@ -46,7 +46,7 @@ export function FlickerView({
     const timeout = setTimeout(() => {
       animation.stop();
       opacity.setValue(1);
-    }, 400);
+    }, 2000);
 
     return () => {
       animation.stop();

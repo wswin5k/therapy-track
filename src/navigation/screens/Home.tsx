@@ -55,11 +55,8 @@ import {
   dayDifference,
   getShiftedDateOnly,
   getWeekday,
-  isEqualDateOnly,
-  normalizeToDateOnly,
 } from "../../dateOnlyUtils";
 import { getTodayDateOnly } from "../../dateOnlyUtils";
-import * as Notifications from "expo-notifications";
 import { FlickerView } from "../../components/FlickerView";
 
 class DosageInfo {
@@ -482,7 +479,13 @@ function ScheduledMeasurement({
   );
 }
 
-export function Home({ date }: { date: Date }) {
+export function Home({
+  date,
+  groupIdFromNotification,
+}: {
+  date: Date;
+  groupIdFromNotification?: number;
+}) {
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const theme = useTheme();
@@ -517,9 +520,6 @@ export function Home({ date }: { date: Date }) {
 
   const scrollViewRef = React.useRef<ScrollView>(null);
   const groupIdToPositionRef = React.useRef<Map<number, number>>(new Map());
-  const [flickerGroupId, setFlickerGroupId] = React.useState<number | null>(
-    null,
-  );
 
   const loadGroups = React.useCallback(async () => {
     const groups = await dbGetGroups(db);
@@ -770,36 +770,20 @@ export function Home({ date }: { date: Date }) {
     ]),
   );
 
-  const response = Notifications.useLastNotificationResponse();
+  // React.useEffect(() => {
+  //   // const groupId = data.groupId;
+  //   // const timer = setTimeout(() => {
+  //   //   if (scrollViewRef.current) {
+  //   //     scrollViewRef.current?.scrollTo({
+  //   //       y: groupIdToPositionRef.current.get(groupId),
+  //   //       animated: true,
+  //   //     });
+  //   //     setFlickerGroupId(groupId);
+  //   //   }
+  //   // }, 500);
 
-  React.useEffect(() => {
-    if (
-      response &&
-      response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER
-    ) {
-      const notificationDate = normalizeToDateOnly(
-        new Date(response.notification.date),
-      );
-      if (isEqualDateOnly(notificationDate, date)) {
-        return;
-      }
-      const data = response.notification.request.content.data;
-      if (data && "groupId" in data && typeof data.groupId === "number") {
-        const groupId = data.groupId;
-        const timer = setTimeout(() => {
-          if (scrollViewRef.current) {
-            scrollViewRef.current?.scrollTo({
-              y: groupIdToPositionRef.current.get(groupId),
-              animated: true,
-            });
-            setFlickerGroupId(groupId);
-          }
-        }, 500);
-
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [response, date]);
+  //   // return () => clearTimeout(timer);
+  // }, []);
 
   const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
@@ -1009,7 +993,7 @@ export function Home({ date }: { date: Date }) {
               getUnscheduledMeasurements(group.dbId) ||
               getScheduledMeasurements(group.dbId)) && (
               <FlickerView
-                flicker={group.dbId === flickerGroupId}
+                flicker={group.dbId === groupIdFromNotification}
                 key={group.dbId}
                 style={[
                   styles.groupContainer,

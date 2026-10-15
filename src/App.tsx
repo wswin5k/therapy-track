@@ -14,6 +14,11 @@ import "@formatjs/intl-locale/polyfill.js";
 import React from "react";
 import { dbGetSettings } from "./models/dbAccess";
 import { themeSelectionToColorSchemeName } from "./models/Settings";
+import {
+  flushPendingNavigation,
+  navigationRef,
+  setupNotificationHandlers,
+} from "./services/notificationService";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -83,6 +88,10 @@ function AppNavigation() {
     loadSettings();
   }, [db]);
 
+  React.useEffect(() => {
+    return setupNotificationHandlers();
+  }, []);
+
   const colorScheme = useColorScheme();
 
   let theme = colorSchemeToTheme(colorScheme);
@@ -93,6 +102,7 @@ function AppNavigation() {
 
   return (
     <Navigation
+      ref={navigationRef}
       theme={theme}
       linking={{
         enabled: "auto",
@@ -100,6 +110,7 @@ function AppNavigation() {
       }}
       onReady={() => {
         SplashScreen.hideAsync();
+        flushPendingNavigation();
       }}
     />
   );
