@@ -770,20 +770,19 @@ export function Home({
     ]),
   );
 
-  // React.useEffect(() => {
-  //   // const groupId = data.groupId;
-  //   // const timer = setTimeout(() => {
-  //   //   if (scrollViewRef.current) {
-  //   //     scrollViewRef.current?.scrollTo({
-  //   //       y: groupIdToPositionRef.current.get(groupId),
-  //   //       animated: true,
-  //   //     });
-  //   //     setFlickerGroupId(groupId);
-  //   //   }
-  //   // }, 500);
-
-  //   // return () => clearTimeout(timer);
-  // }, []);
+  React.useEffect(() => {
+    if (groupIdFromNotification) {
+      const timer = setTimeout(() => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current?.scrollTo({
+            y: groupIdToPositionRef.current.get(groupIdFromNotification),
+            animated: true,
+          });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [date, groupIdFromNotification]);
 
   const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {

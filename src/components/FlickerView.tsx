@@ -7,6 +7,8 @@ import {
   useAnimatedValue,
 } from "react-native";
 
+export const NOTIFICATION_FLICKER_TIMEOUT = 5000;
+
 type FlickerViewProps = ViewProps & {
   flicker?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -29,27 +31,30 @@ export function FlickerView({
       Animated.sequence([
         Animated.timing(opacity, {
           toValue: 0.5,
-          duration: 500,
+          duration: 250,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 500,
+          duration: 250,
           useNativeDriver: true,
         }),
       ]),
-      { iterations: 1 },
+      { iterations: 2 },
     );
 
-    animation.start();
+    const startDelay = setTimeout(() => {
+      animation.start();
+    }, 500);
 
     const timeout = setTimeout(() => {
       animation.stop();
       opacity.setValue(1);
-    }, 2000);
+    }, NOTIFICATION_FLICKER_TIMEOUT);
 
     return () => {
       animation.stop();
+      clearTimeout(startDelay);
       clearTimeout(timeout);
     };
   }, [flicker, opacity]);

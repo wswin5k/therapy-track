@@ -100,7 +100,6 @@ export function openHomeFromNotification(params: HomeParams) {
     pendingHomeParams = params;
     return;
   }
-  console.log("openHomeFromNotification", params);
 
   navigationRef.navigate("DrawerTabs", {
     screen: "Home",
@@ -109,12 +108,6 @@ export function openHomeFromNotification(params: HomeParams) {
 }
 
 export function flushPendingNavigation() {
-  console.log(
-    "flushPendingNavigation",
-    navigationRef.isReady(),
-    pendingHomeParams,
-  );
-
   if (!navigationRef.isReady() || !pendingHomeParams) {
     return;
   }
@@ -127,7 +120,10 @@ export function flushPendingNavigation() {
   });
 }
 
-let lastHandledNotificationId: string | null = null;
+let lastHandledNotification: {
+  identifier: string | null;
+  timestamp: number;
+} | null = null;
 
 function handleNotificationResponse(
   response: Notifications.NotificationResponse,
@@ -139,10 +135,24 @@ function handleNotificationResponse(
   const request = response.notification.request;
   // Prevent the same notification being processed twice
   // by the live listener and cold-start lookup.
-  if (request.identifier === lastHandledNotificationId) {
+  const isLastNotificationRecent = (): boolean => {
+    if (lastHandledNotification === null) {
+      return false;
+    }
+    const nowTimestamp = new Date().getTime();
+    return Math.abs(lastHandledNotification?.timestamp - nowTimestamp) < 30_000;
+  };
+  if (
+    request.identifier === lastHandledNotification?.identifier &&
+    isLastNotificationRecent()
+  ) {
     return;
   }
-  lastHandledNotificationId = request.identifier;
+
+  lastHandledNotification = {
+    identifier: request.identifier,
+    timestamp: new Date().getTime(),
+  };
 
   const data = request.content.data;
   if (!(data && "groupId" in data && typeof data.groupId === "number")) {
@@ -152,12 +162,6 @@ function handleNotificationResponse(
   const notificationDate = normalizeToDateOnly(
     new Date(response.notification.date),
   );
-  console.log(
-    "handleNotificationResponse",
-    new Date(response.notification.date),
-    notificationDate,
-    data.groupId,
-  );
 
   openHomeFromNotification({
     selectedDate: serializeDateOnly(notificationDate),
@@ -166,16 +170,16 @@ function handleNotificationResponse(
 }
 
 export function setupNotificationHandlers() {
-  const subscription = Notifications.addNotificationResponseReceivedListener(
-    handleNotificationResponse,
-  );
-
   // Covers a notification tap that launched the app
   // from a terminated state.
   const response = Notifications.getLastNotificationResponse();
   if (response) {
     handleNotificationResponse(response);
   }
+
+  const subscription = Notifications.addNotificationResponseReceivedListener(
+    handleNotificationResponse,
+  );
 
   return () => subscription.remove();
 }

@@ -29,6 +29,7 @@ import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Lucide from "@react-native-vector-icons/lucide/static";
+import { NOTIFICATION_FLICKER_TIMEOUT } from "../../components/FlickerView";
 
 const INIITIAL_INDEX = 10_000;
 const TOTAL_ITEMS = 20_000;
@@ -115,21 +116,27 @@ export function HomeSwipeable() {
     });
   }, [navigation, theme.colors]);
 
-  React.useEffect(() => {
-    const params = route.params as
-      | {
-          groupIdFromNotification: number;
-          selectedDate?: string;
-        }
-      | undefined;
-    if (params && params.selectedDate) {
-      const selectedDate = deserializeDateOnly(params.selectedDate);
-      setGroupIdFromNotification(params.groupIdFromNotification);
-      setDateFromNotifictation(selectedDate);
-      moveToDate(selectedDate);
-      navigation.setParams({ selectedDate: undefined });
-    }
-  }, [route.params, moveToDate, navigation]);
+  useFocusEffect(
+    React.useCallback(() => {
+      const params = route.params as
+        | {
+            groupIdFromNotification: number;
+            selectedDate?: string;
+          }
+        | undefined;
+      if (params && params.selectedDate) {
+        const selectedDate = deserializeDateOnly(params.selectedDate);
+        setGroupIdFromNotification(params.groupIdFromNotification);
+        setDateFromNotifictation(selectedDate);
+        moveToDate(selectedDate);
+        navigation.setParams({ selectedDate: undefined });
+        setTimeout(() => {
+          setGroupIdFromNotification(undefined);
+          setDateFromNotifictation(undefined);
+        }, NOTIFICATION_FLICKER_TIMEOUT);
+      }
+    }, [route.params, moveToDate, navigation]),
+  );
 
   const { width: windowDimensionsWidth } = useWindowDimensions();
   const { left: safeInsetsLeft, right: safeInsetsRight } = useSafeAreaInsets();
