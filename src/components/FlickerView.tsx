@@ -7,7 +7,7 @@ import {
   useAnimatedValue,
 } from "react-native";
 
-export const NOTIFICATION_FLICKER_TIMEOUT = 5000;
+export const NOTIFICATION_FLICKER_TIMEOUT = 3000;
 
 type FlickerViewProps = ViewProps & {
   flicker?: boolean;
