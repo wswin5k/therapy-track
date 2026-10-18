@@ -3,10 +3,9 @@ import { Home } from "./Home";
 import {
   useFocusEffect,
   useNavigation,
+  useRoute,
   useTheme,
 } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../index";
 import { useTranslation } from "react-i18next";
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
@@ -19,27 +18,36 @@ import {
   View,
   VirtualizedList,
 } from "react-native";
-import { dayDifference, serializeDateOnly } from "../../dateOnlyUtils";
+import {
+  dayDifference,
+  deserializeDateOnly,
+  isEqualDateOnly,
+  serializeDateOnly,
+} from "../../dateOnlyUtils";
 import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FloatingActionButton } from "../../components/FloatingActionButton";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Lucide from "@react-native-vector-icons/lucide/static";
-type HomeNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "HomeSwipeable"
->;
+import { NOTIFICATION_FLICKER_TIMEOUT } from "../../components/FlickerView";
 
 const INIITIAL_INDEX = 10_000;
 const TOTAL_ITEMS = 20_000;
 
 export function HomeSwipeable() {
-  const navigation = useNavigation<HomeNavigationProp>();
+  const navigation = useNavigation();
   const theme = useTheme();
+  const route = useRoute();
   const { i18n } = useTranslation();
 
   const listRef = React.useRef<VirtualizedList<number>>(null);
   const [currentIndex, setCurrentIndex] = React.useState(INIITIAL_INDEX);
+  const [groupIdFromNotification, setGroupIdFromNotification] = React.useState<
+    number | undefined
+  >(undefined);
+  const [dateFromNotification, setDateFromNotifictation] = React.useState<
+    Date | undefined
+  >(undefined);
 
   const [isDatePickerOpened, setIsDatePickerOpened] =
     React.useState<boolean>(false);
@@ -66,6 +74,31 @@ export function HomeSwipeable() {
     [i18n.language],
   );
 
+  const moveToDate = React.useCallback(
+    (newDate: Date) => {
+      const today = getTodayDateOnly();
+      const days = dayDifference(today, newDate);
+      let targetIndex = 0;
+      if (newDate > today) {
+        targetIndex = INIITIAL_INDEX + days;
+      } else if (newDate < today) {
+        targetIndex = INIITIAL_INDEX - days;
+      } else {
+        targetIndex = INIITIAL_INDEX;
+      }
+      if (targetIndex && listRef.current) {
+        setCurrentIndex(targetIndex);
+        listRef.current.scrollToIndex({
+          index: targetIndex,
+          animated: false,
+          viewPosition: 0.5,
+        });
+      }
+      navigation.setOptions({ title: formatDate(newDate) });
+    },
+    [formatDate, navigation],
+  );
+
   React.useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -85,16 +118,24 @@ export function HomeSwipeable() {
 
   useFocusEffect(
     React.useCallback(() => {
-      const selectedDate = getDate(currentIndex - INIITIAL_INDEX);
-      if (listRef.current) {
-        listRef.current.scrollToIndex({
-          index: currentIndex,
-          animated: false,
-          viewPosition: 0,
-        });
+      const params = route.params as
+        | {
+            groupIdFromNotification: number;
+            selectedDate?: string;
+          }
+        | undefined;
+      if (params && params.selectedDate) {
+        const selectedDate = deserializeDateOnly(params.selectedDate);
+        setGroupIdFromNotification(params.groupIdFromNotification);
+        setDateFromNotifictation(selectedDate);
+        moveToDate(selectedDate);
+        navigation.setParams({ selectedDate: undefined });
+        setTimeout(() => {
+          setGroupIdFromNotification(undefined);
+          setDateFromNotifictation(undefined);
+        }, NOTIFICATION_FLICKER_TIMEOUT);
       }
-      navigation.setOptions({ title: formatDate(selectedDate) });
-    }, [navigation, formatDate, currentIndex]),
+    }, [route.params, moveToDate, navigation]),
   );
 
   const { width: windowDimensionsWidth } = useWindowDimensions();
@@ -117,6 +158,20 @@ export function HomeSwipeable() {
     }
   }, [screenWidth, currentIndex]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const selectedDate = getDate(currentIndex - INIITIAL_INDEX);
+      if (listRef.current) {
+        listRef.current.scrollToIndex({
+          index: currentIndex,
+          animated: false,
+          viewPosition: 0,
+        });
+      }
+      navigation.setOptions({ title: formatDate(selectedDate) });
+    }, [navigation, formatDate, currentIndex]),
+  );
+
   const handleMomentumScrollEnd = (
     event: NativeSyntheticEvent<NativeScrollEvent>,
   ) => {
@@ -132,25 +187,7 @@ export function HomeSwipeable() {
   const handleDatePick = (_: DateTimePickerChangeEvent, newDate?: Date) => {
     setIsDatePickerOpened(false);
     if (newDate) {
-      const today = getTodayDateOnly();
-      const days = dayDifference(today, newDate);
-      let targetIndex = 0;
-      if (newDate > today) {
-        targetIndex = INIITIAL_INDEX + days;
-      } else if (newDate < today) {
-        targetIndex = INIITIAL_INDEX - days;
-      } else {
-        targetIndex = INIITIAL_INDEX;
-      }
-      if (targetIndex && listRef.current) {
-        setCurrentIndex(targetIndex);
-        listRef.current.scrollToIndex({
-          index: targetIndex,
-          animated: false,
-          viewPosition: 0.5,
-        });
-      }
-      navigation.setOptions({ title: formatDate(newDate) });
+      moveToDate(newDate);
     }
   };
   const handleDateDismiss = () => {
@@ -176,11 +213,18 @@ export function HomeSwipeable() {
     },
   ];
 
-  const renderHome = ({ item: index }: { item: number }) => {
+  const renderHome = ({ index }: { index: number }) => {
     const date = getDate(index - INIITIAL_INDEX);
     return (
       <View key={index} style={{ width: screenWidth }}>
-        <Home date={date} />
+        <Home
+          date={date}
+          groupIdFromNotification={
+            dateFromNotification && isEqualDateOnly(dateFromNotification, date)
+              ? groupIdFromNotification
+              : undefined
+          }
+        />
       </View>
     );
   };

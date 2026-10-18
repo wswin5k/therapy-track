@@ -1,5 +1,8 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import { createStaticNavigation } from "@react-navigation/native";
+import {
+  createStaticNavigation,
+  NavigatorScreenParams,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { TouchableOpacity } from "react-native";
@@ -75,6 +78,16 @@ export interface AssessmentParam {
   valueDomain: ValueDomain;
   dbId?: number;
 }
+
+export type DrawerTabsParamList = {
+  Home: { selectedDate?: string; groupIdFromNotification?: number } | undefined;
+  MedicinesList: undefined;
+  AssessmentsList: undefined;
+  SchedulesList: undefined;
+  GroupsList: undefined;
+  RecordHistoryScreen: undefined;
+  SettingsScreen: undefined;
+};
 
 const DrawerTabs = createDrawerNavigator({
   screenOptions: ({ theme, navigation }) => ({
@@ -173,8 +186,7 @@ const DrawerTabs = createDrawerNavigator({
 });
 
 export type RootStackParamList = {
-  HomeSwipeable: { selectedDate?: string } | undefined;
-  DrawerTabs: { selectedDate?: string } | undefined;
+  DrawerTabs: NavigatorScreenParams<DrawerTabsParamList>;
   EditMedicineScreen: {
     mode: "save-and-go-back" | "schedule" | "one-time";
     medicine?: Medicine;
