@@ -206,7 +206,7 @@ export function EditMedicineScreen() {
   const elementKeyCounter = React.useRef<number>(1);
   const [activeIngredientInfos, setActiveIngredientInfos] = React.useState<
     ActiveIngredientInfo[]
-  >([new ActiveIngredientInfo(0)]);
+  >([]);
 
   const [medicinesNames, setMedicinesNames] = React.useState<string[]>([]);
 
