@@ -72,7 +72,13 @@ function GroupListItem({
 
   const handleEdit = () => {
     navigation.navigate("EditGroupScreen", {
-      group: group,
+      group: {
+        name: group.name,
+        color: group.color,
+        isReminderOn: group.isReminderOn,
+        reminderTime: group.reminderTime,
+        dbId: group.dbId,
+      },
     });
   };
 
