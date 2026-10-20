@@ -337,8 +337,6 @@ function UnscheduledMeasurement({
             numberOfLines={1}
           >
             {measurement.assessmentName}
-            {"  –  "}
-            {t("assessment")}
           </Text>
         </View>
       </TouchableOpacity>
@@ -427,7 +425,6 @@ function ScheduledMeasurement({
   handleClick: (measurement: ScheduledMeasurementInfo) => void;
   isDisabled: boolean;
 }) {
-  const { t } = useTranslation();
   const theme = useTheme();
 
   return (
@@ -458,8 +455,6 @@ function ScheduledMeasurement({
           numberOfLines={1}
         >
           {measurement.assessmentName}
-          {"  –  "}
-          {t("assessment")}
         </Text>
         {isDone ? (
           <Ionicons
@@ -871,44 +866,48 @@ export function Home({
   const renderScheduled = (group?: Group) => {
     const dosages = getScheduledDosages(group?.dbId);
     const measurements = getScheduledMeasurements(group?.dbId);
-    const lastIdx = measurements
-      ? measurements.length - 1
-      : dosages?.length
-        ? dosages.length - 1
-        : 0;
     return (
       <>
-        {(dosages || measurements) && (
-          <Text
-            style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
-          >
-            Scheduled
-          </Text>
+        {dosages && (
+          <>
+            <Text
+              style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
+            >
+              {t("Scheduled medicines")}
+            </Text>
+            {dosages.map((di, idx) => (
+              <View key={pair(di.scheduleId, di.index)}>
+                <ScheduledDosage
+                  dosage={di}
+                  isDone={di.dosageRecordId !== null}
+                  bottomBorder={idx !== dosages.length - 1}
+                  handleClick={handleDosageClick}
+                  isDisabled={isFuture}
+                />
+              </View>
+            ))}
+          </>
         )}
-        {dosages &&
-          dosages.map((di, idx) => (
-            <View key={pair(di.scheduleId, di.index)}>
-              <ScheduledDosage
-                dosage={di}
-                isDone={di.dosageRecordId !== null}
-                bottomBorder={!(!measurements && idx === lastIdx)}
-                handleClick={handleDosageClick}
-                isDisabled={isFuture}
-              />
-            </View>
-          ))}
-        {measurements &&
-          measurements.map((mi, idx) => (
-            <View key={pair(mi.assessmentScheduleId, mi.index)}>
-              <ScheduledMeasurement
-                measurement={mi}
-                isDone={mi.value !== null}
-                bottomBorder={!(idx === lastIdx)}
-                handleClick={handleMeasurementClick}
-                isDisabled={isFuture}
-              />
-            </View>
-          ))}
+        {measurements && (
+          <>
+            <Text
+              style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
+            >
+              {t("Scheduled assessments")}
+            </Text>
+            {measurements.map((mi, idx) => (
+              <View key={pair(mi.assessmentScheduleId, mi.index)}>
+                <ScheduledMeasurement
+                  measurement={mi}
+                  isDone={mi.value !== null}
+                  bottomBorder={idx !== measurements.length - 1}
+                  handleClick={handleMeasurementClick}
+                  isDisabled={isFuture}
+                />
+              </View>
+            ))}
+          </>
+        )}
       </>
     );
   };
@@ -922,42 +921,46 @@ export function Home({
   const renderUnscheduled = (group?: Group) => {
     const dosages = getUnscheduledDosages(group?.dbId);
     const measurements = getUnscheduledMeasurements(group?.dbId);
-    const lastIdx = measurements
-      ? measurements.length - 1
-      : dosages?.length
-        ? dosages.length - 1
-        : 0;
     return (
       <>
-        {(dosages || measurements) && (
-          <Text
-            style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
-          >
-            Unscheduled
-          </Text>
+        {dosages && (
+          <>
+            <Text
+              style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
+            >
+              {t("Unscheduled medicines")}
+            </Text>
+            {dosages.map((di, idx) => (
+              <View key={di.dosageRecordId}>
+                <UnscheduledDosage
+                  dosage={di}
+                  bottomBorder={idx !== dosages.length - 1}
+                  loadUnscheduledRecords={loadUnscheduledDosageRecords}
+                  isDisabled={isFuture}
+                />
+              </View>
+            ))}
+          </>
         )}
-        {dosages &&
-          dosages.map((di, idx) => (
-            <View key={di.dosageRecordId}>
-              <UnscheduledDosage
-                dosage={di}
-                bottomBorder={!(!measurements && idx === lastIdx)}
-                loadUnscheduledRecords={loadUnscheduledDosageRecords}
-                isDisabled={isFuture}
-              />
-            </View>
-          ))}
-        {measurements &&
-          measurements.map((di, idx) => (
-            <View key={di.measurementRecordId}>
-              <UnscheduledMeasurement
-                measurement={di}
-                bottomBorder={!(idx === lastIdx)}
-                loadUnscheduledRecords={loadUnscheduledMeasurementRecords}
-                isDisabled={isFuture}
-              />
-            </View>
-          ))}
+        {measurements && (
+          <>
+            <Text
+              style={[styles.modeLabel, { color: theme.colors.textSecondary }]}
+            >
+              {t("Unscheduled assessments")}
+            </Text>
+            {measurements.map((di, idx) => (
+              <View key={di.measurementRecordId}>
+                <UnscheduledMeasurement
+                  measurement={di}
+                  bottomBorder={idx !== measurements.length - 1}
+                  loadUnscheduledRecords={loadUnscheduledMeasurementRecords}
+                  isDisabled={isFuture}
+                />
+              </View>
+            ))}
+          </>
+        )}
       </>
     );
   };
@@ -1070,15 +1073,15 @@ const styles = StyleSheet.create({
     margin: 1,
   },
   headerLabel: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: "500",
-    marginBottom: 8,
     alignSelf: "center",
   },
   modeLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
-    marginBottom: 8,
+    marginBottom: 3,
+    marginTop: 10,
     alignSelf: "center",
   },
   scheduleContent: {
