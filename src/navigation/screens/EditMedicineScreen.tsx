@@ -246,6 +246,8 @@ export function EditMedicineScreen() {
               ),
           ),
         );
+      } else {
+        setActiveIngredientInfos([new ActiveIngredientInfo(0)]);
       }
       loadMedicineNames();
     }, [route.params, loadMedicineNames]),
