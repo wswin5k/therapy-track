@@ -48,6 +48,7 @@ export function ModalPicker<T>({
   disabled = false,
   disabledMessage = undefined,
 }: ModalPickerProps<T>) {
+  console.log(values);
   const [modalVisible, setModalVisible] = React.useState(false);
   const theme = useTheme();
   const [numberOfPresses, setNumberOfPresses] = React.useState(0);

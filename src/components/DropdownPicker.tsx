@@ -12,7 +12,7 @@ import {
   TextStyle,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { ERROR_BORDER_WIDTH } from "../commonStyles";
+import { DEFAULT_BORDER_RADIUS, ERROR_BORDER_WIDTH } from "../commonStyles";
 import { eStyles } from "../commonStyles";
 
 interface ModalDropdownPickerProps<T> {
@@ -44,13 +44,18 @@ export function DropdownPicker<T>({
 
   const [modalVisible, setModalVisible] = React.useState(false);
   const [selectedValue, setSelectedValue] = React.useState<T>(initialValue);
+  console.log(initialValue, selectedValue);
   const [triggerLayout, setTriggerLayout] = React.useState({
     x: 0,
     y: 0,
     width: 0,
     height: 0,
   });
-  const triggerRef = React.useRef<View>(null);
+  const triggerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    setSelectedValue(initialValue);
+  }, [initialValue]);
 
   const handleSelect = (value: T) => {
     setSelectedValue(value);
@@ -242,7 +247,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,

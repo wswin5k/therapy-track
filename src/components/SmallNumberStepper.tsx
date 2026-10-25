@@ -12,6 +12,7 @@ type SmallNumberStepperProps = {
   min?: number;
   max?: number;
   defaultValue?: number;
+  allowFractions?: boolean;
   fractionalStepsBelowZero?: boolean;
   onChange: (value: number) => void;
   disabled?: boolean;
@@ -22,6 +23,7 @@ export default function SmallNumberStepper({
   min = 0.1,
   max = 100,
   defaultValue = 1,
+  allowFractions = true,
   fractionalStepsBelowZero = true,
   onChange,
   disabled = false,
@@ -36,7 +38,7 @@ export default function SmallNumberStepper({
     const fractionalSteps = [1.0, 0.75, 0.66, 0.5, 0.33, 0.25, 0.1];
 
     if (type === "increment" && count < max) {
-      if (newValue >= 1 || !fractionalStepsBelowZero) {
+      if (newValue >= 1 || !fractionalStepsBelowZero || !allowFractions) {
         newValue = Math.floor(count + 1.0);
       } else {
         newValue = 1;
@@ -48,7 +50,7 @@ export default function SmallNumberStepper({
         }
       }
     } else if (type === "decrement" && count > min) {
-      if (newValue > 1 || !fractionalStepsBelowZero) {
+      if (newValue > 1 || !fractionalStepsBelowZero || !allowFractions) {
         newValue = Math.ceil(count - 1.0);
       } else {
         newValue = 1;

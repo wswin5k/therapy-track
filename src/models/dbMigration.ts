@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 
-export const APP_DATABASE_VERSION = 1;
+export const APP_DATABASE_VERSION = 2;
 
 export async function getDbVersion(db: SQLiteDatabase) {
   const pragma_user_version = await db.getFirstAsync<{
@@ -145,6 +145,27 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       VALUES (1, 1, 0, 1, "[]");
       `);
     currentDbVersion = 1;
+  }
+
+  if (currentDbVersion === 1) {
+    await db.execAsync(`
+      CREATE TABLE gauges (
+      id INTEGER PRIMARY KEY NOT NULL,
+      created_at TEXT NOT NULL,
+      source_column TEXT NOT NULL,
+      operation TEXT NOT NULL,
+      empty_treatment TEXT NOT NULL,
+      length_in_days INTEGER NOT NULL,
+      precision INTEGER NOT NULL);
+
+      CREATE TABLE gauges_records (
+      id INTEGER PRIMARY KEY NOT NULL,
+      date TEXT NOT NULL,
+      gauge INTEGER NOT NULL,
+      value REAL NOT NULL,
+      FOREIGN KEY(gauge) REFERENCES gauges(id));
+      `);
+    currentDbVersion = 2;
   }
 
   await db.execAsync(`PRAGMA user_version = ${APP_DATABASE_VERSION}`);

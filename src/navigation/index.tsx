@@ -44,6 +44,10 @@ import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-fre
 import { Entypo } from "@react-native-vector-icons/entypo/static";
 import { Octicons } from "@react-native-vector-icons/octicons/static";
 import Lucide from "@react-native-vector-icons/lucide/static";
+import { GaugesListScreen } from "./screens/GaugesListScreen";
+import { EditGaugeScreen } from "./screens/EditGaugeScreen";
+import { Column } from "../models/dbColumnService";
+import { EmptyTreatment, OperationAny } from "../models/Gauge";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
   screenOptions: {
@@ -170,6 +174,15 @@ const DrawerTabs = createDrawerNavigator({
         ),
       },
     },
+    GaugesList: {
+      screen: GaugesListScreen,
+      options: {
+        title: "Gauges",
+        drawerIcon: ({ color, size }: { color: string; size: number }) => (
+          <Entypo name="gauge" size={size} color={color} />
+        ),
+      },
+    },
     SettingsScreen: {
       screen: SettingsScreen,
       options: {
@@ -243,6 +256,16 @@ export type RootStackParamList = {
       isReminderOn: boolean;
       reminderTime: string | null;
       dbId: number;
+    };
+  };
+  EditGaugeScreen: {
+    gauge?: {
+      dbId: number;
+      sourceColumn: Column;
+      operation: OperationAny;
+      emptyTreatment: EmptyTreatment;
+      lengthInDays: number;
+      precision: number;
     };
   };
   EditCustomFrequencyScreen: undefined;
@@ -343,6 +366,13 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Edit group",
+      },
+    },
+    EditGaugeScreen: {
+      screen: EditGaugeScreen,
+      options: {
+        presentation: "modal",
+        title: "Edit gauge",
       },
     },
     EditCustomFrequencyScreen: {
