@@ -43,8 +43,9 @@ export function DropdownPicker<T>({
   const theme = useTheme();
 
   const [modalVisible, setModalVisible] = React.useState(false);
+  const [previousInitialValue, setPreviousInitialValue] =
+    React.useState<T>(initialValue);
   const [selectedValue, setSelectedValue] = React.useState<T>(initialValue);
-  console.log(initialValue, selectedValue);
   const [triggerLayout, setTriggerLayout] = React.useState({
     x: 0,
     y: 0,
@@ -53,9 +54,10 @@ export function DropdownPicker<T>({
   });
   const triggerRef = React.useRef(null);
 
-  React.useEffect(() => {
+  if (initialValue !== previousInitialValue) {
+    setPreviousInitialValue(initialValue);
     setSelectedValue(initialValue);
-  }, [initialValue]);
+  }
 
   const handleSelect = (value: T) => {
     setSelectedValue(value);

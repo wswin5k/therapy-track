@@ -13,7 +13,7 @@ import {
   useNavigation,
   useTheme,
 } from "@react-navigation/native";
-import { dbGetGauges } from "../../models/dbAccess";
+import { dbDeleteGauge, dbGetGauges } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { lStyles } from "../../commonStyles";
@@ -49,7 +49,7 @@ function GaugeListItem({
         setValue(newValue);
       };
       loadData();
-    }, []),
+    }, [db]),
   );
 
   const handleDelete = () => {
@@ -57,13 +57,9 @@ function GaugeListItem({
   };
 
   const confirmDelete = async () => {
-    //await dbDeleteGroup(db, group.dbId);
-    //setDeleteDialogVisible(false);
-    //await loadData();
-  };
-
-  const closeDeleteRefusal = () => {
-    handleOptionsToggle();
+    await dbDeleteGauge(db, gauge.dbId);
+    setDeleteDialogVisible(false);
+    await loadData();
   };
 
   const cancelDelete = () => {
@@ -168,10 +164,8 @@ function GaugeListItem({
             </Text>
           </View>
 
-          <Text
-            style={[styles.itemValue, { color: theme.colors.textSecondary }]}
-          >
-            {value}
+          <Text style={[styles.itemValue, { color: theme.colors.text }]}>
+            {value.toFixed(gauge.precision)}
           </Text>
         </View>
       </TouchableOpacity>
@@ -285,6 +279,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
   },
   itemLabel: {
     flex: 1,

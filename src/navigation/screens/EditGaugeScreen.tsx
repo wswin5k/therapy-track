@@ -32,7 +32,7 @@ import {
 } from "../../models/dbColumnService";
 import { ModalPicker } from "../../components/ModalPicker";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
-import { dbInsertGauge } from "../../models/dbAccess";
+import { dbInsertGauge, dbUpdateGauge } from "../../models/dbAccess";
 
 function getEmptyTreatmentLabel(value: EmptyTreatment): string {
   switch (value) {
@@ -74,6 +74,7 @@ export function EditGaugeScreen() {
     OperationAny[]
   >(Object.values(OperationNumber));
 
+  const [gaugeId, setGaugeId] = React.useState<number | null>(null);
   const [column, setColumn] = React.useState<Column | null>(null);
   const [columnError, setColumnError] = React.useState(false);
   const [operation, setOperation] = React.useState<OperationAny>(
@@ -92,10 +93,27 @@ export function EditGaugeScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      const gaugeInit = (route.params as { gauge?: Gauge }).gauge;
+      const gaugeInit = (
+        route.params as {
+          gauge?: {
+            dbId: number;
+            sourceColumn: Column;
+            operation: OperationAny;
+            emptyTreatment: EmptyTreatment;
+            lengthInDays: number;
+            precision: number;
+          };
+        }
+      ).gauge;
 
       if (gaugeInit) {
+        setGaugeId(gaugeInit.dbId);
+        setColumn(gaugeInit.sourceColumn);
+        setOperation(gaugeInit.operation);
+        setLengthInDays(gaugeInit.lengthInDays);
+        console.log("length", gaugeInit.lengthInDays);
         setEmptyTreatment(gaugeInit.emptyTreatment);
+        setPrecision(gaugeInit.precision);
       }
       loadData();
     }, [loadData, route.params]),
@@ -127,7 +145,11 @@ export function EditGaugeScreen() {
     const validatedData = validate();
 
     if (validatedData) {
-      dbInsertGauge(db, validatedData);
+      if (gaugeId === null) {
+        await dbInsertGauge(db, validatedData);
+      } else {
+        await dbUpdateGauge(db, { ...validatedData, dbId: gaugeId });
+      }
       navigation.goBack();
     }
   };
@@ -139,9 +161,10 @@ export function EditGaugeScreen() {
   const handleColumnChange = (value: Column) => {
     setColumn(value);
     let newOperationsDomain: OperationAny[] = Object.values(OperationNumber);
-    if (value.sourceType == SourceType.AssessmentBoolean) {
+    if (value.sourceType === SourceType.AssessmentBoolean) {
       newOperationsDomain = Object.values(OperationBoolean);
     }
+    setColumnError(false);
     setOperationsDomain(newOperationsDomain);
     setOperation(newOperationsDomain[0]);
   };
@@ -163,6 +186,7 @@ export function EditGaugeScreen() {
               backgroundColor: theme.colors.surface,
             }}
             placeholder={t("Select source records")}
+            disabled={gaugeId !== null}
             error={columnError}
           />
         </View>
@@ -186,12 +210,12 @@ export function EditGaugeScreen() {
         </View>
         <View style={styles.rowEmptyValuesContainer}>
           <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-            {t("Length in days")}
+            {t("Period in days")}
           </Text>
           <View style={styles.numberStepperContainer}>
             <SmallNumberStepper
               onChange={(value) => setLengthInDays(value)}
-              defaultValue={lengthInDays}
+              initialValue={lengthInDays}
               allowFractions={false}
               min={1}
             />
@@ -222,7 +246,7 @@ export function EditGaugeScreen() {
           <View style={styles.numberStepperContainer}>
             <SmallNumberStepper
               onChange={(value) => setPrecision(value)}
-              defaultValue={precision}
+              initialValue={precision}
               allowFractions={false}
               min={0}
             />

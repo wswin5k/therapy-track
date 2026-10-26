@@ -2,7 +2,6 @@ import { SQLiteDatabase } from "expo-sqlite";
 import {
   dbGetAssessments,
   dbGetMedicines,
-  dbGetScheduledDosageRecords,
   dbGetScheduledMeasurementRecords,
   dbGetUnscheduledMeasurementRecords,
 } from "./dbAccess";

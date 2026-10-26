@@ -380,7 +380,7 @@ export default function EditMedicineScheduleScreen() {
                 <View style={styles.dosageAmountContainer}>
                   <SmallNumberStepper
                     onChange={createDosagesInputHandler(dIdx)}
-                    defaultValue={1}
+                    initialValue={1}
                   />
                 </View>
                 <View style={[styles.dosageGroupPickerContainer]}>

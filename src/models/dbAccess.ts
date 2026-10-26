@@ -1357,6 +1357,38 @@ export async function dbInsertGauge(
   return db_insert.lastInsertRowId;
 }
 
+export async function dbUpdateGauge(
+  db: SQLiteDatabase,
+  gauge: {
+    dbId: number;
+    sourceColumn: Column;
+    operation: OperationAny;
+    emptyTreatment: EmptyTreatment;
+    lengthInDays: number;
+    precision: number;
+  },
+): Promise<number> {
+  await db.runAsync(
+    `UPDATE gauges
+    SET source_column = ?, 
+    operation = ?, 
+    length_in_days = ?,
+    empty_treatment = ?, 
+    precision = ?
+    WHERE id = ?`,
+    serializeColumn(gauge.sourceColumn),
+    gauge.operation,
+    gauge.lengthInDays,
+    gauge.emptyTreatment,
+    gauge.precision,
+    gauge.dbId,
+  );
+}
+
+export async function dbDeleteGauge(db: SQLiteDatabase, id: number) {
+  await db.runAsync("DELETE FROM gauges WHERE id = ?", id);
+}
+
 export async function dbGetGauges(db: SQLiteDatabase): Promise<Gauge[]> {
   const rows = await db.getAllAsync<GaugeRow>(`
       SELECT
