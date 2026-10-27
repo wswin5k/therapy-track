@@ -13,15 +13,20 @@ import {
   useNavigation,
   useTheme,
 } from "@react-navigation/native";
-import { dbDeleteGauge, dbGetGauges } from "../../models/dbAccess";
+import {
+  dbDeleteGauge,
+  dbGetGauges,
+  dbGetGaugesRecords,
+} from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { lStyles } from "../../commonStyles";
 import { Gauge } from "../../models/Gauge";
-import { updateGaugeRecord } from "../../models/dbColumnService";
+import { computeAllGaugesRecords } from "../../models/dbRecordsService";
 
 function GaugeListItem({
   gauge,
+  value,
   loadData,
   optionsOpened,
   handleOptionsToggle,
@@ -29,6 +34,7 @@ function GaugeListItem({
   atLeastOneOptionsOpened,
 }: {
   gauge: Gauge;
+  value: number | null;
   loadData: () => Promise<void>;
   optionsOpened: boolean;
   handleOptionsToggle: () => void;
@@ -40,17 +46,6 @@ function GaugeListItem({
   const navigation = useNavigation();
   const theme = useTheme();
   const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
-  const [value, setValue] = React.useState(0);
-
-  React.useEffect(
-    React.useCallback(() => {
-      const loadData = async () => {
-        const newValue = await updateGaugeRecord(db, gauge, new Date());
-        setValue(newValue);
-      };
-      loadData();
-    }, [db]),
-  );
 
   const handleDelete = () => {
     setDeleteDialogVisible(true);
@@ -78,6 +73,25 @@ function GaugeListItem({
         precision: gauge.precision,
       },
     });
+  };
+
+  const formatValue = () => {
+    if (value === null) {
+      return "N/A";
+    }
+    // if (
+    //   (
+    //     [
+    //       OperationNumber.PercentNotZero,
+    //       OperationBoolean.PercentFalse,
+    //       OperationBoolean.PercentTrue,
+    //     ] as OperationAny[]
+    //   ).includes(gauge.operation)
+    // ) {
+    //   return value.toFixed(gauge.precision) + "%";
+    // }
+
+    return value.toFixed(gauge.precision);
   };
 
   const renderOptions = () => (
@@ -165,7 +179,7 @@ function GaugeListItem({
           </View>
 
           <Text style={[styles.itemValue, { color: theme.colors.text }]}>
-            {value.toFixed(gauge.precision)}
+            {formatValue()}
           </Text>
         </View>
       </TouchableOpacity>
@@ -180,6 +194,10 @@ export function GaugesListScreen() {
   const navigation = useNavigation();
 
   const [gauges, setGauges] = React.useState<Gauge[]>([]);
+  const [lastGaugesValues, setLastGaugesValues] = React.useState<
+    Map<number, number | null>
+  >(new Map());
+
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
   const atLeastOneOptionsOpened = React.useMemo(
     () => optionsOpened.some((v) => v),
@@ -187,8 +205,23 @@ export function GaugesListScreen() {
   );
 
   const loadData = React.useCallback(async () => {
+    await computeAllGaugesRecords(db);
+
     const newGauges = await dbGetGauges(db);
     setGauges(newGauges);
+
+    const gaugesRecords = await dbGetGaugesRecords(db);
+    gaugesRecords.sort((a, b) => b.date.getTime() - a.date.getTime());
+    // todo only select last
+    const newLastGaugesValues = new Map();
+
+    gaugesRecords.forEach((gr) => {
+      if (!newLastGaugesValues.has(gr.gaugeId)) {
+        newLastGaugesValues.set(gr.gaugeId, gr.value);
+      }
+    });
+
+    setLastGaugesValues(newLastGaugesValues);
 
     setOptionsOpened(Array.from({ length: newGauges.length }, () => false));
   }, [db]);
@@ -248,6 +281,7 @@ export function GaugesListScreen() {
                   <GaugeListItem
                     key={idx}
                     gauge={g}
+                    value={lastGaugesValues.get(g.dbId) ?? null}
                     optionsOpened={optionsOpened[idx]}
                     loadData={loadData}
                     onPress={handleOptionsOff}
@@ -286,8 +320,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   itemValue: {
-    fontSize: 40,
-    fontWeight: "600",
+    fontSize: 36,
     marginBottom: 6,
   },
   itemText: {

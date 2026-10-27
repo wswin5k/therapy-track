@@ -160,10 +160,13 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
 
       CREATE TABLE gauges_records (
       id INTEGER PRIMARY KEY NOT NULL,
-      date TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
       gauge INTEGER NOT NULL,
-      value REAL NOT NULL,
-      FOREIGN KEY(gauge) REFERENCES gauges(id));
+      date TEXT NOT NULL,
+      value REAL,
+      FOREIGN KEY(gauge) REFERENCES gauges(id),
+      UNIQUE (gauge, date)
+      );
       `);
     currentDbVersion = 2;
   }

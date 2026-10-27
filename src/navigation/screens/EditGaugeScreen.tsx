@@ -20,16 +20,12 @@ import { eStyles, PRESSABLE_HEIGHT } from "../../commonStyles";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import {
   EmptyTreatment,
-  Gauge,
   OperationAny,
   OperationBoolean,
   OperationNumber,
 } from "../../models/Gauge";
-import {
-  Column,
-  dbColumnsGetAll,
-  SourceType,
-} from "../../models/dbColumnService";
+import { dbColumnsGetAll } from "../../models/dbRecordsService";
+import { Metric, SourceType } from "../../models/Gauge";
 import { ModalPicker } from "../../components/ModalPicker";
 import SmallNumberStepper from "../../components/SmallNumberStepper";
 import { dbInsertGauge, dbUpdateGauge } from "../../models/dbAccess";
@@ -69,13 +65,13 @@ export function EditGaugeScreen() {
   const navigation = useNavigation();
   const theme = useTheme();
 
-  const [columns, setColumns] = React.useState<Column[]>([]);
+  const [columns, setColumns] = React.useState<Metric[]>([]);
   const [operationsDomain, setOperationsDomain] = React.useState<
     OperationAny[]
   >(Object.values(OperationNumber));
 
   const [gaugeId, setGaugeId] = React.useState<number | null>(null);
-  const [column, setColumn] = React.useState<Column | null>(null);
+  const [column, setColumn] = React.useState<Metric | null>(null);
   const [columnError, setColumnError] = React.useState(false);
   const [operation, setOperation] = React.useState<OperationAny>(
     operationsDomain[0],
@@ -97,7 +93,7 @@ export function EditGaugeScreen() {
         route.params as {
           gauge?: {
             dbId: number;
-            sourceColumn: Column;
+            sourceColumn: Metric;
             operation: OperationAny;
             emptyTreatment: EmptyTreatment;
             lengthInDays: number;
@@ -111,16 +107,23 @@ export function EditGaugeScreen() {
         setColumn(gaugeInit.sourceColumn);
         setOperation(gaugeInit.operation);
         setLengthInDays(gaugeInit.lengthInDays);
-        console.log("length", gaugeInit.lengthInDays);
         setEmptyTreatment(gaugeInit.emptyTreatment);
         setPrecision(gaugeInit.precision);
+        let newOperationsDomain: OperationAny[] =
+          Object.values(OperationNumber);
+        if (
+          gaugeInit.sourceColumn.sourceType === SourceType.AssessmentBoolean
+        ) {
+          newOperationsDomain = Object.values(OperationBoolean);
+        }
+        setOperationsDomain(newOperationsDomain);
       }
       loadData();
     }, [loadData, route.params]),
   );
 
   const validate = (): {
-    sourceColumn: Column;
+    sourceColumn: Metric;
     operation: OperationAny;
     emptyTreatment: EmptyTreatment;
     lengthInDays: number;
@@ -158,7 +161,7 @@ export function EditGaugeScreen() {
     setEmptyTreatment(value);
   };
 
-  const handleColumnChange = (value: Column) => {
+  const handleColumnChange = (value: Metric) => {
     setColumn(value);
     let newOperationsDomain: OperationAny[] = Object.values(OperationNumber);
     if (value.sourceType === SourceType.AssessmentBoolean) {
@@ -229,7 +232,7 @@ export function EditGaugeScreen() {
           <View style={[styles.pickerContainer]}>
             <DropdownPicker
               options={Object.values(EmptyTreatment)}
-              initialValue={EmptyTreatment.ZeroFill}
+              initialValue={emptyTreatment}
               onValueChange={handleEmptyTreatmentChange}
               getLabel={getEmptyTreatmentLabel}
               pressableStyle={{

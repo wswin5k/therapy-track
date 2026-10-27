@@ -35,8 +35,8 @@ export class Assessment {
     public dbId: number,
   ) {}
 
-  getLabel(groupLabel: string): string {
-    return `${this.name} – ${groupLabel}`;
+  getLabel(groupLabel?: string): string {
+    return groupLabel ? `${this.name} – ${groupLabel}` : this.name;
   }
 }
 

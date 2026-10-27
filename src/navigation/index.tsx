@@ -46,7 +46,7 @@ import { Octicons } from "@react-native-vector-icons/octicons/static";
 import Lucide from "@react-native-vector-icons/lucide/static";
 import { GaugesListScreen } from "./screens/GaugesListScreen";
 import { EditGaugeScreen } from "./screens/EditGaugeScreen";
-import { Column } from "../models/dbColumnService";
+import { Metric } from "../models/Gauge";
 import { EmptyTreatment, OperationAny } from "../models/Gauge";
 
 const SchedulesTabs = createMaterialTopTabNavigator({
@@ -261,7 +261,7 @@ export type RootStackParamList = {
   EditGaugeScreen: {
     gauge?: {
       dbId: number;
-      sourceColumn: Column;
+      sourceColumn: Metric;
       operation: OperationAny;
       emptyTreatment: EmptyTreatment;
       lengthInDays: number;

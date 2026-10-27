@@ -75,6 +75,7 @@ import {
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { t } from "i18next";
 import { Toast, ToastType } from "../../../components/Toast";
+import { NewColumnConfig } from "../../../models/dbRecordsService";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -183,13 +184,6 @@ class TableData {
     public fullHeaderToValueType: Map<string, ValueType>,
     public dayToFullHeaderToValue: Map<string, Map<string, string | number>>,
     public newColumnConfigs: Map<string, NewColumnConfig>,
-  ) {}
-}
-
-class NewColumnConfig {
-  constructor(
-    public type: ColumnType,
-    public source_created_at: Date,
   ) {}
 }
 

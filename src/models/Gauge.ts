@@ -1,12 +1,11 @@
-import { Column } from "./dbColumnService";
-
 export class GaugeRecord {
   constructor(
     public dbId: number,
+    public updatedAt: Date,
     // date and gaugeId uniquely identify a record
-    public date: Date,
     public gaugeId: number,
-    public value: number,
+    public date: Date,
+    public value: number | null,
   ) {}
 }
 
@@ -34,10 +33,25 @@ export class Gauge {
   constructor(
     public dbId: number,
     public createdAt: Date,
-    public sourceColumn: Column,
+    public sourceColumn: Metric,
     public operation: OperationNumber | OperationBoolean,
     public emptyTreatment: EmptyTreatment,
     public lengthInDays: number,
     public precision: number,
+  ) {}
+}
+export enum SourceType {
+  AssessmentNumeric = "AssessmentNumeric",
+  AssessmentBoolean = "AssessmentBoolean",
+  Medicine = "Medicine",
+  ActiveIngredientWithForm = "ActiveIngredientWithForm",
+  ActiveIngredientWithoutForm = "ActiveIngredientWithoutForm",
+}
+
+export class Metric {
+  constructor(
+    public label: string,
+    public sourceType: SourceType,
+    public sourceIds: number[],
   ) {}
 }
