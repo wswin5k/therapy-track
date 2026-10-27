@@ -431,7 +431,7 @@ export function EditAssessmentScreen() {
           </Text>
           <View style={styles.numberStepperInput}>
             <SmallNumberStepper
-              defaultValue={minimumDefault}
+              initialValue={minimumDefault}
               min={NUMERIC_MIN}
               max={minimumMax}
               fractionalStepsBelowZero={false}
@@ -445,7 +445,7 @@ export function EditAssessmentScreen() {
           </Text>
           <View style={styles.numberStepperInput}>
             <SmallNumberStepper
-              defaultValue={maximumDefault}
+              initialValue={maximumDefault}
               min={maximumMin}
               max={NUMERIC_MAX}
               fractionalStepsBelowZero={false}

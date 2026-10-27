@@ -3,7 +3,7 @@ import { SelectValueDomain, ValueDomain } from "./AssessmentSchedule";
 export class ScheduledDosageRecord {
   constructor(
     public dbId: number,
-    public record_datetime: Date,
+    public recordDatetime: Date,
     public date: Date,
     public medicineScheduleId: number,
     public dosageIndex: number,
@@ -13,7 +13,7 @@ export class ScheduledDosageRecord {
 export class UnscheduledDosageRecord {
   constructor(
     public dbId: number,
-    public record_datetime: Date,
+    public recordDatetime: Date,
     public date: Date,
     public medicineId: number,
     public amount: number,

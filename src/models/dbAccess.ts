@@ -42,6 +42,8 @@ import {
   ThemeSelection,
 } from "./Settings";
 import { baseUnitShorFormPlural } from "../navigation/enumMappings";
+import { Metric, SourceType } from "./Gauge";
+import { EmptyTreatment, Gauge, GaugeRecord, OperationAny } from "./Gauge";
 
 interface MedicineScheduleWithMedicineRow {
   id: number;
@@ -49,7 +51,7 @@ interface MedicineScheduleWithMedicineRow {
   medicine: number;
   medicine_created_at: string;
   medicine_name: string;
-  medicine_base_unit: keyof typeof BaseUnit;
+  medicine_base_unit: BaseUnit;
   medicine_active_ingredients: string;
   start_date: string;
   end_date: string | null;
@@ -61,7 +63,7 @@ interface MedicineRow {
   id: number;
   created_at: string;
   name: string;
-  base_unit: keyof typeof BaseUnit;
+  base_unit: BaseUnit;
   active_ingredients: string;
 }
 
@@ -151,6 +153,24 @@ interface ScheduledMeasurementRecordRow {
 interface SettingsRow {
   id: number;
   theme: string;
+}
+
+interface GaugeRow {
+  id: number;
+  created_at: string;
+  source_column: string;
+  operation: OperationAny;
+  empty_treatment: EmptyTreatment;
+  length_in_days: number;
+  precision: number;
+}
+
+interface GaugesRecordRow {
+  id: number;
+  udpated_at: string;
+  gauge: number;
+  date: string;
+  value: number | null;
 }
 
 interface HistoryTableSettingsRow {
@@ -282,6 +302,15 @@ function deserializeColumnConfigs(value: string): Map<string, ColumnConfig> {
     },
   );
   return result;
+}
+
+function serializeColumn(value: Metric): string {
+  return JSON.stringify(value);
+}
+
+function deserializeColumn(value: string): Metric {
+  const obj = JSON.parse(value);
+  return new Metric(obj.label, obj.sourceType as SourceType, obj.sourceIds);
 }
 
 function getDateFilterClause(startDate?: Date, endDate?: Date): string {
@@ -1310,4 +1339,134 @@ export async function dbUpdateHistoryTableSettings(
     serializeBoolean(settings.mergeIngredientsWithDifferentForms),
     serializeColumnConfigs(settings.columnConfigs),
   );
+}
+
+export async function dbInsertGauge(
+  db: SQLiteDatabase,
+  gauge: {
+    sourceColumn: Metric;
+    operation: OperationAny;
+    emptyTreatment: EmptyTreatment;
+    lengthInDays: number;
+    precision: number;
+  },
+): Promise<number> {
+  const db_insert = await db.runAsync(
+    `INSERT INTO gauges 
+    (created_at, source_column, operation, empty_treatment, length_in_days, precision) 
+    VALUES (?, ?, ?, ?, ?, ?)`,
+    serializeDatetime(new Date()),
+    serializeColumn(gauge.sourceColumn),
+    gauge.operation,
+    gauge.emptyTreatment,
+    gauge.lengthInDays,
+    gauge.precision,
+  );
+  return db_insert.lastInsertRowId;
+}
+
+export async function dbUpdateGauge(
+  db: SQLiteDatabase,
+  gauge: {
+    dbId: number;
+    sourceColumn: Metric;
+    operation: OperationAny;
+    emptyTreatment: EmptyTreatment;
+    lengthInDays: number;
+    precision: number;
+  },
+) {
+  await db.runAsync(
+    `UPDATE gauges
+    SET source_column = ?, 
+    operation = ?, 
+    length_in_days = ?,
+    empty_treatment = ?, 
+    precision = ?
+    WHERE id = ?`,
+    serializeColumn(gauge.sourceColumn),
+    gauge.operation,
+    gauge.lengthInDays,
+    gauge.emptyTreatment,
+    gauge.precision,
+    gauge.dbId,
+  );
+}
+
+export async function dbDeleteGauge(db: SQLiteDatabase, id: number) {
+  await db.runAsync("DELETE FROM gauges WHERE id = ?", id);
+}
+
+export async function dbGetGauges(db: SQLiteDatabase): Promise<Gauge[]> {
+  const rows = await db.getAllAsync<GaugeRow>(`
+      SELECT
+        id,
+        created_at,
+        source_column,
+        operation, 
+        empty_treatment,
+        length_in_days,
+        precision
+      FROM gauges
+    `);
+
+  return rows.map((row) => {
+    const sourceColumn = deserializeColumn(row.source_column);
+    return new Gauge(
+      row.id,
+      deserializeDatetime(row.created_at),
+      sourceColumn,
+      row.operation,
+      row.empty_treatment,
+      row.length_in_days,
+      row.precision,
+    );
+  });
+}
+
+export async function dbUpsertGaugeRecord(
+  db: SQLiteDatabase,
+  gaugeRecord: {
+    date: Date;
+    gaugeId: number;
+    value: number | null;
+  },
+) {
+  // todo batch insert
+  await db.runAsync(
+    `INSERT INTO gauges_records (updated_at, gauge, date, value)
+      VALUES (?, ?, ?, ?) 
+      ON CONFLICT(gauge, date) 
+      DO UPDATE SET updated_at = ?, value = ?;`,
+    serializeDatetime(new Date()),
+    gaugeRecord.gaugeId,
+    serializeDateOnly(gaugeRecord.date),
+    gaugeRecord.value,
+    serializeDatetime(new Date()),
+    gaugeRecord.value,
+  );
+}
+
+export async function dbGetGaugesRecords(
+  db: SQLiteDatabase,
+): Promise<GaugeRecord[]> {
+  const rows = await db.getAllAsync<GaugesRecordRow>(`
+      SELECT
+        id,
+        updated_at,
+        gauge,
+        date, 
+        value
+      FROM gauges_records
+    `);
+
+  return rows.map((row) => {
+    return new GaugeRecord(
+      row.id,
+      deserializeDatetime(row.udpated_at),
+      row.gauge,
+      deserializeDateOnly(row.date),
+      row.value,
+    );
+  });
 }

@@ -67,6 +67,10 @@ export class ActiveIngredient {
     public unit: IngredientAmountUnit,
   ) {}
 
+  // Not-short and short labels relate to different values.
+  // With and without unit labels relate to the same values,
+  // the unit is only stripped because it often should be determined
+  // later.
   getLabel(baseUnitLabel: string): string {
     const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(this.unit);
     return `${this.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;

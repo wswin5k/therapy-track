@@ -65,10 +65,12 @@ export function ModalPicker<T>({
   };
 
   const handlePress = () => {
-    if (disabled && disabledMessage && Platform.OS === "android") {
-      setNumberOfPresses((prev) => prev + 1);
-      if (numberOfPresses > 2) {
-        ToastAndroid.show(disabledMessage, ToastAndroid.SHORT);
+    if (disabled) {
+      if (disabledMessage && Platform.OS === "android") {
+        setNumberOfPresses((prev) => prev + 1);
+        if (numberOfPresses > 2) {
+          ToastAndroid.show(disabledMessage, ToastAndroid.SHORT);
+        }
       }
     } else {
       setModalVisible(true);

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import { eStyles } from "../commonStyles";
+import { DEFAULT_BORDER_RADIUS, eStyles } from "../commonStyles";
 import { ERROR_BORDER_WIDTH } from "../commonStyles";
 
 function isClose(a: number, b: number) {
@@ -11,7 +11,8 @@ function isClose(a: number, b: number) {
 type SmallNumberStepperProps = {
   min?: number;
   max?: number;
-  defaultValue?: number;
+  initialValue?: number;
+  allowFractions?: boolean;
   fractionalStepsBelowZero?: boolean;
   onChange: (value: number) => void;
   disabled?: boolean;
@@ -21,14 +22,22 @@ type SmallNumberStepperProps = {
 export default function SmallNumberStepper({
   min = 0.1,
   max = 100,
-  defaultValue = 1,
+  initialValue = 1,
+  allowFractions = true,
   fractionalStepsBelowZero = true,
   onChange,
   disabled = false,
   error = false,
 }: SmallNumberStepperProps) {
-  const [count, setCount] = React.useState<number>(defaultValue);
   const theme = useTheme();
+  const [count, setCount] = React.useState<number>(initialValue);
+  const [previousInitialValue, setPreviousInitialValue] =
+    React.useState<number>(initialValue);
+
+  if (initialValue !== previousInitialValue) {
+    setPreviousInitialValue(initialValue);
+    setCount(initialValue);
+  }
 
   const handlePress = (type: "increment" | "decrement") => {
     let newValue = count;
@@ -36,7 +45,7 @@ export default function SmallNumberStepper({
     const fractionalSteps = [1.0, 0.75, 0.66, 0.5, 0.33, 0.25, 0.1];
 
     if (type === "increment" && count < max) {
-      if (newValue >= 1 || !fractionalStepsBelowZero) {
+      if (newValue >= 1 || !fractionalStepsBelowZero || !allowFractions) {
         newValue = Math.floor(count + 1.0);
       } else {
         newValue = 1;
@@ -48,7 +57,7 @@ export default function SmallNumberStepper({
         }
       }
     } else if (type === "decrement" && count > min) {
-      if (newValue > 1 || !fractionalStepsBelowZero) {
+      if (newValue > 1 || !fractionalStepsBelowZero || !allowFractions) {
         newValue = Math.ceil(count - 1.0);
       } else {
         newValue = 1;
@@ -152,14 +161,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     padding: 4,
     justifyContent: "space-between",
   },
   button: {
     width: 40,
     height: 40,
-    borderRadius: 8,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     justifyContent: "center",
     alignItems: "center",
   },

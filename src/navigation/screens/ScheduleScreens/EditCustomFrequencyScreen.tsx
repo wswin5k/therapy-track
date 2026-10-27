@@ -149,7 +149,7 @@ export function EditCustomFrequencyScreen() {
             >
               <View style={styles.xTimesStepperContainer}>
                 <SmallNumberStepper
-                  defaultValue={timesADay}
+                  initialValue={timesADay}
                   onChange={(value) => setTimesADay(value)}
                   fractionalStepsBelowZero={false}
                   min={1}
@@ -178,7 +178,7 @@ export function EditCustomFrequencyScreen() {
               </Text>
               <View style={styles.everyXStepperContainer}>
                 <SmallNumberStepper
-                  defaultValue={daysNumber}
+                  initialValue={daysNumber}
                   onChange={(value) => setDaysNumber(value)}
                   fractionalStepsBelowZero={false}
                   min={1}
@@ -206,7 +206,7 @@ export function EditCustomFrequencyScreen() {
               </Text>
               <View style={styles.everyXStepperContainer}>
                 <SmallNumberStepper
-                  defaultValue={weeksNumber}
+                  initialValue={weeksNumber}
                   onChange={(value) => setWeeksNumber(value)}
                   fractionalStepsBelowZero={false}
                   min={1}

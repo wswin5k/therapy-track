@@ -87,7 +87,7 @@ export function AssessmentInput({
     return (
       <View style={styles.numberStepperInput}>
         <SmallNumberStepper
-          defaultValue={value}
+          initialValue={value}
           min={valueDomain.min}
           max={valueDomain.max}
           fractionalStepsBelowZero={false}
