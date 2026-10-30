@@ -15,7 +15,6 @@ import {
 } from "@react-navigation/native";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { useSQLiteContext } from "expo-sqlite";
-
 import { eStyles, PRESSABLE_HEIGHT } from "../../commonStyles";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import {
