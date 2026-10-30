@@ -24,6 +24,7 @@ import {
   navigationRef,
   setupNotificationHandlers,
 } from "./services/notificationService";
+import SystemNavigationBar from "react-native-system-navigation-bar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -77,7 +78,7 @@ const CustomDarkTheme: ReactNavigation.Theme = {
 };
 
 function colorSchemeToTheme(
-  colorScheme: ColorSchemeName,
+  colorScheme: ColorSchemeName | null,
 ): ReactNavigation.Theme {
   return colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme;
 }
@@ -101,9 +102,20 @@ function AppNavigation() {
 
   let theme = colorSchemeToTheme(colorScheme);
 
-  Appearance.addChangeListener((preferences) => {
-    theme = colorSchemeToTheme(preferences.colorScheme);
-  });
+  const applyTheme = React.useCallback(
+    (colorScheme: Appearance.ColorSchemeName | null) => {
+      SystemNavigationBar.setBarColor(theme.colors.card + "FF", {
+        style: colorScheme === "dark" ? "light" : "dark",
+        bar: "navigation",
+        translucent: false,
+      });
+    },
+    [theme.colors.card],
+  );
+
+  React.useEffect(() => {
+    applyTheme(colorScheme);
+  }, [applyTheme, colorScheme]);
 
   return (
     <Navigation
