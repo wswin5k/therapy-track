@@ -128,7 +128,7 @@ export function App() {
       onInit={migrateDbIfNeeded}
     >
       <SafeAreaProvider>
-        <StatusBar animated={true} barStyle={"auto"} />
+        <StatusBar barStyle={"auto"} />
         <AppNavigation />
       </SafeAreaProvider>
     </SQLiteProvider>
