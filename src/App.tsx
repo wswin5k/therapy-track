@@ -117,7 +117,7 @@ function AppNavigation() {
         SplashScreen.hideAsync();
         flushPendingNavigation();
       }}
-    ></Navigation>
+    />
   );
 }
 
