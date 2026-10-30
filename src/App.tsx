@@ -1,6 +1,11 @@
 import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { createURL } from "expo-linking";
-import { Appearance, ColorSchemeName, useColorScheme } from "react-native";
+import {
+  Appearance,
+  ColorSchemeName,
+  StatusBar,
+  useColorScheme,
+} from "react-native";
 import { Navigation } from "./navigation";
 import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import {
@@ -112,7 +117,7 @@ function AppNavigation() {
         SplashScreen.hideAsync();
         flushPendingNavigation();
       }}
-    />
+    ></Navigation>
   );
 }
 
@@ -123,6 +128,7 @@ export function App() {
       onInit={migrateDbIfNeeded}
     >
       <SafeAreaProvider>
+        <StatusBar animated={true} barStyle={"auto"} />
         <AppNavigation />
       </SafeAreaProvider>
     </SQLiteProvider>
