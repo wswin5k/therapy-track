@@ -1,9 +1,9 @@
 import { ColorSchemeName } from "react-native";
 
 export enum ThemeSelection {
+  Auto = "Auto",
   Light = "Light",
   Dark = "Dark",
-  Auto = "Auto",
 }
 
 export function themeSelectionToColorSchemeName(
