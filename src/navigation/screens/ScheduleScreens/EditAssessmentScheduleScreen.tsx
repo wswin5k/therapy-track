@@ -295,7 +295,7 @@ export function EditAssessmentScheduleScreen() {
       setStartDateError(false);
     }
 
-    if (!(endDate === null || (startDate && endDate && startDate < endDate))) {
+    if (!(endDate === null || (startDate && endDate && startDate <= endDate))) {
       isDataValid = false;
     } else {
       isDataValid = true;

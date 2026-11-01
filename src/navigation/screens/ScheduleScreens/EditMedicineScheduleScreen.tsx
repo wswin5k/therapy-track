@@ -255,7 +255,7 @@ export default function EditMedicineScheduleScreen() {
       setStartDateError(false);
     }
 
-    if (!(endDate === null || (startDate && endDate && startDate < endDate))) {
+    if (!(endDate === null || (startDate && endDate && startDate <= endDate))) {
       isDataValid = false;
     } else {
       isDataValid = true;
@@ -380,7 +380,7 @@ export default function EditMedicineScheduleScreen() {
                 <View style={styles.dosageAmountContainer}>
                   <SmallNumberStepper
                     onChange={createDosagesInputHandler(dIdx)}
-                    initialValue={1}
+                    initialValue={dosageIdxToAmount[dIdx]}
                   />
                 </View>
                 <View style={[styles.dosageGroupPickerContainer]}>
