@@ -48,26 +48,37 @@ import { GaugesListScreen } from "./screens/GaugesListScreen";
 import { EditGaugeScreen } from "./screens/EditGaugeScreen";
 import { Metric } from "../models/Gauge";
 import { EmptyTreatment, OperationAny } from "../models/Gauge";
+import { CustomDrawerContent } from "./CustomDrawerContent";
 
-const SchedulesTabs = createMaterialTopTabNavigator({
-  screenOptions: {
-    tabBarLabelStyle: { fontSize: 16 },
-  },
-  screens: {
-    SchedulesTabsMedicine: {
-      screen: MedicineSchedulesListScreen,
-      options: {
-        title: "Medicines",
-      },
-    },
-    AssessmentSchedulesTabsMedicine: {
-      screen: AssessmentSchedulesListScreen,
-      options: {
-        title: "Assessments",
-      },
-    },
-  },
-});
+const TopTab = createMaterialTopTabNavigator();
+
+function SchedulesTabs() {
+  return (
+    <TopTab.Navigator
+      screenOptions={{
+        tabBarLabelStyle: {
+          fontSize: 16,
+        },
+      }}
+    >
+      <TopTab.Screen
+        name="SchedulesTabsMedicine"
+        component={MedicineSchedulesListScreen}
+        options={{
+          title: "Medicines",
+        }}
+      />
+
+      <TopTab.Screen
+        name="AssessmentSchedulesTabsMedicine"
+        component={AssessmentSchedulesListScreen}
+        options={{
+          title: "Assessments",
+        }}
+      />
+    </TopTab.Navigator>
+  );
+}
 
 export interface MedicineParam {
   name: string;
@@ -93,110 +104,136 @@ export type DrawerTabsParamList = {
   SettingsScreen: undefined;
 };
 
-const DrawerTabs = createDrawerNavigator({
-  screenOptions: ({ theme, navigation }) => ({
-    drawerActiveTintColor: theme.colors.primary,
-    drawerInactiveTintColor: theme.colors.text,
-    drawerStyle: {
-      backgroundColor: theme.colors.card,
-    },
-    drawerContentContainerStyle: {
-      flexGrow: 1,
-    },
-    drawerLabelStyle: {
-      fontSize: 16,
-    },
-    headerStyle: {
-      backgroundColor: theme.colors.card,
-    },
-    headerTintColor: theme.colors.text,
-    headerLeft: () => (
-      <TouchableOpacity
-        onPress={() => navigation.openDrawer()}
-        style={{ marginLeft: 16, marginRight: 10 }}
-      >
-        <Ionicons name="menu" size={28} color={theme.colors.text} />
-      </TouchableOpacity>
-    ),
-  }),
-  screens: {
-    Home: {
-      screen: HomeSwipeable,
-      options: {
-        drawerLabel: "Home",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Octicons name="home-fill" size={size} color={color} />
-        ),
-      },
-    },
-    MedicinesList: {
-      screen: MedicineListScreen,
-      options: {
-        title: "Medicines",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <FontAwesomeFreeSolid name="pills" size={size} color={color} />
-        ),
-      },
-    },
-    AssessmentsList: {
-      screen: AssessmentListScreen,
-      options: {
-        title: "Assessments",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Entypo name="ruler" size={size} color={color} />
-        ),
-      },
-    },
-    SchedulesList: {
-      screen: SchedulesTabs,
-      options: {
-        title: "Schedules",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Lucide name="calendar-range" size={size} color={color} />
-        ),
-      },
-    },
-    GroupsList: {
-      screen: GroupListScreen,
-      options: {
-        title: "Groups and Notifications",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <FontAwesomeFreeSolid name="bell" size={size} color={color} />
-        ),
-      },
-    },
-    RecordHistoryScreen: {
-      screen: HistoryTableScreen,
-      options: {
-        title: "History Table",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="receipt" size={size} color={color} />
-        ),
-      },
-    },
-    GaugesList: {
-      screen: GaugesListScreen,
-      options: {
-        title: "Gauges",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Entypo name="gauge" size={size} color={color} />
-        ),
-      },
-    },
-    SettingsScreen: {
-      screen: SettingsScreen,
-      options: {
-        title: "Settings",
-        drawerIcon: ({ color, size }: { color: string; size: number }) => (
-          <Ionicons name="settings-sharp" size={size} color={color} />
-        ),
-        drawerItemStyle: {
-          marginTop: "auto",
+const Drawer = createDrawerNavigator();
+
+function DrawerNavigator() {
+  return (
+    <Drawer.Navigator
+      drawerContent={CustomDrawerContent}
+      screenOptions={({ theme, navigation }) => ({
+        drawerActiveTintColor: theme.colors.primary,
+        drawerInactiveTintColor: theme.colors.text,
+
+        drawerStyle: {
+          backgroundColor: theme.colors.card,
         },
-      },
-    },
-  },
-});
+
+        drawerLabelStyle: {
+          fontSize: 16,
+        },
+
+        headerStyle: {
+          backgroundColor: theme.colors.card,
+        },
+
+        headerTintColor: theme.colors.text,
+
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.openDrawer()}
+            style={{
+              marginLeft: 16,
+              marginRight: 10,
+            }}
+          >
+            <Ionicons name="menu" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
+        ),
+      })}
+    >
+      <Drawer.Screen
+        name="Home"
+        component={HomeSwipeable}
+        options={{
+          drawerLabel: "Home",
+          drawerIcon: ({ color, size }) => (
+            <Octicons name="home-fill" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="MedicinesList"
+        component={MedicineListScreen}
+        options={{
+          title: "Medicines",
+          drawerIcon: ({ color, size }) => (
+            <FontAwesomeFreeSolid name="pills" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="AssessmentsList"
+        component={AssessmentListScreen}
+        options={{
+          title: "Assessments",
+          drawerIcon: ({ color, size }) => (
+            <Entypo name="ruler" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="SchedulesList"
+        component={SchedulesTabs}
+        options={{
+          title: "Schedules",
+          drawerIcon: ({ color, size }) => (
+            <Lucide name="calendar-range" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="GroupsList"
+        component={GroupListScreen}
+        options={{
+          title: "Groups and Notifications",
+          drawerIcon: ({ color, size }) => (
+            <FontAwesomeFreeSolid name="bell" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="RecordHistoryScreen"
+        component={HistoryTableScreen}
+        options={{
+          title: "History Table",
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="receipt" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="GaugesList"
+        component={GaugesListScreen}
+        options={{
+          title: "Gauges",
+          drawerIcon: ({ color, size }) => (
+            <Entypo name="gauge" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="SettingsScreen"
+        component={SettingsScreen}
+        options={{
+          title: "Settings",
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="settings-sharp" size={size} color={color} />
+          ),
+          drawerItemStyle: {
+            marginTop: "auto",
+          },
+        }}
+      />
+    </Drawer.Navigator>
+  );
+}
 
 export type RootStackParamList = {
   DrawerTabs: NavigatorScreenParams<DrawerTabsParamList>;
@@ -285,7 +322,7 @@ const RootStack = createNativeStackNavigator({
   }),
   screens: {
     DrawerTabs: {
-      screen: DrawerTabs,
+      screen: DrawerNavigator,
       options: {
         title: "Home",
         headerShown: false,
