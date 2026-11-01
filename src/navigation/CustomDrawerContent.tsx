@@ -78,7 +78,6 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                 : route.name
           }
           icon={drawerIcon}
-
           focused={focused}
           activeTintColor={drawerActiveTintColor}
           inactiveTintColor={drawerInactiveTintColor}
