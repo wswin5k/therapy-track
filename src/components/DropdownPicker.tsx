@@ -52,7 +52,7 @@ export function DropdownPicker<T>({
     width: 0,
     height: 0,
   });
-  const triggerRef = React.useRef(null);
+  const triggerRef = React.useRef<React.ComponentRef<TouchableOpacity>>(null);
 
   if (initialValue !== previousInitialValue) {
     setPreviousInitialValue(initialValue);

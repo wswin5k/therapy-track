@@ -513,7 +513,7 @@ export function Home({
     React.useState<boolean>(true);
   const [areGroupsEmpty, setAreGroupsEmpty] = React.useState<boolean>(true);
 
-  const scrollViewRef = React.useRef<ScrollView>(null);
+  const scrollViewRef = React.useRef<React.ComponentRef<ScrollView>>(null);
   const groupIdToPositionRef = React.useRef<Map<number, number>>(new Map());
 
   const loadGroups = React.useCallback(async () => {

@@ -5,7 +5,9 @@ export function NotFound() {
   return (
     <DefaultMainContainer justifyContent="center">
       <Text>404</Text>
-      <Button screen="DrawerTabs">Go to Home</Button>
+      <Button screen="DrawerTabs" params={{ screen: "Home" }}>
+        Go to Home
+      </Button>
     </DefaultMainContainer>
   );
 }
