@@ -13,7 +13,7 @@ import {
   useTheme,
   useFocusEffect,
 } from "@react-navigation/native";
-import type { RootStackParamList } from "../index";
+import type { AssessmentWithIdParam, RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   NAME_MAX_LENGTH,
@@ -23,7 +23,6 @@ import {
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import {
-  Assessment,
   ValueType,
   NumericValueDomain,
   SelectValueDomain,
@@ -117,7 +116,7 @@ export function EditAssessmentScreen() {
       const params = route.params as {
         mode:
           "create-and-go-back" | "update-and-go-back" | "schedule" | "one-time";
-        assessment: Assessment;
+        assessment: AssessmentWithIdParam;
       };
       setMode(params.mode);
       if (params.mode === "update-and-go-back") {
