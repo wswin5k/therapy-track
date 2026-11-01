@@ -477,9 +477,11 @@ function ScheduledMeasurement({
 export function Home({
   date,
   groupIdFromNotification,
+  showUngroupedLabel,
 }: {
   date: Date;
   groupIdFromNotification?: number;
+  showUngroupedLabel?: boolean;
 }) {
   const { t } = useTranslation();
   const db = useSQLiteContext();
@@ -1037,7 +1039,7 @@ export function Home({
               },
             ]}
           >
-            {areGroupsEmpty || (
+            {!areGroupsEmpty && showUngroupedLabel && (
               <Text style={[styles.headerLabel, { color: theme.colors.text }]}>
                 Ungrouped
               </Text>
