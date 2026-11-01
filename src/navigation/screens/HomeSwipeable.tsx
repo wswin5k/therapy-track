@@ -40,7 +40,7 @@ export function HomeSwipeable() {
   const route = useRoute();
   const { i18n } = useTranslation();
 
-  const listRef = React.useRef<VirtualizedList<number>>(null);
+  const listRef = React.useRef<InstanceType<typeof VirtualizedList>>(null);
   const [currentIndex, setCurrentIndex] = React.useState(INIITIAL_INDEX);
   const [groupIdFromNotification, setGroupIdFromNotification] = React.useState<
     number | undefined

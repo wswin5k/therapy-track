@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import { createNavigationContainerRef } from "@react-navigation/native";
 import { DrawerTabsParamList, RootStackParamList } from "../navigation";
 import { normalizeToDateOnly, serializeDateOnly } from "../dateOnlyUtils";
+import { AndroidImportance } from "expo-notifications";
 
 function getNotificationIdentifier(groupId: number): string {
   return `group-reminder-${groupId}`;
@@ -28,7 +29,7 @@ export async function requestNotificationPermissions(): Promise<boolean> {
         "therapy-track-group-reminders",
         {
           name: "Therapy track group reminders",
-          importance: Notifications.AndroidImportance.MAX,
+          importance: AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: "#1D86E2",
           sound: "default",
