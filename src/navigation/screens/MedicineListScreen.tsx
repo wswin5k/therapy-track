@@ -70,7 +70,12 @@ function MedicineListItem({
 
   const handleEdit = () => {
     navigation.navigate("EditMedicineScreen", {
-      medicine: medicine,
+      medicine: {
+        name: medicine.name,
+        baseUnit: medicine.baseUnit,
+        activeIngredients: medicine.activeIngredients,
+        dbId: medicine.dbId,
+      },
       mode: "save-and-go-back",
     });
   };

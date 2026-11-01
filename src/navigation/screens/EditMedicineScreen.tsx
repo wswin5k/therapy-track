@@ -14,13 +14,12 @@ import {
   useTheme,
   useFocusEffect,
 } from "@react-navigation/native";
-import type { RootStackParamList } from "../index";
+import type { MedicineWithIdParam, RootStackParamList } from "../index";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   BaseUnit,
   IngredientAmountUnit,
   ActiveIngredient,
-  Medicine,
 } from "../../models/MedicineSchedule";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
@@ -225,7 +224,7 @@ export function EditMedicineScreen() {
     React.useCallback(() => {
       const params = route.params as {
         mode: "save-and-go-back" | "schedule" | "one-time";
-        medicine?: Medicine;
+        medicine?: MedicineWithIdParam;
       };
       setMode(params.mode);
       const medicineInit = params.medicine;

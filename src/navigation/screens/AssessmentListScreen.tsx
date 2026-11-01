@@ -70,7 +70,12 @@ function AssessmentListItem({
 
   const handleEdit = () => {
     navigation.navigate("EditAssessmentScreen", {
-      assessment: assessment,
+      assessment: {
+        name: assessment.name,
+        type: assessment.type,
+        valueDomain: assessment.valueDomain,
+        dbId: assessment.dbId,
+      },
       mode: "update-and-go-back",
     });
   };

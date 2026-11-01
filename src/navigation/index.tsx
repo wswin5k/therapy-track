@@ -9,11 +9,7 @@ import { TouchableOpacity } from "react-native";
 import { EditMedicineScreen } from "./screens/EditMedicineScreen";
 import { NotFound } from "./screens/NotFound";
 import { MedicineSchedulesListScreen } from "./screens/MedicineSchedulesListScreen";
-import type {
-  ActiveIngredient,
-  BaseUnit,
-  Medicine,
-} from "../models/MedicineSchedule";
+import type { ActiveIngredient, BaseUnit } from "../models/MedicineSchedule";
 import EditMedicineScheduleScreen from "./screens/ScheduleScreens/EditMedicineScheduleScreen";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { SelectMedicineScreen } from "./screens/SelectMedicineScreen";
@@ -23,11 +19,7 @@ import { HistoryTableScreen } from "./screens/HistoryTable/HistoryTableScreen";
 import PartiallyEditAnyScheduleScreen from "./screens/ScheduleScreens/PartiallyEditAnyScheduleScreen";
 import { EditGroupScreen } from "./screens/EditGroupScreen";
 import { GroupListScreen } from "./screens/GroupListScreen";
-import {
-  Assessment,
-  ValueType,
-  ValueDomain,
-} from "../models/AssessmentSchedule";
+import { ValueType, ValueDomain } from "../models/AssessmentSchedule";
 import { EditAssessmentScreen } from "./screens/EditAssessmentScreen";
 import { EditSingleMeasurementScreen } from "./screens/EditSingleMeasurementScreen";
 import { EditAssessmentScheduleScreen } from "./screens/ScheduleScreens/EditAssessmentScheduleScreen";
@@ -87,11 +79,25 @@ export interface MedicineParam {
   dbId?: number;
 }
 
+export interface MedicineWithIdParam {
+  name: string;
+  baseUnit: BaseUnit;
+  activeIngredients: ActiveIngredient[];
+  dbId: number;
+}
+
 export interface AssessmentParam {
   name: string;
   type: ValueType;
   valueDomain: ValueDomain;
   dbId?: number;
+}
+
+export interface AssessmentWithIdParam {
+  name: string;
+  type: ValueType;
+  valueDomain: ValueDomain;
+  dbId: number;
 }
 
 export type DrawerTabsParamList = {
@@ -239,11 +245,11 @@ export type RootStackParamList = {
   DrawerTabs: NavigatorScreenParams<DrawerTabsParamList>;
   EditMedicineScreen: {
     mode: "save-and-go-back" | "schedule" | "one-time";
-    medicine?: Medicine;
+    medicine?: MedicineWithIdParam;
   };
   EditAssessmentScreen: {
     mode: "create-and-go-back" | "update-and-go-back" | "schedule" | "one-time";
-    assessment?: Assessment;
+    assessment?: AssessmentWithIdParam;
   };
   SelectEntryTypeScreen:
     { mode: "schedule" | "one-time"; selectedDate?: string } | undefined;
@@ -270,20 +276,11 @@ export type RootStackParamList = {
     scheduleType: "assessment" | "medicine";
   };
   EditSingleDosageScreen: {
-    medicine: {
-      name: string;
-      baseUnit: BaseUnit;
-      activeIngredients: ActiveIngredient[];
-      dbId?: number;
-    };
+    medicine: MedicineParam;
     selectedDate?: string;
   };
   EditSingleMeasurementScreen: {
-    assessment: {
-      name: string;
-      type: ValueType;
-      dbId?: number;
-    };
+    assessment: AssessmentParam;
     selectedDate?: string;
   };
   EditGroupScreen: {

@@ -48,12 +48,22 @@ export function SelectAssessmentScreen() {
     }
     if (mode === "schedule") {
       navigation.navigate("EditAssessmentScheduleScreen", {
-        assessment: assessment,
+        assessment: {
+          name: assessment.name,
+          type: assessment.type,
+          valueDomain: assessment.valueDomain,
+          dbId: assessment.dbId,
+        },
       });
     } else {
       // mode === "one-time"
       navigation.navigate("EditSingleMeasurementScreen", {
-        assessment: assessment,
+        assessment: {
+          name: assessment.name,
+          type: assessment.type,
+          valueDomain: assessment.valueDomain,
+          dbId: assessment.dbId,
+        },
         selectedDate: selectedDate,
       });
     }
