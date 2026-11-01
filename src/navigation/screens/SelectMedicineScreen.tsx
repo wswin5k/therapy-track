@@ -55,12 +55,22 @@ export function SelectMedicineScreen() {
     }
     if (mode === "schedule") {
       navigation.navigate("EditMedicineScheduleScreen", {
-        medicine: medicine,
+        medicine: {
+          name: medicine.name,
+          baseUnit: medicine.baseUnit,
+          activeIngredients: medicine.activeIngredients,
+          dbId: medicine.dbId,
+        },
       });
     } else {
       // mode === "one-time"
       navigation.navigate("EditSingleDosageScreen", {
-        medicine: medicine,
+        medicine: {
+          name: medicine.name,
+          baseUnit: medicine.baseUnit,
+          activeIngredients: medicine.activeIngredients,
+          dbId: medicine.dbId,
+        },
         selectedDate: selectedDate,
       });
     }
