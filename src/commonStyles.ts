@@ -211,4 +211,22 @@ export const lStyles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
   },
+  separatorText: {
+    fontSize: 15,
+    fontWeight: "500",
+    textAlign: "left",
+  },
+  seperatorContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    paddingTop: 4,
+    paddingBottom: 20,
+  },
+  separtorLine: {
+    height: 1,
+    marginHorizontal: 10,
+    flex: 1,
+    alignSelf: "center",
+    opacity: 0.5,
+  },
 });

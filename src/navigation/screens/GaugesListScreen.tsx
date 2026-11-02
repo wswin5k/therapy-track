@@ -23,6 +23,7 @@ import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { lStyles } from "../../commonStyles";
 import { Gauge } from "../../models/Gauge";
 import { computeAllGaugesRecords } from "../../models/dbRecordsService";
+import { sortByCreatedAtDesc } from "../utils";
 
 function GaugeListItem({
   gauge,
@@ -208,6 +209,8 @@ export function GaugesListScreen() {
     await computeAllGaugesRecords(db);
 
     const newGauges = await dbGetGauges(db);
+    sortByCreatedAtDesc(newGauges);
+
     setGauges(newGauges);
 
     const gaugesRecords = await dbGetGaugesRecords(db);

@@ -104,3 +104,11 @@ export function getDisplayDirectoryName(uri: string): string | null {
 
   return null;
 }
+
+interface HasCreatedAt {
+  createdAt: Date;
+}
+
+export function sortByCreatedAtDesc(list: HasCreatedAt[]) {
+  list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}

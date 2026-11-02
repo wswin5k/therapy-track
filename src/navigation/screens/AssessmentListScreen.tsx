@@ -18,6 +18,7 @@ import { InformationDialog } from "../../components/InformationDialog";
 import { Assessment } from "../../models/AssessmentSchedule";
 import { assessmentTypeToDisplayForm } from "../enumMappings";
 import { lStyles } from "../../commonStyles";
+import { sortByCreatedAtDesc } from "../utils";
 
 function AssessmentListItem({
   assessment,
@@ -191,6 +192,7 @@ export function AssessmentListScreen() {
 
   const loadData = React.useCallback(async () => {
     const newAssessments = await dbGetAssessments(db);
+    sortByCreatedAtDesc(newAssessments);
     setAssessments(newAssessments);
 
     const schedulesWitAssessments = await dbGetAssessmentSchedules(db);

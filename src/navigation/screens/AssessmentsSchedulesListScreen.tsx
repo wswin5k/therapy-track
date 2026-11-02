@@ -22,6 +22,7 @@ import { frequencyToDisplayForm, getWeekdays } from "./ScheduleScreens/common";
 import { AssessmentSchedule } from "../../models/AssessmentSchedule";
 import { capitalizeFirstLetter } from "../utils";
 import { lStyles } from "../../commonStyles";
+import { seperateAndSortSchedules } from "./MedicineSchedulesListScreen";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -201,7 +202,17 @@ export function AssessmentSchedulesListScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation();
 
-  const [schedules, setSchedules] = React.useState<AssessmentSchedule[]>([]);
+  const [ongoningSchedules, setOngoingSchedules] = React.useState<
+    AssessmentSchedule[]
+  >([]);
+  const [finishedSchedules, setFinishedSchedules] = React.useState<
+    AssessmentSchedule[]
+  >([]);
+  const [futureSchedules, setFutureSchedules] = React.useState<
+    AssessmentSchedule[]
+  >([]);
+  const [noSchedules, setNoSchedules] = React.useState<boolean>(false);
+
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
   const atLeastOneOptionsOpened = React.useMemo(
     () => optionsOpened.some((v) => v),
@@ -212,7 +223,17 @@ export function AssessmentSchedulesListScreen() {
 
   const loadData = React.useCallback(async () => {
     const result = await dbGetAssessmentSchedules(db);
-    setSchedules(result);
+    const { ongoingSchedules, finishedSchedules, futureSchedules } =
+      seperateAndSortSchedules(result);
+    setOngoingSchedules(ongoingSchedules);
+    setFinishedSchedules(finishedSchedules);
+    setFutureSchedules(futureSchedules);
+    setNoSchedules(
+      ongoingSchedules.length === 0 &&
+        futureSchedules.length === 0 &&
+        finishedSchedules.length === 0,
+    );
+
     setOptionsOpened(Array.from({ length: result.length }, () => false));
     const assessments = await dbGetAssessments(db);
     if (assessments.length > 0) {
@@ -246,6 +267,44 @@ export function AssessmentSchedulesListScreen() {
     </View>
   );
 
+  const renderGroup = (schedules: AssessmentSchedule[], label: string) => {
+    return (
+      schedules.length > 0 && (
+        <>
+          <View style={lStyles.seperatorContainer}>
+            <View
+              style={[
+                lStyles.separtorLine,
+                { backgroundColor: theme.colors.textSecondary },
+              ]}
+            />
+            <Text
+              style={[
+                lStyles.separatorText,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              {label}
+            </Text>
+          </View>
+          {schedules.map((s, idx) => {
+            return (
+              <ScheduleListItem
+                key={idx}
+                schedule={s}
+                optionsOpened={optionsOpened[idx]}
+                loadSchedules={loadData}
+                onPress={handleOptionsOff}
+                handleOptionsToggle={createHandleOptionsToggle(idx)}
+                atLeastOneOptionsOpened={atLeastOneOptionsOpened}
+              />
+            );
+          })}
+        </>
+      )
+    );
+  };
+
   const createHandleOptionsToggle = (idx: number) => {
     return () => {
       const newValue = !optionsOpened[idx];
@@ -276,20 +335,11 @@ export function AssessmentSchedulesListScreen() {
           style={lStyles.mainScrollContainer}
           contentContainerStyle={lStyles.mainScrollContentContainer}
         >
-          {schedules.length === 0 && renderEmptyState()}
-          {schedules.map((s, idx) => {
-            return (
-              <ScheduleListItem
-                key={idx}
-                schedule={s}
-                optionsOpened={optionsOpened[idx]}
-                loadSchedules={loadData}
-                onPress={handleOptionsOff}
-                handleOptionsToggle={createHandleOptionsToggle(idx)}
-                atLeastOneOptionsOpened={atLeastOneOptionsOpened}
-              />
-            );
-          })}
+          {noSchedules && renderEmptyState()}
+
+          {renderGroup(ongoningSchedules, "Ongoing")}
+          {renderGroup(futureSchedules, "Future")}
+          {renderGroup(finishedSchedules, "Finished")}
 
           <TouchableOpacity
             onPress={handleAddSchedule}

@@ -18,6 +18,7 @@ import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
 import { baseUnitToSingularShortForm } from "../enumMappings";
 import { lStyles } from "../../commonStyles";
+import { sortByCreatedAtDesc } from "../utils";
 
 function MedicineListItem({
   medicine,
@@ -196,8 +197,9 @@ export function MedicineListScreen() {
   );
 
   const loadData = React.useCallback(async () => {
-    const medicines = await dbGetMedicines(db);
-    setMedicines(medicines);
+    const newMedicines = await dbGetMedicines(db);
+    sortByCreatedAtDesc(newMedicines);
+    setMedicines(newMedicines);
 
     const schedulesWithMedicines = await dbGetMedicineSchedules(db);
     const newMedicinesWithSchedules = new Set<number>();
@@ -206,7 +208,7 @@ export function MedicineListScreen() {
     });
     setMedicineWithSchedules(newMedicinesWithSchedules);
 
-    setOptionsOpened(Array.from({ length: medicines.length }, () => false));
+    setOptionsOpened(Array.from({ length: newMedicines.length }, () => false));
   }, [db]);
 
   useFocusEffect(
