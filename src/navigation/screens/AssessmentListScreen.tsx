@@ -131,7 +131,7 @@ function AssessmentListItem({
   const getDeleteMessage = (): string => {
     let message = t("Do you want to remove ") + assessment.name;
     if (hasUnscheduledRecords) {
-      message += " and all of its associated unscheduled dosage records";
+      message += " and all of its associated unscheduled records";
     }
     message += "?";
     return message;
