@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     borderStyle: "dashed",
     alignItems: "center",
     height: SELECT_HEIGHT,

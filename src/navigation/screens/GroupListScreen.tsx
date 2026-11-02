@@ -19,6 +19,7 @@ import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
 import { cancelGroupNotification } from "../../services/notificationService";
 import { lStyles } from "../../commonStyles";
+import { sortByCreatedAtDesc } from "../utils";
 
 function GroupListItem({
   group,
@@ -198,11 +199,12 @@ export function GroupListScreen() {
   );
 
   const loadData = React.useCallback(async () => {
-    const groups = await dbGetGroups(db);
-    setGroups(groups);
+    const newGroups = await dbGetGroups(db);
+    sortByCreatedAtDesc(newGroups);
+    setGroups(newGroups);
 
     const newGroupsWithUsages = new Set<number>();
-    for (const group of groups) {
+    for (const group of newGroups) {
       const hasDosages = await dbGroupHasDosagesOrMeasurements(db, group.dbId);
       const hasRecords = await dbGroupHasUnscheduledRecords(db, group.dbId);
       if (hasDosages || hasRecords) {
@@ -211,7 +213,7 @@ export function GroupListScreen() {
     }
     setGroupsWithUsages(newGroupsWithUsages);
 
-    setOptionsOpened(Array.from({ length: groups.length }, () => false));
+    setOptionsOpened(Array.from({ length: newGroups.length }, () => false));
   }, [db]);
 
   useFocusEffect(

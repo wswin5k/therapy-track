@@ -58,6 +58,7 @@ import {
 } from "../../dateOnlyUtils";
 import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FlickerView } from "../../components/FlickerView";
+import { DEFAULT_BORDER_RADIUS } from "../../commonStyles";
 
 class DosageInfo {
   medicineName: string;
@@ -1094,7 +1095,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   groupContainer: {
-    borderRadius: 12,
+    borderRadius: DEFAULT_BORDER_RADIUS,
     paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 8,
@@ -1138,7 +1139,7 @@ const styles = StyleSheet.create({
     borderColor: "red",
   },
   optionsButton: {
-    borderRadius: 8,
+    borderRadius: 40,
     minWidth: "25%",
     minHeight: 35,
     justifyContent: "center",

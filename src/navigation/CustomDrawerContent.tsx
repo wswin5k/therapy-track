@@ -95,7 +95,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 
   const renderSeparator = (label: string) => {
     return (
-      <View style={{ flexDirection: "row", justifyContent: "center" }}>
+      <View style={styles.separatorContainer}>
         <View
           style={[
             styles.separtorLine,
@@ -136,6 +136,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
     </DrawerContentScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   labelText: {
     fontSize: 15,
@@ -150,6 +151,7 @@ const styles = StyleSheet.create({
     height: 20,
     width: "100%",
   },
+  separatorContainer: { flexDirection: "row", justifyContent: "center" },
   separtorLine: {
     height: 1,
     marginHorizontal: 12,

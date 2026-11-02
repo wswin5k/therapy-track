@@ -20,8 +20,10 @@ import { RootStackParamList } from "..";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { baseUnitToSingularShortForm } from "../enumMappings";
 import { frequencyToDisplayForm, getWeekdays } from "./ScheduleScreens/common";
-import { capitalizeFirstLetter } from "../utils";
+import { capitalizeFirstLetter, sortByCreatedAtDesc } from "../utils";
 import { lStyles } from "../../commonStyles";
+import { getTodayDateOnly } from "../../dateOnlyUtils";
+import { AssessmentSchedule } from "../../models/AssessmentSchedule";
 
 type EditMedicineScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -194,13 +196,59 @@ function ScheduleListItem({
   );
 }
 
+export function seperateAndSortSchedules<
+  T extends MedicineSchedule | AssessmentSchedule,
+>(
+  schedules: T[],
+): {
+  futureSchedules: T[];
+  ongoingSchedules: T[];
+  finishedSchedules: T[];
+} {
+  const futureSchedules: T[] = [];
+  const ongoingSchedules: T[] = [];
+  const finishedSchedules: T[] = [];
+  const today = getTodayDateOnly();
+
+  schedules.forEach((s) => {
+    if (s.endDate !== null && s.endDate < today) {
+      finishedSchedules.push(s);
+    } else {
+      if (s.startDate !== null && s.startDate > today) {
+        futureSchedules.push(s);
+      } else {
+        ongoingSchedules.push(s);
+      }
+    }
+  });
+  sortByCreatedAtDesc(futureSchedules);
+  sortByCreatedAtDesc(ongoingSchedules);
+  sortByCreatedAtDesc(finishedSchedules);
+
+  return {
+    futureSchedules,
+    ongoingSchedules,
+    finishedSchedules,
+  };
+}
+
 export function MedicineSchedulesListScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation();
 
-  const [schedules, setSchedules] = React.useState<MedicineSchedule[]>([]);
+  const [ongoningSchedules, setOngoingSchedules] = React.useState<
+    MedicineSchedule[]
+  >([]);
+  const [finishedSchedules, setFinishedSchedules] = React.useState<
+    MedicineSchedule[]
+  >([]);
+  const [futureSchedules, setFutureSchedules] = React.useState<
+    MedicineSchedule[]
+  >([]);
+  const [noSchedules, setNoSchedules] = React.useState<boolean>(false);
+
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
   const atLeastOneOptionsOpened = React.useMemo(
     () => optionsOpened.some((v) => v),
@@ -211,7 +259,17 @@ export function MedicineSchedulesListScreen() {
 
   const loadData = React.useCallback(async () => {
     const result = await dbGetMedicineSchedules(db);
-    setSchedules(result);
+    const { ongoingSchedules, finishedSchedules, futureSchedules } =
+      seperateAndSortSchedules(result);
+    setOngoingSchedules(ongoingSchedules);
+    setFinishedSchedules(finishedSchedules);
+    setFutureSchedules(futureSchedules);
+    setNoSchedules(
+      ongoingSchedules.length === 0 &&
+        futureSchedules.length === 0 &&
+        finishedSchedules.length === 0,
+    );
+
     setOptionsOpened(Array.from({ length: result.length }, () => false));
     const medicines = await dbGetMedicines(db);
     if (medicines.length > 0) {
@@ -245,6 +303,44 @@ export function MedicineSchedulesListScreen() {
     </View>
   );
 
+  const renderGroup = (schedules: MedicineSchedule[], label: string) => {
+    return (
+      schedules.length > 0 && (
+        <>
+          <View style={lStyles.seperatorContainer}>
+            <View
+              style={[
+                lStyles.separtorLine,
+                { backgroundColor: theme.colors.textSecondary },
+              ]}
+            />
+            <Text
+              style={[
+                lStyles.separatorText,
+                { color: theme.colors.textSecondary },
+              ]}
+            >
+              {label}
+            </Text>
+          </View>
+          {schedules.map((s, idx) => {
+            return (
+              <ScheduleListItem
+                key={idx}
+                schedule={s}
+                optionsOpened={optionsOpened[idx]}
+                loadSchedules={loadData}
+                onPress={handleOptionsOff}
+                handleOptionsToggle={createHandleOptionsToggle(idx)}
+                atLeastOneOptionsOpened={atLeastOneOptionsOpened}
+              />
+            );
+          })}
+        </>
+      )
+    );
+  };
+
   const createHandleOptionsToggle = (idx: number) => {
     return () => {
       const newValue = !optionsOpened[idx];
@@ -275,20 +371,12 @@ export function MedicineSchedulesListScreen() {
           style={lStyles.mainScrollContainer}
           contentContainerStyle={lStyles.mainScrollContentContainer}
         >
-          {schedules.length === 0 && renderEmptyState()}
-          {schedules.map((s, idx) => {
-            return (
-              <ScheduleListItem
-                key={idx}
-                schedule={s}
-                optionsOpened={optionsOpened[idx]}
-                loadSchedules={loadData}
-                onPress={handleOptionsOff}
-                handleOptionsToggle={createHandleOptionsToggle(idx)}
-                atLeastOneOptionsOpened={atLeastOneOptionsOpened}
-              />
-            );
-          })}
+          {noSchedules && renderEmptyState()}
+
+          {renderGroup(ongoningSchedules, "Ongoing")}
+          {renderGroup(futureSchedules, "Future")}
+          {renderGroup(finishedSchedules, "Finished")}
+
           <TouchableOpacity
             onPress={handleAddSchedule}
             style={[lStyles.addButton, { borderColor: theme.colors.primary }]}
