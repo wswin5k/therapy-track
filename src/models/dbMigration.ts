@@ -22,6 +22,8 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   }
 
   if (currentDbVersion === 0) {
+    // todo: add on delete cascade in unscheduled*records and measurement/dosages
+    // possibly elsewhere
     await db.execAsync(`
       PRAGMA journal_mode = 'wal';
 

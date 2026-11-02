@@ -145,9 +145,9 @@ function ScheduleListItem({
     <View style={{}}>
       <ConfirmationDialog
         visible={deleteDialogVisible}
-        title={t("Delete confirmation")}
+        title={t("Confirm delete")}
         message={t(
-          "This action is going to pernamently delete the schedule and " +
+          "This action is going to permanently delete the schedule and " +
             "all of its associated measurement records. Do you want to proceed?",
         )}
         confirmText={t("Delete")}
