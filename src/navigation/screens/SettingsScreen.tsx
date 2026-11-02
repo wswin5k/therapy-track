@@ -150,7 +150,14 @@ export function SettingsScreen() {
           UTI: "public.database",
         });
       }
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ERR_PICKER_CANCELLED"
+      ) {
+        return;
+      }
       showErrorToast();
     } finally {
       if (backupFile.exists) {
@@ -257,7 +264,8 @@ export function SettingsScreen() {
         visible={loadBackupConfirmationDialogOpen}
         title={t("Confirm data override")}
         message={t(
-          "This action is going to permanently delete current application data. Do you want to continue?",
+          "This action is going to permanently delete current application data. " +
+            "Do you want to continue?",
         )}
         confirmText={t("Override")}
         cancelText={t("Cancel")}

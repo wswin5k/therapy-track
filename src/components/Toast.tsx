@@ -79,9 +79,9 @@ export function Toast({
 
   const backgroundColor = React.useMemo(() => {
     if (type === ToastType.Error) {
-      return mixColors(theme.colors.backgroundToast, theme.colors.error, 0.7);
+      return mixColors(theme.colors.backgroundToast, theme.colors.error, 0.4);
     } else if (type === ToastType.Success) {
-      return mixColors(theme.colors.backgroundToast, theme.colors.success, 0.8);
+      return mixColors(theme.colors.backgroundToast, theme.colors.success, 0.4);
     } else {
       return theme.colors.backgroundToast;
     }
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   message: {
-    fontSize: 17,
+    fontSize: 18,
     textAlign: "left",
   },
 });
