@@ -9,8 +9,10 @@ import {
 } from "@react-navigation/native";
 import {
   dbDeleteMedicine,
+  dbDeleteUnscheduledDosageRecordsForMedicine,
   dbGetMedicines,
   dbGetMedicineSchedules,
+  dbGetUnscheduledDosageRecords,
 } from "../../models/dbAccess";
 import { Medicine } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
@@ -23,6 +25,7 @@ import { sortByCreatedAtDesc } from "../utils";
 function MedicineListItem({
   medicine,
   hasSchedules,
+  hasUnscheduledRecords,
   loadData,
   optionsOpened,
   handleOptionsToggle,
@@ -31,6 +34,7 @@ function MedicineListItem({
 }: {
   medicine: Medicine;
   hasSchedules: boolean;
+  hasUnscheduledRecords: boolean;
   loadData: () => Promise<void>;
   optionsOpened: boolean;
   handleOptionsToggle: () => void;
@@ -54,6 +58,7 @@ function MedicineListItem({
   };
 
   const confirmDelete = async () => {
+    await dbDeleteUnscheduledDosageRecordsForMedicine(db, medicine.dbId);
     await dbDeleteMedicine(db, medicine);
     setDeleteDialogVisible(false);
     await loadData();
@@ -121,12 +126,21 @@ function MedicineListItem({
     </TouchableOpacity>
   );
 
+  const getDeleteMessage = (): string => {
+    let message = t("Do you want to remove ") + medicine.name;
+    if (hasUnscheduledRecords) {
+      message += " and all of its associated unscheduled records";
+    }
+    message += "?";
+    return message;
+  };
+
   return (
     <View>
       <ConfirmationDialog
         visible={deleteDialogVisible}
-        title={t("Delete confirmation")}
-        message={t("Do you want to remove ") + medicine.name + "?"}
+        title={t("Confirm delete")}
+        message={getDeleteMessage()}
         confirmText={t("Delete")}
         cancelText={t("Cancel")}
         onConfirm={confirmDelete}
@@ -137,7 +151,7 @@ function MedicineListItem({
         visible={deleteRefusalDialogVisible}
         title={t("Medicine has schedules")}
         message={t(
-          "Deletetion of the medicine has been refused, because " +
+          "Medicine cannot be deleted because " +
             "it has connected schedules. " +
             "They need to be deleted before the medicine.",
         )}
@@ -190,6 +204,8 @@ export function MedicineListScreen() {
   const [medicinesWithSchedules, setMedicineWithSchedules] = React.useState<
     Set<number>
   >(new Set());
+  const [medicinesWithUnscheduledRecords, setMedicinesWithUnscheduledRecords] =
+    React.useState<Set<number>>(new Set());
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
   const atLeastOneOptionsOpened = React.useMemo(
     () => optionsOpened.some((v) => v),
@@ -207,6 +223,13 @@ export function MedicineListScreen() {
       newMedicinesWithSchedules.add(s.medicine.dbId);
     });
     setMedicineWithSchedules(newMedicinesWithSchedules);
+
+    const unscheduledDosageRecords = await dbGetUnscheduledDosageRecords(db);
+    const newMedicinesWithUnscheduledRecords = new Set<number>();
+    unscheduledDosageRecords.forEach((r) => {
+      newMedicinesWithUnscheduledRecords.add(r.medicineId);
+    });
+    setMedicinesWithUnscheduledRecords(newMedicinesWithUnscheduledRecords);
 
     setOptionsOpened(Array.from({ length: newMedicines.length }, () => false));
   }, [db]);
@@ -266,6 +289,9 @@ export function MedicineListScreen() {
                 key={idx}
                 medicine={m}
                 hasSchedules={medicinesWithSchedules.has(m.dbId)}
+                hasUnscheduledRecords={medicinesWithUnscheduledRecords.has(
+                  m.dbId,
+                )}
                 optionsOpened={optionsOpened[idx]}
                 loadData={loadData}
                 onPress={handleOptionsOff}

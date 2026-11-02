@@ -761,6 +761,16 @@ export async function dbDeleteUnscheduledDosageRecord(
   );
 }
 
+export async function dbDeleteUnscheduledDosageRecordsForMedicine(
+  db: SQLiteDatabase,
+  medicineId: number,
+) {
+  await db.runAsync(
+    "DELETE FROM unscheduled_dosage_records WHERE medicine = ?",
+    medicineId,
+  );
+}
+
 export async function dbGetUnscheduledDosageRecords(
   db: SQLiteDatabase,
   startDate?: Date,
@@ -1123,6 +1133,16 @@ export async function dbDeleteUnscheduledMeasurementRecord(
   await db.runAsync(
     "DELETE FROM unscheduled_measurement_records WHERE id = ?",
     recordId,
+  );
+}
+
+export async function dbDeleteUnscheduledMeasurementRecordsForAssessment(
+  db: SQLiteDatabase,
+  assessmentId: number,
+) {
+  await db.runAsync(
+    "DELETE FROM unscheduled_measurement_records WHERE assessment = ?",
+    assessmentId,
   );
 }
 

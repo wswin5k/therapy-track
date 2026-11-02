@@ -139,8 +139,10 @@ function GaugeListItem({
     <View style={{}}>
       <ConfirmationDialog
         visible={deleteDialogVisible}
-        title={t("Delete confirmation")}
-        message={t("Do you want to remove ") + gauge.sourceColumn.label + "?"}
+        title={t("Confirm delete")}
+        message={
+          t("Do you want to remove ") + gauge.sourceColumn.label + " gauge?"
+        }
         confirmText={t("Delete")}
         cancelText={t("Cancel")}
         onConfirm={confirmDelete}

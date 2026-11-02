@@ -134,8 +134,8 @@ function GroupListItem({
     <View style={{}}>
       <ConfirmationDialog
         visible={deleteDialogVisible}
-        title={t("Delete confirmation")}
-        message={t("Do you want to remove ") + group.name + "?"}
+        title={t("Confirm delete")}
+        message={t("Do you want to remove ") + group.name + " group?"}
         confirmText={t("Delete")}
         cancelText={t("Cancel")}
         onConfirm={confirmDelete}
@@ -146,7 +146,7 @@ function GroupListItem({
         visible={deleteRefusalDialogVisible}
         title={t("Group is in use")}
         message={t(
-          "Cannot delete a group while it's assigned to schedules or records",
+          "Cannot delete a group while it's assigned to schedules or records.",
         )}
         closeText={t("Close")}
         onClose={closeDeleteRefusal}
@@ -235,7 +235,7 @@ export function GroupListScreen() {
         style={[lStyles.emptySubtext, { color: theme.colors.textTertiary }]}
       >
         {t(
-          "Create groups to organize measurments and dosages, and to manage reminders",
+          "Create groups to organize measurements and dosages, and to manage reminders",
         )}
       </Text>
     </View>

@@ -9,8 +9,10 @@ import {
 } from "@react-navigation/native";
 import {
   dbDeleteAssessment,
+  dbDeleteUnscheduledMeasurementRecordsForAssessment,
   dbGetAssessments,
   dbGetAssessmentSchedules,
+  dbGetUnscheduledMeasurementRecords,
 } from "../../models/dbAccess";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
@@ -23,6 +25,7 @@ import { sortByCreatedAtDesc } from "../utils";
 function AssessmentListItem({
   assessment,
   hasSchedules,
+  hasUnscheduledRecords,
   loadData,
   optionsOpened,
   handleOptionsToggle,
@@ -31,6 +34,7 @@ function AssessmentListItem({
 }: {
   assessment: Assessment;
   hasSchedules: boolean;
+  hasUnscheduledRecords: boolean;
   loadData: () => Promise<void>;
   optionsOpened: boolean;
   handleOptionsToggle: () => void;
@@ -54,6 +58,10 @@ function AssessmentListItem({
   };
 
   const confirmDelete = async () => {
+    await dbDeleteUnscheduledMeasurementRecordsForAssessment(
+      db,
+      assessment.dbId,
+    );
     await dbDeleteAssessment(db, assessment);
     setDeleteDialogVisible(false);
     await loadData();
@@ -120,13 +128,21 @@ function AssessmentListItem({
       </TouchableOpacity>
     </TouchableOpacity>
   );
+  const getDeleteMessage = (): string => {
+    let message = t("Do you want to remove ") + assessment.name;
+    if (hasUnscheduledRecords) {
+      message += " and all of its associated unscheduled records";
+    }
+    message += "?";
+    return message;
+  };
 
   return (
     <View>
       <ConfirmationDialog
         visible={deleteDialogVisible}
-        title={t("Delete confirmation")}
-        message={t("Do you want to remove ") + assessment.name + "?"}
+        title={t("Confirm delete")}
+        message={getDeleteMessage()}
         confirmText={t("Delete")}
         cancelText={t("Cancel")}
         onConfirm={confirmDelete}
@@ -137,7 +153,7 @@ function AssessmentListItem({
         visible={deleteRefusalDialogVisible}
         title={t("Assessment has schedules")}
         message={t(
-          "Deletetion of the assessment has been refused, because " +
+          "Assessment cannot be deleted because " +
             "it has connected schedules. " +
             "They need to be deleted before the assessment.",
         )}
@@ -184,6 +200,10 @@ export function AssessmentListScreen() {
   const [assessements, setAssessments] = React.useState<Assessment[]>([]);
   const [assessmentsWithSchedules, setAssessmentsWithSchedules] =
     React.useState<Set<number>>(new Set());
+  const [
+    assessmentsWithUnscheduledRecords,
+    setAssessmentsWithUnscheduledRecords,
+  ] = React.useState<Set<number>>(new Set());
   const [optionsOpened, setOptionsOpened] = React.useState<boolean[]>([]);
   const atLeastOneOptionsOpened = React.useMemo(
     () => optionsOpened.some((v) => v),
@@ -201,6 +221,13 @@ export function AssessmentListScreen() {
       newAssessmentsWithSchedules.add(s.assessment.dbId);
     });
     setAssessmentsWithSchedules(newAssessmentsWithSchedules);
+
+    const unscheduledRecords = await dbGetUnscheduledMeasurementRecords(db);
+    const newAssessmentsWithUnscheduledRecords = new Set<number>();
+    unscheduledRecords.forEach((r) => {
+      newAssessmentsWithUnscheduledRecords.add(r.assessmentId);
+    });
+    setAssessmentsWithUnscheduledRecords(newAssessmentsWithUnscheduledRecords);
 
     setOptionsOpened(
       Array.from({ length: newAssessments.length }, () => false),
@@ -262,6 +289,9 @@ export function AssessmentListScreen() {
                 key={a.dbId}
                 assessment={a}
                 hasSchedules={assessmentsWithSchedules.has(a.dbId)}
+                hasUnscheduledRecords={assessmentsWithUnscheduledRecords.has(
+                  a.dbId,
+                )}
                 optionsOpened={optionsOpened[idx]}
                 loadData={loadData}
                 onPress={handleOptionsOff}

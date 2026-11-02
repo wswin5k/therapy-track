@@ -257,7 +257,7 @@ export function SettingsScreen() {
         visible={loadBackupConfirmationDialogOpen}
         title={t("Confirm data override")}
         message={t(
-          "This action is going to pernamently delete current application data. Do you want to continue?",
+          "This action is going to permanently delete current application data. Do you want to continue?",
         )}
         confirmText={t("Override")}
         cancelText={t("Cancel")}
