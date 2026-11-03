@@ -14,6 +14,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~58.0.14",
     "@formatjs/intl-locale": "^5.4.2",
+    "@gorhom/portal": "^1.0.14",
     "@react-native-community/datetimepicker": "9.2.1",
     "@react-native-vector-icons/entypo": "^13.1.5",
     "@react-native-vector-icons/fontawesome-free-solid": "^1.1.5",
