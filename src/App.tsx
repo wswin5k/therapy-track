@@ -25,6 +25,7 @@ import {
   setupNotificationHandlers,
 } from "./services/notificationService";
 import SystemNavigationBar from "react-native-system-navigation-bar";
+import { PortalProvider } from "@gorhom/portal";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -140,8 +141,10 @@ export function App() {
       onInit={migrateDbIfNeeded}
     >
       <SafeAreaProvider>
-        <StatusBar barStyle={"auto"} />
-        <AppNavigation />
+        <PortalProvider>
+          <StatusBar barStyle={"auto"} />
+          <AppNavigation />
+        </PortalProvider>
       </SafeAreaProvider>
     </SQLiteProvider>
   );

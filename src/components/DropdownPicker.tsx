@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,9 +10,10 @@ import {
   Dimensions,
   TextStyle,
 } from "react-native";
-import { useTheme } from "@react-navigation/native";
+import { useFocusEffect, useTheme } from "@react-navigation/native";
 import { DEFAULT_BORDER_RADIUS, ERROR_BORDER_WIDTH } from "../commonStyles";
 import { eStyles } from "../commonStyles";
+import { Portal } from "@gorhom/portal";
 
 interface ModalDropdownPickerProps<T> {
   options: T[];
@@ -53,6 +53,12 @@ export function DropdownPicker<T>({
     height: 0,
   });
   const triggerRef = React.useRef<React.ComponentRef<TouchableOpacity>>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => setModalVisible(false);
+    }, []),
+  );
 
   if (initialValue !== previousInitialValue) {
     setPreviousInitialValue(initialValue);
@@ -163,75 +169,72 @@ export function DropdownPicker<T>({
         <Text style={[styles.chevron, { color: theme.colors.text }]}>▼</Text>
       </TouchableOpacity>
 
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setModalVisible(false)}
-        >
-          <View
-            style={[
-              styles.dropdownContainer,
-              {
-                position: "absolute",
-                top: dropdownTop,
-                bottom: dropdownBottom,
-                left: triggerLayout.x,
-                width: triggerLayout.width,
-                maxHeight: dropdownHeight,
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            onStartShouldSetResponder={() => true}
+      {modalVisible && (
+        <Portal>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
           >
-            <ScrollView
-              style={styles.optionsList}
-              showsVerticalScrollIndicator={true}
-              persistentScrollbar={true}
+            <View
+              style={[
+                styles.dropdownContainer,
+                {
+                  position: "absolute",
+                  top: dropdownTop,
+                  bottom: dropdownBottom,
+                  left: triggerLayout.x,
+                  width: triggerLayout.width,
+                  maxHeight: dropdownHeight,
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.colors.border,
+                },
+              ]}
+              onStartShouldSetResponder={() => true}
             >
-              {options.map((option, index) => {
-                const isSelected =
-                  selectedValue &&
-                  getValueKey(option) === getValueKey(selectedValue);
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => handleSelect(option)}
-                    style={[
-                      styles.optionItem,
-                      {
-                        backgroundColor: isSelected
-                          ? theme.colors.primary + "15"
-                          : "transparent",
-                      },
-                    ]}
-                  >
-                    <Text
+              <ScrollView
+                style={styles.optionsList}
+                showsVerticalScrollIndicator={true}
+                persistentScrollbar={true}
+              >
+                {options.map((option, index) => {
+                  const isSelected =
+                    selectedValue &&
+                    getValueKey(option) === getValueKey(selectedValue);
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => handleSelect(option)}
                       style={[
-                        eStyles.pressableText,
+                        styles.optionItem,
                         {
-                          color: isSelected
-                            ? theme.colors.primary
-                            : theme.colors.text,
+                          backgroundColor: isSelected
+                            ? theme.colors.primary + "15"
+                            : "transparent",
                         },
-                        isSelected && styles.selectedOptionText,
                       ]}
                     >
-                      {getLabel(option)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+                      <Text
+                        style={[
+                          eStyles.pressableText,
+                          {
+                            color: isSelected
+                              ? theme.colors.primary
+                              : theme.colors.text,
+                          },
+                          isSelected && styles.selectedOptionText,
+                        ]}
+                      >
+                        {getLabel(option)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </TouchableOpacity>
+        </Portal>
+      )}
     </>
   );
 }
@@ -245,6 +248,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   modalOverlay: {
+    ...StyleSheet.absoluteFill,
     flex: 1,
   },
   dropdownContainer: {

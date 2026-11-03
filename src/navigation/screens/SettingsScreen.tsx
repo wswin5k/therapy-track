@@ -218,7 +218,8 @@ export function SettingsScreen() {
       setToastType(ToastType.Error);
       setToastMessage(
         t(
-          "Load failed. The database file is from a newer version of the application.",
+          "Load failed. The database file is " +
+            "from a newer version of the application.",
         ),
       );
       return;
