@@ -5,8 +5,8 @@ services:
     user: "1000:1000"
     volumes:
       - .:/app:z
-      - /app/node_modules
-      - /app/.expo
+      - node-modules:/app/node_modules
+      - dot-expo:/app/.expo
       - gradle-cache:/home/node/.gradle
       - android-cache:/home/node/.android
     environment:
@@ -35,3 +35,5 @@ services:
 volumes:
   gradle-cache:
   android-cache:
+  node-modules:
+  dot-expo:
