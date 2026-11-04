@@ -829,7 +829,7 @@ export function HistoryTableScreen() {
         await Sharing.shareAsync(tempFile.uri, {
           dialogTitle: "Export CSV file",
           mimeType: "text/csv",
-          UTI: ".csv",
+          UTI: "public.comma-separated-values-text",
         });
       }
     } catch (error) {
