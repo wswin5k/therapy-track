@@ -34,8 +34,7 @@ import {
   weightUnitToGramsMultiplier,
 } from "../../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
-import * as FileSystem from "expo-file-system/legacy";
-import { shareAsync } from "expo-sharing";
+import * as Sharing from "expo-sharing";
 import { Medicine } from "../../../models/MedicineSchedule";
 import { useTranslation } from "react-i18next";
 import {
@@ -52,7 +51,6 @@ import HistoryTable from "./HistoryTable";
 import {
   deserializeDateOnly,
   getShiftedDateOnly,
-  getTodayDateOnly,
   serializeDateOnly,
 } from "../../../dateOnlyUtils";
 import {
@@ -76,6 +74,7 @@ import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { t } from "i18next";
 import { Toast, ToastType } from "../../../components/Toast";
 import { NewColumnConfig } from "../../../models/dbRecordsService";
+import { File, Paths, Directory } from "expo-file-system";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -93,13 +92,21 @@ function escapeCSVField(field: string): string {
   return field;
 }
 
-function generateCSV(headers: string[], records: string[][]): string {
+function generateCSV(
+  headers: string[],
+  rowHeaders: Date[],
+  records: string[][],
+): string {
   const csvRows: string[] = [];
 
-  csvRows.push(headers.map(escapeCSVField).join(","));
+  csvRows.push(["Date", ...headers].map(escapeCSVField).join(","));
 
-  for (const record of records) {
-    csvRows.push(record.map(escapeCSVField).join(","));
+  for (const [idx, record] of records.entries()) {
+    csvRows.push(
+      [serializeDateOnly(rowHeaders[idx]), ...record]
+        .map(escapeCSVField)
+        .join(","),
+    );
   }
 
   return csvRows.join("\n");
@@ -783,50 +790,61 @@ export function HistoryTableScreen() {
   }, [isMenuOpen]);
 
   const handleSaveToCSV = React.useCallback(async () => {
-    try {
-      const csvContent = generateCSV(fullHeaders, cells);
+    const csvContent = generateCSV(fullHeaders, rowHeaders, cells);
 
-      const today = getTodayDateOnly();
-      const todayStr = serializeDateOnly(today);
-      const fileName = `dosage-history-${todayStr}.csv`;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const fileName = `therapy-track-records-${timestamp}.csv`;
 
-      const tempFileUri = `${FileSystem.cacheDirectory}${fileName}`;
-      await FileSystem.writeAsStringAsync(tempFileUri, csvContent, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+    const tempFile = new File(Paths.cache, fileName);
+    if (tempFile.exists) {
+      tempFile.delete();
+    }
+    tempFile.write(csvContent);
 
-      if (Platform.OS === "android") {
-        const permissions =
-          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-
-        if (permissions.granted) {
-          const directoryUri = permissions.directoryUri;
-          const fileUri =
-            await FileSystem.StorageAccessFramework.createFileAsync(
-              directoryUri,
-              fileName,
-              "text/csv",
-            );
-          await FileSystem.writeAsStringAsync(fileUri, csvContent, {
-            encoding: FileSystem.EncodingType.UTF8,
-          });
-          const directoryDisplayName = getDisplayDirectoryName(directoryUri);
-          const message =
-            directoryDisplayName === null
-              ? "File exported successfully."
-              : `File saved in ${directoryDisplayName}.`;
-          setToastType(ToastType.Success);
-          setToastMessage(message);
-        }
-      } else {
-        await shareAsync(tempFileUri, {
-          UTI: ".csv",
-          mimeType: "text/csv",
-        });
-      }
-    } catch {
+    const showErrorToast = () => {
       setToastType(ToastType.Error);
       setToastMessage(t("Failed to export the file."));
+    };
+
+    try {
+      if (Platform.OS === "android") {
+        const directory = await Directory.pickDirectoryAsync();
+        if (!directory) {
+          return;
+        }
+        await tempFile.copy(directory);
+        const directoryDisplayName = getDisplayDirectoryName(directory.uri);
+        const message =
+          directoryDisplayName === null
+            ? "File exported successfully."
+            : `File saved in ${directoryDisplayName}.`;
+        setToastType(ToastType.Success);
+        setToastMessage(message);
+      } else if (Platform.OS === "ios") {
+        const canShare = await Sharing.isAvailableAsync();
+        if (!canShare) {
+          showErrorToast();
+          return;
+        }
+        await Sharing.shareAsync(tempFile.uri, {
+          dialogTitle: "Export CSV file",
+          mimeType: "text/csv",
+          UTI: "public.comma-separated-values-text",
+        });
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ERR_PICKER_CANCELLED"
+      ) {
+        return;
+      }
+      showErrorToast();
+    } finally {
+      if (tempFile.exists) {
+        tempFile.delete();
+      }
     }
     setIsMenuOpen(false);
   }, [cells, fullHeaders, t]);
@@ -884,7 +902,6 @@ export function HistoryTableScreen() {
       <Toast
         message={toastMessage ?? ""}
         visible={toastMessage !== null}
-        duration={4000}
         onHide={() => setToastMessage(null)}
         type={toastType}
       />

@@ -26,7 +26,7 @@ type ToastProps = {
 
 export function Toast({
   message,
-  duration = 4000,
+  duration = 3000,
   visible,
   onHide,
   type = ToastType.Default,
