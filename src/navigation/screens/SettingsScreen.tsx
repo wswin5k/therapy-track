@@ -257,7 +257,6 @@ export function SettingsScreen() {
       <Toast
         message={toastMessage ?? ""}
         visible={toastMessage !== null}
-        duration={4000}
         onHide={() => setToastMessage(null)}
         type={toastType}
       />
