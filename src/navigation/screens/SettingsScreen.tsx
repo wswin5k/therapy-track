@@ -90,7 +90,7 @@ export function SettingsScreen() {
   const handleCreateBackupFile = async (): Promise<void> => {
     const showErrorToast = () => {
       setToastType(ToastType.Error);
-      setToastMessage(t("Failed to export the file."));
+      setToastMessage(t("Failed to export the backup file."));
     };
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");

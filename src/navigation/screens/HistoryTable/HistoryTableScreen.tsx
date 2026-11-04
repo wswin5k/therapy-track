@@ -803,7 +803,7 @@ export function HistoryTableScreen() {
 
     const showErrorToast = () => {
       setToastType(ToastType.Error);
-      setToastMessage(t("Failed to export the backup file."));
+      setToastMessage(t("Failed to export the file."));
     };
 
     try {
