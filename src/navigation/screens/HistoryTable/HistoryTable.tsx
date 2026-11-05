@@ -25,7 +25,7 @@ const MIN_CELL_LINES_LENGTH = 2;
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
 const MID_CELL_WIDTH = 150;
 
-const ROW_HEADER_WIDTH = 114;
+const ROW_HEADER_WIDTH = 90;
 
 function isSizeClose(a: number, b: number): boolean {
   return Math.abs(a - b) < DELTA_WIDTH_BUFFER;
@@ -67,9 +67,9 @@ export default function HistoryTable({
   const formatDate = React.useCallback(
     (date: Date) => {
       return new Intl.DateTimeFormat(i18n.resolvedLanguage, {
+        weekday: "narrow",
         day: "2-digit",
         month: "short",
-        year: "numeric",
       }).format(date);
     },
     [i18n.resolvedLanguage],
@@ -118,6 +118,8 @@ export default function HistoryTable({
   const [columnWidths, setColumnsWidths] = React.useState<number[]>(
     fillInitialColumnWidths(),
   );
+
+  //const [movingColumn, setMovingColumn] = React.useState<
 
   const scrollX = useSharedValue(0);
   const scrollY = useSharedValue(0);

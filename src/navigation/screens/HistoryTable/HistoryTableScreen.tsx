@@ -75,6 +75,8 @@ import { t } from "i18next";
 import { Toast, ToastType } from "../../../components/Toast";
 import { NewColumnConfig } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";
+import Lucide from "@react-native-vector-icons/lucide/static";
+import { DateRangeConfigurationDialog } from "./ConfigurationDialog";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -137,11 +139,13 @@ export function MenuModal({
   onClose,
   handleSaveToCSV,
   handleOpenConfiguration,
+  handleDateRange,
 }: {
   visible: boolean;
   onClose: () => void;
   handleSaveToCSV: () => void;
   handleOpenConfiguration: () => void;
+  handleDateRange: () => void;
 }) {
   const theme = useTheme();
 
@@ -163,18 +167,50 @@ export function MenuModal({
         >
           <TouchableOpacity
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
-            onPress={handleSaveToCSV}
+            onPress={handleDateRange}
           >
+            <Lucide
+              name="calendar-range"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              {t("Save to CSV")}
+              {t("Date Range")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
             onPress={handleOpenConfiguration}
           >
+            <Ionicons
+              name="eye"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              {t("Configure")}
+              {t("Visible Columns")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderColor: theme.colors.border }]}
+            onPress={handleOpenConfiguration}
+          >
+            <Lucide
+              name="settings-2"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
+            <Text style={[styles.menuText, { color: theme.colors.text }]}>
+              {t("Display Options")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderColor: theme.colors.border }]}
+            onPress={handleSaveToCSV}
+          >
+            <Lucide
+              name="save"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
+            <Text style={[styles.menuText, { color: theme.colors.text }]}>
+              {t("Save to CSV")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -220,6 +256,9 @@ export function HistoryTableScreen() {
   const [toastType, setToastType] = React.useState<ToastType>(
     ToastType.Success,
   );
+
+  const [dateRangeDialogOpen, setDateRangeDialogOpen] =
+    React.useState<boolean>(false);
 
   function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
@@ -854,6 +893,10 @@ export function HistoryTableScreen() {
     setIsMenuOpen(false);
   }, [navigation]);
 
+  const handleDateRangeDialogOpen = React.useCallback(() => {
+    setDateRangeDialogOpen(true);
+  }, []);
+
   React.useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -897,6 +940,7 @@ export function HistoryTableScreen() {
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
         handleOpenConfiguration={handleOpenConfiguration}
+        handleDateRange={handleDateRangeDialogOpen}
       ></MenuModal>
 
       <Toast
@@ -905,6 +949,14 @@ export function HistoryTableScreen() {
         onHide={() => setToastMessage(null)}
         type={toastType}
       />
+
+      {dateRangeDialogOpen && (
+        <DateRangeConfigurationDialog
+          onApply={() => {}}
+          onCancel={() => setDateRangeDialogOpen(false)}
+        ></DateRangeConfigurationDialog>
+      )}
+
       {!isTableDataReady() ? (
         renderEmptyState()
       ) : (
@@ -958,20 +1010,23 @@ const styles = StyleSheet.create({
     top: 0,
     right: 0,
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderBottomLeftRadius: DEFAULT_BORDER_RADIUS,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
   },
   menuItem: {
     alignContent: "flex-start",
+    alignItems: "center",
     padding: 18,
-    borderBottomWidth: 1,
+    flexDirection: "row",
     width: "100%",
+  },
+  menuIcon: {
+    fontSize: 24,
   },
   menuText: {
     alignItems: "center",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "400",
+    paddingLeft: 12,
   },
 });
