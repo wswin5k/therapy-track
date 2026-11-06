@@ -81,6 +81,7 @@ RUN npm install -g expo-cli
 COPY --chown=node:node package*.json ./
 RUN npm install
 
+RUN mkdir -p node_modules .expo
 COPY --chown=node:node . .
 
 FROM base AS expo-server
