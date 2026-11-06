@@ -60,27 +60,51 @@ import { getTodayDateOnly } from "../../dateOnlyUtils";
 import { FlickerView } from "../../components/FlickerView";
 import { DEFAULT_BORDER_RADIUS } from "../../commonStyles";
 
-class ScheduledDosageInfo {
+class DosageInfo {
+  medicineName: string;
+  medicineBaseUnit: BaseUnit;
+  amount: number;
+  index: number;
+  scheduleId: number;
+  dosageRecordId: number | null;
+  groupId: number | null;
+
   constructor(
-    public medicineName: string,
-    public medicineBaseUnit: BaseUnit,
-    public amount: number,
-    public index: number,
-    public scheduleId: number,
-    public dosageRecordId: number | null = null,
-    public groupId: number | null,
-    public recordDate: Date | null = null,
-  ) {}
+    medicinName: string,
+    medicineBaseUnit: BaseUnit,
+    amount: number,
+    index: number,
+    scheduleId: number,
+    dosageRecordId: number | null = null,
+    groupId: number | null,
+  ) {
+    this.medicineName = medicinName;
+    this.medicineBaseUnit = medicineBaseUnit;
+    this.amount = amount;
+    this.index = index;
+    this.scheduleId = scheduleId;
+    this.dosageRecordId = dosageRecordId;
+    this.groupId = groupId;
+  }
 }
 
 class UnscheduledDosageInfo {
+  medicineName: string;
+  medicineBaseUnit: BaseUnit;
+  amount: number;
+  dosageRecordId: number;
+
   constructor(
-    public medicineName: string,
-    public medicineBaseUnit: BaseUnit,
-    public amount: number,
-    public dosageRecordId: number,
-    public recordDate: Date | null = null,
-  ) {}
+    medicineName: string,
+    medicineBaseUnit: BaseUnit,
+    amount: number,
+    dosageRecordId: number,
+  ) {
+    this.medicineName = medicineName;
+    this.medicineBaseUnit = medicineBaseUnit;
+    this.amount = amount;
+    this.dosageRecordId = dosageRecordId;
+  }
 }
 
 class UnscheduledMeasurementInfo {
@@ -328,10 +352,10 @@ function ScheduledDosage({
   handleClick,
   isDisabled,
 }: {
-  dosage: ScheduledDosageInfo;
+  dosage: DosageInfo;
   isDone: boolean;
   bottomBorder: boolean;
-  handleClick: (dosage: ScheduledDosageInfo) => void;
+  handleClick: (dosage: DosageInfo) => void;
   isDisabled: boolean;
 }) {
   const { t } = useTranslation();
@@ -472,7 +496,7 @@ export function Home({
     new Map(),
   );
   const [scheduledDosages, setScheduledDosages] = React.useState<
-    Map<number | null, ScheduledDosageInfo[]>
+    Map<number | null, DosageInfo[]>
   >(new Map());
   const [unscheduledDosages, setUnscheduledDosages] = React.useState<
     Map<number | null, UnscheduledDosageInfo[]>
@@ -548,7 +572,7 @@ export function Home({
 
     const dosageRecords = await dbGetScheduledDosageRecords(db, date, date);
 
-    let newScheduledDosages = new Map<number | null, ScheduledDosageInfo[]>();
+    let newScheduledDosages = new Map<number | null, DosageInfo[]>();
     for (const s of schedulesOverlapping) {
       if (dailyScheduleFilter(s)) {
         continue;
@@ -564,16 +588,16 @@ export function Home({
           (dr) =>
             dr.medicineScheduleId === s.dbId && dr.dosageIndex === dosage.index,
         );
+        const dosageRecordId = dosageRecord ? dosageRecord.dbId : null;
         groupDosages.push(
-          new ScheduledDosageInfo(
+          new DosageInfo(
             s.medicine.name,
             s.medicine.baseUnit,
             dosage.amount,
             dosage.index,
             s.dbId,
-            dosageRecord?.dbId ?? null,
+            dosageRecordId,
             groupId,
-            dosageRecord?.recordDatetime ?? null,
           ),
         );
         newIsEmpty = false;
@@ -758,7 +782,7 @@ export function Home({
     }
   }, [date, groupIdFromNotification]);
 
-  const handleDosageClick = async (dosage: ScheduledDosageInfo) => {
+  const handleDosageClick = async (dosage: DosageInfo) => {
     if (dosage.dosageRecordId) {
       await dbDeleteScheduledDosageRecord(db, dosage.dosageRecordId);
     } else {

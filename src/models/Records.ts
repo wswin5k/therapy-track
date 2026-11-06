@@ -38,7 +38,7 @@ export function sortArrayMeasurementValue(
 export class ScheduledMeasurementRecord {
   constructor(
     public dbId: number,
-    public recordDatetime: Date,
+    public record_datetime: Date,
     public date: Date,
     public assessmentScheduleId: number,
     public measurementIndex: number,
@@ -49,7 +49,7 @@ export class ScheduledMeasurementRecord {
 export class UnscheduledMeasurementRecord {
   constructor(
     public dbId: number,
-    public recordDatetime: Date,
+    public record_datetime: Date,
     public date: Date,
     public assessmentId: number,
     public value: AssessmentValue,
