@@ -39,6 +39,10 @@ export function isLessOrEqualDateOnly(first: Date, second: Date): boolean {
   return first.getTime() <= second.getTime();
 }
 
+export function isLessDateOnly(first: Date, second: Date): boolean {
+  return first.getTime() < second.getTime();
+}
+
 export function toDisplayConcise(date: Date, language: string | undefined) {
   const now = new Date();
   const yearFormat =

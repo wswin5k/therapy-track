@@ -51,6 +51,7 @@ import HistoryTable from "./HistoryTable";
 import {
   deserializeDateOnly,
   getShiftedDateOnly,
+  isLessDateOnly,
   serializeDateOnly,
 } from "../../../dateOnlyUtils";
 import {
@@ -75,6 +76,8 @@ import { t } from "i18next";
 import { Toast, ToastType } from "../../../components/Toast";
 import { NewColumnConfig } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";
+import Lucide from "@react-native-vector-icons/lucide/static";
+import { DateRange, DateRangeConfigurationDialog } from "./ConfigurationDialog";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -137,11 +140,13 @@ export function MenuModal({
   onClose,
   handleSaveToCSV,
   handleOpenConfiguration,
+  handleDateRange,
 }: {
   visible: boolean;
   onClose: () => void;
   handleSaveToCSV: () => void;
   handleOpenConfiguration: () => void;
+  handleDateRange: () => void;
 }) {
   const theme = useTheme();
 
@@ -163,18 +168,50 @@ export function MenuModal({
         >
           <TouchableOpacity
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
-            onPress={handleSaveToCSV}
+            onPress={handleDateRange}
           >
+            <Lucide
+              name="calendar-range"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              {t("Save to CSV")}
+              {t("Date Range")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
             onPress={handleOpenConfiguration}
           >
+            <Ionicons
+              name="eye"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
-              {t("Configure")}
+              {t("Visible Columns")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderColor: theme.colors.border }]}
+            onPress={handleOpenConfiguration}
+          >
+            <Lucide
+              name="settings-2"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
+            <Text style={[styles.menuText, { color: theme.colors.text }]}>
+              {t("Display Options")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menuItem, { borderColor: theme.colors.border }]}
+            onPress={handleSaveToCSV}
+          >
+            <Lucide
+              name="save"
+              style={[styles.menuIcon, { color: theme.colors.text }]}
+            />
+            <Text style={[styles.menuText, { color: theme.colors.text }]}>
+              {t("Save to CSV")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -200,14 +237,14 @@ export function HistoryTableScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
 
-  const [rowHeaders, setRowHeaders] = React.useState<Date[]>([]);
+  const [rowHeadersAll, setRowHeadersAll] = React.useState<Date[]>([]);
   const [fullHeaders, setFullHeaders] = React.useState<string[]>([]);
   const [fullHeaderToDisplayHeader, setFullHeaderToDisplayHeader] =
     React.useState<Map<string, string>>(new Map());
   const [fullHeaderToValueType, setFullHeaderToValueType] = React.useState<
     Map<string, ValueType>
   >(new Map());
-  const [cells, setCells] = React.useState<string[][]>([]);
+  const [cellsAll, setCellsAll] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   const [settings, setSettings] = React.useState<HistoryTableSettings | null>(
@@ -220,6 +257,42 @@ export function HistoryTableScreen() {
   const [toastType, setToastType] = React.useState<ToastType>(
     ToastType.Success,
   );
+
+  const [dateRangeDialogOpen, setDateRangeDialogOpen] =
+    React.useState<boolean>(false);
+  const [dateRange, setDateRange] = React.useState<DateRange>(
+    new DateRange(null, null),
+  );
+
+  const { rowHeaders, cells } = React.useMemo((): {
+    rowHeaders: Date[];
+    cells: string[][];
+  } => {
+    let endIdx = rowHeadersAll.length - 1;
+    if (dateRange.startDate !== null) {
+      while (
+        isLessDateOnly(rowHeadersAll[endIdx], dateRange.startDate) &&
+        endIdx > 0
+      ) {
+        endIdx -= 1;
+      }
+      endIdx += 1;
+    }
+    let startIdx = 0;
+    if (dateRange.endDate !== null) {
+      while (
+        isLessDateOnly(dateRange.endDate, rowHeadersAll[startIdx]) &&
+        startIdx < rowHeadersAll.length - 1
+      ) {
+        startIdx += 1;
+      }
+    }
+    console.log(startIdx, endIdx);
+    return {
+      rowHeaders: rowHeadersAll.slice(startIdx, endIdx),
+      cells: cellsAll.slice(startIdx, endIdx),
+    };
+  }, [rowHeadersAll, cellsAll, dateRange]);
 
   function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
@@ -742,8 +815,8 @@ export function HistoryTableScreen() {
       ]);
       setFullHeaderToDisplayHeader(headersMap);
 
-      setRowHeaders(dates);
-      setCells(newTableRows);
+      setRowHeadersAll(dates);
+      setCellsAll(newTableRows);
     },
     [db, getAssessmentData, getMedicineData],
   );
@@ -790,7 +863,7 @@ export function HistoryTableScreen() {
   }, [isMenuOpen]);
 
   const handleSaveToCSV = React.useCallback(async () => {
-    const csvContent = generateCSV(fullHeaders, rowHeaders, cells);
+    const csvContent = generateCSV(fullHeaders, rowHeadersAll, cellsAll);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileName = `therapy-track-records-${timestamp}.csv`;
@@ -847,12 +920,22 @@ export function HistoryTableScreen() {
       }
     }
     setIsMenuOpen(false);
-  }, [cells, fullHeaders, t]);
+  }, [cellsAll, rowHeadersAll, fullHeaders, t]);
 
   const handleOpenConfiguration = React.useCallback(() => {
     navigation.navigate("EditRecordHistoryConfigurationScreen");
     setIsMenuOpen(false);
   }, [navigation]);
+
+  const handleDateRangeDialogOpen = React.useCallback(() => {
+    setIsMenuOpen(false);
+    setDateRangeDialogOpen(true);
+  }, []);
+
+  const handleDateRangeConfigurationChange = (dateRange: DateRange) => {
+    setDateRange(dateRange);
+    setDateRangeDialogOpen(false);
+  };
 
   React.useEffect(() => {
     navigation.setOptions({
@@ -886,7 +969,7 @@ export function HistoryTableScreen() {
       fullHeaderToValueType.size === 0 ||
       fullHeaderToDisplayHeader.size === 0 ||
       rowHeaders.length === 0 ||
-      cells.length === 0
+      cellsAll.length === 0
     );
   };
 
@@ -897,6 +980,7 @@ export function HistoryTableScreen() {
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
         handleOpenConfiguration={handleOpenConfiguration}
+        handleDateRange={handleDateRangeDialogOpen}
       ></MenuModal>
 
       <Toast
@@ -905,6 +989,14 @@ export function HistoryTableScreen() {
         onHide={() => setToastMessage(null)}
         type={toastType}
       />
+
+      {dateRangeDialogOpen && (
+        <DateRangeConfigurationDialog
+          onApply={handleDateRangeConfigurationChange}
+          onCancel={() => setDateRangeDialogOpen(false)}
+        ></DateRangeConfigurationDialog>
+      )}
+
       {!isTableDataReady() ? (
         renderEmptyState()
       ) : (
@@ -958,20 +1050,23 @@ const styles = StyleSheet.create({
     top: 0,
     right: 0,
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderBottomLeftRadius: DEFAULT_BORDER_RADIUS,
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
   },
   menuItem: {
     alignContent: "flex-start",
+    alignItems: "center",
     padding: 18,
-    borderBottomWidth: 1,
+    flexDirection: "row",
     width: "100%",
+  },
+  menuIcon: {
+    fontSize: 24,
   },
   menuText: {
     alignItems: "center",
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "400",
+    paddingLeft: 12,
   },
 });
