@@ -119,8 +119,6 @@ export default function HistoryTable({
     fillInitialColumnWidths(),
   );
 
-  //const [movingColumn, setMovingColumn] = React.useState<
-
   const scrollX = useSharedValue(0);
   const scrollY = useSharedValue(0);
   const columnHeaderRef = useAnimatedRef<Animated.ScrollView>();
