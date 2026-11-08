@@ -34,6 +34,7 @@ import {
   weightUnitToGramsMultiplier,
 } from "../../../models/MedicineSchedule";
 import Ionicons from "@react-native-vector-icons/ionicons/static";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import * as Sharing from "expo-sharing";
 import { Medicine } from "../../../models/MedicineSchedule";
 import { useTranslation } from "react-i18next";
@@ -170,8 +171,8 @@ export function MenuModal({
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
             onPress={handleDateRange}
           >
-            <Lucide
-              name="calendar-range"
+            <MaterialDesignIcons
+              name="calendar-expand-horizontal"
               style={[styles.menuIcon, { color: theme.colors.text }]}
             />
             <Text style={[styles.menuText, { color: theme.colors.text }]}>
@@ -258,6 +259,8 @@ export function HistoryTableScreen() {
     ToastType.Success,
   );
 
+  const [version, setVersion] = React.useState(0);
+
   const [dateRangeDialogOpen, setDateRangeDialogOpen] =
     React.useState<boolean>(false);
   const [dateRange, setDateRange] = React.useState<DateRange>(
@@ -276,7 +279,9 @@ export function HistoryTableScreen() {
       ) {
         endIdx -= 1;
       }
-      endIdx += 1;
+      if (endIdx > 0) {
+        endIdx += 1;
+      }
     }
     let startIdx = 0;
     if (dateRange.endDate !== null) {
@@ -287,7 +292,6 @@ export function HistoryTableScreen() {
         startIdx += 1;
       }
     }
-    console.log(startIdx, endIdx);
     return {
       rowHeaders: rowHeadersAll.slice(startIdx, endIdx),
       cells: cellsAll.slice(startIdx, endIdx),
@@ -935,6 +939,7 @@ export function HistoryTableScreen() {
   const handleDateRangeConfigurationChange = (dateRange: DateRange) => {
     setDateRange(dateRange);
     setDateRangeDialogOpen(false);
+    setVersion((version) => version + 1);
   };
 
   React.useEffect(() => {
@@ -1002,6 +1007,7 @@ export function HistoryTableScreen() {
       ) : (
         <View style={[styles.mainContainer]}>
           <HistoryTable
+            key={version}
             fullHeaders={fullHeaders}
             fullHeaderToValueType={fullHeaderToValueType}
             fullHeaderToDisplayHeader={fullHeaderToDisplayHeader}

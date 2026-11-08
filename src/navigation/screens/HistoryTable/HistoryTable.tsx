@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rowHeaderCell: {
-    justifyContent: "center",
+    justifyContent: "flex-end",
     alignItems: "center",
     borderWidth: 1,
     padding: 6,

@@ -38,6 +38,10 @@ export function mixColors(
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
 
+export function floatToHexColor(value: number): string {
+  return ("00" + Math.round(value * 255).toString(16)).toUpperCase().slice(-2);
+}
+
 export function isEqualLowerCase(a: string | null, b: string | null): boolean {
   return a?.toLowerCase() === b?.toLowerCase();
 }
