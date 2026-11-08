@@ -279,8 +279,9 @@ export function HistoryTableScreen() {
       ) {
         endIdx -= 1;
       }
-      if (endIdx > 0) {
-        endIdx += 1;
+      endIdx += 1;
+      if (isLessDateOnly(rowHeadersAll[0], dateRange.startDate)) {
+        endIdx = 0;
       }
     }
     let startIdx = 0;
@@ -290,6 +291,14 @@ export function HistoryTableScreen() {
         startIdx < rowHeadersAll.length - 1
       ) {
         startIdx += 1;
+      }
+      if (
+        isLessDateOnly(
+          dateRange.endDate,
+          rowHeadersAll[rowHeadersAll.length - 1],
+        )
+      ) {
+        startIdx = rowHeadersAll.length;
       }
     }
     return {
