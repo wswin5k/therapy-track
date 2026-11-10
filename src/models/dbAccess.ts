@@ -1347,6 +1347,12 @@ export async function dbUpdateHistoryTableSettings(
   db: SQLiteDatabase,
   settings: HistoryTableSettings,
 ) {
+  // let queryStr = `UPDATE history_table_settings
+  //   SET expand_all_rows = ?,
+  //   show_days_without_entries = ?,
+  //   merge_ingredients_with_different_forms = ?,
+  //   column_configs = ?
+  //   WHERE id = 1`
   await db.runAsync(
     `UPDATE history_table_settings
     SET expand_all_rows = ?,

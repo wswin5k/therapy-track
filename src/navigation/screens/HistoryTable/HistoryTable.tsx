@@ -759,6 +759,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rowHeaderCell: {
+    flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
     borderWidth: 1,

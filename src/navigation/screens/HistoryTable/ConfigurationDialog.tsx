@@ -1,11 +1,19 @@
 import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Switch,
+  ScrollView,
+} from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import {
   DEFAULT_BORDER_RADIUS,
   ERROR_BORDER_WIDTH,
   eStyles,
+  PRESSABLE_HEIGHT,
   PRESSABLE_PADDING_HORIZONTAL,
   SECONDARY_EDIT_PRESSABLE_HEIGHT,
 } from "../../../commonStyles";
@@ -283,6 +291,93 @@ export function DateRangeConfigurationDialog({
   );
 }
 
+export class DisplayOptions {
+  constructor(
+    public expandAllRows: boolean,
+    public showDaysWithoutEntries: boolean,
+  ) {}
+}
+
+interface DisplayOptionsConfigurationDialogProps {
+  initialDisplayOptions: DisplayOptions;
+  onApply: (displayOptions: DisplayOptions) => void;
+  onCancel: () => void;
+}
+
+export function DisplayOptionsConfigurationDialog({
+  initialDisplayOptions,
+  onApply,
+  onCancel,
+}: DisplayOptionsConfigurationDialogProps) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const [displayOptions, setDisplayOptions] = React.useState<DisplayOptions>(
+    initialDisplayOptions,
+  );
+
+  const handleUpdateDisplayOptions = (updates: Partial<DisplayOptions>) => {
+    setDisplayOptions((value) => {
+      return { ...value, ...updates };
+    });
+  };
+  const handleApply = () => {
+    onApply(displayOptions);
+  };
+
+  return (
+    <>
+      <ConfigurationDialog
+        title="Display Options"
+        onApply={handleApply}
+        onCancel={onCancel}
+      >
+        <ScrollView
+          nestedScrollEnabled={true}
+          persistentScrollbar={true}
+          style={styles.displayOptionsDialogContent}
+        >
+          <View style={styles.optionsRowContainer}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
+              {t("Expand all rows")}
+            </Text>
+            <Switch
+              value={displayOptions.expandAllRows}
+              onValueChange={(value: boolean) =>
+                handleUpdateDisplayOptions({ expandAllRows: value })
+              }
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
+              thumbColor={theme.colors.surface}
+              style={styles.switch}
+            />
+          </View>
+          <View style={styles.optionsRowContainer}>
+            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
+              {t("Show days without entries")}
+            </Text>
+            <Switch
+              value={displayOptions.showDaysWithoutEntries}
+              onValueChange={(value: boolean) =>
+                handleUpdateDisplayOptions({
+                  showDaysWithoutEntries: value,
+                })
+              }
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
+              thumbColor={theme.colors.surface}
+              style={styles.switch}
+            />
+          </View>
+        </ScrollView>
+      </ConfigurationDialog>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
@@ -300,12 +395,17 @@ const styles = StyleSheet.create({
   },
   dialog: {
     borderRadius: DEFAULT_BORDER_RADIUS,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 20,
     maxHeight: "100%",
     width: "100%",
     alignItems: "center",
     borderWidth: 1,
+  },
+  displayOptionsDialogContent: {
+    width: "100%",
+    alignSelf: "center",
+    //flex: 1,
   },
   dateRangeContainer: {
     flexDirection: "column",
@@ -364,5 +464,16 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 20,
     fontWeight: "300",
+  },
+  optionsRowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    //alignSelf: "flex-start",
+    //marginBottom: 20,
+  },
+  switch: {
+    transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
+    height: PRESSABLE_HEIGHT,
   },
 });
