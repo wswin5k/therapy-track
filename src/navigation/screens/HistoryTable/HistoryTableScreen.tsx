@@ -145,14 +145,14 @@ export function MenuModal({
   visible,
   onClose,
   handleSaveToCSV,
-  handleOpenConfiguration,
+  handleVisibleColumns,
   handleDateRange,
   handleDisplayOptions,
 }: {
   visible: boolean;
   onClose: () => void;
   handleSaveToCSV: () => void;
-  handleOpenConfiguration: () => void;
+  handleVisibleColumns: () => void;
   handleDateRange: () => void;
   handleDisplayOptions: () => void;
 }) {
@@ -188,7 +188,7 @@ export function MenuModal({
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
-            onPress={handleOpenConfiguration}
+            onPress={handleVisibleColumns}
           >
             <Ionicons
               name="eye"
@@ -976,7 +976,6 @@ export function HistoryTableScreen() {
           settings.columnConfigs,
         );
         dbUpdateHistoryTableSettings(db, newSettings);
-        console.log(newSettings);
         const tableDataPromise = loadAndCombineDataForTable(newSettings);
         const settingsPromise = loadSettings();
         await Promise.all([tableDataPromise, settingsPromise]);
@@ -1037,7 +1036,7 @@ export function HistoryTableScreen() {
         visible={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
-        handleOpenConfiguration={handleDisplayOptionsMenuItemPress}
+        handleVisibleColumns={handleDisplayOptionsMenuItemPress}
         handleDateRange={handleDateRangeMenuItemPress}
         handleDisplayOptions={handleDisplayOptionsMenuItemPress}
       ></MenuModal>

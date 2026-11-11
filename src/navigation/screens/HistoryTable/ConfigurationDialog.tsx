@@ -404,7 +404,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "400",
     paddingHorizontal: 0,
-    //textAlign: "left"
   },
   dateRangeContainer: {
     flexDirection: "column",
