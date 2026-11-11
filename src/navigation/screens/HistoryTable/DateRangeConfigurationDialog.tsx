@@ -13,7 +13,7 @@ import RNDateTimePicker, {
   DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
 import { getTodayDateOnly } from "../../../dateOnlyUtils";
-import { ConfigurationDialog } from "./ConfigurationDialog";
+import { ButtonConfiguration, Dialog } from "../../../components/Dialog";
 
 export class DateRange {
   constructor(
@@ -91,6 +91,15 @@ export function DateRangeConfigurationDialog({
     onApply(new DateRange(startDate, endDate));
   };
 
+  const buttons = [
+    new ButtonConfiguration(
+      t("Apply"),
+      handleApply,
+      theme.colors.primary,
+      theme.colors.textOnPrimary,
+    ),
+  ];
+
   return (
     <>
       {isStartDatePickerOpened ? (
@@ -118,11 +127,7 @@ export function DateRangeConfigurationDialog({
       ) : (
         ""
       )}
-      <ConfigurationDialog
-        title="Date Range"
-        onApply={handleApply}
-        onCancel={onCancel}
-      >
+      <Dialog title="Date Range" buttons={buttons} onCancel={onCancel}>
         <View style={styles.dateRangeContainer}>
           <View style={styles.dateRow}>
             <Text style={[styles.labelText, { color: theme.colors.text }]}>
@@ -175,7 +180,7 @@ export function DateRangeConfigurationDialog({
             </TouchableOpacity>
           </View>
         </View>
-      </ConfigurationDialog>
+      </Dialog>
     </>
   );
 }

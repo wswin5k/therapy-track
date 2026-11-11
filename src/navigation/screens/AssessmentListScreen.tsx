@@ -153,7 +153,9 @@ function AssessmentListItem({
         visible={deleteRefusalDialogVisible}
         title={t("Assessment has schedules")}
         message={t(
-          "Assessment cannot be deleted because " +
+          "Assessment " +
+            assessment.name +
+            " cannot be deleted because " +
             "it has connected schedules. " +
             "They need to be deleted before the assessment.",
         )}

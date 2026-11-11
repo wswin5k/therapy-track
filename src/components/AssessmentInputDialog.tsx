@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Modal, View, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { ValueType, ValueDomain } from "../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,7 @@ import {
   getDefaultValue,
   isTextValueValid,
 } from "./AssessmentInput";
-import { DEFAULT_BORDER_RADIUS } from "../commonStyles";
+import { ButtonConfiguration, Dialog } from "./Dialog";
 
 interface AssessmentInputDialogProps {
   title: string;
@@ -49,160 +49,57 @@ export function AssessmentInputDialog({
     }
   };
 
+  const buttons = [
+    new ButtonConfiguration(
+      t("Save"),
+      handleSave,
+      theme.colors.primary,
+      theme.colors.textOnPrimary,
+    ),
+  ];
+
+  if (initialValue !== null) {
+    buttons.unshift(
+      new ButtonConfiguration(
+        t("Clear"),
+        onClear,
+        theme.colors.surface,
+        theme.colors.primary,
+        theme.colors.primary,
+      ),
+    );
+  }
+
   return (
-    <Modal transparent animationType="fade" onRequestClose={onCancel}>
-      <TouchableOpacity
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={onCancel}
-      >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={(e) => e.stopPropagation()}
-          style={styles.modal}
-        >
-          <View
-            style={[
-              styles.dialog,
-              { backgroundColor: theme.colors.background },
-            ]}
-          >
-            <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
-              <Text
-                style={[
-                  styles.closeButtonText,
-                  { color: theme.colors.textSecondary },
-                ]}
-              >
-                ✕
-              </Text>
-            </TouchableOpacity>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              {title}
-            </Text>
-            <AssessmentInput
-              value={value}
-              type={assessmentType}
-              handleValueChange={setValue}
-              valueDomain={valueDomain}
-              valueError={valueError}
-            />
-            <View style={styles.marginContainer}></View>
-            <View style={styles.buttonContainer}>
-              {initialValue !== null ? (
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.clearButton,
-                    {
-                      borderColor: theme.colors.primary,
-                      backgroundColor: theme.colors.surface,
-                    },
-                  ]}
-                  onPress={onClear}
-                >
-                  <Text
-                    style={[styles.buttonText, { color: theme.colors.primary }]}
-                  >
-                    {t("Clear")}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                ""
-              )}
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-                onPress={handleSave}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    { color: theme.colors.textOnPrimary },
-                  ]}
-                >
-                  {t("Save")}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+    <Dialog
+      title={title}
+      buttons={buttons}
+      onCancel={onCancel}
+      showCloseButton={true}
+      enableContentScroll={false}
+    >
+      <View style={styles.contentContainer}>
+        <AssessmentInput
+          value={value}
+          type={assessmentType}
+          handleValueChange={setValue}
+          valueDomain={valueDomain}
+          valueError={valueError}
+        />
+      </View>
+    </Dialog>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100%",
-    width: "100%",
-  },
-  modal: {
-    width: 400,
-    maxWidth: "85%",
-    maxHeight: "65%",
-  },
-  dialog: {
-    borderRadius: DEFAULT_BORDER_RADIUS,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    maxHeight: "100%",
-    width: "100%",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 14,
-    textAlign: "center",
-    height: 30,
-    textAlignVertical: "center",
-    width: "100%",
-  },
   marginContainer: {
-    height: 16,
+    height: 0,
   },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    width: "100%",
-    gap: 20,
-    height: 44,
-  },
-  button: {
-    flexShrink: 1,
-    width: "50%",
-    paddingHorizontal: 16,
-    borderRadius: DEFAULT_BORDER_RADIUS,
-    justifyContent: "center",
-  },
-  clearButton: {
-    borderWidth: 1.5,
-  },
-  buttonText: {
-    fontSize: 17,
-    fontWeight: "500",
-    width: "100%",
-    textAlign: "center",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    zIndex: 0,
-    justifyContent: "center",
+  contentContainer: {
+    width: "90%",
+    alignSelf: "center",
     alignItems: "center",
-    marginRight: 12,
-    marginTop: 6,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    fontWeight: "300",
+    justifyContent: "center",
+    marginBottom: 16,
   },
 });

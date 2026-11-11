@@ -6,6 +6,7 @@ export const DEFAULT_BORDER_RADIUS: number = 12;
 export const PRESSABLE_PADDING_HORIZONTAL: number = 12;
 export const PRESSABLE_HEIGHT: number = 54;
 export const SECONDARY_PRESSABLE_HEIGHT: number = 50;
+export const TERTIARY_PRESSABLE_HEIGHT: number = 46;
 
 //styles for edit screens
 
@@ -175,7 +176,7 @@ export const lStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 40,
-    height: 44,
+    height: TERTIARY_PRESSABLE_HEIGHT,
     minWidth: 90,
     maxWidth: "50%",
     justifyContent: "center",

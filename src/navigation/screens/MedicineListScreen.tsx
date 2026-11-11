@@ -151,7 +151,9 @@ function MedicineListItem({
         visible={deleteRefusalDialogVisible}
         title={t("Medicine has schedules")}
         message={t(
-          "Medicine cannot be deleted because " +
+          "Medicine " +
+            medicine.name +
+            " cannot be deleted because " +
             "it has connected schedules. " +
             "They need to be deleted before the medicine.",
         )}
