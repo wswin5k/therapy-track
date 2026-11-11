@@ -20,7 +20,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import {
   PRESSABLE_HEIGHT,
   eStyles,
-  SECONDARY_EDIT_PRESSABLE_HEIGHT,
+  SECONDARY_PRESSABLE_HEIGHT,
 } from "../../commonStyles";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import {
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     ...eStyles.pressable,
     justifyContent: "center",
     width: 80,
-    height: SECONDARY_EDIT_PRESSABLE_HEIGHT,
+    height: SECONDARY_PRESSABLE_HEIGHT,
     maxWidth: "50%",
     overflow: "hidden",
     borderWidth: 1.2,

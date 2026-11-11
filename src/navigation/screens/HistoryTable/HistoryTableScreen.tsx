@@ -946,11 +946,6 @@ export function HistoryTableScreen() {
     setIsMenuOpen(false);
   }, [cellsAll, rowHeadersAll, fullHeaders, t]);
 
-  const handleOpenConfiguration = React.useCallback(() => {
-    navigation.navigate("EditRecordHistoryConfigurationScreen");
-    setIsMenuOpen(false);
-  }, [navigation]);
-
   const handleDateRangeMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
     setDateRangeDialogOpen(true);
@@ -1042,7 +1037,7 @@ export function HistoryTableScreen() {
         visible={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
-        handleOpenConfiguration={handleOpenConfiguration}
+        handleOpenConfiguration={handleDisplayOptionsMenuItemPress}
         handleDateRange={handleDateRangeMenuItemPress}
         handleDisplayOptions={handleDisplayOptionsMenuItemPress}
       ></MenuModal>

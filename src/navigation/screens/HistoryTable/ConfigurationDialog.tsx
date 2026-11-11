@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Switch,
   ScrollView,
+  useColorScheme,
+  BackHandler,
 } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -13,17 +15,16 @@ import {
   DEFAULT_BORDER_RADIUS,
   ERROR_BORDER_WIDTH,
   eStyles,
-  PRESSABLE_HEIGHT,
   PRESSABLE_PADDING_HORIZONTAL,
-  SECONDARY_EDIT_PRESSABLE_HEIGHT,
+  SECONDARY_PRESSABLE_HEIGHT,
 } from "../../../commonStyles";
 import RNDateTimePicker, {
   DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
 import { getTodayDateOnly } from "../../../dateOnlyUtils";
 import { Portal } from "@gorhom/portal";
-import SystemNavigationBar from "react-native-system-navigation-bar";
 import { floatToHexColor } from "../../utils";
+import { applyNavigationBarTheme } from "../../../App";
 
 const TRANSPARENCY_ALPHA = 0.7;
 const TRANSPARENCY_ALPHA_HEX = floatToHexColor(TRANSPARENCY_ALPHA);
@@ -43,22 +44,28 @@ export function ConfigurationDialog({
 }: AssessmentInputDialogProps) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const colorScheme = useColorScheme();
 
   React.useEffect(() => {
-    SystemNavigationBar.setBarColor(
-      theme.colors.card + TRANSPARENCY_ALPHA_HEX,
-      {
-        bar: "navigation",
-        translucent: true,
-      },
-    );
+    applyNavigationBarTheme(theme.colors.card, "dark", true);
     return () => {
-      SystemNavigationBar.setBarColor(theme.colors.card, {
-        bar: "navigation",
-        translucent: false,
-      });
+      applyNavigationBarTheme(theme.colors.card, colorScheme, false);
     };
-  }, [theme.colors.card]);
+  }, [theme.colors.card, colorScheme]);
+
+  React.useEffect(() => {
+    const backAction = () => {
+      onCancel();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onCancel]);
 
   const handleSave = () => {
     onApply();
@@ -79,7 +86,10 @@ export function ConfigurationDialog({
           <View
             style={[
               styles.dialog,
-              { backgroundColor: theme.colors.background },
+              {
+                backgroundColor: theme.colors.background,
+                borderColor: theme.colors.border,
+              },
             ]}
           >
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
@@ -95,7 +105,10 @@ export function ConfigurationDialog({
             <Text style={[styles.title, { color: theme.colors.text }]}>
               {title}
             </Text>
-            {children}
+
+            <ScrollView persistentScrollbar={true} style={styles.dialogContent}>
+              {children}
+            </ScrollView>
             <TouchableOpacity
               style={[styles.button, { backgroundColor: theme.colors.primary }]}
               onPress={handleSave}
@@ -224,13 +237,7 @@ export function DateRangeConfigurationDialog({
       >
         <View style={styles.dateRangeContainer}>
           <View style={styles.dateRow}>
-            <Text
-              style={[
-                eStyles.labelText,
-                { paddingHorizontal: 10 },
-                { color: theme.colors.text },
-              ]}
-            >
+            <Text style={[styles.labelText, { color: theme.colors.text }]}>
               {t("Start date")}
             </Text>
             <TouchableOpacity
@@ -257,13 +264,7 @@ export function DateRangeConfigurationDialog({
             </TouchableOpacity>
           </View>
           <View style={styles.dateRow}>
-            <Text
-              style={[
-                eStyles.labelText,
-                { paddingHorizontal: 10 },
-                { color: theme.colors.text },
-              ]}
-            >
+            <Text style={[styles.labelText, { color: theme.colors.text }]}>
               {t("End date")}
             </Text>
             <TouchableOpacity
@@ -331,48 +332,42 @@ export function DisplayOptionsConfigurationDialog({
         onApply={handleApply}
         onCancel={onCancel}
       >
-        <ScrollView
-          nestedScrollEnabled={true}
-          persistentScrollbar={true}
-          style={styles.displayOptionsDialogContent}
-        >
-          <View style={styles.optionsRowContainer}>
-            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-              {t("Expand all rows")}
-            </Text>
-            <Switch
-              value={displayOptions.expandAllRows}
-              onValueChange={(value: boolean) =>
-                handleUpdateDisplayOptions({ expandAllRows: value })
-              }
-              trackColor={{
-                false: theme.colors.border,
-                true: theme.colors.primary,
-              }}
-              thumbColor={theme.colors.surface}
-              style={styles.switch}
-            />
-          </View>
-          <View style={styles.optionsRowContainer}>
-            <Text style={[eStyles.labelText, { color: theme.colors.text }]}>
-              {t("Show days without entries")}
-            </Text>
-            <Switch
-              value={displayOptions.showDaysWithoutEntries}
-              onValueChange={(value: boolean) =>
-                handleUpdateDisplayOptions({
-                  showDaysWithoutEntries: value,
-                })
-              }
-              trackColor={{
-                false: theme.colors.border,
-                true: theme.colors.primary,
-              }}
-              thumbColor={theme.colors.surface}
-              style={styles.switch}
-            />
-          </View>
-        </ScrollView>
+        <View style={styles.optionsRowContainer}>
+          <Text style={[styles.labelText, { color: theme.colors.text }]}>
+            {t("Expand all rows")}
+          </Text>
+          <Switch
+            value={displayOptions.expandAllRows}
+            onValueChange={(value: boolean) =>
+              handleUpdateDisplayOptions({ expandAllRows: value })
+            }
+            trackColor={{
+              false: theme.colors.border,
+              true: theme.colors.primary,
+            }}
+            thumbColor={theme.colors.surface}
+            style={eStyles.switchPressable}
+          />
+        </View>
+        <View style={styles.optionsRowContainer}>
+          <Text style={[styles.labelText, { color: theme.colors.text }]}>
+            {t("Show days without entries")}
+          </Text>
+          <Switch
+            value={displayOptions.showDaysWithoutEntries}
+            onValueChange={(value: boolean) =>
+              handleUpdateDisplayOptions({
+                showDaysWithoutEntries: value,
+              })
+            }
+            trackColor={{
+              false: theme.colors.border,
+              true: theme.colors.primary,
+            }}
+            thumbColor={theme.colors.surface}
+            style={eStyles.switchPressable}
+          />
+        </View>
       </ConfigurationDialog>
     </>
   );
@@ -391,21 +386,25 @@ const styles = StyleSheet.create({
   modal: {
     width: 400,
     maxWidth: "85%",
-    maxHeight: "65%",
+    maxHeight: "85%",
   },
   dialog: {
     borderRadius: DEFAULT_BORDER_RADIUS,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
     maxHeight: "100%",
     width: "100%",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: 2,
   },
-  displayOptionsDialogContent: {
+  dialogContent: {
     width: "100%",
     alignSelf: "center",
-    //flex: 1,
+  },
+  labelText: {
+    flexShrink: 1,
+    fontSize: 17,
+    fontWeight: "400",
+    paddingHorizontal: 0,
+    //textAlign: "left"
   },
   dateRangeContainer: {
     flexDirection: "column",
@@ -415,12 +414,13 @@ const styles = StyleSheet.create({
   },
   dateRow: {
     width: "100%",
+    paddingHorizontal: 24,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   datePressable: {
-    height: SECONDARY_EDIT_PRESSABLE_HEIGHT,
+    height: SECONDARY_PRESSABLE_HEIGHT,
     borderWidth: 1,
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: PRESSABLE_PADDING_HORIZONTAL,
@@ -430,20 +430,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 24,
+    marginTop: 16,
+    marginBottom: 20,
     textAlign: "center",
-    height: 30,
     textAlignVertical: "center",
     width: "100%",
   },
   button: {
-    flexShrink: 1,
-    width: "50%",
+    minWidth: "35%",
     borderRadius: DEFAULT_BORDER_RADIUS,
     paddingHorizontal: 16,
-    marginTop: 24,
+    marginVertical: 20,
     justifyContent: "center",
-    height: SECONDARY_EDIT_PRESSABLE_HEIGHT,
+    alignItems: "center",
+    height: SECONDARY_PRESSABLE_HEIGHT,
   },
   buttonText: {
     fontSize: 17,
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     right: 0,
-    zIndex: 0,
+    zIndex: 1,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
@@ -469,11 +469,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    //alignSelf: "flex-start",
-    //marginBottom: 20,
-  },
-  switch: {
-    transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
-    height: PRESSABLE_HEIGHT,
+    paddingHorizontal: 20,
   },
 });

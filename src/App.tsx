@@ -24,7 +24,9 @@ import {
   navigationRef,
   setupNotificationHandlers,
 } from "./services/notificationService";
-import SystemNavigationBar from "react-native-system-navigation-bar";
+import SystemNavigationBar, {
+  ColorInput,
+} from "react-native-system-navigation-bar";
 import { PortalProvider } from "@gorhom/portal";
 
 SplashScreen.preventAutoHideAsync();
@@ -84,6 +86,18 @@ function colorSchemeToTheme(
   return colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme;
 }
 
+export function applyNavigationBarTheme(
+  color: ColorInput,
+  colorScheme: Appearance.ColorSchemeName | null,
+  translucent: boolean,
+) {
+  SystemNavigationBar.setBarColor(color, {
+    style: colorScheme === "dark" ? "light" : "dark",
+    bar: "navigation",
+    translucent: translucent,
+  });
+}
+
 function AppNavigation() {
   const db = useSQLiteContext();
   React.useEffect(() => {
@@ -103,20 +117,9 @@ function AppNavigation() {
 
   let theme = colorSchemeToTheme(colorScheme);
 
-  const applyTheme = React.useCallback(
-    (colorScheme: Appearance.ColorSchemeName | null) => {
-      SystemNavigationBar.setBarColor(theme.colors.card + "FF", {
-        style: colorScheme === "dark" ? "light" : "dark",
-        bar: "navigation",
-        translucent: false,
-      });
-    },
-    [theme.colors.card],
-  );
-
   React.useEffect(() => {
-    applyTheme(colorScheme);
-  }, [applyTheme, colorScheme]);
+    applyNavigationBarTheme(theme.colors.card, colorScheme, false);
+  }, [colorScheme, theme.colors.card]);
 
   return (
     <Navigation
