@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Modal, View, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { useTheme } from "@react-navigation/native";
 import { ButtonConfiguration, Dialog } from "./Dialog";
 

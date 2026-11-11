@@ -57,7 +57,6 @@ export function AssessmentInputDialog({
       theme.colors.textOnPrimary,
     ),
   ];
-  console.log(theme);
 
   if (initialValue !== null) {
     buttons.unshift(
