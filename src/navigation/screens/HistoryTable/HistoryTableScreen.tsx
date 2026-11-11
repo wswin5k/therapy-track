@@ -78,12 +78,8 @@ import { Toast, ToastType } from "../../../components/Toast";
 import { NewColumnConfig } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";
 import Lucide from "@react-native-vector-icons/lucide/static";
-import {
-  DateRange,
-  DateRangeConfigurationDialog,
-  DisplayOptions,
-  DisplayOptionsConfigurationDialog,
-} from "./ConfigurationDialog";
+import { DateRange, DateRangeConfigurationDialog } from "./DateRangeConfigurationDialog";
+import { DisplayOptions, DisplayOptionsConfigurationDialog } from "./DisplayOptionsConfigurationDialog";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
