@@ -247,14 +247,14 @@ export function HistoryTableScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
 
-  const [rowHeadersWhole, setRowHeadersAll] = React.useState<Date[]>([]);
+  const [rowHeadersAll, setRowHeadersAll] = React.useState<Date[]>([]);
   const [fullHeaders, setFullHeaders] = React.useState<string[]>([]);
   const [fullHeaderToDisplayHeader, setFullHeaderToDisplayHeader] =
     React.useState<Map<string, string>>(new Map());
   const [fullHeaderToValueType, setFullHeaderToValueType] = React.useState<
     Map<string, ValueType>
   >(new Map());
-  const [cellsWhole, setCellsAll] = React.useState<string[][]>([]);
+  const [cellsAll, setCellsAll] = React.useState<string[][]>([]);
 
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   const [settings, setSettings] = React.useState<HistoryTableSettings | null>(
@@ -283,48 +283,48 @@ export function HistoryTableScreen() {
     rowHeaders: Date[];
     cells: string[][];
   } => {
-    if (rowHeadersWhole.length === 0 || cellsWhole.length === 0) {
+    if (rowHeadersAll.length === 0 || cellsAll.length === 0) {
       return {
         rowHeaders: rowHeaders,
         cells: cells,
       };
     }
 
-    let endIdx = rowHeadersWhole.length - 1;
+    let endIdx = rowHeadersAll.length - 1;
     if (dateRange.startDate !== null) {
       while (
-        isLessDateOnly(rowHeadersWhole[endIdx], dateRange.startDate) &&
+        isLessDateOnly(rowHeadersAll[endIdx], dateRange.startDate) &&
         endIdx > 0
       ) {
         endIdx -= 1;
       }
       endIdx += 1;
-      if (isLessDateOnly(rowHeadersWhole[0], dateRange.startDate)) {
+      if (isLessDateOnly(rowHeadersAll[0], dateRange.startDate)) {
         endIdx = 0;
       }
     }
     let startIdx = 0;
     if (dateRange.endDate !== null) {
       while (
-        isLessDateOnly(dateRange.endDate, rowHeadersWhole[startIdx]) &&
-        startIdx < rowHeadersWhole.length - 1
+        isLessDateOnly(dateRange.endDate, rowHeadersAll[startIdx]) &&
+        startIdx < rowHeadersAll.length - 1
       ) {
         startIdx += 1;
       }
       if (
         isLessDateOnly(
           dateRange.endDate,
-          rowHeadersWhole[rowHeadersWhole.length - 1],
+          rowHeadersAll[rowHeadersAll.length - 1],
         )
       ) {
-        startIdx = rowHeadersWhole.length;
+        startIdx = rowHeadersAll.length;
       }
     }
     return {
-      rowHeaders: rowHeadersWhole.slice(startIdx, endIdx),
-      cells: cellsWhole.slice(startIdx, endIdx),
+      rowHeaders: rowHeadersAll.slice(startIdx, endIdx),
+      cells: cellsAll.slice(startIdx, endIdx),
     };
-  }, [rowHeadersWhole, cellsWhole, dateRange]);
+  }, [rowHeadersAll, cellsAll, dateRange]);
 
   function calculateHeaders(
     fullHeaderToShortHeader: Map<string, string>,
@@ -896,7 +896,7 @@ export function HistoryTableScreen() {
   }, [isMenuOpen]);
 
   const handleSaveToCSV = React.useCallback(async () => {
-    const csvContent = generateCSV(fullHeaders, rowHeadersWhole, cellsWhole);
+    const csvContent = generateCSV(fullHeaders, rowHeadersAll, cellsAll);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileName = `therapy-track-records-${timestamp}.csv`;
@@ -953,7 +953,7 @@ export function HistoryTableScreen() {
       }
     }
     setIsMenuOpen(false);
-  }, [cellsWhole, rowHeadersWhole, fullHeaders, t]);
+  }, [cellsAll, rowHeadersAll, fullHeaders, t]);
 
   const handleDateRangeMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
@@ -971,13 +971,13 @@ export function HistoryTableScreen() {
 
   const dateRangeWhole = React.useMemo(
     () =>
-      rowHeadersWhole.length > 0
+      rowHeadersAll.length > 0
         ? new DateRange(
-            rowHeadersWhole[rowHeadersWhole.length - 1],
-            rowHeadersWhole[0],
+            rowHeadersAll[rowHeadersAll.length - 1],
+            rowHeadersAll[0],
           )
         : new DateRange(null, null),
-    [rowHeadersWhole],
+    [rowHeadersAll],
   );
 
   const handleDisplayOptionsMenuItemPress = React.useCallback(() => {
@@ -1046,7 +1046,7 @@ export function HistoryTableScreen() {
       fullHeaderToValueType.size === 0 ||
       fullHeaderToDisplayHeader.size === 0 ||
       rowHeaders.length === 0 ||
-      cellsWhole.length === 0
+      cellsAll.length === 0
     );
   };
 
