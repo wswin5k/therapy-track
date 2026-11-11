@@ -78,8 +78,14 @@ import { Toast, ToastType } from "../../../components/Toast";
 import { NewColumnConfig } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";
 import Lucide from "@react-native-vector-icons/lucide/static";
-import { DateRange, DateRangeConfigurationDialog } from "./DateRangeConfigurationDialog";
-import { DisplayOptions, DisplayOptionsConfigurationDialog } from "./DisplayOptionsConfigurationDialog";
+import {
+  DateRange,
+  DateRangeConfigurationDialog,
+} from "./DateRangeConfigurationDialog";
+import {
+  DisplayOptions,
+  DisplayOptionsConfigurationDialog,
+} from "./DisplayOptionsConfigurationDialog";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -277,6 +283,13 @@ export function HistoryTableScreen() {
     rowHeaders: Date[];
     cells: string[][];
   } => {
+    if (rowHeadersAll.length === 0 || cellsAll.length === 0) {
+      return {
+        rowHeaders: rowHeaders,
+        cells: cells,
+      };
+    }
+
     let endIdx = rowHeadersAll.length - 1;
     if (dateRange.startDate !== null) {
       while (
@@ -790,7 +803,7 @@ export function HistoryTableScreen() {
       ]);
       const days = Array.from(daysSet).sort();
       let dates = [];
-      if (initialSettings.showDaysWithoutEntries) {
+      if (initialSettings.showDaysWithoutEntries && days.length > 0) {
         const startDay = deserializeDateOnly(days[0]);
         const endDate = deserializeDateOnly(days[days.length - 1]);
 
@@ -956,6 +969,17 @@ export function HistoryTableScreen() {
     [],
   );
 
+  const dateRangeWhole = React.useMemo(
+    () =>
+      rowHeadersAll.length > 0
+        ? new DateRange(
+            rowHeadersAll[rowHeadersAll.length - 1],
+            rowHeadersAll[0],
+          )
+        : new DateRange(null, null),
+    [rowHeadersAll],
+  );
+
   const handleDisplayOptionsMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
     setDisplayOptionsDialogOpen(true);
@@ -1046,6 +1070,7 @@ export function HistoryTableScreen() {
 
       {dateRangeDialogOpen && (
         <DateRangeConfigurationDialog
+          initialDateRange={dateRangeWhole}
           onApply={handleDateRangeConfigurationChange}
           onCancel={() => setDateRangeDialogOpen(false)}
         />
