@@ -23,11 +23,13 @@ export class DateRange {
 }
 
 interface DateRangeConfigurationDialogProps {
+  initialDateRange: DateRange;
   onApply: (dateRange: DateRange) => void;
   onCancel: () => void;
 }
 
 export function DateRangeConfigurationDialog({
+  initialDateRange,
   onApply,
   onCancel,
 }: DateRangeConfigurationDialogProps) {
@@ -94,7 +96,7 @@ export function DateRangeConfigurationDialog({
       {isStartDatePickerOpened ? (
         <RNDateTimePicker
           mode="date"
-          value={startDate ?? getTodayDateOnly()}
+          value={startDate ?? initialDateRange.startDate ?? getTodayDateOnly()}
           onValueChange={handleStartDateChange}
           onDismiss={handleStartDateDismiss}
           neutralButton={{ label: "Clear", textColor: "" }}
@@ -106,7 +108,7 @@ export function DateRangeConfigurationDialog({
       {isEndDatePickerOpened ? (
         <RNDateTimePicker
           mode="date"
-          value={endDate ?? startDate ?? getTodayDateOnly()}
+          value={endDate ?? initialDateRange.endDate ?? getTodayDateOnly()}
           minimumDate={startDate ? startDate : undefined}
           onValueChange={handleEndDateChange}
           onDismiss={handeEndDateDismiss}

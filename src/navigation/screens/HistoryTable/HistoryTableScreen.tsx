@@ -78,8 +78,14 @@ import { Toast, ToastType } from "../../../components/Toast";
 import { NewColumnConfig } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";
 import Lucide from "@react-native-vector-icons/lucide/static";
-import { DateRange, DateRangeConfigurationDialog } from "./DateRangeConfigurationDialog";
-import { DisplayOptions, DisplayOptionsConfigurationDialog } from "./DisplayOptionsConfigurationDialog";
+import {
+  DateRange,
+  DateRangeConfigurationDialog,
+} from "./DateRangeConfigurationDialog";
+import {
+  DisplayOptions,
+  DisplayOptionsConfigurationDialog,
+} from "./DisplayOptionsConfigurationDialog";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -956,6 +962,17 @@ export function HistoryTableScreen() {
     [],
   );
 
+  const dateRangeWhole = React.useMemo(
+    () =>
+      rowHeadersAll.length > 0
+        ? new DateRange(
+            rowHeadersAll[rowHeadersAll.length - 1],
+            rowHeadersAll[0],
+          )
+        : new DateRange(null, null),
+    [rowHeadersAll],
+  );
+
   const handleDisplayOptionsMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
     setDisplayOptionsDialogOpen(true);
@@ -1046,6 +1063,7 @@ export function HistoryTableScreen() {
 
       {dateRangeDialogOpen && (
         <DateRangeConfigurationDialog
+          initialDateRange={dateRangeWhole}
           onApply={handleDateRangeConfigurationChange}
           onCancel={() => setDateRangeDialogOpen(false)}
         />
