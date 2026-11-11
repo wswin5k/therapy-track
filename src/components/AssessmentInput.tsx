@@ -7,7 +7,7 @@ import {
 } from "../models/AssessmentSchedule";
 import { AssessmentValue } from "../models/Records";
 import SmallNumberStepper from "./SmallNumberStepper";
-import { ERROR_BORDER_WIDTH } from "../commonStyles";
+import { ERROR_BORDER_WIDTH, eStyles } from "../commonStyles";
 import { useTheme } from "@react-navigation/native";
 import {
   TouchableOpacity,
@@ -100,7 +100,7 @@ export function AssessmentInput({
   const renderBooleanInput = (value: boolean) => {
     return (
       <Switch
-        style={[styles.switchInput]}
+        style={[eStyles.switchPressable]}
         value={value}
         onValueChange={handleValueChange}
         trackColor={{
@@ -295,11 +295,6 @@ const styles = StyleSheet.create({
   },
   selectInputCheckmark: {
     fontSize: 22,
-  },
-  switchInput: {
-    height: 50,
-    transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
-    alignSelf: "center",
   },
   numberStepperInput: {
     height: 55,

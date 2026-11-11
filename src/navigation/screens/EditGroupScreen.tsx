@@ -36,7 +36,7 @@ import {
 import { isEqualLowerCase } from "../utils";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { ERROR_BORDER_WIDTH } from "../../commonStyles";
-import { eStyles, PRESSABLE_HEIGHT } from "../../commonStyles";
+import { eStyles } from "../../commonStyles";
 
 type EditGroupScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -264,7 +264,7 @@ export function EditGroupScreen() {
               true: theme.colors.primary,
             }}
             thumbColor={theme.colors.surface}
-            style={styles.switch}
+            style={eStyles.switchPressable}
           />
         </View>
 
@@ -341,9 +341,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 30,
-  },
-  switch: {
-    transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
-    height: PRESSABLE_HEIGHT,
   },
 });

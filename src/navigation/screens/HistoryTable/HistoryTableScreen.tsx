@@ -78,7 +78,12 @@ import { Toast, ToastType } from "../../../components/Toast";
 import { NewColumnConfig } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";
 import Lucide from "@react-native-vector-icons/lucide/static";
-import { DateRange, DateRangeConfigurationDialog } from "./ConfigurationDialog";
+import {
+  DateRange,
+  DateRangeConfigurationDialog,
+  DisplayOptions,
+  DisplayOptionsConfigurationDialog,
+} from "./ConfigurationDialog";
 
 function extractDate(datetime: Date): string {
   return serializeDateOnly(datetime);
@@ -140,14 +145,16 @@ export function MenuModal({
   visible,
   onClose,
   handleSaveToCSV,
-  handleOpenConfiguration,
+  handleVisibleColumns,
   handleDateRange,
+  handleDisplayOptions,
 }: {
   visible: boolean;
   onClose: () => void;
   handleSaveToCSV: () => void;
-  handleOpenConfiguration: () => void;
+  handleVisibleColumns: () => void;
   handleDateRange: () => void;
+  handleDisplayOptions: () => void;
 }) {
   const theme = useTheme();
 
@@ -181,7 +188,7 @@ export function MenuModal({
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
-            onPress={handleOpenConfiguration}
+            onPress={handleVisibleColumns}
           >
             <Ionicons
               name="eye"
@@ -193,7 +200,7 @@ export function MenuModal({
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
-            onPress={handleOpenConfiguration}
+            onPress={handleDisplayOptions}
           >
             <Lucide
               name="settings-2"
@@ -266,6 +273,9 @@ export function HistoryTableScreen() {
   const [dateRange, setDateRange] = React.useState<DateRange>(
     new DateRange(null, null),
   );
+
+  const [displayOptionsDialogOpen, setDisplayOptionsDialogOpen] =
+    React.useState<boolean>(false);
 
   const { rowHeaders, cells } = React.useMemo((): {
     rowHeaders: Date[];
@@ -863,8 +873,9 @@ export function HistoryTableScreen() {
     React.useCallback(() => {
       const setUp = async () => {
         const initialSettings = await dbGetHistoryTableSettings(db);
-        await loadAndCombineDataForTable(initialSettings);
-        await loadSettings();
+        const tableDataPromise = loadAndCombineDataForTable(initialSettings);
+        const settingsPromise = loadSettings();
+        await Promise.all([tableDataPromise, settingsPromise]);
       };
       setUp();
     }, [db, loadAndCombineDataForTable, loadSettings]),
@@ -935,32 +946,64 @@ export function HistoryTableScreen() {
     setIsMenuOpen(false);
   }, [cellsAll, rowHeadersAll, fullHeaders, t]);
 
-  const handleOpenConfiguration = React.useCallback(() => {
-    navigation.navigate("EditRecordHistoryConfigurationScreen");
-    setIsMenuOpen(false);
-  }, [navigation]);
-
-  const handleDateRangeDialogOpen = React.useCallback(() => {
+  const handleDateRangeMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
     setDateRangeDialogOpen(true);
   }, []);
 
-  const handleDateRangeConfigurationChange = (dateRange: DateRange) => {
-    setDateRange(dateRange);
-    setDateRangeDialogOpen(false);
-    setVersion((version) => version + 1);
-  };
+  const handleDateRangeConfigurationChange = React.useCallback(
+    (dateRange: DateRange) => {
+      setDateRange(dateRange);
+      setDateRangeDialogOpen(false);
+      setVersion((version) => version + 1);
+    },
+    [],
+  );
+
+  const handleDisplayOptionsMenuItemPress = React.useCallback(() => {
+    setIsMenuOpen(false);
+    setDisplayOptionsDialogOpen(true);
+  }, []);
+
+  const handleDisplayOptionsConfigurationChange = React.useCallback(
+    async (displayOptions: DisplayOptions) => {
+      setDisplayOptionsDialogOpen(false);
+      if (settings) {
+        const newSettings = new HistoryTableSettings(
+          displayOptions.expandAllRows,
+          displayOptions.showDaysWithoutEntries,
+          settings.mergeIngredientsWithDifferentForms,
+          settings.columnConfigs,
+        );
+        dbUpdateHistoryTableSettings(db, newSettings);
+        const tableDataPromise = loadAndCombineDataForTable(newSettings);
+        const settingsPromise = loadSettings();
+        await Promise.all([tableDataPromise, settingsPromise]);
+        setVersion((version) => version + 1);
+      }
+    },
+    [db, loadAndCombineDataForTable, loadSettings, settings],
+  );
+
+  const displayOptions = React.useMemo(
+    () =>
+      new DisplayOptions(
+        settings?.expandAllRows ?? false,
+        settings?.showDaysWithoutEntries ?? true,
+      ),
+    [settings],
+  );
 
   React.useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
           onPress={handleMenuToggle}
-          style={{ marginLeft: 16, marginRight: 20 }}
+          style={styles.menuToggleButton}
         >
           <Ionicons
             name="ellipsis-vertical"
-            size={24}
+            style={styles.menuToggleIcon}
             color={theme.colors.text}
           />
         </TouchableOpacity>
@@ -993,8 +1036,9 @@ export function HistoryTableScreen() {
         visible={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
-        handleOpenConfiguration={handleOpenConfiguration}
-        handleDateRange={handleDateRangeDialogOpen}
+        handleVisibleColumns={handleDisplayOptionsMenuItemPress}
+        handleDateRange={handleDateRangeMenuItemPress}
+        handleDisplayOptions={handleDisplayOptionsMenuItemPress}
       ></MenuModal>
 
       <Toast
@@ -1008,7 +1052,15 @@ export function HistoryTableScreen() {
         <DateRangeConfigurationDialog
           onApply={handleDateRangeConfigurationChange}
           onCancel={() => setDateRangeDialogOpen(false)}
-        ></DateRangeConfigurationDialog>
+        />
+      )}
+
+      {displayOptionsDialogOpen && (
+        <DisplayOptionsConfigurationDialog
+          initialDisplayOptions={displayOptions}
+          onApply={handleDisplayOptionsConfigurationChange}
+          onCancel={() => setDisplayOptionsDialogOpen(false)}
+        />
       )}
 
       {!isTableDataReady() ? (
@@ -1083,5 +1135,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "400",
     paddingLeft: 12,
+  },
+  menuToggleButton: {
+    marginLeft: 16,
+    marginRight: 20,
+  },
+  menuToggleIcon: {
+    fontSize: 24,
   },
 });

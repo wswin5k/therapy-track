@@ -5,9 +5,9 @@ export const DISABLED_OPACITY: number = 0.4;
 export const DEFAULT_BORDER_RADIUS: number = 12;
 export const PRESSABLE_PADDING_HORIZONTAL: number = 12;
 export const PRESSABLE_HEIGHT: number = 54;
+export const SECONDARY_PRESSABLE_HEIGHT: number = 50;
 
 //styles for edit screens
-export const SECONDARY_EDIT_PRESSABLE_HEIGHT: number = 50;
 
 export const eStyles = StyleSheet.create({
   mainScrollContainer: {
@@ -78,6 +78,10 @@ export const eStyles = StyleSheet.create({
   nextButtonText: {
     fontSize: 18,
     fontWeight: "600",
+  },
+  switchPressable: {
+    transform: [{ scaleX: 1.4 }, { scaleY: 1.4 }],
+    height: PRESSABLE_HEIGHT,
   },
 });
 

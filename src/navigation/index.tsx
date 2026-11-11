@@ -31,7 +31,6 @@ import { SelectEntryTypeScreen } from "./screens/SelectEntryTypeScreen";
 import { EditCustomFrequencyScreen } from "./screens/ScheduleScreens/EditCustomFrequencyScreen";
 import { Frequency } from "../models/Frequency";
 import { SettingsScreen } from "./screens/SettingsScreen";
-import { EditHistoryTableSettingsScreen } from "./screens/HistoryTable/EditHistoryTableSettingsScreen";
 import { FontAwesomeFreeSolid } from "@react-native-vector-icons/fontawesome-free-solid/static";
 import { Entypo } from "@react-native-vector-icons/entypo/static";
 import { Octicons } from "@react-native-vector-icons/octicons/static";
@@ -414,13 +413,6 @@ const RootStack = createNativeStackNavigator({
       options: {
         presentation: "modal",
         title: "Create custom frequency",
-      },
-    },
-    EditRecordHistoryConfigurationScreen: {
-      screen: EditHistoryTableSettingsScreen,
-      options: {
-        presentation: "modal",
-        title: "History table configuration",
       },
     },
     NotFound: {
