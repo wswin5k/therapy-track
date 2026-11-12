@@ -303,7 +303,11 @@ export function MedicineSchedulesListScreen() {
     </View>
   );
 
-  const renderGroup = (schedules: MedicineSchedule[], label: string) => {
+  const renderGroup = (
+    schedules: MedicineSchedule[],
+    label: string,
+    idxOffset: number,
+  ) => {
     return (
       schedules.length > 0 && (
         <>
@@ -323,7 +327,9 @@ export function MedicineSchedulesListScreen() {
               {label}
             </Text>
           </View>
-          {schedules.map((s, idx) => {
+          {schedules.map((s, idxLocal) => {
+            const idx = idxLocal + idxOffset;
+
             return (
               <ScheduleListItem
                 key={idx}
@@ -373,9 +379,13 @@ export function MedicineSchedulesListScreen() {
         >
           {noSchedules && renderEmptyState()}
 
-          {renderGroup(ongoningSchedules, "Ongoing")}
-          {renderGroup(futureSchedules, "Future")}
-          {renderGroup(finishedSchedules, "Finished")}
+          {renderGroup(ongoningSchedules, "Ongoing", 0)}
+          {renderGroup(futureSchedules, "Future", ongoningSchedules.length)}
+          {renderGroup(
+            finishedSchedules,
+            "Finished",
+            ongoningSchedules.length + finishedSchedules.length,
+          )}
 
           <TouchableOpacity
             onPress={handleAddSchedule}
