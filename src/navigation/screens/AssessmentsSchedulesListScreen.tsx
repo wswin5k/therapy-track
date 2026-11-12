@@ -347,7 +347,7 @@ export function AssessmentSchedulesListScreen() {
           {renderGroup(
             finishedSchedules,
             "Finished",
-            ongoningSchedules.length + finishedSchedules.length,
+            ongoningSchedules.length + futureSchedules.length,
           )}
 
           <TouchableOpacity
