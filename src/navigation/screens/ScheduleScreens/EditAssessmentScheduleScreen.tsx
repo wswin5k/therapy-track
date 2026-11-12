@@ -124,10 +124,12 @@ export function EditAssessmentScheduleScreen() {
     };
   const resetMeasurementGroups = (count: number) => {
     setMeasurementIdxToGroupId(
-      Array.from(
-        { length: count },
-        (_, idx) => measurementIdxToDefaultGroupId.current.get(idx) ?? null,
-      ),
+      count === 1
+        ? [null]
+        : Array.from(
+            { length: count },
+            (_, idx) => measurementIdxToDefaultGroupId.current.get(idx) ?? null,
+          ),
     );
   };
 

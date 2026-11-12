@@ -24,10 +24,8 @@ import {
   navigationRef,
   setupNotificationHandlers,
 } from "./services/notificationService";
-import SystemNavigationBar, {
-  ColorInput,
-} from "react-native-system-navigation-bar";
 import { PortalProvider } from "@gorhom/portal";
+import { applyNavigationBarTheme } from "./navigation/utils";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -84,18 +82,6 @@ function colorSchemeToTheme(
   colorScheme: ColorSchemeName | null,
 ): ReactNavigation.Theme {
   return colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme;
-}
-
-export function applyNavigationBarTheme(
-  color: ColorInput,
-  colorScheme: Appearance.ColorSchemeName | null,
-  translucent: boolean,
-) {
-  SystemNavigationBar.setBarColor(color, {
-    style: colorScheme === "dark" ? "light" : "dark",
-    bar: "navigation",
-    translucent: translucent,
-  });
 }
 
 function AppNavigation() {

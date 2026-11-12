@@ -15,10 +15,9 @@ import {
   TERTIARY_PRESSABLE_HEIGHT,
 } from "../commonStyles";
 import { Portal } from "@gorhom/portal";
-import { floatToHexColor } from "../navigation/utils";
-import { applyNavigationBarTheme } from "../App";
+import { applyNavigationBarTheme, floatToHexColor } from "../navigation/utils";
 
-const TRANSPARENCY_ALPHA = 0.7;
+const TRANSPARENCY_ALPHA = 0.8;
 const TRANSPARENCY_ALPHA_HEX = floatToHexColor(TRANSPARENCY_ALPHA);
 
 export class ButtonConfiguration {

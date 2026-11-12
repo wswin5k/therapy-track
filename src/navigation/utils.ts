@@ -1,4 +1,8 @@
 import { Paths } from "expo-file-system";
+import { Appearance } from "react-native";
+import SystemNavigationBar, {
+  ColorInput,
+} from "react-native-system-navigation-bar";
 
 export function mixColors(
   color1: string,
@@ -115,4 +119,16 @@ interface HasCreatedAt {
 
 export function sortByCreatedAtDesc(list: HasCreatedAt[]) {
   list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+export function applyNavigationBarTheme(
+  color: ColorInput,
+  colorScheme: Appearance.ColorSchemeName | null,
+  translucent: boolean,
+) {
+  SystemNavigationBar.setBarColor(color, {
+    style: colorScheme === "dark" ? "light" : "dark",
+    bar: "navigation",
+    translucent: translucent,
+  });
 }
