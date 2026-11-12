@@ -267,7 +267,11 @@ export function AssessmentSchedulesListScreen() {
     </View>
   );
 
-  const renderGroup = (schedules: AssessmentSchedule[], label: string) => {
+  const renderGroup = (
+    schedules: AssessmentSchedule[],
+    label: string,
+    idxOffset: number,
+  ) => {
     return (
       schedules.length > 0 && (
         <>
@@ -287,7 +291,8 @@ export function AssessmentSchedulesListScreen() {
               {label}
             </Text>
           </View>
-          {schedules.map((s, idx) => {
+          {schedules.map((s, idxLocal) => {
+            const idx = idxLocal + idxOffset;
             return (
               <ScheduleListItem
                 key={idx}
@@ -337,9 +342,13 @@ export function AssessmentSchedulesListScreen() {
         >
           {noSchedules && renderEmptyState()}
 
-          {renderGroup(ongoningSchedules, "Ongoing")}
-          {renderGroup(futureSchedules, "Future")}
-          {renderGroup(finishedSchedules, "Finished")}
+          {renderGroup(ongoningSchedules, "Ongoing", 0)}
+          {renderGroup(futureSchedules, "Future", ongoningSchedules.length)}
+          {renderGroup(
+            finishedSchedules,
+            "Finished",
+            ongoningSchedules.length + futureSchedules.length,
+          )}
 
           <TouchableOpacity
             onPress={handleAddSchedule}
