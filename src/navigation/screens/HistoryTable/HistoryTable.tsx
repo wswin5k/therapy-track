@@ -581,7 +581,7 @@ export default function HistoryTable({
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.primary,
             },
-            computeRowHeaderStyles(0, rowHeaders.length - 1),
+            computeRowHeaderStyles(0, rowHeaders.length),
           ]}
         >
           <Text
