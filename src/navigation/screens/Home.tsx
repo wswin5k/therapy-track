@@ -111,7 +111,6 @@ const pair = (a: number, b: number): number => {
 
 function UnscheduledDosage({
   dosage,
-  bottomBorder,
   loadUnscheduledRecords,
   isDisabled,
 }: {
@@ -180,9 +179,7 @@ function UnscheduledDosage({
         style={[
           styles.scheduleItem,
           {
-            borderColor: theme.colors.border,
             filter: optionsOpened ? "blur(4px), opacity(50%)" : "",
-            borderBottomWidth: bottomBorder ? 2 : 0,
           },
         ]}
         onLongPress={(e) => {
@@ -218,7 +215,6 @@ function UnscheduledDosage({
 
 function UnscheduledMeasurement({
   measurement,
-  bottomBorder,
   loadUnscheduledRecords,
   isDisabled,
 }: {
@@ -290,9 +286,7 @@ function UnscheduledMeasurement({
         style={[
           styles.scheduleItem,
           {
-            borderColor: theme.colors.border,
             filter: optionsOpened ? "blur(4px), opacity(50%)" : "",
-            borderBottomWidth: bottomBorder ? 2 : 0,
           },
         ]}
         onLongPress={(e) => {
@@ -324,7 +318,6 @@ function UnscheduledMeasurement({
 function ScheduledDosage({
   dosage,
   isDone,
-  bottomBorder,
   handleClick,
   isDisabled,
 }: {
@@ -339,13 +332,7 @@ function ScheduledDosage({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.scheduleItem,
-        {
-          borderColor: theme.colors.border,
-          borderBottomWidth: bottomBorder ? 2 : 0,
-        },
-      ]}
+      style={[styles.scheduleItem]}
       onPress={(e) => {
         if (isDisabled) {
           e.stopPropagation();
@@ -392,7 +379,6 @@ function ScheduledDosage({
 function ScheduledMeasurement({
   measurement,
   isDone,
-  bottomBorder,
   handleClick,
   isDisabled,
 }: {
@@ -406,13 +392,7 @@ function ScheduledMeasurement({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.scheduleItem,
-        {
-          borderColor: theme.colors.border,
-          borderBottomWidth: bottomBorder ? 2 : 0,
-        },
-      ]}
+      style={[styles.scheduleItem]}
       onPress={(e) => {
         if (isDisabled) {
           e.stopPropagation();
@@ -863,6 +843,14 @@ export function Home({
                   handleClick={handleDosageClick}
                   isDisabled={isFuture}
                 />
+                {idx < dosages.length - 1 && (
+                  <View
+                    style={[
+                      styles.separtorLine,
+                      { backgroundColor: theme.colors.border },
+                    ]}
+                  ></View>
+                )}
               </View>
             ))}
           </>
@@ -883,6 +871,14 @@ export function Home({
                   handleClick={handleMeasurementClick}
                   isDisabled={isFuture}
                 />
+                {idx < measurements.length - 1 && (
+                  <View
+                    style={[
+                      styles.separtorLine,
+                      { backgroundColor: theme.colors.border },
+                    ]}
+                  ></View>
+                )}
               </View>
             ))}
           </>
@@ -917,6 +913,14 @@ export function Home({
                   loadUnscheduledRecords={loadUnscheduledDosageRecords}
                   isDisabled={isFuture}
                 />
+                {idx < dosages.length - 1 && (
+                  <View
+                    style={[
+                      styles.separtorLine,
+                      { backgroundColor: theme.colors.border },
+                    ]}
+                  ></View>
+                )}
               </View>
             ))}
           </>
@@ -936,6 +940,14 @@ export function Home({
                   loadUnscheduledRecords={loadUnscheduledMeasurementRecords}
                   isDisabled={isFuture}
                 />
+                {idx < measurements.length - 1 && (
+                  <View
+                    style={[
+                      styles.separtorLine,
+                      { backgroundColor: theme.colors.border },
+                    ]}
+                  ></View>
+                )}
               </View>
             ))}
           </>
@@ -1124,5 +1136,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     textAlign: "center",
+  },
+  separtorLine: {
+    height: 2,
+    marginHorizontal: 10,
   },
 });
