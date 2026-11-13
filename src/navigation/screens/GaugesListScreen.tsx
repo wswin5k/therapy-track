@@ -22,7 +22,7 @@ import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { lStyles } from "../../commonStyles";
 import { Gauge } from "../../models/Gauge";
-import { computeAllGaugesRecords } from "../../models/dbRecordsService";
+import { computeAllGaugesRecords } from "../../models/dbGaugeService";
 import { sortByCreatedAtDesc } from "../utils";
 
 function GaugeListItem({

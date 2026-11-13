@@ -38,9 +38,14 @@ class ColumnFitWidths {
   ) {}
 }
 
+// they're combined into one object to maintain integrity
+// - new object means the all of it's field are integral between each other
+export class TableData {
+  constructor(public headers: string) {}
+}
+
 type HistoryTableProps = {
   fullHeaders: string[];
-  fullHeaderToDisplayHeader: Map<string, string>;
   // todo possbily take the cells in the following types
   // not strings
   fullHeaderToValueType: Map<string, ValueType>;
@@ -53,7 +58,6 @@ type HistoryTableProps = {
 
 export default function HistoryTable({
   fullHeaders,
-  fullHeaderToDisplayHeader,
   fullHeaderToValueType,
   rowHeaders,
   data,
@@ -520,7 +524,7 @@ export default function HistoryTable({
               handleColumnHeaderLayout(index, width);
             }}
           >
-            {fullHeaderToDisplayHeader.get(columnHeader)}
+            {columnHeader}
           </Text>
         </View>
       ))}
@@ -622,7 +626,7 @@ export default function HistoryTable({
                       { color: theme.colors.textOnPrimary },
                     ]}
                   >
-                    {fullHeaderToDisplayHeader.get(columnHeader)}
+                    {columnHeader}
                   </Text>
                 </TouchableOpacity>
               </View>

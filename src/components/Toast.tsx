@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   message: {
-    fontSize: 18,
+    fontSize: 17,
     textAlign: "left",
   },
 });

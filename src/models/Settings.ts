@@ -43,6 +43,7 @@ export class HistoryTableSettings {
   constructor(
     public expandAllRows: boolean,
     public showDaysWithoutEntries: boolean,
+    //todo: remove
     public mergeIngredientsWithDifferentForms: boolean,
     public columnConfigs: Map<string, ColumnConfig>,
   ) {}

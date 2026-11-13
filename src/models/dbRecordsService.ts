@@ -2,7 +2,6 @@ import { SQLiteDatabase } from "expo-sqlite";
 import {
   dbGetAssessments,
   dbGetAssessmentSchedules,
-  dbGetGauges,
   dbGetGroups,
   dbGetMedicines,
   dbGetMedicineSchedules,
@@ -10,31 +9,18 @@ import {
   dbGetScheduledMeasurementRecords,
   dbGetUnscheduledDosageRecords,
   dbGetUnscheduledMeasurementRecords,
-  dbUpsertGaugeRecord,
 } from "./dbAccess";
 import {
   baseUnitShorFormPlural,
   ingredientAmountUnitEnumToDisplayForm,
 } from "../navigation/enumMappings";
-import {
-  EmptyTreatment,
-  Metric,
-  OperationAny,
-  OperationBoolean,
-  OperationNumber,
-  SourceType,
-} from "./Gauge";
+import { Metric, SourceType } from "./Gauge";
 import {
   Assessment,
   AssessmentSchedule,
   ValueType,
 } from "./AssessmentSchedule";
-import {
-  deserializeDateOnly,
-  getShiftedDateOnly,
-  getTodayDateOnly,
-  serializeDateOnly,
-} from "../dateOnlyUtils";
+import { serializeDateOnly } from "../dateOnlyUtils";
 import { Group } from "./Frequency";
 import {
   AssessmentValue,
@@ -107,14 +93,20 @@ export async function dbColumnsGetAll(db: SQLiteDatabase): Promise<Metric[]> {
   return Array.from(columns.values());
 }
 
-class TableData {
+export class NewColumnConfig {
   constructor(
-    public fullLabels: string[],
-    public fullLabelToDisplayLabel: Map<string, string>,
-    public fullHeadersToSettingsHeader: Map<string, string>,
-    public fullHeaderToValueType: Map<string, ValueType>,
-    public dayToFullHeaderToValue: Map<string, Map<string, AssessmentValue>>,
-    public newColumnConfigs: Map<string, NewColumnConfig>,
+    public type: ColumnType,
+    public source_created_at: Date,
+  ) {}
+}
+
+class RecordsData {
+  constructor(
+    public dayToLabelToValue: Map<string, Map<string, AssessmentValue>>,
+    public labels: string[],
+    public labelToInternalLabel: Map<string, string>,
+    public labelToValueType: Map<string, ValueType>,
+    public internalLabelToColumnConfig: Map<string, NewColumnConfig>,
   ) {}
 }
 
@@ -122,7 +114,7 @@ export async function getAllAssessmentRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
-): Promise<Map<string, Map<string, AssessmentValue>>> {
+): Promise<RecordsData> {
   const scheuledMeasurementRecrods = await dbGetScheduledMeasurementRecords(
     db,
     startDate,
@@ -151,6 +143,10 @@ export async function getAllAssessmentRecords(
 
   const dayToLabelToValues = new Map<string, Map<string, AssessmentValue>>();
 
+  const labelToInternalLabel = new Map();
+  const labelToValueType = new Map();
+  const newColumnConfigs = new Map();
+
   const digestMeasurementRecord = (
     record: ScheduledMeasurementRecord | UnscheduledMeasurementRecord,
     assessment: Assessment,
@@ -158,6 +154,16 @@ export async function getAllAssessmentRecords(
   ) => {
     const group = groupId ? (idToGroup.get(groupId) ?? null) : null;
     const label = assessment.getLabel(group?.name);
+
+    labelToInternalLabel.set(label, label);
+
+    labelToValueType.set(label, assessment.type);
+
+    newColumnConfigs.set(
+      label,
+      new NewColumnConfig(ColumnType.Medicine, assessment.createdAt),
+    );
+
     const dateStr = serializeDateOnly(record.date);
     const dailyRow =
       dayToLabelToValues.get(dateStr) || new Map<string, AssessmentValue>();
@@ -187,47 +193,74 @@ export async function getAllAssessmentRecords(
     digestMeasurementRecord(record, assessment, measurement.groupId);
   }
 
-  return dayToLabelToValues;
+  const labels = Array.from(labelToInternalLabel.keys()).sort();
+
+  return new RecordsData(
+    dayToLabelToValues,
+    labels,
+    labelToInternalLabel,
+    labelToValueType,
+    newColumnConfigs,
+  );
 }
 
 function insertActiveIngredientWeightUnits(
-  dayToHeaderToValues: Map<string, Map<string, number>>,
-  fullHeaderToShortHeader: Map<string, string>,
-  shortHeaderCounts: Map<string, number>,
-  fullHeaderToWeightUnits: Map<string, Set<IngredientAmountUnit>>,
-  fullHeaderToSettingsHeader: Map<string, string>,
-) {
-  for (const [fullHeader, weightUnits] of fullHeaderToWeightUnits) {
+  dayToLabelToValue: Map<string, Map<string, number>>,
+  fullLabelToShortLabel: Map<string, string>,
+  fullLabelToWeightUnits: Map<string, Set<IngredientAmountUnit>>,
+): Map<string, string> {
+  // 1. Calculates appropriate weight unit.
+  // 2. Creats new short and full labels with units.
+  // 3. Updates the  record data mapping (dayToLabelToValue).
+  // 4. Creates a mapping from a label to internal label.
+
+  const updateRow = (
+    labelToValues: Map<string, number>,
+    label: string,
+    newLabel: string,
+    weightUnitMultiplier: number,
+  ) => {
+    const value = labelToValues.get(label);
+    if (!value) {
+      return;
+    }
+    labelToValues.set(newLabel, value / weightUnitMultiplier);
+    labelToValues.delete(label);
+  };
+
+  const fullLabelToInternalLabel = new Map();
+
+  for (const [fullHeader, weightUnits] of fullLabelToWeightUnits) {
     const weightUnit = maxWeightUnit([...weightUnits]);
     const weightUnitMultiplier = weightUnitToGramsMultiplier(weightUnit);
     const weightUnitDisplay = ingredientAmountUnitEnumToDisplayForm(weightUnit);
 
     const newFullHeader = `${fullHeader} [${weightUnitDisplay}]`;
-    const shortHeader = getOrThrow(fullHeaderToShortHeader, fullHeader);
+    const shortHeader = getOrThrow(fullLabelToShortLabel, fullHeader);
     const newShortHeader = `${shortHeader} [${weightUnitDisplay}]`;
 
-    fullHeaderToShortHeader.set(newFullHeader, newShortHeader);
-    fullHeaderToShortHeader.delete(fullHeader);
+    fullLabelToShortLabel.delete(fullHeader);
+    fullLabelToShortLabel.set(newFullHeader, newShortHeader);
 
-    fullHeaderToSettingsHeader.set(newFullHeader, fullHeader);
+    fullLabelToInternalLabel.set(newFullHeader, fullHeader);
+    fullLabelToInternalLabel.set(newShortHeader, shortHeader);
 
-    if (shortHeaderCounts.has(shortHeader)) {
-      shortHeaderCounts.set(
-        newShortHeader,
-        getOrThrow(shortHeaderCounts, shortHeader),
+    for (const headerToValues of dayToLabelToValue.values()) {
+      updateRow(
+        headerToValues,
+        fullHeader,
+        newFullHeader,
+        weightUnitMultiplier,
       );
-      shortHeaderCounts.delete(shortHeader);
-    }
-
-    for (const headerToValues of dayToHeaderToValues.values()) {
-      const value = headerToValues.get(fullHeader);
-      if (!value) {
-        continue;
-      }
-      headerToValues.set(fullHeader, value / weightUnitMultiplier);
-      // headerToValues.delete(fullHeader);
+      updateRow(
+        headerToValues,
+        shortHeader,
+        newShortHeader,
+        weightUnitMultiplier,
+      );
     }
   }
+  return fullLabelToInternalLabel;
 }
 
 function updateHeaderCounter(
@@ -245,26 +278,11 @@ function updateHeaderCounter(
   }
 }
 
-function calculateHeaders(
-  fullHeaderToShortHeader: Map<string, string>,
-  shortHeaderCounts: Map<string, number>,
-): Map<string, string> {
-  const headers = new Map();
-  for (const [fullHeader, shortHeader] of fullHeaderToShortHeader) {
-    if (shortHeaderCounts.get(shortHeader) === 1) {
-      headers.set(fullHeader, shortHeader);
-    } else {
-      headers.set(fullHeader, fullHeader);
-    }
-  }
-  return headers;
-}
-
 export async function getAllMedicineRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
-): Promise<TableData> {
+): Promise<RecordsData> {
   const scheduledDosageRecords = await dbGetScheduledDosageRecords(
     db,
     startDate,
@@ -291,10 +309,10 @@ export async function getAllMedicineRecords(
   const dayToLabelToValues = new Map<string, Map<string, number>>();
 
   /* to handle shortening of header labels*/
-  const fullHeaderToShortHeader = new Map<string, string>();
-  const shortHeaderCounts = new Map<string, number>();
+  const fullLabelToShortLabel = new Map<string, string>();
+  const shortLabelCounts = new Map<string, number>();
 
-  const fullActiveIngredientHeaderToWeightUnits = new Map<
+  const fullActiveIngredientLabelToWeightUnits = new Map<
     string,
     Set<IngredientAmountUnit>
   >();
@@ -312,70 +330,70 @@ export async function getAllMedicineRecords(
     const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
 
     for (const ai of medicine.activeIngredients) {
-      let fullHeader = ai.getLabel(baseUnitLabel);
-      let shortHeader = ai.getShortLabel();
+      let fullLabel = ai.getLabel(baseUnitLabel);
+      let shortLabel = ai.getShortLabel();
 
       let weightUnitMultiplier = 1;
       if (isWeightUnit(ai.unit)) {
-        fullHeader = ai.getLabelWithoutUnit(baseUnitLabel);
-        shortHeader = ai.getShortLabelWithoutUnit();
+        fullLabel = ai.getLabelWithoutUnit(baseUnitLabel);
+        shortLabel = ai.getShortLabelWithoutUnit();
         weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
-        fullActiveIngredientHeaderToWeightUnits.set(
-          fullHeader,
+        fullActiveIngredientLabelToWeightUnits.set(
+          fullLabel,
           (
-            fullActiveIngredientHeaderToWeightUnits.get(fullHeader) || new Set()
+            fullActiveIngredientLabelToWeightUnits.get(fullLabel) || new Set()
           ).add(ai.unit),
         );
       }
 
-      const ccFullHeader = newColumnConfigs.get(fullHeader);
+      const ccFullHeader = newColumnConfigs.get(fullLabel);
       if (
         !ccFullHeader ||
         ccFullHeader._source_created_at > medicine.createdAt
       ) {
         newColumnConfigs.set(
-          fullHeader,
+          fullLabel,
           new NewColumnConfig(ColumnType.ActiveIngredient, medicine.createdAt),
         );
       }
-      const ccShortHeader = newColumnConfigs.get(shortHeader);
+      const ccShortHeader = newColumnConfigs.get(shortLabel);
       if (
         !ccShortHeader ||
         ccShortHeader._source_created_at > medicine.createdAt
       ) {
         newColumnConfigs.set(
-          shortHeader,
+          shortLabel,
           new NewColumnConfig(ColumnType.ActiveIngredient, medicine.createdAt),
         );
       }
       updateHeaderCounter(
-        fullHeaderToShortHeader,
-        shortHeaderCounts,
-        fullHeader,
-        shortHeader,
+        fullLabelToShortLabel,
+        shortLabelCounts,
+        fullLabel,
+        shortLabel,
       );
-      let amountTotal = dailyRow.get(fullHeader) || 0;
-      amountTotal += ai.amount * medicineAmount * weightUnitMultiplier;
-      dailyRow.set(fullHeader, amountTotal);
+
+      let amountTotalFullLabel = dailyRow.get(fullLabel) || 0;
+      amountTotalFullLabel += ai.amount * medicineAmount * weightUnitMultiplier;
+      dailyRow.set(fullLabel, amountTotalFullLabel);
+      let amountTotalShortLabel = dailyRow.get(shortLabel) || 0;
+      amountTotalShortLabel +=
+        ai.amount * medicineAmount * weightUnitMultiplier;
+      dailyRow.set(shortLabel, amountTotalShortLabel);
     }
 
-    const header = medicine.getLabel();
+    const label = medicine.getLabel();
 
     newColumnConfigs.set(
-      header,
+      label,
       new NewColumnConfig(ColumnType.Medicine, medicine.createdAt),
     );
 
-    updateHeaderCounter(
-      fullHeaderToShortHeader,
-      shortHeaderCounts,
-      header,
-      header,
-    );
+    updateHeaderCounter(fullLabelToShortLabel, shortLabelCounts, label, label);
 
-    let amountTotal = dailyRow.get(header) || 0;
+    let amountTotal = dailyRow.get(label) || 0;
     amountTotal += medicineAmount;
-    dailyRow.set(header, amountTotal);
+    dailyRow.set(label, amountTotal);
 
     dayToLabelToValues.set(dateStr, dailyRow);
   };
@@ -400,211 +418,39 @@ export async function getAllMedicineRecords(
     );
   }
 
-  const fullHeadersToSettingsHeader = new Map();
-
-  insertActiveIngredientWeightUnits(
+  const labelToInternalLabel = insertActiveIngredientWeightUnits(
     dayToLabelToValues,
-    fullHeaderToShortHeader,
-    shortHeaderCounts,
-    fullActiveIngredientHeaderToWeightUnits,
-    fullHeadersToSettingsHeader,
+    fullLabelToShortLabel,
+    fullActiveIngredientLabelToWeightUnits,
   );
 
-  const fullLabelToDisplayLabel = calculateHeaders(
-    fullHeaderToShortHeader,
-    shortHeaderCounts,
-  );
+  // remove full labels from records and configs data
+  // where the coressponding short label count == 1
+  const labelsSet = new Set<string>();
+  for (const [fullLabel, shortLabel] of fullLabelToShortLabel) {
+    labelsSet.add(shortLabel);
+    const shortLabelInternal =
+      labelToInternalLabel.get(shortLabel) ?? shortLabel;
+    if (shortLabelCounts.get(shortLabelInternal) === 1) {
+      for (const headerToValues of dayToLabelToValues.values()) {
+        headerToValues.delete(fullLabel);
+      }
+      newColumnConfigs.delete(fullLabel);
+    } else {
+      labelsSet.add(fullLabel);
+    }
+  }
+  const labels = [...labelsSet];
+  labels.sort();
 
-  const fullLabels = Array.from(fullHeaderToShortHeader.keys()).sort();
+  const labelToValueType = new Map();
+  labels.forEach((header) => labelToValueType.set(header, ValueType.Numeric));
 
-  const fullHeaderToValueType = new Map();
-  fullLabels.forEach((header) =>
-    fullHeaderToValueType.set(header, ValueType.Numeric),
-  );
-
-  return new TableData(
-    fullLabels,
-    fullLabelToDisplayLabel,
-    fullHeadersToSettingsHeader,
-    fullHeaderToValueType,
+  return new RecordsData(
     dayToLabelToValues,
+    labels,
+    labelToInternalLabel,
+    labelToValueType,
     newColumnConfigs,
   );
-}
-
-export function updateGaugeRecordsFromRecord() {
-  // finds gauges coressponding to a given record
-  // updates all gauge records coressponding to it
-}
-
-function applyNumberOperation(
-  values: number[],
-  operation: OperationNumber,
-  emptyTreatment: EmptyTreatment,
-): number | null {
-  if (values.length === 0) {
-    return emptyTreatment === EmptyTreatment.Omit ? null : 0;
-  }
-  switch (operation) {
-    case OperationNumber.Average:
-      return values.reduce((sum, n) => sum + n, 0) / values.length;
-
-    case OperationNumber.Total:
-      return values.reduce((sum, n) => sum + n, 0);
-
-    case OperationNumber.Minimum:
-      return Math.min(...values);
-
-    case OperationNumber.Maximum:
-      return Math.max(...values);
-
-    case OperationNumber.PercentNotZero:
-      return (values.filter((n) => n !== 0).length / values.length) * 100;
-  }
-}
-
-function applyBooleanOperation(
-  values: boolean[],
-  operation: OperationBoolean,
-  emptyTreatment: EmptyTreatment,
-): number | null {
-  if (values.length === 0) {
-    return emptyTreatment === EmptyTreatment.Omit ? null : 0;
-  }
-  switch (operation) {
-    case OperationBoolean.PercentTrue:
-      return (values.filter((v) => v === true).length / values.length) * 100;
-
-    case OperationBoolean.PercentFalse:
-      return (values.filter((v) => v === false).length / values.length) * 100;
-  }
-}
-
-export function isNumberArray(value: unknown): value is number[] {
-  return (
-    Array.isArray(value) && value.every((item) => typeof item === "number")
-  );
-}
-
-export function isBooleanArray(value: unknown): value is boolean[] {
-  return (
-    Array.isArray(value) && value.every((item) => typeof item === "boolean")
-  );
-}
-
-export async function computeAllGaugesRecords(db: SQLiteDatabase) {
-  const gauges = await dbGetGauges(db);
-  const assessmentData = await getAllAssessmentRecords(db);
-  const medicineData = await getAllMedicineRecords(db);
-
-  const labelToDayToValues: Map<
-    string,
-    Map<string, AssessmentValue>
-  > = new Map();
-
-  // transpose the table
-  assessmentData.forEach((dayRow, day) => {
-    dayRow.forEach((value, label) => {
-      if (value !== null) {
-        const dayToValue = labelToDayToValues.get(label) ?? new Map();
-        dayToValue.set(day, value);
-        labelToDayToValues.set(label, dayToValue);
-      }
-    });
-  });
-  medicineData.dayToFullHeaderToValue.forEach((dayRow, day) => {
-    dayRow.forEach((value, label) => {
-      if (value !== null) {
-        const dayToValue = labelToDayToValues.get(label) ?? new Map();
-        dayToValue.set(day, value);
-        labelToDayToValues.set(label, dayToValue);
-      }
-    });
-  });
-
-  for (const gauge of gauges) {
-    const dayToValue = labelToDayToValues.get(gauge.sourceColumn.label);
-    if (dayToValue === undefined || dayToValue.size === 0) {
-      continue;
-    }
-    const daysPatchy = Array.from(dayToValue.keys());
-    //todo search for other places where dates are wronglt sorted
-    daysPatchy.sort();
-    const days = [];
-    const startDay = deserializeDateOnly(daysPatchy[0]);
-    const endDate = getTodayDateOnly();
-
-    for (
-      let date = startDay;
-      date <= endDate;
-      date = getShiftedDateOnly(date, 1)
-    ) {
-      days.push(date);
-    }
-
-    for (const [idx, day] of days.entries()) {
-      const valuesToAggregate = [];
-      const windowStartIdx = Math.max(idx + 1 - gauge.lengthInDays, 0);
-      for (const windowDay of days.slice(windowStartIdx, idx + 1)) {
-        const windowDayStr = serializeDateOnly(windowDay);
-        const value = dayToValue.get(windowDayStr);
-        if (value !== undefined) {
-          valuesToAggregate.push(value);
-        } else {
-          if (gauge.emptyTreatment === EmptyTreatment.ZeroFill) {
-            valuesToAggregate.push(
-              gauge.sourceColumn.sourceType === SourceType.AssessmentBoolean
-                ? false
-                : 0,
-            );
-          }
-        }
-      }
-      let valueAggregated = null;
-      if (gauge.sourceColumn.sourceType === SourceType.AssessmentBoolean) {
-        if (
-          isBooleanArray(valuesToAggregate) &&
-          (Object.values(OperationBoolean) as OperationAny[]).includes(
-            gauge.operation,
-          )
-        ) {
-          valueAggregated = applyBooleanOperation(
-            valuesToAggregate,
-            gauge.operation as OperationBoolean,
-            gauge.emptyTreatment,
-          );
-        } else {
-          throw Error("Expected boolean values and operation.");
-        }
-      } else {
-        if (
-          isNumberArray(valuesToAggregate) &&
-          (Object.values(OperationNumber) as OperationAny[]).includes(
-            gauge.operation,
-          )
-        ) {
-          valueAggregated = applyNumberOperation(
-            valuesToAggregate,
-            gauge.operation as OperationNumber,
-            gauge.emptyTreatment,
-          );
-        } else {
-          throw Error("Expected number values and operation.");
-        }
-      }
-
-      // TODO: gather all
-      await dbUpsertGaugeRecord(db, {
-        date: day,
-        gaugeId: gauge.dbId,
-        value: valueAggregated,
-      });
-    }
-  }
-}
-export class NewColumnConfig {
-  constructor(
-    public type: ColumnType,
-    public source_created_at: Date,
-  ) {}
 }
