@@ -40,7 +40,6 @@ class ColumnFitWidths {
 
 type HistoryTableProps = {
   fullHeaders: string[];
-  fullHeaderToDisplayHeader: Map<string, string>;
   // todo possbily take the cells in the following types
   // not strings
   fullHeaderToValueType: Map<string, ValueType>;
@@ -53,7 +52,6 @@ type HistoryTableProps = {
 
 export default function HistoryTable({
   fullHeaders,
-  fullHeaderToDisplayHeader,
   fullHeaderToValueType,
   rowHeaders,
   data,
@@ -520,7 +518,7 @@ export default function HistoryTable({
               handleColumnHeaderLayout(index, width);
             }}
           >
-            {fullHeaderToDisplayHeader.get(columnHeader)}
+            {columnHeader}
           </Text>
         </View>
       ))}
@@ -622,7 +620,7 @@ export default function HistoryTable({
                       { color: theme.colors.textOnPrimary },
                     ]}
                   >
-                    {fullHeaderToDisplayHeader.get(columnHeader)}
+                    {columnHeader}
                   </Text>
                 </TouchableOpacity>
               </View>

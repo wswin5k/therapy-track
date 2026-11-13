@@ -9,7 +9,6 @@ export const SECONDARY_PRESSABLE_HEIGHT: number = 50;
 export const TERTIARY_PRESSABLE_HEIGHT: number = 46;
 
 //styles for edit screens
-
 export const eStyles = StyleSheet.create({
   mainScrollContainer: {
     flex: 1,
@@ -125,6 +124,7 @@ export const sStyles = StyleSheet.create({
   },
 });
 
+//styles for list screens
 export const lStyles = StyleSheet.create({
   mainScrollContainer: {
     flex: 1,
