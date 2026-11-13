@@ -37,8 +37,8 @@ import {
 } from "../../../models/Settings";
 import { Toast, ToastType } from "../../../components/Toast";
 import {
-  getAllAssessmentRecords as getAssessmentRecords,
-  getAllMedicineRecords as getMedicineRecords,
+  getAssessmentRecords as getAssessmentRecords,
+  getMedicineRecords as getMedicineRecords,
   NewColumnConfig,
 } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";

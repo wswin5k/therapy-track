@@ -38,12 +38,6 @@ class ColumnFitWidths {
   ) {}
 }
 
-// they're combined into one object to maintain integrity
-// - new object means the all of it's field are integral between each other
-export class TableData {
-  constructor(public headers: string) {}
-}
-
 type HistoryTableProps = {
   fullHeaders: string[];
   // todo possbily take the cells in the following types

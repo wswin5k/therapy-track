@@ -104,13 +104,15 @@ class RecordsData {
   constructor(
     public dayToLabelToValue: Map<string, Map<string, AssessmentValue>>,
     public labels: string[],
+    // internal label doesn't contain weight unit, the mapping only contains
+    // the labels which have different internal label
     public labelToInternalLabel: Map<string, string>,
     public labelToValueType: Map<string, ValueType>,
     public internalLabelToColumnConfig: Map<string, NewColumnConfig>,
   ) {}
 }
 
-export async function getAllAssessmentRecords(
+export async function getAssessmentRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
@@ -211,8 +213,8 @@ function insertActiveIngredientWeightUnits(
 ): Map<string, string> {
   // 1. Calculates appropriate weight unit.
   // 2. Creats new short and full labels with units.
-  // 3. Updates the  record data mapping (dayToLabelToValue).
-  // 4. Creates a mapping from a label to internal label.
+  // 3. Updates the record data mapping (dayToLabelToValue) with new labels and amounts.
+  // 4. Creates and returns a mapping from a label to internal label.
 
   const updateRow = (
     labelToValues: Map<string, number>,
@@ -278,7 +280,7 @@ function updateHeaderCounter(
   }
 }
 
-export async function getAllMedicineRecords(
+export async function getMedicineRecords(
   db: SQLiteDatabase,
   startDate?: Date,
   endDate?: Date,
@@ -435,7 +437,9 @@ export async function getAllMedicineRecords(
       for (const headerToValues of dayToLabelToValues.values()) {
         headerToValues.delete(fullLabel);
       }
-      newColumnConfigs.delete(fullLabel);
+      const fullLabelInternal =
+        labelToInternalLabel.get(fullLabel) ?? fullLabel;
+      newColumnConfigs.delete(fullLabelInternal);
     } else {
       labelsSet.add(fullLabel);
     }

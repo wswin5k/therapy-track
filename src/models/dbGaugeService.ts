@@ -6,10 +6,7 @@ import {
   serializeDateOnly,
 } from "../dateOnlyUtils";
 import { dbGetGauges, dbUpsertGaugeRecord } from "./dbAccess";
-import {
-  getAllAssessmentRecords,
-  getAllMedicineRecords,
-} from "./dbRecordsService";
+import { getAssessmentRecords, getMedicineRecords } from "./dbRecordsService";
 import {
   OperationNumber,
   EmptyTreatment,
@@ -79,8 +76,8 @@ export function isBooleanArray(value: unknown): value is boolean[] {
 
 export async function computeAllGaugesRecords(db: SQLiteDatabase) {
   const gauges = await dbGetGauges(db);
-  const assessmentData = await getAllAssessmentRecords(db);
-  const medicineData = await getAllMedicineRecords(db);
+  const assessmentData = await getAssessmentRecords(db);
+  const medicineData = await getMedicineRecords(db);
 
   const labelToDayToValues: Map<
     string,
