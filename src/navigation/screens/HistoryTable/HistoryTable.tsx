@@ -38,27 +38,36 @@ class ColumnFitWidths {
   ) {}
 }
 
+// packed into one object to maintain data integrity
+// - when the object changes all of the internal fields are compliant
+// with each other
+export class TableData {
+  constructor(
+    public headers: string[],
+    // todo possbily take the cells in the following types
+    // not strings
+    public headerToValueType: Map<string, ValueType>,
+    public rowHeaders: Date[],
+    public cells: string[][],
+  ) {}
+}
+
 type HistoryTableProps = {
-  fullHeaders: string[];
-  // todo possbily take the cells in the following types
-  // not strings
-  fullHeaderToValueType: Map<string, ValueType>;
-  rowHeaders: Date[];
-  data: string[][];
+  td: TableData;
+  id: number;
   expandAllRows: boolean;
   settingsColumnWidths: Map<string, number | null>;
   saveColumnWidth: (fullHeader: string, width: number) => Promise<void>;
 };
 
 export default function HistoryTable({
-  fullHeaders,
-  fullHeaderToValueType,
-  rowHeaders,
-  data,
+  td,
+  id,
   expandAllRows,
   settingsColumnWidths,
   saveColumnWidth,
 }: HistoryTableProps) {
+  console.log(id);
   const theme = useTheme();
   const { i18n } = useTranslation();
 
@@ -74,41 +83,48 @@ export default function HistoryTable({
   );
 
   const [rowHeights, setRowHeights] = React.useState<number[]>(
-    Array.from({ length: data.length }, () => MIN_CELL_HEIGHT),
+    Array.from({ length: td.cells.length }, () => MIN_CELL_HEIGHT),
   );
   const fittingCellHeights = React.useRef<number[][]>(
-    Array.from({ length: data.length }, () =>
-      Array.from({ length: data[0].length }, () => MIN_CELL_HEIGHT),
+    Array.from({ length: td.cells.length }, () =>
+      Array.from({ length: td.cells[0].length }, () => MIN_CELL_HEIGHT),
     ),
   );
   const fittingCellLineLenghts = React.useRef<number[][]>(
-    Array.from({ length: data.length }, () =>
-      Array.from({ length: data[0].length }, () => MIN_CELL_LINES_LENGTH),
+    Array.from({ length: td.cells.length }, () =>
+      Array.from({ length: td.cells[0].length }, () => MIN_CELL_LINES_LENGTH),
     ),
   );
+  React.useEffect(() => {
+    fittingCellLineLenghts.current = Array.from(
+      { length: td.cells.length },
+      () =>
+        Array.from({ length: td.cells[0].length }, () => MIN_CELL_LINES_LENGTH),
+    );
+  });
   const [rowsNumberOfLines, setRowsNumberOfLines] = React.useState<number[]>(
-    Array.from({ length: data.length }, () => MIN_CELL_LINES_LENGTH),
+    Array.from({ length: td.cells.length }, () => MIN_CELL_LINES_LENGTH),
   );
   const relevantColumnForRowHeight = React.useRef<number[]>(
-    Array.from({ length: data.length }, () => 0),
+    Array.from({ length: td.cells.length }, () => 0),
   );
 
   const [columnWidthsFromHeaderLayout, setColumnWidthsFromHeaderLayout] =
     React.useState<(ColumnFitWidths | null)[]>(
-      Array.from({ length: fullHeaders.length }, () => null),
+      Array.from({ length: td.headers.length }, () => null),
     );
   const [columnWidthsFromCellLayout, setColumnWidthsFromCellLayout] =
     React.useState<(number | null)[]>(
-      Array.from({ length: fullHeaders.length }, () => null),
+      Array.from({ length: td.headers.length }, () => null),
     );
   const columnWidthsCycles = React.useRef(
-    Array.from({ length: fullHeaders.length }, () => cycle([MID_CELL_WIDTH])),
+    Array.from({ length: td.headers.length }, () => cycle([MID_CELL_WIDTH])),
   );
 
   const fillInitialColumnWidths = () => {
     return Array.from(
-      { length: fullHeaders.length },
-      (_, idx) => settingsColumnWidths.get(fullHeaders[idx]) ?? MID_CELL_WIDTH,
+      { length: td.headers.length },
+      (_, idx) => settingsColumnWidths.get(td.headers[idx]) ?? MID_CELL_WIDTH,
     );
   };
   const [intermediateColumnWidths, setIntermediateColumnsWidths] =
@@ -145,7 +161,9 @@ export default function HistoryTable({
   const dateGapStyle = (rowIndex: number) => {
     const styles: Record<string, any> = {};
     if (rowIndex > 0) {
-      if (dayDifference(rowHeaders[rowIndex - 1], rowHeaders[rowIndex]) > 1) {
+      if (
+        dayDifference(td.rowHeaders[rowIndex - 1], td.rowHeaders[rowIndex]) > 1
+      ) {
         styles.borderTopWidth = 3;
       }
     }
@@ -205,7 +223,7 @@ export default function HistoryTable({
     styles.height = rowHeights[rowIndex];
 
     if (
-      fullHeaderToValueType.get(fullHeaders[columnIndex]) ===
+      td.headerToValueType.get(td.headers[columnIndex]) ===
       ValueType.MultiSelect
     ) {
       styles.alignItems = "flex-start";
@@ -216,13 +234,13 @@ export default function HistoryTable({
 
   const calculateMultiSelectFitWidth = (columnIndex: number): number | null => {
     if (
-      fullHeaderToValueType.get(fullHeaders[columnIndex]) !==
+      td.headerToValueType.get(td.headers[columnIndex]) !==
       ValueType.MultiSelect
     ) {
       return null;
     }
     const lognestLineLength = Math.max(
-      ...data.map((rowData) =>
+      ...td.cells.map((rowData) =>
         Math.max(
           ...rowData[columnIndex].split("\n").map((line) => line.length),
         ),
@@ -405,7 +423,7 @@ export default function HistoryTable({
         }
 
         // update start and cycles based on saved column widths in settings
-        const settingsWidth = settingsColumnWidths.get(fullHeaders[idx]);
+        const settingsWidth = settingsColumnWidths.get(td.headers[idx]);
         if (settingsWidth) {
           const cycleOptionsDiffs = cycleOptions.map((el) =>
             Math.abs(el - settingsWidth),
@@ -425,7 +443,7 @@ export default function HistoryTable({
       }
       setIntermediateColumnsWidths(newColumnWidths);
     },
-    [fullHeaders, settingsColumnWidths],
+    [td.headers, settingsColumnWidths],
   );
 
   useFocusEffect(
@@ -491,225 +509,251 @@ export default function HistoryTable({
         }
       }),
     );
-    await saveColumnWidth(fullHeaders[index], nextWidth);
+    await saveColumnWidth(td.headers[index], nextWidth);
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Hidden column headers for measuring purposes */}
-      {fullHeaders.map((columnHeader, index) => (
-        <View
-          key={index}
-          style={[
-            styles.hiddenContainer,
-            styles.columnHeaderCell,
-            { height: MIN_CELL_HEIGHT },
-          ]}
-          pointerEvents="none"
-        >
-          <Text
-            numberOfLines={1}
-            style={[styles.headerText]}
-            onLayout={(event) => {
-              const width =
-                Math.ceil(event.nativeEvent.layout.width) +
-                COLUMN_HEADER_PADDING * 2 +
-                10;
-              handleColumnHeaderLayout(index, width);
-            }}
-          >
-            {columnHeader}
-          </Text>
-        </View>
-      ))}
-      {/* Hidden cells for measuring purposes */}
-      {data.map((row, rowIndex) => (
-        <View key={rowIndex} style={[styles.row, styles.hiddenContainer]}>
-          {row.map((cell, columnIndex) => (
-            <View key={columnIndex}>
-              <View
-                style={[styles.cell, styles.row, { width: MIN_CELL_WIDTH }]}
-              >
-                <Text
-                  style={[styles.cellText]}
-                  onTextLayout={(event) => {
-                    const linesLength = event.nativeEvent.lines.length;
-                    handleMinCellTextLayout(rowIndex, columnIndex, linesLength);
-                  }}
-                >
-                  {cell}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.cell,
-                  { width: intermediateColumnWidths[columnIndex] },
-                ]}
-              >
-                <Text
-                  style={[styles.cellText, { color: theme.colors.success }]}
-                  onLayout={(event) => {
-                    const height =
-                      Math.ceil(event.nativeEvent.layout.height) + 20;
-                    handleIntermediateCellLayout(rowIndex, columnIndex, height);
-                  }}
-                  onTextLayout={(event) => {
-                    const linesLength = event.nativeEvent.lines.length;
-                    handleIntermediateCellTextLayout(
-                      rowIndex,
-                      columnIndex,
-                      linesLength,
-                    );
-                  }}
-                >
-                  {cell}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      ))}
-
-      {/* Top row: corner + horizontal sticky header */}
-      <View style={styles.row}>
-        <View
-          style={[
-            styles.cornerCell,
-            {
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.primary,
-            },
-            computeRowHeaderStyles(0, rowHeaders.length),
-          ]}
-        >
-          <Text
-            style={[styles.headerText, { color: theme.colors.textOnPrimary }]}
-          >
-            {t("Date")}
-          </Text>
-        </View>
-
-        {/* Top Header */}
-        <View style={styles.columnHeaderClip}>
-          <Animated.ScrollView
-            ref={columnHeaderRef}
-            style={styles.row}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            scrollEnabled={false}
-          >
-            {fullHeaders.map((columnHeader, index) => (
-              <View key={index}>
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.columnHeaderCell,
-                    computeColumnHeaderStyles(index, fullHeaders.length - 1),
-                    {
-                      borderColor: theme.colors.border,
-                      backgroundColor: theme.colors.primary,
-                    },
-                  ]}
-                  onPress={() => handleToggleColumnWidth(index)}
-                >
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="middle"
-                    style={[
-                      styles.headerText,
-                      { color: theme.colors.textOnPrimary },
-                    ]}
-                  >
-                    {columnHeader}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </Animated.ScrollView>
-        </View>
-      </View>
-      {/* Main - vertical sticky header + scrollable body */}
-      <View style={styles.table}>
-        {/* Row Header */}
-        <View style={[styles.rowHeaderClip]}>
-          <Animated.ScrollView
-            ref={rowHeaderRef}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
-          >
-            {rowHeaders.map((rowHeader, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.rowHeaderCell,
-                  {
-                    borderColor: theme.colors.border,
-                    backgroundColor: mixColors(
-                      index % 2 === 0
-                        ? theme.colors.surface
-                        : theme.colors.card,
-                      theme.colors.primary,
-                      0.85,
-                    ),
-                  },
-                  computeRowHeaderStyles(index + 1, rowHeaders.length),
-                ]}
-              >
-                <Text style={[{ color: theme.colors.text }, styles.headerText]}>
-                  {formatDate(rowHeader)}
-                </Text>
-              </View>
-            ))}
-          </Animated.ScrollView>
-        </View>
-
-        {/* Scrollable body */}
-        <Animated.ScrollView horizontal onScroll={scrollHandlerX}>
-          <Animated.ScrollView
-            onScroll={scrollHandlerY}
-            nestedScrollEnabled={true}
-          >
-            {data.map((row, rowIndex) => (
-              <View key={rowIndex} style={styles.row}>
-                {row.map((cell, columnIndex) => (
-                  <TouchableOpacity
-                    key={columnIndex}
-                    disabled={expandAllRows}
-                    onPress={() => handleCellPress(rowIndex, columnIndex)}
-                    style={[
-                      styles.cell,
-
-                      {
-                        borderColor: theme.colors.border,
-                        backgroundColor:
-                          rowIndex % 2 === 0
-                            ? theme.colors.surface
-                            : theme.colors.card,
-                      },
-                      computeCellStyles(
-                        rowIndex,
-                        columnIndex,
-                        data.length - 1,
-                        row.length - 1,
-                      ),
-                    ]}
-                  >
-                    <Text
-                      style={[{ color: theme.colors.text }, styles.cellText]}
-                      numberOfLines={rowsNumberOfLines[rowIndex]}
-                      ellipsizeMode="tail"
-                    >
-                      {cell}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ))}
-          </Animated.ScrollView>
-        </Animated.ScrollView>
-      </View>
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+        {t("No records found")}
+      </Text>
     </View>
   );
+
+  if (
+    td.headers.length === 0 ||
+    td.cells.length === 0 ||
+    td.rowHeaders.length === 0
+  ) {
+    return renderEmptyState();
+  } else {
+    return (
+      <View style={styles.container}>
+        {/* Hidden column headers for measuring purposes */}
+        {td.headers.map((columnHeader, index) => (
+          <View
+            key={index}
+            style={[
+              styles.hiddenContainer,
+              styles.columnHeaderCell,
+              { height: MIN_CELL_HEIGHT },
+            ]}
+            pointerEvents="none"
+          >
+            <Text
+              numberOfLines={1}
+              style={[styles.headerText]}
+              onLayout={(event) => {
+                const width =
+                  Math.ceil(event.nativeEvent.layout.width) +
+                  COLUMN_HEADER_PADDING * 2 +
+                  10;
+                handleColumnHeaderLayout(index, width);
+              }}
+            >
+              {columnHeader}
+            </Text>
+          </View>
+        ))}
+        {/* Hidden cells for measuring purposes */}
+        {td.cells.map((row, rowIndex) => (
+          <View key={rowIndex} style={[styles.row, styles.hiddenContainer]}>
+            {row.map((cell, columnIndex) => (
+              <View key={columnIndex}>
+                <View
+                  style={[styles.cell, styles.row, { width: MIN_CELL_WIDTH }]}
+                >
+                  <Text
+                    style={[styles.cellText]}
+                    onTextLayout={(event) => {
+                      const linesLength = event.nativeEvent.lines.length;
+                      handleMinCellTextLayout(
+                        rowIndex,
+                        columnIndex,
+                        linesLength,
+                      );
+                    }}
+                  >
+                    {cell}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.cell,
+                    { width: intermediateColumnWidths[columnIndex] },
+                  ]}
+                >
+                  <Text
+                    style={[styles.cellText, { color: theme.colors.success }]}
+                    onLayout={(event) => {
+                      const height =
+                        Math.ceil(event.nativeEvent.layout.height) + 20;
+                      handleIntermediateCellLayout(
+                        rowIndex,
+                        columnIndex,
+                        height,
+                      );
+                    }}
+                    onTextLayout={(event) => {
+                      const linesLength = event.nativeEvent.lines.length;
+                      handleIntermediateCellTextLayout(
+                        rowIndex,
+                        columnIndex,
+                        linesLength,
+                      );
+                    }}
+                  >
+                    {cell}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ))}
+
+        {/* Top row: corner + horizontal sticky header */}
+        <View style={styles.row}>
+          <View
+            style={[
+              styles.cornerCell,
+              {
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.primary,
+              },
+              computeRowHeaderStyles(0, td.rowHeaders.length),
+            ]}
+          >
+            <Text
+              style={[styles.headerText, { color: theme.colors.textOnPrimary }]}
+            >
+              {t("Date")}
+            </Text>
+          </View>
+
+          {/* Top Header */}
+          <View style={styles.columnHeaderClip}>
+            <Animated.ScrollView
+              ref={columnHeaderRef}
+              style={styles.row}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              scrollEnabled={false}
+            >
+              {td.headers.map((columnHeader, index) => (
+                <View key={index}>
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.columnHeaderCell,
+                      computeColumnHeaderStyles(index, td.headers.length - 1),
+                      {
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.primary,
+                      },
+                    ]}
+                    onPress={() => handleToggleColumnWidth(index)}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="middle"
+                      style={[
+                        styles.headerText,
+                        { color: theme.colors.textOnPrimary },
+                      ]}
+                    >
+                      {columnHeader}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </Animated.ScrollView>
+          </View>
+        </View>
+        {/* Main - vertical sticky header + scrollable body */}
+        <View style={styles.table}>
+          {/* Row Header */}
+          <View style={[styles.rowHeaderClip]}>
+            <Animated.ScrollView
+              ref={rowHeaderRef}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+            >
+              {td.rowHeaders.map((rowHeader, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.rowHeaderCell,
+                    {
+                      borderColor: theme.colors.border,
+                      backgroundColor: mixColors(
+                        index % 2 === 0
+                          ? theme.colors.surface
+                          : theme.colors.card,
+                        theme.colors.primary,
+                        0.85,
+                      ),
+                    },
+                    computeRowHeaderStyles(index + 1, td.rowHeaders.length),
+                  ]}
+                >
+                  <Text
+                    style={[{ color: theme.colors.text }, styles.headerText]}
+                  >
+                    {formatDate(rowHeader)}
+                  </Text>
+                </View>
+              ))}
+            </Animated.ScrollView>
+          </View>
+
+          {/* Scrollable body */}
+          <Animated.ScrollView horizontal onScroll={scrollHandlerX}>
+            <Animated.ScrollView
+              onScroll={scrollHandlerY}
+              nestedScrollEnabled={true}
+            >
+              {td.cells.map((row, rowIndex) => (
+                <View key={rowIndex} style={styles.row}>
+                  {row.map((cell, columnIndex) => (
+                    <TouchableOpacity
+                      key={columnIndex}
+                      disabled={expandAllRows}
+                      onPress={() => handleCellPress(rowIndex, columnIndex)}
+                      style={[
+                        styles.cell,
+
+                        {
+                          borderColor: theme.colors.border,
+                          backgroundColor:
+                            rowIndex % 2 === 0
+                              ? theme.colors.surface
+                              : theme.colors.card,
+                        },
+                        computeCellStyles(
+                          rowIndex,
+                          columnIndex,
+                          td.cells.length - 1,
+                          row.length - 1,
+                        ),
+                      ]}
+                    >
+                      <Text
+                        style={[{ color: theme.colors.text }, styles.cellText]}
+                        numberOfLines={rowsNumberOfLines[rowIndex]}
+                        ellipsizeMode="tail"
+                      >
+                        {cell}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ))}
+            </Animated.ScrollView>
+          </Animated.ScrollView>
+        </View>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -766,5 +810,16 @@ const styles = StyleSheet.create({
   hiddenContainer: {
     position: "absolute",
     opacity: 0,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    padding: 24,
+    marginBottom: 8,
+    marginTop: 14,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "500",
+    textAlign: "center",
   },
 });

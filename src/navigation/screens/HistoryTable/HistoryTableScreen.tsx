@@ -1,7 +1,7 @@
 import {
+  ActivityIndicator,
   Platform,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -21,7 +21,7 @@ import Ionicons from "@react-native-vector-icons/ionicons/static";
 import * as Sharing from "expo-sharing";
 import { useTranslation } from "react-i18next";
 import { ValueType } from "../../../models/AssessmentSchedule";
-import HistoryTable from "./HistoryTable";
+import HistoryTable, { TableData } from "./HistoryTable";
 import {
   deserializeDateOnly,
   getShiftedDateOnly,
@@ -37,8 +37,8 @@ import {
 } from "../../../models/Settings";
 import { Toast, ToastType } from "../../../components/Toast";
 import {
-  getAssessmentRecords as getAssessmentRecords,
-  getMedicineRecords as getMedicineRecords,
+  getAssessmentRecords,
+  getMedicineRecords,
   NewColumnConfig,
 } from "../../../models/dbRecordsService";
 import { File, Paths, Directory } from "expo-file-system";
@@ -51,38 +51,7 @@ import {
   DisplayOptionsConfigurationDialog,
 } from "./DisplayOptionsConfigurationDialog";
 import { MenuModal } from "./MenuModal";
-
-function escapeCSVField(field: string): string {
-  if (
-    field.includes(",") ||
-    field.includes('"') ||
-    field.includes("\n") ||
-    field.includes("\r")
-  ) {
-    return `"${field.replace(/"/g, '""')}"`;
-  }
-  return field;
-}
-
-function generateCSV(
-  headers: string[],
-  rowHeaders: Date[],
-  records: string[][],
-): string {
-  const csvRows: string[] = [];
-
-  csvRows.push(["Date", ...headers].map(escapeCSVField).join(","));
-
-  for (const [idx, record] of records.entries()) {
-    csvRows.push(
-      [serializeDateOnly(rowHeaders[idx]), ...record]
-        .map(escapeCSVField)
-        .join(","),
-    );
-  }
-
-  return csvRows.join("\n");
-}
+import { generateCSV } from "./exportUtils";
 
 function formatAssessmentValue(
   value: AssessmentValue,
@@ -110,12 +79,15 @@ export function HistoryTableScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
 
+  const [tableDataAndVersion, setTableDataAndVersion] = React.useState<{
+    tableData: TableData | null;
+    version: number;
+  }>({ tableData: null, version: 0 });
+
+  //todo consider moving moving to Ref
   const [rowHeadersAll, setRowHeadersAll] = React.useState<Date[]>([]);
-  const [fullHeaders, setFullHeaders] = React.useState<string[]>([]);
-  const [fullHeaderToValueType, setFullHeaderToValueType] = React.useState<
-    Map<string, ValueType>
-  >(new Map());
   const [cellsAll, setCellsAll] = React.useState<string[][]>([]);
+  const [headers, setHeaders] = React.useState<string[]>([]);
 
   const [settingsColumnWidths, setSetingsColumnWidths] = React.useState<
     Map<string, number>
@@ -132,8 +104,6 @@ export function HistoryTableScreen() {
     ToastType.Success,
   );
 
-  const [version, setVersion] = React.useState(0);
-
   const [dateRangeDialogOpen, setDateRangeDialogOpen] =
     React.useState<boolean>(false);
   const [dateRange, setDateRange] = React.useState<DateRange>(
@@ -141,53 +111,6 @@ export function HistoryTableScreen() {
   );
   const [displayOptionsDialogOpen, setDisplayOptionsDialogOpen] =
     React.useState<boolean>(false);
-
-  const { rowHeaders, cells } = React.useMemo((): {
-    rowHeaders: Date[];
-    cells: string[][];
-  } => {
-    if (rowHeadersAll.length === 0 || cellsAll.length === 0) {
-      return {
-        rowHeaders: rowHeaders,
-        cells: cells,
-      };
-    }
-
-    let endIdx = rowHeadersAll.length - 1;
-    if (dateRange.startDate !== null) {
-      while (
-        isLessDateOnly(rowHeadersAll[endIdx], dateRange.startDate) &&
-        endIdx > 0
-      ) {
-        endIdx -= 1;
-      }
-      endIdx += 1;
-      if (isLessDateOnly(rowHeadersAll[0], dateRange.startDate)) {
-        endIdx = 0;
-      }
-    }
-    let startIdx = 0;
-    if (dateRange.endDate !== null) {
-      while (
-        isLessDateOnly(dateRange.endDate, rowHeadersAll[startIdx]) &&
-        startIdx < rowHeadersAll.length - 1
-      ) {
-        startIdx += 1;
-      }
-      if (
-        isLessDateOnly(
-          dateRange.endDate,
-          rowHeadersAll[rowHeadersAll.length - 1],
-        )
-      ) {
-        startIdx = rowHeadersAll.length;
-      }
-    }
-    return {
-      rowHeaders: rowHeadersAll.slice(startIdx, endIdx),
-      cells: cellsAll.slice(startIdx, endIdx),
-    };
-  }, [rowHeadersAll, cellsAll, dateRange]);
 
   const combineColumnConfigs = async (
     newColumnConfigs: Map<string, NewColumnConfig>,
@@ -227,6 +150,62 @@ export function HistoryTableScreen() {
     return updatedColumnConfigs;
   };
 
+  const computeAndSetTableData = React.useCallback(
+    (
+      rowHeadersAll: Date[],
+      cellsAll: string[][],
+      dateRange: DateRange,
+      headers: string[],
+      headerToValueType: Map<string, ValueType>,
+    ) => {
+      let endIdx = rowHeadersAll.length - 1;
+      if (dateRange.startDate !== null) {
+        while (
+          isLessDateOnly(rowHeadersAll[endIdx], dateRange.startDate) &&
+          endIdx > 0
+        ) {
+          endIdx -= 1;
+        }
+        endIdx += 1;
+        if (isLessDateOnly(rowHeadersAll[0], dateRange.startDate)) {
+          endIdx = 0;
+        }
+      }
+      let startIdx = 0;
+      if (dateRange.endDate !== null) {
+        while (
+          isLessDateOnly(dateRange.endDate, rowHeadersAll[startIdx]) &&
+          startIdx < rowHeadersAll.length - 1
+        ) {
+          startIdx += 1;
+        }
+        if (
+          isLessDateOnly(
+            dateRange.endDate,
+            rowHeadersAll[rowHeadersAll.length - 1],
+          )
+        ) {
+          startIdx = rowHeadersAll.length;
+        }
+      }
+
+      // when there is change in table data the HistoryTable component
+      // is re-mounted using version as a component key
+      setTableDataAndVersion((prev) => {
+        return {
+          tableData: new TableData(
+            headers,
+            headerToValueType,
+            rowHeadersAll.slice(startIdx, endIdx),
+            cellsAll.slice(startIdx, endIdx),
+          ),
+          version: prev.version + 1,
+        };
+      });
+    },
+    [],
+  );
+
   const loadAndCombineDataForTable = React.useCallback(
     async (initialSettings: HistoryTableSettings) => {
       const medicineTableData = await getMedicineRecords(db);
@@ -264,7 +243,6 @@ export function HistoryTableScreen() {
         }
       };
       headers.sort((a, b) => getOrdinal(a) - getOrdinal(b));
-      setFullHeaders(headers);
 
       const newTableRows = new Array();
 
@@ -296,7 +274,8 @@ export function HistoryTableScreen() {
         ...medicineTableData.labelToValueType,
         ...assessmentTableData.labelToValueType,
       ]);
-      setFullHeaderToValueType(types);
+      setHeaders(headers);
+
       for (const date of dates) {
         const day = serializeDateOnly(date);
 
@@ -314,11 +293,11 @@ export function HistoryTableScreen() {
         }
         newTableRows.push(record);
       }
-
       setRowHeadersAll(dates);
       setCellsAll(newTableRows);
+      computeAndSetTableData(dates, newTableRows, dateRange, headers, types);
     },
-    [db],
+    [db, computeAndSetTableData, dateRange],
   );
 
   const loadSettings = React.useCallback(async () => {
@@ -349,6 +328,9 @@ export function HistoryTableScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const setUp = async () => {
+        setTableDataAndVersion((prev) => {
+          return { tableData: null, version: prev.version + 1 };
+        });
         const initialSettings = await dbGetHistoryTableSettings(db);
         const tableDataPromise = loadAndCombineDataForTable(initialSettings);
         const settingsPromise = loadSettings();
@@ -364,7 +346,7 @@ export function HistoryTableScreen() {
   }, [isMenuOpen]);
 
   const handleSaveToCSV = React.useCallback(async () => {
-    const csvContent = generateCSV(fullHeaders, rowHeadersAll, cellsAll);
+    const csvContent = generateCSV(headers, rowHeadersAll, cellsAll);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileName = `therapy-track-records-${timestamp}.csv`;
@@ -421,7 +403,7 @@ export function HistoryTableScreen() {
       }
     }
     setIsMenuOpen(false);
-  }, [cellsAll, rowHeadersAll, fullHeaders, t]);
+  }, [cellsAll, rowHeadersAll, headers, t]);
 
   const handleDateRangeMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
@@ -430,9 +412,12 @@ export function HistoryTableScreen() {
 
   const handleDateRangeConfigurationChange = React.useCallback(
     (dateRange: DateRange) => {
-      setDateRange(dateRange);
+      setTableDataAndVersion((prev) => {
+        return { tableData: null, version: prev.version + 1 };
+      });
       setDateRangeDialogOpen(false);
-      setVersion((version) => version + 1);
+      setDateRange(dateRange);
+      // the range will applied via useFocusEffect dependencies
     },
     [],
   );
@@ -467,7 +452,6 @@ export function HistoryTableScreen() {
         const tableDataPromise = loadAndCombineDataForTable(newSettings);
         const settingsPromise = loadSettings();
         await Promise.all([tableDataPromise, settingsPromise]);
-        setVersion((version) => version + 1);
       }
     },
     [db, loadAndCombineDataForTable, loadSettings, settings],
@@ -499,24 +483,6 @@ export function HistoryTableScreen() {
     });
   }, [navigation, isMenuOpen, handleMenuToggle, theme.colors]);
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No records found")}
-      </Text>
-    </View>
-  );
-
-  const isTableDataReady = () => {
-    return !(
-      settings === null ||
-      fullHeaders.length === 0 ||
-      fullHeaderToValueType.size === 0 ||
-      rowHeaders.length === 0 ||
-      cellsAll.length === 0
-    );
-  };
-
   return (
     <DefaultMainContainer>
       <MenuModal
@@ -526,7 +492,7 @@ export function HistoryTableScreen() {
         handleVisibleColumns={handleDisplayOptionsMenuItemPress}
         handleDateRange={handleDateRangeMenuItemPress}
         handleDisplayOptions={handleDisplayOptionsMenuItemPress}
-      ></MenuModal>
+      />
 
       <Toast
         message={toastMessage ?? ""}
@@ -551,16 +517,14 @@ export function HistoryTableScreen() {
         />
       )}
 
-      {!isTableDataReady() ? (
-        renderEmptyState()
+      {tableDataAndVersion.tableData === null ? (
+        <ActivityIndicator size="large" style={styles.activityIndicator} />
       ) : (
         <View style={[styles.mainContainer]}>
           <HistoryTable
-            key={version}
-            fullHeaders={fullHeaders}
-            fullHeaderToValueType={fullHeaderToValueType}
-            rowHeaders={rowHeaders}
-            data={cells}
+            key={tableDataAndVersion.version}
+            id={tableDataAndVersion.version}
+            td={tableDataAndVersion.tableData}
             expandAllRows={settings?.expandAllRows === true}
             settingsColumnWidths={settingsColumnWidths}
             saveColumnWidth={saveColumnWidth}
@@ -572,16 +536,9 @@ export function HistoryTableScreen() {
 }
 
 const styles = StyleSheet.create({
-  emptyContainer: {
-    alignItems: "center",
-    padding: 24,
-    marginBottom: 8,
-    marginTop: 14,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "500",
-    textAlign: "center",
+  activityIndicator: {
+    margin: 30,
+    alignSelf: "center",
   },
   mainContainer: {
     padding: 6,
