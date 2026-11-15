@@ -14,8 +14,12 @@ import { ValueType } from "../../../models/AssessmentSchedule";
 import { useTranslation } from "react-i18next";
 import { dayDifference } from "../../../dateOnlyUtils";
 import { t } from "i18next";
+import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ColumnMenuModal } from "./ColumnMenuModal";
+import { useHeaderHeight } from "@react-navigation/elements";
 
-const TABLE_RADIUS = 10;
+const TABLE_RADIUS = DEFAULT_BORDER_RADIUS;
 const DELTA_WIDTH_BUFFER = 10;
 const COLUMN_HEADER_PADDING = 8;
 
@@ -57,7 +61,9 @@ type HistoryTableProps = {
   id: number;
   expandAllRows: boolean;
   settingsColumnWidths: Map<string, number | null>;
-  saveColumnWidth: (fullHeader: string, width: number) => Promise<void>;
+  initialVisibleColumns: Set<string>;
+  saveColumnWidth: (header: string, width: number) => Promise<void>;
+  saveColumnVisibility: (header: string, isShown: boolean) => Promise<void>;
 };
 
 export default function HistoryTable({
@@ -65,9 +71,11 @@ export default function HistoryTable({
   id,
   expandAllRows,
   settingsColumnWidths,
+  initialVisibleColumns,
   saveColumnWidth,
+  saveColumnVisibility,
 }: HistoryTableProps) {
-  console.log(id);
+  console.log("history table key", id);
   const theme = useTheme();
   const { i18n } = useTranslation();
 
@@ -132,6 +140,23 @@ export default function HistoryTable({
   const [columnWidths, setColumnsWidths] = React.useState<number[]>(
     fillInitialColumnWidths(),
   );
+
+  const [visibleColumns, setVisibleColumns] = React.useState<Set<string>>(
+    initialVisibleColumns,
+  );
+
+  const headerPositionRefs = React.useRef<
+    (React.ComponentRef<TouchableOpacity> | null)[]
+  >(Array.from({ length: td.headers.length }, () => null));
+
+  const [headerMenu, setHeaderMenu] = React.useState<{
+    index: number;
+    left: number;
+    top: number;
+  } | null>(null);
+
+  const { left: safeInsetsLeft } = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
 
   const scrollX = useSharedValue(0);
   const scrollY = useSharedValue(0);
@@ -512,6 +537,41 @@ export default function HistoryTable({
     await saveColumnWidth(td.headers[index], nextWidth);
   };
 
+  const handleOpenHeaderMenu = (index: number) => {
+    headerPositionRefs.current[index]?.measure(
+      (
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        pageX: number,
+        pageY: number,
+      ) => {
+        setHeaderMenu({
+          index,
+          left: pageX - TABLE_MARGIN - safeInsetsLeft,
+          top: pageY + height - headerHeight - TABLE_MARGIN,
+        });
+      },
+    );
+  };
+
+  const handleHideHeaderMenu = () => {
+    setHeaderMenu(null);
+  };
+
+  const handleHidePress = async () => {
+    if (headerMenu !== null) {
+      const header = td.headers[headerMenu.index];
+      setVisibleColumns((prev) => {
+        prev.delete(header);
+        return new Set([...prev]);
+      });
+      await saveColumnVisibility(td.headers[headerMenu.index], false);
+      setHeaderMenu(null);
+    }
+  };
+
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
@@ -529,6 +589,14 @@ export default function HistoryTable({
   }
   return (
     <View style={styles.container}>
+      {headerMenu !== null && (
+        <ColumnMenuModal
+          onClose={handleHideHeaderMenu}
+          handleHidePress={handleHidePress}
+          topPosition={headerMenu?.top}
+          leftPosition={headerMenu?.left}
+        />
+      )}
       {/* Hidden column headers for measuring purposes */}
       {td.headers.map((columnHeader, index) => (
         <View
@@ -631,33 +699,41 @@ export default function HistoryTable({
             showsHorizontalScrollIndicator={false}
             scrollEnabled={false}
           >
-            {td.headers.map((columnHeader, index) => (
-              <View key={index}>
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.columnHeaderCell,
-                    computeColumnHeaderStyles(index, td.headers.length - 1),
-                    {
-                      borderColor: theme.colors.border,
-                      backgroundColor: theme.colors.primary,
-                    },
-                  ]}
-                  onPress={() => handleToggleColumnWidth(index)}
-                >
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="middle"
-                    style={[
-                      styles.headerText,
-                      { color: theme.colors.textOnPrimary },
-                    ]}
-                  >
-                    {columnHeader}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+            {td.headers.map(
+              (columnHeader, index) =>
+                visibleColumns.has(columnHeader) && (
+                  <View key={index}>
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.columnHeaderCell,
+                        computeColumnHeaderStyles(index, td.headers.length - 1),
+                        {
+                          borderColor: theme.colors.border,
+                          backgroundColor: theme.colors.primary,
+                        },
+                      ]}
+                      onPress={() => handleToggleColumnWidth(index)}
+                      // @ts-ignore
+                      ref={(el) => (headerPositionRefs.current[index] = el)}
+                      onLongPress={() => {
+                        handleOpenHeaderMenu(index);
+                      }}
+                    >
+                      <Text
+                        numberOfLines={1}
+                        ellipsizeMode="middle"
+                        style={[
+                          styles.headerText,
+                          { color: theme.colors.textOnPrimary },
+                        ]}
+                      >
+                        {columnHeader}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ),
+            )}
           </Animated.ScrollView>
         </View>
       </View>
@@ -704,38 +780,44 @@ export default function HistoryTable({
           >
             {td.cells.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.row}>
-                {row.map((cell, columnIndex) => (
-                  <TouchableOpacity
-                    key={columnIndex}
-                    disabled={expandAllRows}
-                    onPress={() => handleCellPress(rowIndex, columnIndex)}
-                    style={[
-                      styles.cell,
+                {row.map(
+                  (cell, columnIndex) =>
+                    visibleColumns.has(td.headers[columnIndex]) && (
+                      <TouchableOpacity
+                        key={columnIndex}
+                        disabled={expandAllRows}
+                        onPress={() => handleCellPress(rowIndex, columnIndex)}
+                        style={[
+                          styles.cell,
 
-                      {
-                        borderColor: theme.colors.border,
-                        backgroundColor:
-                          rowIndex % 2 === 0
-                            ? theme.colors.surface
-                            : theme.colors.card,
-                      },
-                      computeCellStyles(
-                        rowIndex,
-                        columnIndex,
-                        td.cells.length - 1,
-                        row.length - 1,
-                      ),
-                    ]}
-                  >
-                    <Text
-                      style={[{ color: theme.colors.text }, styles.cellText]}
-                      numberOfLines={rowsNumberOfLines[rowIndex]}
-                      ellipsizeMode="tail"
-                    >
-                      {cell}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                          {
+                            borderColor: theme.colors.border,
+                            backgroundColor:
+                              rowIndex % 2 === 0
+                                ? theme.colors.surface
+                                : theme.colors.card,
+                          },
+                          computeCellStyles(
+                            rowIndex,
+                            columnIndex,
+                            td.cells.length - 1,
+                            row.length - 1,
+                          ),
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            { color: theme.colors.text },
+                            styles.cellText,
+                          ]}
+                          numberOfLines={rowsNumberOfLines[rowIndex]}
+                          ellipsizeMode="tail"
+                        >
+                          {cell}
+                        </Text>
+                      </TouchableOpacity>
+                    ),
+                )}
               </View>
             ))}
           </Animated.ScrollView>
@@ -745,9 +827,12 @@ export default function HistoryTable({
   );
 }
 
+const TABLE_MARGIN = 6;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    margin: TABLE_MARGIN,
   },
   table: {
     flexDirection: "row",
@@ -810,5 +895,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
     textAlign: "center",
+  },
+  menuContainer: {
+    zIndex: 10,
+    elevation: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: DEFAULT_BORDER_RADIUS,
+  },
+  menuItem: {
+    alignContent: "flex-start",
+    alignItems: "center",
+    padding: 12,
+    flexDirection: "row",
+    width: "100%",
+  },
+  menuIcon: {
+    fontSize: 20,
+  },
+  menuText: {
+    alignItems: "center",
+    fontSize: 16,
+    fontWeight: "400",
+    paddingLeft: 10,
   },
 });

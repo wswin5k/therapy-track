@@ -383,9 +383,7 @@ async function removeMedicineLabelsFromHistoryTableSettings(
   const baseUnitLabel = baseUnitShorFormPlural(medicine.baseUnit);
   medicine.activeIngredients.forEach((ai) => {
     settings.columnConfigs.delete(ai.getLabel(baseUnitLabel));
-    settings.columnConfigs.delete(ai.getLabelWithoutUnit(baseUnitLabel));
-    settings.columnConfigs.delete(ai.getShortLabel());
-    settings.columnConfigs.delete(ai.getShortLabelWithoutUnit());
+    settings.columnConfigs.delete(ai.getLabelWithoutUnit());
   });
   settings.columnConfigs.delete(medicine.getLabel());
   dbUpdateHistoryTableSettings(db, settings);
