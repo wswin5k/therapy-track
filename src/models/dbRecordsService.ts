@@ -38,7 +38,6 @@ import {
   weightUnitToGramsMultiplier,
 } from "./MedicineSchedule";
 import { ColumnType } from "./Settings";
-import { getOrThrow } from "../navigation/utils";
 
 export async function dbColumnsGetAll(db: SQLiteDatabase): Promise<Metric[]> {
   const medicines = await dbGetMedicines(db);
@@ -50,7 +49,7 @@ export async function dbColumnsGetAll(db: SQLiteDatabase): Promise<Metric[]> {
       new Metric(m.getLabel(), SourceType.Medicine, [m.dbId]),
     );
     m.activeIngredients.forEach((ai) => {
-      const label = ai.getLabelWithoutUnit(baseUnitLabel);
+      const label = ai.getLabel(baseUnitLabel);
       const column = columns.get(label);
       if (column) {
         column.sourceIds.push(label);
@@ -61,7 +60,7 @@ export async function dbColumnsGetAll(db: SQLiteDatabase): Promise<Metric[]> {
         );
       }
 
-      const labelShort = ai.getShortLabelWithoutUnit();
+      const labelShort = ai.getLabelWithoutUnit();
       const columnShort = columns.get(labelShort);
       if (columnShort) {
         columnShort.sourceIds.push(m.dbId);
@@ -104,11 +103,9 @@ class RecordsData {
   constructor(
     public dayToLabelToValue: Map<string, Map<string, AssessmentValue>>,
     public labels: string[],
-    // internal label doesn't contain weight unit, the mapping only contains
-    // the labels which have different internal label
-    public labelToInternalLabel: Map<string, string>,
     public labelToValueType: Map<string, ValueType>,
-    public internalLabelToColumnConfig: Map<string, NewColumnConfig>,
+    public labelToColumnConfig: Map<string, NewColumnConfig>,
+    public labelToUnit: Map<string, string>,
   ) {}
 }
 
@@ -145,7 +142,6 @@ export async function getAssessmentRecords(
 
   const dayToLabelToValues = new Map<string, Map<string, AssessmentValue>>();
 
-  const labelToInternalLabel = new Map();
   const labelToValueType = new Map();
   const newColumnConfigs = new Map();
 
@@ -157,13 +153,11 @@ export async function getAssessmentRecords(
     const group = groupId ? (idToGroup.get(groupId) ?? null) : null;
     const label = assessment.getLabel(group?.name);
 
-    labelToInternalLabel.set(label, label);
-
     labelToValueType.set(label, assessment.type);
 
     newColumnConfigs.set(
       label,
-      new NewColumnConfig(ColumnType.Medicine, assessment.createdAt),
+      new NewColumnConfig(ColumnType.Assessment, assessment.createdAt),
     );
 
     const dateStr = serializeDateOnly(record.date);
@@ -195,74 +189,52 @@ export async function getAssessmentRecords(
     digestMeasurementRecord(record, assessment, measurement.groupId);
   }
 
-  const labels = Array.from(labelToInternalLabel.keys()).sort();
+  const labels = Array.from(labelToValueType.keys()).sort();
+  const labelToUnit = new Map();
 
   return new RecordsData(
     dayToLabelToValues,
     labels,
-    labelToInternalLabel,
     labelToValueType,
     newColumnConfigs,
+    labelToUnit,
   );
 }
 
-function insertActiveIngredientWeightUnits(
+function applyActiveIngredientWeightUnits(
   dayToLabelToValue: Map<string, Map<string, number>>,
-  fullLabelToShortLabel: Map<string, string>,
-  fullLabelToWeightUnits: Map<string, Set<IngredientAmountUnit>>,
+  labelToWeightUnits: Map<string, Set<IngredientAmountUnit>>,
 ): Map<string, string> {
   // 1. Calculates appropriate weight unit.
-  // 2. Creats new short and full labels with units.
-  // 3. Updates the record data mapping (dayToLabelToValue) with new labels and amounts.
-  // 4. Creates and returns a mapping from a label to internal label.
+  // 2. Updates the record data mapping (dayToLabelToValue) with new amounts.
+  // 3. Creates and returns a mapping from a label to unit label.
 
   const updateRow = (
     labelToValues: Map<string, number>,
     label: string,
-    newLabel: string,
     weightUnitMultiplier: number,
   ) => {
     const value = labelToValues.get(label);
     if (!value) {
       return;
     }
-    labelToValues.set(newLabel, value / weightUnitMultiplier);
-    labelToValues.delete(label);
+    labelToValues.set(label, value / weightUnitMultiplier);
   };
 
-  const fullLabelToInternalLabel = new Map();
+  const labelToUnit = new Map();
 
-  for (const [fullHeader, weightUnits] of fullLabelToWeightUnits) {
+  for (const [label, weightUnits] of labelToWeightUnits) {
     const weightUnit = maxWeightUnit([...weightUnits]);
     const weightUnitMultiplier = weightUnitToGramsMultiplier(weightUnit);
     const weightUnitDisplay = ingredientAmountUnitEnumToDisplayForm(weightUnit);
 
-    const newFullHeader = `${fullHeader} [${weightUnitDisplay}]`;
-    const shortHeader = getOrThrow(fullLabelToShortLabel, fullHeader);
-    const newShortHeader = `${shortHeader} [${weightUnitDisplay}]`;
+    labelToUnit.set(label, weightUnitDisplay);
 
-    fullLabelToShortLabel.delete(fullHeader);
-    fullLabelToShortLabel.set(newFullHeader, newShortHeader);
-
-    fullLabelToInternalLabel.set(newFullHeader, fullHeader);
-    fullLabelToInternalLabel.set(newShortHeader, shortHeader);
-
-    for (const headerToValues of dayToLabelToValue.values()) {
-      updateRow(
-        headerToValues,
-        fullHeader,
-        newFullHeader,
-        weightUnitMultiplier,
-      );
-      updateRow(
-        headerToValues,
-        shortHeader,
-        newShortHeader,
-        weightUnitMultiplier,
-      );
+    for (const labelToValues of dayToLabelToValue.values()) {
+      updateRow(labelToValues, label, weightUnitMultiplier);
     }
   }
-  return fullLabelToInternalLabel;
+  return labelToUnit;
 }
 
 function updateHeaderCounter(
@@ -314,11 +286,13 @@ export async function getMedicineRecords(
   const fullLabelToShortLabel = new Map<string, string>();
   const shortLabelCounts = new Map<string, number>();
 
-  const fullActiveIngredientLabelToWeightUnits = new Map<
+  const activeIngredientLabelToWeightUnits = new Map<
     string,
     Set<IngredientAmountUnit>
   >();
   const newColumnConfigs = new Map();
+
+  const labelToUnit = new Map();
 
   const digestDosageRecord = (
     record: ScheduledDosageRecord | UnscheduledDosageRecord,
@@ -333,19 +307,27 @@ export async function getMedicineRecords(
 
     for (const ai of medicine.activeIngredients) {
       let fullLabel = ai.getLabel(baseUnitLabel);
-      let shortLabel = ai.getShortLabel();
+      let shortLabel = ai.getLabelWithoutUnit();
 
       let weightUnitMultiplier = 1;
       if (isWeightUnit(ai.unit)) {
-        fullLabel = ai.getLabelWithoutUnit(baseUnitLabel);
-        shortLabel = ai.getShortLabelWithoutUnit();
         weightUnitMultiplier = weightUnitToGramsMultiplier(ai.unit);
-        fullActiveIngredientLabelToWeightUnits.set(
+        activeIngredientLabelToWeightUnits.set(
           fullLabel,
-          (
-            fullActiveIngredientLabelToWeightUnits.get(fullLabel) || new Set()
-          ).add(ai.unit),
+          (activeIngredientLabelToWeightUnits.get(fullLabel) || new Set()).add(
+            ai.unit,
+          ),
         );
+        activeIngredientLabelToWeightUnits.set(
+          shortLabel,
+          (activeIngredientLabelToWeightUnits.get(fullLabel) || new Set()).add(
+            ai.unit,
+          ),
+        );
+      } else {
+        // weight units are set later in applyActiveIngredientWeightUnits
+        labelToUnit.set(fullLabel, ai.getUnitLabel());
+        labelToUnit.set(shortLabel, ai.getUnitLabel());
       }
 
       const ccFullHeader = newColumnConfigs.get(fullLabel);
@@ -385,13 +367,12 @@ export async function getMedicineRecords(
     }
 
     const label = medicine.getLabel();
+    labelToUnit.set(label, medicine.getUnitLabel());
 
     newColumnConfigs.set(
       label,
       new NewColumnConfig(ColumnType.Medicine, medicine.createdAt),
     );
-
-    updateHeaderCounter(fullLabelToShortLabel, shortLabelCounts, label, label);
 
     let amountTotal = dailyRow.get(label) || 0;
     amountTotal += medicineAmount;
@@ -420,31 +401,23 @@ export async function getMedicineRecords(
     );
   }
 
-  const labelToInternalLabel = insertActiveIngredientWeightUnits(
+  const labelToUnitWeights = applyActiveIngredientWeightUnits(
     dayToLabelToValues,
-    fullLabelToShortLabel,
-    fullActiveIngredientLabelToWeightUnits,
+    activeIngredientLabelToWeightUnits,
   );
+  labelToUnitWeights.forEach((unit, label) => labelToUnit.set(label, unit));
 
   // remove full labels from records and configs data
   // where the coressponding short label count == 1
-  const labelsSet = new Set<string>();
   for (const [fullLabel, shortLabel] of fullLabelToShortLabel) {
-    labelsSet.add(shortLabel);
-    const shortLabelInternal =
-      labelToInternalLabel.get(shortLabel) ?? shortLabel;
-    if (shortLabelCounts.get(shortLabelInternal) === 1) {
+    if (shortLabelCounts.get(shortLabel) === 1) {
       for (const headerToValues of dayToLabelToValues.values()) {
         headerToValues.delete(fullLabel);
       }
-      const fullLabelInternal =
-        labelToInternalLabel.get(fullLabel) ?? fullLabel;
-      newColumnConfigs.delete(fullLabelInternal);
-    } else {
-      labelsSet.add(fullLabel);
+      newColumnConfigs.delete(fullLabel);
     }
   }
-  const labels = [...labelsSet];
+  const labels = [...labelToUnit.keys()];
   labels.sort();
 
   const labelToValueType = new Map();
@@ -453,8 +426,8 @@ export async function getMedicineRecords(
   return new RecordsData(
     dayToLabelToValues,
     labels,
-    labelToInternalLabel,
     labelToValueType,
     newColumnConfigs,
+    labelToUnit,
   );
 }

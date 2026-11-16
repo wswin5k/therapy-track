@@ -67,23 +67,14 @@ export class ActiveIngredient {
     public unit: IngredientAmountUnit,
   ) {}
 
-  // Not-short and short labels relate to different values.
-  // With and without unit labels relate to the same values,
-  // the unit is only stripped because it often should be determined
-  // later.
   getLabel(baseUnitLabel: string): string {
-    const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(this.unit);
-    return `${this.name} – ${baseUnitLabel} [${aiUnitDisplay}]`;
-  }
-  getShortLabel(): string {
-    const aiUnitDisplay = ingredientAmountUnitEnumToDisplayForm(this.unit);
-    return `${this.name} [${aiUnitDisplay}]`;
-  }
-  getLabelWithoutUnit(baseUnitLabel: string): string {
     return `${this.name} – ${baseUnitLabel}`;
   }
-  getShortLabelWithoutUnit(): string {
+  getLabelWithoutUnit(): string {
     return `${this.name}`;
+  }
+  getUnitLabel(): string {
+    return ingredientAmountUnitEnumToDisplayForm(this.unit);
   }
 }
 
@@ -104,8 +95,11 @@ export class Medicine {
   }
 
   getLabel(): string {
-    const baseUnitLabel = baseUnitShorFormPlural(this.baseUnit);
-    return `${this.name} [${baseUnitLabel}]`;
+    return this.name;
+  }
+
+  getUnitLabel(): string {
+    return baseUnitShorFormPlural(this.baseUnit);
   }
 }
 

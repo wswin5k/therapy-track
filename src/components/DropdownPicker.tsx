@@ -52,7 +52,9 @@ export function DropdownPicker<T>({
     width: 0,
     height: 0,
   });
-  const triggerRef = React.useRef<React.ComponentRef<TouchableOpacity>>(null);
+  const triggerRef = React.useRef<React.ComponentRef<TouchableOpacity> | null>(
+    null,
+  );
 
   useFocusEffect(
     React.useCallback(() => {
@@ -88,7 +90,7 @@ export function DropdownPicker<T>({
     }
   };
 
-  const handleButtonLaoyt = () => {
+  const handleButtonLayout = () => {
     measureTrigger();
   };
 
@@ -139,7 +141,7 @@ export function DropdownPicker<T>({
       <TouchableOpacity
         ref={triggerRef}
         onPress={handleOpen}
-        onLayout={handleButtonLaoyt}
+        onLayout={handleButtonLayout}
         style={[
           eStyles.pressable,
           {

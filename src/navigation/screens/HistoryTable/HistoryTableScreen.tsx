@@ -30,11 +30,7 @@ import {
 } from "../../../dateOnlyUtils";
 import { castToStringArray, getDisplayDirectoryName } from "../../utils";
 import { AssessmentValue } from "../../../models/Records";
-import {
-  ColumnConfig,
-  ColumnType,
-  HistoryTableSettings,
-} from "../../../models/Settings";
+import { ColumnConfig, HistoryTableSettings } from "../../../models/Settings";
 import { Toast, ToastType } from "../../../components/Toast";
 import {
   getAssessmentRecords,
@@ -92,6 +88,9 @@ export function HistoryTableScreen() {
   const [settingsColumnWidths, setSetingsColumnWidths] = React.useState<
     Map<string, number>
   >(new Map());
+  const [visibleColumns, setVisibleColumns] = React.useState<Set<string>>(
+    new Set(),
+  );
 
   const [settings, setSettings] = React.useState<HistoryTableSettings | null>(
     null,
@@ -112,43 +111,52 @@ export function HistoryTableScreen() {
   const [displayOptionsDialogOpen, setDisplayOptionsDialogOpen] =
     React.useState<boolean>(false);
 
-  const combineColumnConfigs = async (
-    newColumnConfigs: Map<string, NewColumnConfig>,
-    existingColumnConfigs: Map<string, ColumnConfig>,
-  ): Promise<Map<string, ColumnConfig>> => {
-    const allColumnConfigs: ColumnConfig[] = [
-      ...existingColumnConfigs.values(),
-    ];
-    for (const [header, newCC] of newColumnConfigs) {
-      allColumnConfigs.push(
-        new ColumnConfig(
-          [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
-            newCC.type,
-          ),
-          null,
-          0,
-          newCC.type,
-          newCC.source_created_at,
-          header,
-        ),
-      );
-    }
-    allColumnConfigs.sort((a: ColumnConfig, b: ColumnConfig) => {
-      if (a._type !== b._type) {
-        return a._type - b._type;
-      } else {
-        return a._source_created_at.getTime() - b._source_created_at.getTime();
+  const combineColumnConfigs = React.useCallback(
+    async (
+      newColumnConfigs: Map<string, NewColumnConfig>,
+      existingColumnConfigs: Map<string, ColumnConfig>,
+    ): Promise<Map<string, ColumnConfig>> => {
+      const allColumnConfigs: ColumnConfig[] = [
+        ...existingColumnConfigs.values(),
+      ];
+      for (const [header, newCC] of newColumnConfigs) {
+        const existingCC = existingColumnConfigs.get(header);
+        if (!existingCC || existingCC._type !== newCC.type) {
+          allColumnConfigs.push(
+            new ColumnConfig(
+              // [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
+              //   newCC.type,
+              // ),
+              true,
+              null,
+              0,
+              newCC.type,
+              newCC.source_created_at,
+              header,
+            ),
+          );
+        }
       }
-    });
+      allColumnConfigs.sort((a: ColumnConfig, b: ColumnConfig) => {
+        if (a._type !== b._type) {
+          return a._type - b._type;
+        } else {
+          return (
+            a._source_created_at.getTime() - b._source_created_at.getTime()
+          );
+        }
+      });
 
-    const updatedColumnConfigs = new Map();
-    allColumnConfigs.forEach((cc, idx) => {
-      cc.ordinal = idx;
-      updatedColumnConfigs.set(cc._header, cc);
-    });
+      const updatedColumnConfigs = new Map();
+      allColumnConfigs.forEach((cc, idx) => {
+        cc.ordinal = idx;
+        updatedColumnConfigs.set(cc._header, cc);
+      });
 
-    return updatedColumnConfigs;
-  };
+      return updatedColumnConfigs;
+    },
+    [],
+  );
 
   const computeAndSetTableData = React.useCallback(
     (
@@ -157,6 +165,7 @@ export function HistoryTableScreen() {
       dateRange: DateRange,
       headers: string[],
       headerToValueType: Map<string, ValueType>,
+      headerToUnit: Map<string, string>,
     ) => {
       let endIdx = rowHeadersAll.length - 1;
       if (dateRange.startDate !== null) {
@@ -196,6 +205,7 @@ export function HistoryTableScreen() {
           tableData: new TableData(
             headers,
             headerToValueType,
+            headerToUnit,
             rowHeadersAll.slice(startIdx, endIdx),
             cellsAll.slice(startIdx, endIdx),
           ),
@@ -212,8 +222,8 @@ export function HistoryTableScreen() {
       const assessmentTableData = await getAssessmentRecords(db);
 
       const allNewColumnConfigs = new Map([
-        ...medicineTableData.internalLabelToColumnConfig,
-        ...assessmentTableData.internalLabelToColumnConfig,
+        ...medicineTableData.labelToColumnConfig,
+        ...assessmentTableData.labelToColumnConfig,
       ]);
 
       const columnConfigs = await combineColumnConfigs(
@@ -231,11 +241,7 @@ export function HistoryTableScreen() {
       );
 
       const getOrdinal = (header: string): number => {
-        const settingsHeader =
-          medicineTableData.labelToInternalLabel.get(header) ??
-          assessmentTableData.labelToInternalLabel.get(header) ??
-          header;
-        const cc = columnConfigs.get(settingsHeader);
+        const cc = columnConfigs.get(header);
         if (!cc) {
           return 0;
         } else {
@@ -295,48 +301,49 @@ export function HistoryTableScreen() {
       }
       setRowHeadersAll(dates);
       setCellsAll(newTableRows);
-      computeAndSetTableData(dates, newTableRows, dateRange, headers, types);
+      computeAndSetTableData(
+        dates,
+        newTableRows,
+        dateRange,
+        headers,
+        types,
+        medicineTableData.labelToUnit,
+      );
     },
-    [db, computeAndSetTableData, dateRange],
+    [db, computeAndSetTableData, dateRange, combineColumnConfigs],
   );
 
   const loadSettings = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
     setSettings(newSettings);
     const newSettingsColumnWidths = new Map();
-    newSettings.columnConfigs.forEach((cc, fullHeader) =>
-      newSettingsColumnWidths.set(fullHeader, cc.width),
-    );
+    const newVisibleColumns = new Set<string>();
+    newSettings.columnConfigs.forEach((cc, header) => {
+      newSettingsColumnWidths.set(header, cc.width);
+      if (cc.isShown) {
+        newVisibleColumns.add(header);
+      }
+    });
     setSetingsColumnWidths(newSettingsColumnWidths);
+    setVisibleColumns(newVisibleColumns);
   }, [db]);
-
-  const saveColumnWidth = React.useCallback(
-    async (fullHeader: string, width: number) => {
-      if (settings === null) {
-        return;
-      }
-      const columnConfig = settings.columnConfigs.get(fullHeader);
-      if (columnConfig) {
-        columnConfig.width = width;
-        await dbUpdateHistoryTableSettings(db, settings);
-        // not reloaded/out of sync (only theoretically) on purpose
-      }
-    },
-    [db, settings],
-  );
 
   useFocusEffect(
     React.useCallback(() => {
       const setUp = async () => {
-        setTableDataAndVersion((prev) => {
-          return { tableData: null, version: prev.version + 1 };
-        });
         const initialSettings = await dbGetHistoryTableSettings(db);
         const tableDataPromise = loadAndCombineDataForTable(initialSettings);
         const settingsPromise = loadSettings();
         await Promise.all([tableDataPromise, settingsPromise]);
       };
       setUp();
+      return () => {
+        setIsMenuOpen(false);
+        //is this needed?
+        setTableDataAndVersion((prev) => {
+          return { tableData: null, version: prev.version + 1 };
+        });
+      };
     }, [db, loadAndCombineDataForTable, loadSettings]),
   );
 
@@ -466,6 +473,36 @@ export function HistoryTableScreen() {
     [settings],
   );
 
+  const saveColumnWidth = React.useCallback(
+    async (header: string, width: number) => {
+      if (settings === null) {
+        return;
+      }
+      const columnConfig = settings.columnConfigs.get(header);
+      if (columnConfig) {
+        columnConfig.width = width;
+        await dbUpdateHistoryTableSettings(db, settings);
+        // not reloaded/out of sync (only theoretically) on purpose
+      }
+    },
+    [db, settings],
+  );
+
+  const saveColumnVisibility = React.useCallback(
+    async (header: string, isShown: boolean) => {
+      if (settings === null) {
+        return;
+      }
+      const columnConfig = settings.columnConfigs.get(header);
+      if (columnConfig) {
+        columnConfig.isShown = isShown;
+        await dbUpdateHistoryTableSettings(db, settings);
+        // not reloaded/out of sync (only theoretically) on purpose
+      }
+    },
+    [db, settings],
+  );
+
   React.useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -527,7 +564,10 @@ export function HistoryTableScreen() {
             td={tableDataAndVersion.tableData}
             expandAllRows={settings?.expandAllRows === true}
             settingsColumnWidths={settingsColumnWidths}
+            initialVisibleColumns={visibleColumns}
+            menuIsOpen={isMenuOpen}
             saveColumnWidth={saveColumnWidth}
+            saveColumnVisibility={saveColumnVisibility}
           />
         </View>
       )}
@@ -541,7 +581,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   mainContainer: {
-    padding: 6,
     width: "100%",
     height: "100%",
   },

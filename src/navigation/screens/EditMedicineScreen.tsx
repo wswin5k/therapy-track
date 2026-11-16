@@ -306,7 +306,11 @@ export function EditMedicineScreen() {
         .filter((ing) => ing.name && ing.amount && ing.unit)
         .map(
           (ing) =>
-            new ActiveIngredient(ing.name!, parseFloat(ing.amount!), ing.unit!),
+            new ActiveIngredient(
+              ing.name!.trim(),
+              parseFloat(ing.amount!),
+              ing.unit!,
+            ),
         );
     } else {
       medicineValidated = false;
