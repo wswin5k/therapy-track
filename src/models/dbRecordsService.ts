@@ -374,8 +374,6 @@ export async function getMedicineRecords(
       new NewColumnConfig(ColumnType.Medicine, medicine.createdAt),
     );
 
-    //updateHeaderCounter(fullLabelToShortLabel, shortLabelCounts, label, label);
-
     let amountTotal = dailyRow.get(label) || 0;
     amountTotal += medicineAmount;
     dailyRow.set(label, amountTotal);
