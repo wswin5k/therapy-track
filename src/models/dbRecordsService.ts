@@ -325,7 +325,7 @@ export async function getMedicineRecords(
           ),
         );
       } else {
-        // weight units are set later in insertActiveIngredientWeightUnits
+        // weight units are set later in applyActiveIngredientWeightUnits
         labelToUnit.set(fullLabel, ai.getUnitLabel());
         labelToUnit.set(shortLabel, ai.getUnitLabel());
       }
@@ -410,14 +410,11 @@ export async function getMedicineRecords(
   // remove full labels from records and configs data
   // where the coressponding short label count == 1
   for (const [fullLabel, shortLabel] of fullLabelToShortLabel) {
-    //labelsSet.add(shortLabel);
     if (shortLabelCounts.get(shortLabel) === 1) {
       for (const headerToValues of dayToLabelToValues.values()) {
         headerToValues.delete(fullLabel);
       }
       newColumnConfigs.delete(fullLabel);
-    } else {
-      //labelsSet.add(fullLabel);
     }
   }
   const labels = [...labelToUnit.keys()];
