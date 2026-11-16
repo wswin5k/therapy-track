@@ -41,7 +41,7 @@ The following instructions require only adb (from Android platform-tools) and Do
 This setup requires a constant connection to the host and allows hot reloading of JavaScript code.
 
 > [!TIP]
-> Once the app is installed, steps 1 and 2 can be omitted unless there are changes in native code or dependencies.
+> Once the app is installed, steps 1-3 can be omitted unless there are changes in native code or dependencies.
 
 1. Build the development Docker image.
 
