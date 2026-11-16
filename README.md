@@ -4,9 +4,9 @@
 
 # Therapy Track – medicine and assessments tracker
 
-* Track your medication use with recurring schedules and one-time entries.
-* Receive notifications when it is time to take your medication or complete an assessment.
-* View your usage history and export it to a CSV file.
+* Track your medicine use and assess your condition using schedules or one-time entries.
+* Receive notifications when it is time to take your medicine or complete an assessment.
+* View your history and export it to a CSV file.
 
 
 <p align="center">
@@ -17,80 +17,81 @@
 
 # Installation on Android
 
-The following instructions require only adb (from Android platfrom-tools) and docker installed. The building processs takes place inside of a docker container. The instructions assume physical Android device, although it will work similar for an emulator.
+The following instructions require only adb (from Android platform-tools) and Docker to be installed. The build process takes place inside a Docker container. The instructions assume a physical Android device, although they work similarly for an emulator.
 
 > [!TIP]
-> The commands below have shortcuts in Makefile.
+> The commands below have shortcuts in the Makefile.
 
 ## Release build
 
 1. Build a release APK.
-  ```sh
-	docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
-  ```
+
+   ```sh
+   docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease"
+   ```
 
 2. Connect your device and install the release application.
 
-  ```sh
-  adb install android/app/build/outputs/apk/release/app-release.apk
-  ```
+   ```sh
+   adb install android/app/build/outputs/apk/release/app-release.apk
+   ```
 
-## Development set-up
+## Development setup
 
-This setup requires constant connection with the host and allows hot reloading of javascript code.
+This setup requires a constant connection to the host and allows hot reloading of JavaScript code.
 
 > [!TIP]
->  Generating keystore in step one needs to be done only once.
->  Once the app is installed steps 2, 3 and 4 can be omitted unless there are changes in native code or dependencies.
+> Once the app is installed, steps 1-3 can be omitted unless there are changes in native code or dependencies.
 
-1. Build the development docker image
+1. Build the development Docker image.
 
-  ```sh
-  docker compose build expo
-  ```
+   ```sh
+   docker compose build expo
+   ```
 
 2. Build the debug APK.
-  ```sh
-  docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
-  ```
 
-3. Connect your device and install the development application
+   ```sh
+   docker compose run --rm expo bash -c "npx expo prebuild --platform android && cd android && ./gradlew assembleDebug"
+   ```
 
-  ```sh
-  adb install android/app/build/outputs/apk/debug/app-debug.apk
-  ```
+3. Connect your device and install the development application.
 
-4. Enable port forwarding
+   ```sh
+   adb install android/app/build/outputs/apk/debug/app-debug.apk
+   ```
 
-  ```sh
-  adb reverse tcp:8081 tcp:8081
-  ```
+4. Enable port forwarding.
 
-5. Start the development server
+   ```sh
+   adb reverse tcp:8081 tcp:8081
+   ```
 
-  ```sh
-  docker compose up expo
-  ```
+5. Start the development server.
 
-6. Open the application on the Android device. Now whenever you make code changes the application should reload.
+   ```sh
+   docker compose up expo
+   ```
+
+6. Open the application on the Android device. From now on, whenever you make code changes, the application should reload.
 
 
-# Development with VSCodium and container environment
+# Development with VSCode/VSCodium and a container environment
 
-VSCodium doesn't have the proprietary Dev Containers VSCode extension. Instead it can be connected to the container with Open Remote - SSH extension.
+VSCodium doesn't have the proprietary Dev Containers VSCode extension. Instead, it can be connected to the container with the Open Remote - SSH extension.
 
-1. Generate new ssh key and copy the public key to the project directory
+1. Generate a new SSH key and copy the public key to the project directory.
 
-```sh
-  ssh-keygen -t ed25519 -N "" -f ~/.ssh/expo-container && mkdir -p ssh && cp ~/.ssh/expo-container.pub ssh/
-```
+   ```sh
+   ssh-keygen -t ed25519 -N "" -f ~/.ssh/expo-container && mkdir -p ssh && cp ~/.ssh/expo-container.pub ssh/
+   ```
 
-2. Build and start the container with ssh server.
+2. Build and start the container with the SSH server.
 
-```sh
-  docker compose up --build expo-sshd
-```
+   ```sh
+   docker compose up --build expo-sshd
+   ```
 
-The ssh server will be available on localhost on 50022 port.
+   The SSH server will be available on localhost on port 50022.
 
-3. In VSCodium "Run a Command": "Remote-SSH: Connect Current Window to Host" and enter the connection string `node@localhost:50022`
+3. In VSCodium top search bar choose "Show and Run Commands", then "Remote-SSH: Connect Current Window to Host..." and enter the connection string `node@localhost:50022`.
