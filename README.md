@@ -94,4 +94,4 @@ VSCodium doesn't have the proprietary Dev Containers VSCode extension. Instead, 
 
    The SSH server will be available on localhost on port 50022.
 
-3. In VSCodium, run the command "Remote-SSH: Connect Current Window to Host" and enter the connection string `node@localhost:50022`.
+3. In VSCodium top search bar choose "Show and Run Commands", then "Remote-SSH: Connect Current Window to Host..." and enter the connection string `node@localhost:50022`.
