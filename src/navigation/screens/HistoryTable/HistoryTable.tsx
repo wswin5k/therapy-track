@@ -51,6 +51,7 @@ export class TableData {
     // todo possbily take the cells in the following types
     // not strings
     public headerToValueType: Map<string, ValueType>,
+    public headerToUnit: Map<string, string>,
     public rowHeaders: Date[],
     public cells: string[][],
   ) {}
@@ -62,6 +63,7 @@ type HistoryTableProps = {
   expandAllRows: boolean;
   settingsColumnWidths: Map<string, number | null>;
   initialVisibleColumns: Set<string>;
+  menuIsOpen: boolean;
   saveColumnWidth: (header: string, width: number) => Promise<void>;
   saveColumnVisibility: (header: string, isShown: boolean) => Promise<void>;
 };
@@ -72,6 +74,7 @@ export default function HistoryTable({
   expandAllRows,
   settingsColumnWidths,
   initialVisibleColumns,
+  menuIsOpen,
   saveColumnWidth,
   saveColumnVisibility,
 }: HistoryTableProps) {
@@ -144,6 +147,19 @@ export default function HistoryTable({
   const [visibleColumns, setVisibleColumns] = React.useState<Set<string>>(
     initialVisibleColumns,
   );
+  const computeLastColumnIndex = () => {
+    // todo: toReversed and toSorted should be suppoorted in RN 0.89
+    const reversed = [...td.headers].reverse();
+    for (const [idx, header] of reversed.entries()) {
+      if (initialVisibleColumns.has(header)) {
+        return reversed.length - 1 - idx;
+      }
+    }
+    return 0;
+  };
+  const [lastColumnIndex, setLastColumnIndex] = React.useState<number>(
+    computeLastColumnIndex(),
+  );
 
   const headerPositionRefs = React.useRef<
     (React.ComponentRef<TouchableOpacity> | null)[]
@@ -154,6 +170,15 @@ export default function HistoryTable({
     left: number;
     top: number;
   } | null>(null);
+
+  const [prevIsMenuOpen, setPrevIsMenuOpen] = React.useState(false);
+
+  if (menuIsOpen !== prevIsMenuOpen) {
+    setPrevIsMenuOpen(menuIsOpen);
+    if (menuIsOpen) {
+      setHeaderMenu(null);
+    }
+  }
 
   const { left: safeInsetsLeft } = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -195,12 +220,9 @@ export default function HistoryTable({
     return styles;
   };
 
-  const computeColumnHeaderStyles = (
-    columnIndex: number,
-    columnsLength: number,
-  ) => {
+  const computeColumnHeaderStyles = (columnIndex: number) => {
     const styles: Record<string, any> = {};
-    const isInLastColumn = columnIndex === columnsLength;
+    const isInLastColumn = columnIndex === lastColumnIndex;
     if (isInLastColumn) {
       styles.borderTopRightRadius = TABLE_RADIUS;
     }
@@ -232,11 +254,10 @@ export default function HistoryTable({
     rowIndex: number,
     columnIndex: number,
     rowsLength: number,
-    columnsLength: number,
   ) => {
     const styles: Record<string, any> = {};
     const isInLastRow = rowIndex === rowsLength;
-    const isInLastColumn = columnIndex === columnsLength;
+    const isInLastColumn = columnIndex === lastColumnIndex;
 
     if (isInLastColumn) {
       if (isInLastRow) {
@@ -567,6 +588,9 @@ export default function HistoryTable({
         prev.delete(header);
         return new Set([...prev]);
       });
+      setLastColumnIndex((prev) =>
+        headerMenu.index === prev ? prev - 1 : prev,
+      );
       await saveColumnVisibility(td.headers[headerMenu.index], false);
       setHeaderMenu(null);
     }
@@ -575,10 +599,15 @@ export default function HistoryTable({
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-        {t("No records found")}
+        {t("No data to display")}
       </Text>
     </View>
   );
+
+  const formatColumnHeader = (header: string) => {
+    const unit = td.headerToUnit.get(header);
+    return unit ? `${header} [${unit}]` : header;
+  };
 
   if (
     td.headers.length === 0 ||
@@ -589,7 +618,7 @@ export default function HistoryTable({
   }
   return (
     <View style={styles.container}>
-      {headerMenu !== null && (
+      {headerMenu !== null && !menuIsOpen && (
         <ColumnMenuModal
           onClose={handleHideHeaderMenu}
           handleHidePress={handleHidePress}
@@ -619,7 +648,7 @@ export default function HistoryTable({
               handleColumnHeaderLayout(index, width);
             }}
           >
-            {columnHeader}
+            {formatColumnHeader(columnHeader)}
           </Text>
         </View>
       ))}
@@ -707,7 +736,7 @@ export default function HistoryTable({
                       key={index}
                       style={[
                         styles.columnHeaderCell,
-                        computeColumnHeaderStyles(index, td.headers.length - 1),
+                        computeColumnHeaderStyles(index),
                         {
                           borderColor: theme.colors.border,
                           backgroundColor: theme.colors.primary,
@@ -728,7 +757,7 @@ export default function HistoryTable({
                           { color: theme.colors.textOnPrimary },
                         ]}
                       >
-                        {columnHeader}
+                        {formatColumnHeader(columnHeader)}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -801,7 +830,6 @@ export default function HistoryTable({
                             rowIndex,
                             columnIndex,
                             td.cells.length - 1,
-                            row.length - 1,
                           ),
                         ]}
                       >
@@ -895,28 +923,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
     textAlign: "center",
-  },
-  menuContainer: {
-    zIndex: 10,
-    elevation: 10,
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: DEFAULT_BORDER_RADIUS,
-  },
-  menuItem: {
-    alignContent: "flex-start",
-    alignItems: "center",
-    padding: 12,
-    flexDirection: "row",
-    width: "100%",
-  },
-  menuIcon: {
-    fontSize: 20,
-  },
-  menuText: {
-    alignItems: "center",
-    fontSize: 16,
-    fontWeight: "400",
-    paddingLeft: 10,
   },
 });

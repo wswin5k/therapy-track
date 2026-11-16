@@ -30,7 +30,7 @@ import {
 } from "../../../dateOnlyUtils";
 import { castToStringArray, getDisplayDirectoryName } from "../../utils";
 import { AssessmentValue } from "../../../models/Records";
-import { ColumnConfig, ColumnType, HistoryTableSettings } from "../../../models/Settings";
+import { ColumnConfig, HistoryTableSettings } from "../../../models/Settings";
 import { Toast, ToastType } from "../../../components/Toast";
 import {
   getAssessmentRecords,
@@ -121,19 +121,20 @@ export function HistoryTableScreen() {
       ];
       for (const [header, newCC] of newColumnConfigs) {
         const existingCC = existingColumnConfigs.get(header);
-        if (!existingCC) {
-        allColumnConfigs.push(
-          new ColumnConfig(
-            [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
+        if (!existingCC || existingCC._type !== newCC.type) {
+          allColumnConfigs.push(
+            new ColumnConfig(
+              // [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
+              //   newCC.type,
+              // ),
+              true,
+              null,
+              0,
               newCC.type,
+              newCC.source_created_at,
+              header,
             ),
-            null,
-            0,
-            newCC.type,
-            newCC.source_created_at,
-            header,
-          ),
-        );
+          );
         }
       }
       allColumnConfigs.sort((a: ColumnConfig, b: ColumnConfig) => {
@@ -164,6 +165,7 @@ export function HistoryTableScreen() {
       dateRange: DateRange,
       headers: string[],
       headerToValueType: Map<string, ValueType>,
+      headerToUnit: Map<string, string>,
     ) => {
       let endIdx = rowHeadersAll.length - 1;
       if (dateRange.startDate !== null) {
@@ -203,6 +205,7 @@ export function HistoryTableScreen() {
           tableData: new TableData(
             headers,
             headerToValueType,
+            headerToUnit,
             rowHeadersAll.slice(startIdx, endIdx),
             cellsAll.slice(startIdx, endIdx),
           ),
@@ -298,7 +301,14 @@ export function HistoryTableScreen() {
       }
       setRowHeadersAll(dates);
       setCellsAll(newTableRows);
-      computeAndSetTableData(dates, newTableRows, dateRange, headers, types);
+      computeAndSetTableData(
+        dates,
+        newTableRows,
+        dateRange,
+        headers,
+        types,
+        medicineTableData.labelToUnit,
+      );
     },
     [db, computeAndSetTableData, dateRange, combineColumnConfigs],
   );
@@ -309,7 +319,6 @@ export function HistoryTableScreen() {
     const newSettingsColumnWidths = new Map();
     const newVisibleColumns = new Set<string>();
     newSettings.columnConfigs.forEach((cc, header) => {
-      console.log(header, cc.isShown);
       newSettingsColumnWidths.set(header, cc.width);
       if (cc.isShown) {
         newVisibleColumns.add(header);
@@ -322,16 +331,19 @@ export function HistoryTableScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const setUp = async () => {
-        //todo: is this needed?
-        setTableDataAndVersion((prev) => {
-          return { tableData: null, version: prev.version + 1 };
-        });
         const initialSettings = await dbGetHistoryTableSettings(db);
         const tableDataPromise = loadAndCombineDataForTable(initialSettings);
         const settingsPromise = loadSettings();
         await Promise.all([tableDataPromise, settingsPromise]);
       };
       setUp();
+      return () => {
+        setIsMenuOpen(false);
+        //is this needed?
+        setTableDataAndVersion((prev) => {
+          return { tableData: null, version: prev.version + 1 };
+        });
+      };
     }, [db, loadAndCombineDataForTable, loadSettings]),
   );
 
@@ -483,7 +495,6 @@ export function HistoryTableScreen() {
       }
       const columnConfig = settings.columnConfigs.get(header);
       if (columnConfig) {
-        console.log("saveColumnVisibility", header, isShown);
         columnConfig.isShown = isShown;
         await dbUpdateHistoryTableSettings(db, settings);
         // not reloaded/out of sync (only theoretically) on purpose
@@ -554,6 +565,7 @@ export function HistoryTableScreen() {
             expandAllRows={settings?.expandAllRows === true}
             settingsColumnWidths={settingsColumnWidths}
             initialVisibleColumns={visibleColumns}
+            menuIsOpen={isMenuOpen}
             saveColumnWidth={saveColumnWidth}
             saveColumnVisibility={saveColumnVisibility}
           />
