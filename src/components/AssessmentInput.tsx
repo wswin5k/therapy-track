@@ -210,6 +210,7 @@ export function AssessmentInput({
                     color: theme.colors.text,
                   },
                 ]}
+                numberOfLines={1}
               >
                 {v}
               </Text>
@@ -292,6 +293,7 @@ const styles = StyleSheet.create({
   },
   selectInputText: {
     fontSize: 16,
+    flexShrink: 1,
   },
   selectInputCheckmark: {
     fontSize: 22,

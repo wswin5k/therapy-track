@@ -195,7 +195,6 @@ export function DropdownPicker<T>({
               onStartShouldSetResponder={() => true}
             >
               <ScrollView
-                style={styles.optionsList}
                 showsVerticalScrollIndicator={true}
                 persistentScrollbar={true}
               >
@@ -262,9 +261,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
     overflow: "hidden",
-  },
-  optionsList: {
-    flexGrow: 0,
   },
   optionItem: {
     paddingHorizontal: 12,
