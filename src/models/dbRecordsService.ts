@@ -420,7 +420,6 @@ export async function getMedicineRecords(
     }
   }
   const labels = [...labelsSet];
-  labels.sort();
 
   const labelToValueType = new Map();
   labels.forEach((header) => labelToValueType.set(header, ValueType.Numeric));

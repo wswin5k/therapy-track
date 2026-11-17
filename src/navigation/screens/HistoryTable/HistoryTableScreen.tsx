@@ -668,7 +668,7 @@ export function HistoryTableScreen() {
         <ColumnVisibilityConfigurationDialog
           columnsAll={headersAll}
           initialVisibleColumns={
-            // not-null checked when the visibility toggle is set
+            // not-null checked when the dialog toggle is set
             getVisibleHeaders(settings!)
           }
           onApply={handleColumnVisibilityConfigurationChange}

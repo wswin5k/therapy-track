@@ -145,16 +145,6 @@ export default function HistoryTable({
   const [visibleHeaders, setVisibleColumns] = React.useState<Set<string>>(
     new Set(td.headers),
   );
-  // const computeLastColumnIndex = () => {
-  //   // todo: toReversed and toSorted should be suppoorted in RN 0.89
-  //   const reversed = [...td.headers].reverse();
-  //   for (const [idx, header] of reversed.entries()) {
-  //     if (initialVisibleColumns.has(header)) {
-  //       return reversed.length - 1 - idx;
-  //     }
-  //   }
-  //   return 0;
-  // };
   const [lastColumnIndex, setLastColumnIndex] = React.useState<number>(
     td.headers.length - 1,
   );
