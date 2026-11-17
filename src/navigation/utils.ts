@@ -132,3 +132,23 @@ export function applyNavigationBarTheme(
     translucent: translucent,
   });
 }
+
+export function transpose2DArray(array: string[][]) {
+  const rowsLength = array.length;
+  if (rowsLength === 0) {
+    return array;
+  }
+  const colsLength = array[0].length;
+  if (colsLength === 0) {
+    return array;
+  }
+  const out = new Array(colsLength);
+  for (let j = 0; j < colsLength; j++) {
+    const col = new Array(rowsLength);
+    for (let i = 0; i < rowsLength; i++) {
+      col[i] = array[i][j];
+    }
+    out[j] = col;
+  }
+  return out;
+}

@@ -1,6 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { t } from "i18next";
@@ -55,8 +54,8 @@ export function MenuModal({
             style={[styles.menuItem, { borderColor: theme.colors.border }]}
             onPress={handleVisibleColumns}
           >
-            <Ionicons
-              name="eye"
+            <MaterialDesignIcons
+              name="eye-outline"
               style={[styles.menuIcon, { color: theme.colors.text }]}
             />
             <Text style={[styles.menuText, { color: theme.colors.text }]}>

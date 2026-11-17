@@ -407,18 +407,19 @@ export async function getMedicineRecords(
   );
   labelToUnitWeights.forEach((unit, label) => labelToUnit.set(label, unit));
 
-  // remove full labels from records and configs data
+  const labelsSet = new Set(labelToUnit.keys());
+  // remove full labels from records, configs data and labels set
   // where the coressponding short label count == 1
   for (const [fullLabel, shortLabel] of fullLabelToShortLabel) {
     if (shortLabelCounts.get(shortLabel) === 1) {
       for (const headerToValues of dayToLabelToValues.values()) {
         headerToValues.delete(fullLabel);
+        labelsSet.delete(fullLabel);
       }
       newColumnConfigs.delete(fullLabel);
     }
   }
-  const labels = [...labelToUnit.keys()];
-  labels.sort();
+  const labels = [...labelsSet];
 
   const labelToValueType = new Map();
   labels.forEach((header) => labelToValueType.set(header, ValueType.Numeric));

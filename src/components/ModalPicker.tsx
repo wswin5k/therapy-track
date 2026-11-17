@@ -260,7 +260,6 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: 12,
     marginLeft: 8,
-    flexShrink: 0,
   },
   modalOverlay: {
     flex: 1,

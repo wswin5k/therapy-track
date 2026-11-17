@@ -28,9 +28,17 @@ import {
   isLessDateOnly,
   serializeDateOnly,
 } from "../../../dateOnlyUtils";
-import { castToStringArray, getDisplayDirectoryName } from "../../utils";
+import {
+  castToStringArray,
+  getDisplayDirectoryName,
+  transpose2DArray,
+} from "../../utils";
 import { AssessmentValue } from "../../../models/Records";
-import { ColumnConfig, HistoryTableSettings } from "../../../models/Settings";
+import {
+  ColumnConfig,
+  ColumnType,
+  HistoryTableSettings,
+} from "../../../models/Settings";
 import { Toast, ToastType } from "../../../components/Toast";
 import {
   getAssessmentRecords,
@@ -48,6 +56,7 @@ import {
 } from "./DisplayOptionsConfigurationDialog";
 import { MenuModal } from "./MenuModal";
 import { generateCSV } from "./exportUtils";
+import { ColumnVisibilityConfigurationDialog } from "./ColumnVisibilityConfigurationDialog";
 
 function formatAssessmentValue(
   value: AssessmentValue,
@@ -75,6 +84,8 @@ export function HistoryTableScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
 
+  // when there is change in table data the HistoryTable component
+  // is re-mounted using version as a component key
   const [tableDataAndVersion, setTableDataAndVersion] = React.useState<{
     tableData: TableData | null;
     version: number;
@@ -83,14 +94,11 @@ export function HistoryTableScreen() {
   //todo consider moving moving to Ref
   const [rowHeadersAll, setRowHeadersAll] = React.useState<Date[]>([]);
   const [cellsAll, setCellsAll] = React.useState<string[][]>([]);
-  const [headers, setHeaders] = React.useState<string[]>([]);
+  const [headersAll, setHeadersAll] = React.useState<string[]>([]);
 
   const [settingsColumnWidths, setSetingsColumnWidths] = React.useState<
     Map<string, number>
   >(new Map());
-  const [visibleColumns, setVisibleColumns] = React.useState<Set<string>>(
-    new Set(),
-  );
 
   const [settings, setSettings] = React.useState<HistoryTableSettings | null>(
     null,
@@ -110,6 +118,8 @@ export function HistoryTableScreen() {
   );
   const [displayOptionsDialogOpen, setDisplayOptionsDialogOpen] =
     React.useState<boolean>(false);
+  const [columnVisibilitDialogOpen, setColumnVisibilitDialogOpen] =
+    React.useState<boolean>(false);
 
   const combineColumnConfigs = React.useCallback(
     async (
@@ -124,10 +134,9 @@ export function HistoryTableScreen() {
         if (!existingCC || existingCC._type !== newCC.type) {
           allColumnConfigs.push(
             new ColumnConfig(
-              // [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
-              //   newCC.type,
-              // ),
-              true,
+              [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
+                newCC.type,
+              ),
               null,
               0,
               newCC.type,
@@ -158,15 +167,8 @@ export function HistoryTableScreen() {
     [],
   );
 
-  const computeAndSetTableData = React.useCallback(
-    (
-      rowHeadersAll: Date[],
-      cellsAll: string[][],
-      dateRange: DateRange,
-      headers: string[],
-      headerToValueType: Map<string, ValueType>,
-      headerToUnit: Map<string, string>,
-    ) => {
+  const filterDateRange = React.useCallback(
+    (rowHeadersAll: Date[], cellsAll: string[][], dateRange: DateRange) => {
       let endIdx = rowHeadersAll.length - 1;
       if (dateRange.startDate !== null) {
         while (
@@ -197,24 +199,49 @@ export function HistoryTableScreen() {
           startIdx = rowHeadersAll.length;
         }
       }
-
-      // when there is change in table data the HistoryTable component
-      // is re-mounted using version as a component key
-      setTableDataAndVersion((prev) => {
-        return {
-          tableData: new TableData(
-            headers,
-            headerToValueType,
-            headerToUnit,
-            rowHeadersAll.slice(startIdx, endIdx),
-            cellsAll.slice(startIdx, endIdx),
-          ),
-          version: prev.version + 1,
-        };
-      });
+      return {
+        rowHeaders: rowHeadersAll.slice(startIdx, endIdx),
+        cells: cellsAll.slice(startIdx, endIdx),
+      };
     },
     [],
   );
+
+  const filterHeaderVisibility = (
+    headers: string[],
+    cellsAll: string[][],
+    visibleHeaders: Set<string>,
+  ) => {
+    const filteredHeaders = [];
+    const filteredIndices = new Set();
+
+    const transposedCellsAll = transpose2DArray(cellsAll);
+
+    for (const [idx, header] of headers.entries()) {
+      if (visibleHeaders.has(header)) {
+        filteredHeaders.push(header);
+        filteredIndices.add(idx);
+      }
+    }
+    const transposedFilteredCells = transposedCellsAll.filter((_, idx) =>
+      filteredIndices.has(idx),
+    );
+    const filteredCells = transpose2DArray(transposedFilteredCells);
+    return {
+      filteredHeaders,
+      filteredCells,
+    };
+  };
+
+  const getVisibleHeaders = (settings: HistoryTableSettings) => {
+    const visibleHeaders = new Set<string>();
+    settings.columnConfigs.forEach((cc, header) => {
+      if (cc.isShown) {
+        visibleHeaders.add(header);
+      }
+    });
+    return visibleHeaders;
+  };
 
   const loadAndCombineDataForTable = React.useCallback(
     async (initialSettings: HistoryTableSettings) => {
@@ -280,7 +307,7 @@ export function HistoryTableScreen() {
         ...medicineTableData.labelToValueType,
         ...assessmentTableData.labelToValueType,
       ]);
-      setHeaders(headers);
+      setHeadersAll(headers);
 
       for (const date of dates) {
         const day = serializeDateOnly(date);
@@ -301,31 +328,44 @@ export function HistoryTableScreen() {
       }
       setRowHeadersAll(dates);
       setCellsAll(newTableRows);
-      computeAndSetTableData(
+
+      const { rowHeaders, cells } = filterDateRange(
         dates,
         newTableRows,
         dateRange,
-        headers,
-        types,
-        medicineTableData.labelToUnit,
       );
+
+      const visibleHeaders = getVisibleHeaders(initialSettings);
+      const { filteredHeaders, filteredCells } = filterHeaderVisibility(
+        headers,
+        cells,
+        visibleHeaders,
+      );
+
+      setTableDataAndVersion((prev) => {
+        return {
+          tableData: new TableData(
+            filteredHeaders,
+            types,
+            medicineTableData.labelToUnit,
+            rowHeaders,
+            filteredCells,
+          ),
+          version: prev.version + 1,
+        };
+      });
     },
-    [db, computeAndSetTableData, dateRange, combineColumnConfigs],
+    [db, filterDateRange, dateRange, combineColumnConfigs],
   );
 
   const loadSettings = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
     setSettings(newSettings);
     const newSettingsColumnWidths = new Map();
-    const newVisibleColumns = new Set<string>();
     newSettings.columnConfigs.forEach((cc, header) => {
       newSettingsColumnWidths.set(header, cc.width);
-      if (cc.isShown) {
-        newVisibleColumns.add(header);
-      }
     });
     setSetingsColumnWidths(newSettingsColumnWidths);
-    setVisibleColumns(newVisibleColumns);
   }, [db]);
 
   useFocusEffect(
@@ -353,7 +393,7 @@ export function HistoryTableScreen() {
   }, [isMenuOpen]);
 
   const handleSaveToCSV = React.useCallback(async () => {
-    const csvContent = generateCSV(headers, rowHeadersAll, cellsAll);
+    const csvContent = generateCSV(headersAll, rowHeadersAll, cellsAll);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileName = `therapy-track-records-${timestamp}.csv`;
@@ -410,7 +450,7 @@ export function HistoryTableScreen() {
       }
     }
     setIsMenuOpen(false);
-  }, [cellsAll, rowHeadersAll, headers, t]);
+  }, [cellsAll, rowHeadersAll, headersAll, t]);
 
   const handleDateRangeMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
@@ -473,6 +513,76 @@ export function HistoryTableScreen() {
     [settings],
   );
 
+  const handleColumnVisibilityMenuItemPress = () => {
+    if (settings !== null) {
+      setIsMenuOpen(false);
+      setColumnVisibilitDialogOpen(true);
+    }
+  };
+
+  const handleColumnVisibilityConfigurationChange = React.useCallback(
+    async (visibleHeaders: Set<string>) => {
+      setColumnVisibilitDialogOpen(false);
+
+      if (settings === null || tableDataAndVersion.tableData === null) {
+        return;
+      }
+      const td = tableDataAndVersion.tableData;
+
+      setTableDataAndVersion((prev) => {
+        return {
+          tableData: null,
+          version: prev.version + 1,
+        };
+      });
+
+      for (const [header, cc] of settings.columnConfigs.entries()) {
+        if (visibleHeaders.has(header)) {
+          cc.isShown = true;
+        } else {
+          cc.isShown = false;
+        }
+      }
+      const settingsPromise = dbUpdateHistoryTableSettings(db, settings);
+
+      const { rowHeaders, cells } = filterDateRange(
+        rowHeadersAll,
+        cellsAll,
+        dateRange,
+      );
+      const { filteredHeaders, filteredCells } = filterHeaderVisibility(
+        headersAll,
+        cells,
+        visibleHeaders,
+      );
+
+      setTableDataAndVersion((prev) => {
+        return {
+          tableData: new TableData(
+            filteredHeaders,
+            td.headerToValueType,
+            td.headerToUnit,
+            rowHeaders,
+            filteredCells,
+          ),
+          version: prev.version + 1,
+        };
+      });
+
+      await settingsPromise;
+    },
+    [
+      db,
+      tableDataAndVersion,
+      settings,
+      cellsAll,
+      dateRange,
+      filterDateRange,
+      headersAll,
+      rowHeadersAll,
+    ],
+  );
+
   const saveColumnWidth = React.useCallback(
     async (header: string, width: number) => {
       if (settings === null) {
@@ -526,7 +636,7 @@ export function HistoryTableScreen() {
         visible={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         handleSaveToCSV={handleSaveToCSV}
-        handleVisibleColumns={handleDisplayOptionsMenuItemPress}
+        handleVisibleColumns={handleColumnVisibilityMenuItemPress}
         handleDateRange={handleDateRangeMenuItemPress}
         handleDisplayOptions={handleDisplayOptionsMenuItemPress}
       />
@@ -554,6 +664,18 @@ export function HistoryTableScreen() {
         />
       )}
 
+      {columnVisibilitDialogOpen && (
+        <ColumnVisibilityConfigurationDialog
+          columnsAll={headersAll}
+          initialVisibleColumns={
+            // not-null checked when the dialog toggle is set
+            getVisibleHeaders(settings!)
+          }
+          onApply={handleColumnVisibilityConfigurationChange}
+          onCancel={() => setColumnVisibilitDialogOpen(false)}
+        />
+      )}
+
       {tableDataAndVersion.tableData === null ? (
         <ActivityIndicator size="large" style={styles.activityIndicator} />
       ) : (
@@ -564,7 +686,6 @@ export function HistoryTableScreen() {
             td={tableDataAndVersion.tableData}
             expandAllRows={settings?.expandAllRows === true}
             settingsColumnWidths={settingsColumnWidths}
-            initialVisibleColumns={visibleColumns}
             menuIsOpen={isMenuOpen}
             saveColumnWidth={saveColumnWidth}
             saveColumnVisibility={saveColumnVisibility}

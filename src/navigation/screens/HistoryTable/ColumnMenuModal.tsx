@@ -1,6 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "@react-navigation/native";
-import Ionicons from "@react-native-vector-icons/ionicons/static";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { t } from "i18next";
 import Lucide from "@react-native-vector-icons/lucide/static";
@@ -41,8 +40,8 @@ export function ColumnMenuModal({
           style={[styles.menuItem, { borderColor: theme.colors.border }]}
           onPress={handleHidePress}
         >
-          <Ionicons
-            name="eye-off"
+          <Lucide
+            name="eye-closed"
             style={[styles.menuIcon, { color: theme.colors.text }]}
           />
           <Text style={[styles.menuText, { color: theme.colors.text }]}>
