@@ -172,9 +172,13 @@ export default function HistoryTable({
   const headerHeight = useHeaderHeight();
 
   const scrollX = useSharedValue(0);
-  const scrollY = useSharedValue(0);
+  const scrollFromBodyY = useSharedValue(0);
+  const bodyIsUserScrolling = useSharedValue(false);
+  const scrollFromRowHeadersY = useSharedValue(0);
+  const rowHeadersIsUserScrolling = useSharedValue(false);
   const columnHeaderRef = useAnimatedRef<Animated.ScrollView>();
   const rowHeaderRef = useAnimatedRef<Animated.ScrollView>();
+  const tableBodyRef = useAnimatedRef<Animated.ScrollView>();
 
   // Runs on the UI thread
   const scrollHandlerX = useAnimatedScrollHandler({
@@ -182,9 +186,32 @@ export default function HistoryTable({
       scrollX.value = event.contentOffset.x;
     },
   });
-  const scrollHandlerY = useAnimatedScrollHandler({
+  const scrollHandlerBodyY = useAnimatedScrollHandler({
     onScroll: (event: ReanimatedScrollEvent) => {
-      scrollY.value = event.contentOffset.y;
+      if (bodyIsUserScrolling.value && !rowHeadersIsUserScrolling.value) {
+        scrollFromBodyY.value = event.contentOffset.y;
+      }
+    },
+    onBeginDrag: () => {
+      rowHeadersIsUserScrolling.value = false;
+      bodyIsUserScrolling.value = true;
+    },
+    onMomentumEnd: () => {
+      bodyIsUserScrolling.value = false;
+    },
+  });
+  const scrollHandlerRowHeadersY = useAnimatedScrollHandler({
+    onScroll: (event: ReanimatedScrollEvent) => {
+      if (rowHeadersIsUserScrolling.value && !bodyIsUserScrolling.value) {
+        scrollFromRowHeadersY.value = event.contentOffset.y;
+      }
+    },
+    onBeginDrag: () => {
+      rowHeadersIsUserScrolling.value = true;
+      bodyIsUserScrolling.value = false;
+    },
+    onMomentumEnd: () => {
+      rowHeadersIsUserScrolling.value = false;
     },
   });
 
@@ -193,7 +220,10 @@ export default function HistoryTable({
     scrollTo(columnHeaderRef, scrollX.value, 0, false);
   });
   useDerivedValue(() => {
-    scrollTo(rowHeaderRef, 0, scrollY.value, false);
+    scrollTo(rowHeaderRef, 0, scrollFromBodyY.value, false);
+  });
+  useDerivedValue(() => {
+    scrollTo(tableBodyRef, 0, scrollFromRowHeadersY.value, false);
   });
 
   const dateGapStyle = (rowIndex: number) => {
@@ -558,8 +588,8 @@ export default function HistoryTable({
       ) => {
         setHeaderMenu({
           index,
-          left: pageX - TABLE_MARGIN - safeInsetsLeft,
-          top: pageY + height - headerHeight - TABLE_MARGIN,
+          left: pageX - TABLE_MARGIN_TOPLEFT - safeInsetsLeft,
+          top: pageY + height - headerHeight - TABLE_MARGIN_TOPLEFT,
         });
       },
     );
@@ -762,7 +792,9 @@ export default function HistoryTable({
           <Animated.ScrollView
             ref={rowHeaderRef}
             showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
+            onScroll={scrollHandlerRowHeadersY}
+            bounces={false}
+            overScrollMode="never"
           >
             {td.rowHeaders.map((rowHeader, index) => (
               <View
@@ -791,10 +823,18 @@ export default function HistoryTable({
         </View>
 
         {/* Scrollable body */}
-        <Animated.ScrollView horizontal onScroll={scrollHandlerX}>
+        <Animated.ScrollView
+          horizontal
+          onScroll={scrollHandlerX}
+          bounces={false}
+          overScrollMode="never"
+        >
           <Animated.ScrollView
-            onScroll={scrollHandlerY}
+            onScroll={scrollHandlerBodyY}
             nestedScrollEnabled={true}
+            ref={tableBodyRef}
+            bounces={false}
+            overScrollMode="never"
           >
             {td.cells.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.row}>
@@ -844,12 +884,16 @@ export default function HistoryTable({
   );
 }
 
-const TABLE_MARGIN = 6;
+const TABLE_MARGIN_TOPLEFT = 6;
+const TABLE_MARGIN_BOTTOMRIGHT = 2;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: TABLE_MARGIN,
+    marginTop: TABLE_MARGIN_TOPLEFT,
+    marginLeft: TABLE_MARGIN_TOPLEFT,
+    marginBottom: TABLE_MARGIN_BOTTOMRIGHT,
+    marginRight: TABLE_MARGIN_BOTTOMRIGHT,
   },
   table: {
     flexDirection: "row",
