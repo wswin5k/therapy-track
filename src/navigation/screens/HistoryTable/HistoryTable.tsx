@@ -217,13 +217,19 @@ export default function HistoryTable({
 
   // Sync the scroll position of the headers with the body
   useDerivedValue(() => {
-    scrollTo(columnHeaderRef, scrollX.value, 0, false);
+    if (columnHeaderRef) {
+      scrollTo(columnHeaderRef, scrollX.value, 0, false);
+    }
   });
   useDerivedValue(() => {
-    scrollTo(rowHeaderRef, 0, scrollFromBodyY.value, false);
+    if (rowHeaderRef) {
+      scrollTo(rowHeaderRef, 0, scrollFromBodyY.value, false);
+    }
   });
   useDerivedValue(() => {
-    scrollTo(tableBodyRef, 0, scrollFromRowHeadersY.value, false);
+    if (tableBodyRef) {
+      scrollTo(tableBodyRef, 0, scrollFromRowHeadersY.value, false);
+    }
   });
 
   const dateGapStyle = (rowIndex: number) => {
