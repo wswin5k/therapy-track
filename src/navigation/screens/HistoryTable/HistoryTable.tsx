@@ -23,7 +23,7 @@ const TABLE_RADIUS = DEFAULT_BORDER_RADIUS;
 const DELTA_WIDTH_BUFFER = 10;
 const COLUMN_HEADER_PADDING = 8;
 
-const MIN_CELL_HEIGHT = 52;
+const MIN_CELL_HEIGHT = 50;
 const MIN_CELL_LINES_LENGTH = 2;
 
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
@@ -54,13 +54,13 @@ export class TableData {
     public headerToUnit: Map<string, string>,
     public rowHeaders: Date[],
     public cells: string[][],
+    public expandAllRows: boolean,
   ) {}
 }
 
 type HistoryTableProps = {
   td: TableData;
   id: number;
-  expandAllRows: boolean;
   settingsColumnWidths: Map<string, number | null>;
   menuIsOpen: boolean;
   saveColumnWidth: (header: string, width: number) => Promise<void>;
@@ -70,7 +70,6 @@ type HistoryTableProps = {
 export default function HistoryTable({
   td,
   id,
-  expandAllRows,
   settingsColumnWidths,
   menuIsOpen,
   saveColumnWidth,
@@ -104,13 +103,6 @@ export default function HistoryTable({
       Array.from({ length: td.cells[0].length }, () => MIN_CELL_LINES_LENGTH),
     ),
   );
-  React.useEffect(() => {
-    fittingCellLineLenghts.current = Array.from(
-      { length: td.cells.length },
-      () =>
-        Array.from({ length: td.cells[0].length }, () => MIN_CELL_LINES_LENGTH),
-    );
-  });
   const [rowsNumberOfLines, setRowsNumberOfLines] = React.useState<number[]>(
     Array.from({ length: td.cells.length }, () => MIN_CELL_LINES_LENGTH),
   );
@@ -370,7 +362,7 @@ export default function HistoryTable({
     setRowsNumberOfLines((current) =>
       current.map((el, idx) => {
         if (rowIndex === idx) {
-          if (expandAllRows) {
+          if (td.expandAllRows) {
             return 1000;
           } else if (el === MIN_CELL_LINES_LENGTH) {
             return MIN_CELL_LINES_LENGTH;
@@ -403,7 +395,7 @@ export default function HistoryTable({
     setRowHeights((current) =>
       current.map((el, idx) => {
         if (rowIndex === idx) {
-          if (expandAllRows) {
+          if (td.expandAllRows) {
             const maxFittingHeight = Math.max(
               ...fittingCellHeights.current[rowIndex],
             );
@@ -531,7 +523,7 @@ export default function HistoryTable({
 
   const handleCellPress = (rowIndex: number, columnIndex: number) => {
     // toggles row height
-    if (expandAllRows) {
+    if (td.expandAllRows) {
       return;
     }
     setRowHeights((current) =>
@@ -705,7 +697,7 @@ export default function HistoryTable({
                   style={[styles.cellText, { color: theme.colors.success }]}
                   onLayout={(event) => {
                     const height =
-                      Math.ceil(event.nativeEvent.layout.height) + 20;
+                      Math.ceil(event.nativeEvent.layout.height) + 10;
                     handleIntermediateCellLayout(rowIndex, columnIndex, height);
                   }}
                   onTextLayout={(event) => {
@@ -849,7 +841,7 @@ export default function HistoryTable({
                     visibleHeaders.has(td.headers[columnIndex]) && (
                       <TouchableOpacity
                         key={columnIndex}
-                        disabled={expandAllRows}
+                        disabled={td.expandAllRows}
                         onPress={() => handleCellPress(rowIndex, columnIndex)}
                         style={[
                           styles.cell,
@@ -914,6 +906,7 @@ const styles = StyleSheet.create({
   },
   cellText: {
     fontSize: 15,
+    lineHeight: 19,
   },
   cornerCell: {
     justifyContent: "center",
@@ -922,8 +915,7 @@ const styles = StyleSheet.create({
   },
   cell: {
     borderWidth: 0.5,
-    minHeight: 48,
-    padding: 6,
+    paddingHorizontal: 6,
     justifyContent: "center",
     alignItems: "center",
   },

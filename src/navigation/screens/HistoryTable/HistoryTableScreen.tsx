@@ -350,6 +350,7 @@ export function HistoryTableScreen() {
             medicineTableData.labelToUnit,
             rowHeaders,
             filteredCells,
+            initialSettings.expandAllRows,
           ),
           version: prev.version + 1,
         };
@@ -358,7 +359,7 @@ export function HistoryTableScreen() {
     [db, filterDateRange, dateRange, combineColumnConfigs],
   );
 
-  const loadSettings = React.useCallback(async () => {
+  const loadSettingsAndColumnWidths = React.useCallback(async () => {
     const newSettings = await dbGetHistoryTableSettings(db);
     setSettings(newSettings);
     const newSettingsColumnWidths = new Map();
@@ -373,7 +374,7 @@ export function HistoryTableScreen() {
       const setUp = async () => {
         const initialSettings = await dbGetHistoryTableSettings(db);
         const tableDataPromise = loadAndCombineDataForTable(initialSettings);
-        const settingsPromise = loadSettings();
+        const settingsPromise = loadSettingsAndColumnWidths();
         await Promise.all([tableDataPromise, settingsPromise]);
       };
       setUp();
@@ -384,7 +385,7 @@ export function HistoryTableScreen() {
           return { tableData: null, version: prev.version + 1 };
         });
       };
-    }, [db, loadAndCombineDataForTable, loadSettings]),
+    }, [db, loadAndCombineDataForTable, loadSettingsAndColumnWidths]),
   );
 
   const handleMenuToggle = React.useCallback(() => {
@@ -488,20 +489,55 @@ export function HistoryTableScreen() {
   const handleDisplayOptionsConfigurationChange = React.useCallback(
     async (displayOptions: DisplayOptions) => {
       setDisplayOptionsDialogOpen(false);
-      if (settings) {
-        const newSettings = new HistoryTableSettings(
-          displayOptions.expandAllRows,
-          displayOptions.showDaysWithoutEntries,
-          settings.mergeIngredientsWithDifferentForms,
-          settings.columnConfigs,
-        );
-        dbUpdateHistoryTableSettings(db, newSettings);
-        const tableDataPromise = loadAndCombineDataForTable(newSettings);
-        const settingsPromise = loadSettings();
-        await Promise.all([tableDataPromise, settingsPromise]);
+
+      if (settings === null || tableDataAndVersion.tableData === null) {
+        return;
       }
+      const td = tableDataAndVersion.tableData;
+
+      if (
+        settings.expandAllRows === displayOptions.expandAllRows &&
+        settings.showDaysWithoutEntries ===
+          displayOptions.showDaysWithoutEntries
+      ) {
+        return;
+      }
+
+      const newSettings = new HistoryTableSettings(
+        displayOptions.expandAllRows,
+        displayOptions.showDaysWithoutEntries,
+        settings.mergeIngredientsWithDifferentForms,
+        settings.columnConfigs,
+      );
+      setTableDataAndVersion((prev) => {
+        return { tableData: null, version: prev.version + 1 };
+      });
+
+      if (
+        settings.showDaysWithoutEntries !==
+        displayOptions.showDaysWithoutEntries
+      ) {
+        await loadAndCombineDataForTable(newSettings);
+      } else {
+        // only expandAllRows changed
+        setTableDataAndVersion((prev) => {
+          return {
+            tableData: new TableData(
+              td.headers,
+              td.headerToValueType,
+              td.headerToUnit,
+              td.rowHeaders,
+              td.cells,
+              displayOptions.expandAllRows,
+            ),
+            version: prev.version + 1,
+          };
+        });
+      }
+      await dbUpdateHistoryTableSettings(db, newSettings);
+      setSettings(newSettings);
     },
-    [db, loadAndCombineDataForTable, loadSettings, settings],
+    [db, loadAndCombineDataForTable, settings, tableDataAndVersion],
   );
 
   const displayOptions = React.useMemo(
@@ -564,6 +600,7 @@ export function HistoryTableScreen() {
             td.headerToUnit,
             rowHeaders,
             filteredCells,
+            td.expandAllRows,
           ),
           version: prev.version + 1,
         };
@@ -684,7 +721,6 @@ export function HistoryTableScreen() {
             key={tableDataAndVersion.version}
             id={tableDataAndVersion.version}
             td={tableDataAndVersion.tableData}
-            expandAllRows={settings?.expandAllRows === true}
             settingsColumnWidths={settingsColumnWidths}
             menuIsOpen={isMenuOpen}
             saveColumnWidth={saveColumnWidth}
