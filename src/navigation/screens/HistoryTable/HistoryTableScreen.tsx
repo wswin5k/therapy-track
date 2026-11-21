@@ -233,9 +233,9 @@ export function HistoryTableScreen() {
     };
   };
 
-  const getVisibleHeaders = (settings: HistoryTableSettings) => {
+  const getVisibleHeaders = (columnConfigs: Map<string, ColumnConfig>) => {
     const visibleHeaders = new Set<string>();
-    settings.columnConfigs.forEach((cc, header) => {
+    columnConfigs.forEach((cc, header) => {
       if (cc.isShown) {
         visibleHeaders.add(header);
       }
@@ -335,7 +335,7 @@ export function HistoryTableScreen() {
         dateRange,
       );
 
-      const visibleHeaders = getVisibleHeaders(initialSettings);
+      const visibleHeaders = getVisibleHeaders(columnConfigs);
       const { filteredHeaders, filteredCells } = filterHeaderVisibility(
         headers,
         cells,
@@ -669,7 +669,7 @@ export function HistoryTableScreen() {
           columnsAll={headersAll}
           initialVisibleColumns={
             // not-null checked when the dialog toggle is set
-            getVisibleHeaders(settings!)
+            getVisibleHeaders(settings?.columnConfigs!)
           }
           onApply={handleColumnVisibilityConfigurationChange}
           onCancel={() => setColumnVisibilitDialogOpen(false)}
