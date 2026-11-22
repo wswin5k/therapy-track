@@ -10,7 +10,6 @@ import { useTheme } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { ButtonConfiguration, Dialog } from "../../../components/Dialog";
-import Lucide from "@react-native-vector-icons/lucide/static";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 
 interface ColumnVisibilityConfigurationDialogProps {
@@ -117,12 +116,12 @@ export function ColumnVisibilityConfigurationDialog({
                     name={"eye-outline"}
                   />
                 ) : (
-                  <Lucide
+                  <MaterialDesignIcons
                     style={[
                       styles.entryIcon,
                       { color: theme.colors.textTertiary },
                     ]}
-                    name={"eye-closed"}
+                    name={"eye-off-outline"}
                   />
                 )}
               </TouchableOpacity>

@@ -3,15 +3,20 @@ import { useTheme } from "@react-navigation/native";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { t } from "i18next";
 import Lucide from "@react-native-vector-icons/lucide/static";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 
 export function ColumnMenuModal({
   onClose,
   handleHidePress,
+  handleMoveLeftPress,
+  handleMoveRightPress,
   topPosition,
   leftPosition,
 }: {
   onClose: () => void;
   handleHidePress: () => void;
+  handleMoveLeftPress: () => void;
+  handleMoveRightPress: () => void;
   topPosition: number;
   leftPosition: number;
 }) {
@@ -40,8 +45,8 @@ export function ColumnMenuModal({
           style={[styles.menuItem, { borderColor: theme.colors.border }]}
           onPress={handleHidePress}
         >
-          <Lucide
-            name="eye-closed"
+          <MaterialDesignIcons
+            name="eye-off-outline"
             style={[styles.menuIcon, { color: theme.colors.text }]}
           />
           <Text style={[styles.menuText, { color: theme.colors.text }]}>
@@ -50,14 +55,26 @@ export function ColumnMenuModal({
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.menuItem, { borderColor: theme.colors.border }]}
-          onPress={onClose}
+          onPress={handleMoveLeftPress}
         >
           <Lucide
-            name="arrow-left-right"
+            name="arrow-left"
             style={[styles.menuIcon, { color: theme.colors.text }]}
           />
           <Text style={[styles.menuText, { color: theme.colors.text }]}>
-            {t("Move")}
+            {t("Move left")}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.menuItem, { borderColor: theme.colors.border }]}
+          onPress={handleMoveRightPress}
+        >
+          <Lucide
+            name="arrow-right"
+            style={[styles.menuIcon, { color: theme.colors.text }]}
+          />
+          <Text style={[styles.menuText, { color: theme.colors.text }]}>
+            {t("Move right")}
           </Text>
         </TouchableOpacity>
       </View>
