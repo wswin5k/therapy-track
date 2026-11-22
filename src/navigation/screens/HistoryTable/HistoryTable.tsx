@@ -1,11 +1,19 @@
 import { useFocusEffect, useTheme } from "@react-navigation/native";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  LayoutChangeEvent,
+} from "react-native";
 import Animated, {
   useSharedValue,
   useDerivedValue,
   useAnimatedRef,
   scrollTo,
   useAnimatedScrollHandler,
+  useScrollOffset,
 } from "react-native-reanimated";
 import type { ReanimatedScrollEvent } from "react-native-reanimated/lib/typescript/hook/commonTypes";
 import { cycle, mixColors } from "../../utils";
@@ -18,6 +26,7 @@ import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ColumnMenuModal } from "./ColumnMenuModal";
 import { useHeaderHeight } from "@react-navigation/elements";
+import { scheduleOnUI } from "react-native-worklets";
 
 const TABLE_RADIUS = DEFAULT_BORDER_RADIUS;
 const DELTA_WIDTH_BUFFER = 10;
@@ -30,6 +39,10 @@ const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
 const MID_CELL_WIDTH = 150;
 
 const ROW_HEADER_WIDTH = 90;
+
+const COLUMN_MENU_TABLE_SCROLL_MARGIN_X = 150;
+const COLUMN_MENU_TABLE_SCROLL_MARGIN_Y = 80;
+const COLUMN_MENU_APPROX_WIDTH = 80;
 
 function isSizeClose(a: number, b: number): boolean {
   return Math.abs(a - b) < DELTA_WIDTH_BUFFER;
@@ -141,6 +154,10 @@ export default function HistoryTable({
     td.headers.length - 1,
   );
 
+  const [columnIndexMap, setColumnIndexMap] = React.useState<number[]>(
+    Array.from({ length: td.headers.length }, (_, idx: number) => idx),
+  );
+
   const headerPositionRefs = React.useRef<
     (React.ComponentRef<TouchableOpacity> | null)[]
   >(Array.from({ length: td.headers.length }, () => null));
@@ -160,22 +177,40 @@ export default function HistoryTable({
     }
   }
 
-  const { left: safeInsetsLeft } = useSafeAreaInsets();
+  const { left: safeInsetsLeft, right: sefeInsetsRight } = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const { width: windowDimensionsWidth } = useWindowDimensions();
 
-  const scrollX = useSharedValue(0);
+  const columnHeadersRef = useAnimatedRef<Animated.ScrollView>();
+  const tableBodyHorizontalRef = useAnimatedRef<Animated.ScrollView>();
+
   const scrollFromBodyY = useSharedValue(0);
   const bodyIsUserScrolling = useSharedValue(false);
   const scrollFromRowHeadersY = useSharedValue(0);
   const rowHeadersIsUserScrolling = useSharedValue(false);
-  const columnHeaderRef = useAnimatedRef<Animated.ScrollView>();
-  const rowHeaderRef = useAnimatedRef<Animated.ScrollView>();
-  const tableBodyRef = useAnimatedRef<Animated.ScrollView>();
 
-  // Runs on the UI thread
+  const rowHeadersRef = useAnimatedRef<Animated.ScrollView>();
+  const tableBodyVerticalRef = useAnimatedRef<Animated.ScrollView>();
+
+  const horizontalOffset = useScrollOffset(tableBodyHorizontalRef);
+
+  const scrollHorizontally = (delta: number) => {
+    scheduleOnUI(() => {
+      "worklet";
+      if (!delta) {
+        return;
+      }
+      const offset = Math.max(0, horizontalOffset.value + delta);
+      scrollTo(columnHeadersRef, offset, 0, false);
+      scrollTo(tableBodyHorizontalRef, offset, 0, false);
+    });
+  };
+
   const scrollHandlerX = useAnimatedScrollHandler({
     onScroll: (event: ReanimatedScrollEvent) => {
-      scrollX.value = event.contentOffset.x;
+      if (columnHeadersRef) {
+        scrollTo(columnHeadersRef, event.contentOffset.x, 0, false);
+      }
     },
   });
   const scrollHandlerBodyY = useAnimatedScrollHandler({
@@ -207,22 +242,41 @@ export default function HistoryTable({
     },
   });
 
-  // Sync the scroll position of the headers with the body
   useDerivedValue(() => {
-    if (columnHeaderRef) {
-      scrollTo(columnHeaderRef, scrollX.value, 0, false);
+    if (rowHeadersRef) {
+      scrollTo(rowHeadersRef, 0, scrollFromBodyY.value, false);
     }
   });
   useDerivedValue(() => {
-    if (rowHeaderRef) {
-      scrollTo(rowHeaderRef, 0, scrollFromBodyY.value, false);
+    if (tableBodyVerticalRef) {
+      scrollTo(tableBodyVerticalRef, 0, scrollFromRowHeadersY.value, false);
     }
   });
-  useDerivedValue(() => {
-    if (tableBodyRef) {
-      scrollTo(tableBodyRef, 0, scrollFromRowHeadersY.value, false);
-    }
-  });
+
+  const viewportWidthRef = React.useRef(0);
+  const horizontalContentWidthRef = React.useRef(0);
+  const [maxScrollX, setMaxScrollX] = React.useState(0);
+
+  const updateMaxScroll = () => {
+    const max = Math.max(
+      0,
+      horizontalContentWidthRef.current - viewportWidthRef.current,
+    );
+    setMaxScrollX(max);
+  };
+
+  const handleColumnHeadersLayout = (event: LayoutChangeEvent) => {
+    viewportWidthRef.current = event.nativeEvent.layout.width;
+    updateMaxScroll();
+  };
+
+  const handleColumnHeadersContentSizeChange = (
+    width: number,
+    _height: number,
+  ) => {
+    horizontalContentWidthRef.current = width;
+    updateMaxScroll();
+  };
 
   const dateGapStyle = (rowIndex: number) => {
     const styles: Record<string, any> = {};
@@ -236,14 +290,17 @@ export default function HistoryTable({
     return styles;
   };
 
-  const computeColumnHeaderStyles = (columnIndex: number) => {
+  const computeColumnHeaderStyles = (
+    columnIndex: number,
+    columnDataIndex: number,
+  ) => {
     const styles: Record<string, any> = {};
     const isInLastColumn = columnIndex === lastColumnIndex;
     if (isInLastColumn) {
       styles.borderTopRightRadius = TABLE_RADIUS;
     }
 
-    styles.width = columnWidths[columnIndex];
+    styles.width = columnWidths[columnDataIndex];
     styles.height = MIN_CELL_HEIGHT;
 
     return styles;
@@ -269,10 +326,10 @@ export default function HistoryTable({
   const computeCellStyles = (
     rowIndex: number,
     columnIndex: number,
-    rowsLength: number,
+    columnDataIndex: number,
   ) => {
     const styles: Record<string, any> = {};
-    const isInLastRow = rowIndex === rowsLength;
+    const isInLastRow = rowIndex === td.cells.length - 1;
     const isInLastColumn = columnIndex === lastColumnIndex;
 
     if (isInLastColumn) {
@@ -281,11 +338,11 @@ export default function HistoryTable({
       }
     }
 
-    styles.width = columnWidths[columnIndex];
+    styles.width = columnWidths[columnDataIndex];
     styles.height = rowHeights[rowIndex];
 
     if (
-      td.headerToValueType.get(td.headers[columnIndex]) ===
+      td.headerToValueType.get(td.headers[columnDataIndex]) ===
       ValueType.MultiSelect
     ) {
       styles.alignItems = "flex-start";
@@ -312,7 +369,10 @@ export default function HistoryTable({
     return lognestLineLength * 14 * 0.55;
   };
 
-  const handleColumnHeaderLayout = (index: number, headerFitWidth: number) => {
+  const handleHiddenColumnHeaderLayout = (
+    index: number,
+    headerFitWidth: number,
+  ) => {
     // called on initial mount
     const multiSelectFitWidth = calculateMultiSelectFitWidth(index);
     setColumnWidthsFromHeaderLayout((current) => {
@@ -521,7 +581,7 @@ export default function HistoryTable({
     ]),
   );
 
-  const handleCellPress = (rowIndex: number, columnIndex: number) => {
+  const handleCellPress = (rowIndex: number, columnDataIndex: number) => {
     // toggles row height
     if (td.expandAllRows) {
       return;
@@ -530,7 +590,7 @@ export default function HistoryTable({
       current.map((el, idx) => {
         if (rowIndex === idx) {
           const fittingHeight =
-            fittingCellHeights.current[rowIndex][columnIndex];
+            fittingCellHeights.current[rowIndex][columnDataIndex];
           if (fittingHeight > el || el === MIN_CELL_HEIGHT) {
             return fittingHeight;
           } else {
@@ -545,7 +605,7 @@ export default function HistoryTable({
       current.map((el, idx) => {
         if (rowIndex === idx) {
           const fittitngLinesLegth =
-            fittingCellLineLenghts.current[rowIndex][columnIndex];
+            fittingCellLineLenghts.current[rowIndex][columnDataIndex];
           if (fittitngLinesLegth > el || el === MIN_CELL_LINES_LENGTH) {
             return fittitngLinesLegth;
           } else {
@@ -556,26 +616,26 @@ export default function HistoryTable({
         }
       }),
     );
-    relevantColumnForRowHeight.current[rowIndex] = columnIndex;
+    relevantColumnForRowHeight.current[rowIndex] = columnDataIndex;
   };
 
-  const handleToggleColumnWidth = async (index: number) => {
+  const handleToggleColumnWidth = async (columnDataIndex: number) => {
     // this triggers a layout event handler that updates the actual column width
-    const nextWidth = columnWidthsCycles.current[index].next().value;
+    const nextWidth = columnWidthsCycles.current[columnDataIndex].next().value;
     setIntermediateColumnsWidths((current) =>
       current.map((el, idx) => {
-        if (index === idx) {
+        if (columnDataIndex === idx) {
           return nextWidth;
         } else {
           return el;
         }
       }),
     );
-    await saveColumnWidth(td.headers[index], nextWidth);
+    await saveColumnWidth(td.headers[columnDataIndex], nextWidth);
   };
 
-  const handleOpenHeaderMenu = (index: number) => {
-    headerPositionRefs.current[index]?.measure(
+  const handleOpenHeaderMenu = (columnIndex: number) => {
+    headerPositionRefs.current[columnIndex]?.measure(
       (
         x: number,
         y: number,
@@ -585,7 +645,7 @@ export default function HistoryTable({
         pageY: number,
       ) => {
         setHeaderMenu({
-          index,
+          index: columnIndex,
           left: pageX - TABLE_MARGIN_TOPLEFT - safeInsetsLeft,
           top: pageY + height - headerHeight - TABLE_MARGIN_TOPLEFT,
         });
@@ -597,19 +657,111 @@ export default function HistoryTable({
     setHeaderMenu(null);
   };
 
-  const handleHidePress = async () => {
-    if (headerMenu !== null) {
-      const header = td.headers[headerMenu.index];
-      setHeaderMenu(null);
-      setVisibleColumns((prev) => {
-        prev.delete(header);
-        return new Set([...prev]);
-      });
-      setLastColumnIndex((prev) =>
-        headerMenu.index === prev ? prev - 1 : prev,
-      );
-      await saveColumnVisibility(td.headers[headerMenu.index], false);
+  const handleColumnMenuHidePress = async () => {
+    if (headerMenu === null) {
+      return;
     }
+    const dataIndex = columnIndexMap[headerMenu.index];
+    const header = td.headers[dataIndex];
+    setLastColumnIndex((prev) =>
+      headerMenu?.index === prev ? prev - 1 : prev,
+    );
+    setHeaderMenu(null);
+    setVisibleColumns((prev) => {
+      prev.delete(header);
+      return new Set([...prev]);
+    });
+    await saveColumnVisibility(td.headers[dataIndex], false);
+  };
+
+  const handleColumnMoveLeftPress = () => {
+    if (headerMenu === null || headerMenu.index <= 0) {
+      return;
+    }
+    setColumnIndexMap((prev) => {
+      const leftDataIndex = prev[headerMenu.index - 1];
+      const currentDataIndex = prev[headerMenu.index];
+      return prev.map((el, idx) => {
+        if (idx === headerMenu.index - 1) {
+          return currentDataIndex;
+        } else if (idx === headerMenu.index) {
+          return leftDataIndex;
+        } else {
+          return el;
+        }
+      });
+    });
+
+    const nextColumnIndex = headerMenu.index - 1;
+    const nextDataColumnIndex = columnIndexMap[nextColumnIndex];
+    const moveWidth = -columnWidths[nextDataColumnIndex];
+
+    let tableMoveWidth = 0;
+    const offsetBefore = horizontalOffset.value;
+    if (
+      headerMenu.left + moveWidth <
+      COLUMN_MENU_TABLE_SCROLL_MARGIN_X - TABLE_MARGIN_TOPLEFT - safeInsetsLeft
+    ) {
+      if (-offsetBefore > moveWidth) {
+        tableMoveWidth = -offsetBefore;
+      } else {
+        tableMoveWidth = moveWidth;
+      }
+    }
+
+    scrollHorizontally(tableMoveWidth);
+    setHeaderMenu({
+      index: headerMenu.index - 1,
+      left:
+        headerMenu.left - columnWidths[nextDataColumnIndex] - tableMoveWidth,
+      top: headerMenu.top,
+    });
+  };
+
+  const handleColumnMoveRightPress = async () => {
+    if (headerMenu === null || headerMenu.index >= lastColumnIndex) {
+      return;
+    }
+    setColumnIndexMap((prev) => {
+      const rightDataIndex = prev[headerMenu.index + 1];
+      const currentDataIndex = prev[headerMenu.index];
+      return prev.map((el, idx) => {
+        if (idx === headerMenu.index + 1) {
+          return currentDataIndex;
+        } else if (idx === headerMenu.index) {
+          return rightDataIndex;
+        } else {
+          return el;
+        }
+      });
+    });
+
+    const nextColumnIndex = headerMenu.index + 1;
+    const nextDataColumnIndex = columnIndexMap[nextColumnIndex];
+    const moveWidth = columnWidths[nextDataColumnIndex];
+
+    let tableMoveWidth = 0;
+    if (
+      headerMenu.left + COLUMN_MENU_APPROX_WIDTH + moveWidth >
+      windowDimensionsWidth -
+        COLUMN_MENU_TABLE_SCROLL_MARGIN_Y -
+        TABLE_MARGIN_BOTTOMRIGHT -
+        sefeInsetsRight
+    ) {
+      if (moveWidth > maxScrollX - horizontalOffset.value) {
+        tableMoveWidth = maxScrollX - horizontalOffset.value;
+      } else {
+        tableMoveWidth = moveWidth;
+      }
+    }
+
+    scrollHorizontally(tableMoveWidth);
+    setHeaderMenu({
+      index: headerMenu.index + 1,
+      left:
+        headerMenu.left + columnWidths[nextDataColumnIndex] - tableMoveWidth,
+      top: headerMenu.top,
+    });
   };
 
   const renderEmptyState = () => (
@@ -638,15 +790,18 @@ export default function HistoryTable({
       {headerMenu !== null && !menuIsOpen && (
         <ColumnMenuModal
           onClose={handleHideHeaderMenu}
-          handleHidePress={handleHidePress}
-          topPosition={headerMenu?.top}
-          leftPosition={headerMenu?.left}
+          handleHidePress={handleColumnMenuHidePress}
+          handleMoveLeftPress={handleColumnMoveLeftPress}
+          handleMoveRightPress={handleColumnMoveRightPress}
+          topPosition={headerMenu.top}
+          leftPosition={headerMenu.left}
         />
       )}
+
       {/* Hidden column headers for measuring purposes */}
-      {td.headers.map((columnHeader, index) => (
+      {td.headers.map((columnHeader, columnIndex) => (
         <View
-          key={index}
+          key={columnIndex}
           style={[
             styles.hiddenContainer,
             styles.columnHeaderCell,
@@ -662,7 +817,7 @@ export default function HistoryTable({
                 Math.ceil(event.nativeEvent.layout.width) +
                 COLUMN_HEADER_PADDING * 2 +
                 10;
-              handleColumnHeaderLayout(index, width);
+              handleHiddenColumnHeaderLayout(columnIndex, width);
             }}
           >
             {formatColumnHeader(columnHeader)}
@@ -739,31 +894,37 @@ export default function HistoryTable({
         {/* Top Header */}
         <View style={styles.columnHeaderClip}>
           <Animated.ScrollView
-            ref={columnHeaderRef}
+            ref={columnHeadersRef}
             style={styles.row}
             horizontal
             showsHorizontalScrollIndicator={false}
             scrollEnabled={false}
+            onLayout={handleColumnHeadersLayout}
+            onContentSizeChange={handleColumnHeadersContentSizeChange}
           >
-            {td.headers.map(
-              (columnHeader, index) =>
-                visibleHeaders.has(columnHeader) && (
-                  <View key={index}>
+            {Array.from({ length: td.headers.length }, (_, columnIndex) => {
+              const columnDataIndex = columnIndexMap[columnIndex];
+              const header = td.headers[columnDataIndex];
+              return (
+                visibleHeaders.has(header) && (
+                  <View key={columnDataIndex}>
                     <TouchableOpacity
-                      key={index}
+                      key={columnDataIndex}
                       style={[
                         styles.columnHeaderCell,
-                        computeColumnHeaderStyles(index),
+                        computeColumnHeaderStyles(columnIndex, columnDataIndex),
                         {
                           borderColor: theme.colors.border,
                           backgroundColor: theme.colors.primary,
                         },
                       ]}
-                      onPress={() => handleToggleColumnWidth(index)}
+                      onPress={() => handleToggleColumnWidth(columnDataIndex)}
                       // @ts-ignore
-                      ref={(el) => (headerPositionRefs.current[index] = el)}
+                      ref={(el) => {
+                        headerPositionRefs.current[columnIndex] = el;
+                      }}
                       onLongPress={() => {
-                        handleOpenHeaderMenu(index);
+                        handleOpenHeaderMenu(columnIndex);
                       }}
                     >
                       <Text
@@ -774,12 +935,13 @@ export default function HistoryTable({
                           { color: theme.colors.textOnPrimary },
                         ]}
                       >
-                        {formatColumnHeader(columnHeader)}
+                        {formatColumnHeader(header)}
                       </Text>
                     </TouchableOpacity>
                   </View>
-                ),
-            )}
+                )
+              );
+            })}
           </Animated.ScrollView>
         </View>
       </View>
@@ -788,7 +950,7 @@ export default function HistoryTable({
         {/* Row Header */}
         <View style={[styles.rowHeaderClip]}>
           <Animated.ScrollView
-            ref={rowHeaderRef}
+            ref={rowHeadersRef}
             showsVerticalScrollIndicator={false}
             onScroll={scrollHandlerRowHeadersY}
             bounces={false}
@@ -825,27 +987,30 @@ export default function HistoryTable({
           horizontal
           onScroll={scrollHandlerX}
           bounces={false}
+          ref={tableBodyHorizontalRef}
           overScrollMode="never"
         >
           <Animated.ScrollView
             onScroll={scrollHandlerBodyY}
             nestedScrollEnabled={true}
-            ref={tableBodyRef}
+            ref={tableBodyVerticalRef}
             bounces={false}
             overScrollMode="never"
           >
             {td.cells.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.row}>
-                {row.map(
-                  (cell, columnIndex) =>
-                    visibleHeaders.has(td.headers[columnIndex]) && (
+                {row.map((_, columnIndex) => {
+                  const columnDataIndex = columnIndexMap[columnIndex];
+                  return (
+                    visibleHeaders.has(td.headers[columnDataIndex]) && (
                       <TouchableOpacity
-                        key={columnIndex}
+                        key={columnDataIndex}
                         disabled={td.expandAllRows}
-                        onPress={() => handleCellPress(rowIndex, columnIndex)}
+                        onPress={() =>
+                          handleCellPress(rowIndex, columnDataIndex)
+                        }
                         style={[
                           styles.cell,
-
                           {
                             borderColor: theme.colors.border,
                             backgroundColor:
@@ -856,7 +1021,7 @@ export default function HistoryTable({
                           computeCellStyles(
                             rowIndex,
                             columnIndex,
-                            td.cells.length - 1,
+                            columnDataIndex,
                           ),
                         ]}
                       >
@@ -868,11 +1033,12 @@ export default function HistoryTable({
                           numberOfLines={rowsNumberOfLines[rowIndex]}
                           ellipsizeMode="tail"
                         >
-                          {cell}
+                          {row[columnDataIndex]}
                         </Text>
                       </TouchableOpacity>
-                    ),
-                )}
+                    )
+                  );
+                })}
               </View>
             ))}
           </Animated.ScrollView>
