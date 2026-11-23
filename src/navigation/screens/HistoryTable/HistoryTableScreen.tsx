@@ -131,15 +131,14 @@ export function HistoryTableScreen() {
       ];
       for (const [header, newCC] of newColumnConfigs) {
         const existingCC = existingColumnConfigs.get(header);
-        if (!existingCC || existingCC._type !== newCC.type) {
+        if (!existingCC) {
           allColumnConfigs.push(
             new ColumnConfig(
               [ColumnType.ActiveIngredient, ColumnType.Assessment].includes(
                 newCC.type,
               ),
               null,
-              0,
-              newCC.type,
+              -1,
               newCC.source_created_at,
               header,
             ),
@@ -147,19 +146,17 @@ export function HistoryTableScreen() {
         }
       }
       allColumnConfigs.sort((a: ColumnConfig, b: ColumnConfig) => {
-        if (a._type !== b._type) {
-          return a._type - b._type;
+        if (a.ordinal !== -1 && b.ordinal !== -1) {
+          return a.ordinal - b.ordinal;
         } else {
-          return (
-            a._source_created_at.getTime() - b._source_created_at.getTime()
-          );
+          return b.source_created_at.getTime() - a.source_created_at.getTime();
         }
       });
 
       const updatedColumnConfigs = new Map();
       allColumnConfigs.forEach((cc, idx) => {
         cc.ordinal = idx;
-        updatedColumnConfigs.set(cc._header, cc);
+        updatedColumnConfigs.set(cc.header, cc);
       });
 
       return updatedColumnConfigs;
@@ -243,6 +240,25 @@ export function HistoryTableScreen() {
     return visibleHeaders;
   };
 
+  const sortHeaders = (
+    headers: string[],
+    columnConfigs?: Map<string, ColumnConfig>,
+  ) => {
+    if (!columnConfigs) {
+      return headers;
+    }
+    const getOrdinal = (header: string): number => {
+      const cc = columnConfigs.get(header);
+      if (!cc) {
+        console.warn(`Unexpected missing column config for ${header}`);
+        return 0;
+      } else {
+        return cc.ordinal;
+      }
+    };
+    return [...headers].sort((a, b) => getOrdinal(a) - getOrdinal(b));
+  };
+
   const loadAndCombineDataForTable = React.useCallback(
     async (initialSettings: HistoryTableSettings) => {
       const medicineTableData = await getMedicineRecords(db);
@@ -262,20 +278,12 @@ export function HistoryTableScreen() {
         columnConfigs,
       });
 
-      const headers = new Array(
+      const headersUnsorted = new Array(
         ...medicineTableData.labels,
         ...assessmentTableData.labels,
       );
 
-      const getOrdinal = (header: string): number => {
-        const cc = columnConfigs.get(header);
-        if (!cc) {
-          return 0;
-        } else {
-          return cc.ordinal;
-        }
-      };
-      headers.sort((a, b) => getOrdinal(a) - getOrdinal(b));
+      const headers = sortHeaders(headersUnsorted, columnConfigs);
 
       const newTableRows = new Array();
 
@@ -373,9 +381,8 @@ export function HistoryTableScreen() {
     React.useCallback(() => {
       const setUp = async () => {
         const initialSettings = await dbGetHistoryTableSettings(db);
-        const tableDataPromise = loadAndCombineDataForTable(initialSettings);
-        const settingsPromise = loadSettingsAndColumnWidths();
-        await Promise.all([tableDataPromise, settingsPromise]);
+        await loadAndCombineDataForTable(initialSettings);
+        await loadSettingsAndColumnWidths();
       };
       setUp();
       return () => {
@@ -650,6 +657,25 @@ export function HistoryTableScreen() {
     [db, settings],
   );
 
+  const swapColumnOrdinals = React.useCallback(
+    async (headerFirst: string, headerSecond: string) => {
+      if (settings === null) {
+        return;
+      }
+      const ccFirst = settings.columnConfigs.get(headerFirst);
+      const ccSecond = settings.columnConfigs.get(headerSecond);
+      console.log(ccFirst, ccSecond);
+      if (ccFirst && ccSecond) {
+        const temp = ccFirst.ordinal;
+        ccFirst.ordinal = ccSecond.ordinal;
+        ccSecond.ordinal = temp;
+      }
+      await dbUpdateHistoryTableSettings(db, settings);
+      // not reloaded/out of sync (only theoretically) on purpose
+    },
+    [db, settings],
+  );
+
   React.useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -703,7 +729,7 @@ export function HistoryTableScreen() {
 
       {columnVisibilitDialogOpen && (
         <ColumnVisibilityConfigurationDialog
-          columnsAll={headersAll}
+          columnsAll={sortHeaders(headersAll, settings?.columnConfigs)}
           initialVisibleColumns={
             // not-null checked when the dialog toggle is set
             getVisibleHeaders(settings?.columnConfigs!)
@@ -725,6 +751,7 @@ export function HistoryTableScreen() {
             menuIsOpen={isMenuOpen}
             saveColumnWidth={saveColumnWidth}
             saveColumnVisibility={saveColumnVisibility}
+            swapColumnOrdinals={swapColumnOrdinals}
           />
         </View>
       )}
