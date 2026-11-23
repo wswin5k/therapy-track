@@ -79,6 +79,10 @@ type HistoryTableProps = {
   menuIsOpen: boolean;
   saveColumnWidth: (header: string, width: number) => Promise<void>;
   saveColumnVisibility: (header: string, isShown: boolean) => Promise<void>;
+  swapColumnOrdinals: (
+    headerFirst: string,
+    headerSecond: string,
+  ) => Promise<void>;
 };
 
 export default function HistoryTable({
@@ -88,6 +92,7 @@ export default function HistoryTable({
   menuIsOpen,
   saveColumnWidth,
   saveColumnVisibility,
+  swapColumnOrdinals,
 }: HistoryTableProps) {
   console.log("history table key", id);
   const theme = useTheme();
@@ -683,22 +688,28 @@ export default function HistoryTable({
     if (headerMenu === null || headerMenu.index <= 0) {
       return;
     }
+
+    let nextDataColumnIndex = -1;
+    let dataColumnIndex = -1;
     setColumnIndexMap((prev) => {
-      const leftDataIndex = prev[headerMenu.index - 1];
-      const currentDataIndex = prev[headerMenu.index];
+      nextDataColumnIndex = prev[headerMenu.index - 1];
+      dataColumnIndex = prev[headerMenu.index];
       return prev.map((el, idx) => {
         if (idx === headerMenu.index - 1) {
-          return currentDataIndex;
+          return dataColumnIndex;
         } else if (idx === headerMenu.index) {
-          return leftDataIndex;
+          return nextDataColumnIndex;
         } else {
           return el;
         }
       });
     });
 
-    const nextColumnIndex = headerMenu.index - 1;
-    const nextDataColumnIndex = columnIndexMap[nextColumnIndex];
+    swapColumnOrdinals(
+      td.headers[dataColumnIndex],
+      td.headers[nextDataColumnIndex],
+    );
+
     const moveWidth = -columnWidths[nextDataColumnIndex];
 
     let tableMoveWidth = 0;
@@ -727,22 +738,27 @@ export default function HistoryTable({
     if (headerMenu === null || headerMenu.index >= lastColumnIndex) {
       return;
     }
+    let nextDataColumnIndex = -1;
+    let dataColumnIndex = -1;
     setColumnIndexMap((prev) => {
-      const rightDataIndex = prev[headerMenu.index + 1];
-      const currentDataIndex = prev[headerMenu.index];
+      nextDataColumnIndex = prev[headerMenu.index + 1];
+      dataColumnIndex = prev[headerMenu.index];
       return prev.map((el, idx) => {
         if (idx === headerMenu.index + 1) {
-          return currentDataIndex;
+          return dataColumnIndex;
         } else if (idx === headerMenu.index) {
-          return rightDataIndex;
+          return nextDataColumnIndex;
         } else {
           return el;
         }
       });
     });
 
-    const nextColumnIndex = headerMenu.index + 1;
-    const nextDataColumnIndex = columnIndexMap[nextColumnIndex];
+    swapColumnOrdinals(
+      td.headers[dataColumnIndex],
+      td.headers[nextDataColumnIndex],
+    );
+
     const moveWidth = columnWidths[nextDataColumnIndex];
 
     let tableMoveWidth = 0;

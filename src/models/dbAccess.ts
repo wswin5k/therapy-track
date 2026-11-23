@@ -36,7 +36,6 @@ import {
 } from "../dateOnlyUtils";
 import {
   ColumnConfig,
-  ColumnType,
   HistoryTableSettings,
   Settings,
   ThemeSelection,
@@ -279,24 +278,17 @@ function deserializeColumnConfigs(value: string): Map<string, ColumnConfig> {
       isShown: boolean;
       width: number;
       ordinal: number;
-      _type: number;
-      _source_created_at: string;
-      _header: string;
+      source_created_at: string;
+      header: string;
     }) => {
-      if (!Object.values(ColumnType).includes(cc._type as ColumnType)) {
-        throw Error(
-          `${cc._type} is not a valid IngredientAmountUnit enum value.`,
-        );
-      }
       result.set(
-        cc._header,
+        cc.header,
         new ColumnConfig(
           cc.isShown,
           cc.width,
           cc.ordinal,
-          cc._type,
-          new Date(cc._source_created_at),
-          cc._header,
+          new Date(cc.source_created_at),
+          cc.header,
         ),
       );
     },
