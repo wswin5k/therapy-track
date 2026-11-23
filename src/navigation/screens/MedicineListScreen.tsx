@@ -18,7 +18,7 @@ import { Medicine } from "../../models/MedicineSchedule";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { InformationDialog } from "../../components/InformationDialog";
-import { baseUnitToSingularShortForm } from "../enumMappings";
+import { baseUnitToSingularLongForm } from "../enumMappings";
 import { lStyles } from "../../commonStyles";
 import { sortByCreatedAtDesc } from "../utils";
 
@@ -183,7 +183,7 @@ function MedicineListItem({
           <Text
             style={[lStyles.itemText, { color: theme.colors.textSecondary }]}
           >
-            {t(baseUnitToSingularShortForm[medicine.baseUnit], { count: 2 })}
+            {t(baseUnitToSingularLongForm[medicine.baseUnit], { count: 2 })}
           </Text>
           <Text
             style={[lStyles.itemText, { color: theme.colors.textSecondary }]}
