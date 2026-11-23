@@ -32,7 +32,6 @@ const TABLE_RADIUS = DEFAULT_BORDER_RADIUS;
 const DELTA_WIDTH_BUFFER = 10;
 
 const COLUMN_HEADER_PADDING = 8;
-const COLUMN_HEADER_HEIGHT = 60;
 
 const MIN_CELL_HEIGHT = 50;
 const MIN_CELL_LINES_LENGTH = 2;
@@ -303,7 +302,6 @@ export default function HistoryTable({
     }
 
     styles.width = columnWidths[columnDataIndex];
-    //styles.height = COLUMN_HEADER_HEIGHT;
 
     return styles;
   };
@@ -779,11 +777,6 @@ export default function HistoryTable({
     </View>
   );
 
-  const formatColumnHeader = (header: string) => {
-    const unit = td.headerToUnit.get(header);
-    return unit ? `${header}\n${unit}` : header;
-  };
-
   if (
     td.headers.length === 0 ||
     td.cells.length === 0 ||
@@ -812,7 +805,8 @@ export default function HistoryTable({
           style={[
             styles.hiddenContainer,
             styles.columnHeaderCell,
-            { height: COLUMN_HEADER_HEIGHT },
+            // faster layout?
+            { height: 60 },
           ]}
           pointerEvents="none"
         >
@@ -827,7 +821,7 @@ export default function HistoryTable({
               handleHiddenColumnHeaderLayout(columnIndex, width);
             }}
           >
-            {formatColumnHeader(columnHeader)}
+            {columnHeader}
           </Text>
           {td.headerToUnit.get(columnHeader) && (
             <Text
