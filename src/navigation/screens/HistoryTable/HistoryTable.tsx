@@ -30,7 +30,9 @@ import { scheduleOnUI } from "react-native-worklets";
 
 const TABLE_RADIUS = DEFAULT_BORDER_RADIUS;
 const DELTA_WIDTH_BUFFER = 10;
+
 const COLUMN_HEADER_PADDING = 8;
+const COLUMN_HEADER_HEIGHT = 60;
 
 const MIN_CELL_HEIGHT = 50;
 const MIN_CELL_LINES_LENGTH = 2;
@@ -301,7 +303,7 @@ export default function HistoryTable({
     }
 
     styles.width = columnWidths[columnDataIndex];
-    styles.height = MIN_CELL_HEIGHT;
+    //styles.height = COLUMN_HEADER_HEIGHT;
 
     return styles;
   };
@@ -370,17 +372,22 @@ export default function HistoryTable({
   };
 
   const handleHiddenColumnHeaderLayout = (
-    index: number,
+    columnIndex: number,
     headerFitWidth: number,
   ) => {
     // called on initial mount
-    const multiSelectFitWidth = calculateMultiSelectFitWidth(index);
+    const multiSelectFitWidth = calculateMultiSelectFitWidth(columnIndex);
     setColumnWidthsFromHeaderLayout((current) => {
-      const newValue = current.map((el, idx) =>
-        index === idx
-          ? new ColumnFitWidths(headerFitWidth, multiSelectFitWidth)
-          : el,
-      );
+      const newValue = current.map((el, idx) => {
+        if (columnIndex === idx) {
+          if (el !== null && el.headerFit > headerFitWidth) {
+            return el;
+          }
+          return new ColumnFitWidths(headerFitWidth, multiSelectFitWidth);
+        } else {
+          return el;
+        }
+      });
       return newValue;
     });
   };
@@ -774,7 +781,7 @@ export default function HistoryTable({
 
   const formatColumnHeader = (header: string) => {
     const unit = td.headerToUnit.get(header);
-    return unit ? `${header} [${unit}]` : header;
+    return unit ? `${header}\n${unit}` : header;
   };
 
   if (
@@ -805,7 +812,7 @@ export default function HistoryTable({
           style={[
             styles.hiddenContainer,
             styles.columnHeaderCell,
-            { height: MIN_CELL_HEIGHT },
+            { height: COLUMN_HEADER_HEIGHT },
           ]}
           pointerEvents="none"
         >
@@ -822,6 +829,21 @@ export default function HistoryTable({
           >
             {formatColumnHeader(columnHeader)}
           </Text>
+          {td.headerToUnit.get(columnHeader) && (
+            <Text
+              numberOfLines={1}
+              style={[styles.headerUnitText]}
+              onLayout={(event) => {
+                const width =
+                  Math.ceil(event.nativeEvent.layout.width) +
+                  COLUMN_HEADER_PADDING * 2 +
+                  10;
+                handleHiddenColumnHeaderLayout(columnIndex, width);
+              }}
+            >
+              {td.headerToUnit.get(columnHeader)}
+            </Text>
+          )}
         </View>
       ))}
       {/* Hidden cells for measuring purposes */}
@@ -905,40 +927,51 @@ export default function HistoryTable({
             {Array.from({ length: td.headers.length }, (_, columnIndex) => {
               const columnDataIndex = columnIndexMap[columnIndex];
               const header = td.headers[columnDataIndex];
+              const unit = td.headerToUnit.get(header);
               return (
                 visibleHeaders.has(header) && (
-                  <View key={columnDataIndex}>
-                    <TouchableOpacity
-                      key={columnDataIndex}
+                  <TouchableOpacity
+                    key={columnDataIndex}
+                    style={[
+                      styles.columnHeaderCell,
+                      computeColumnHeaderStyles(columnIndex, columnDataIndex),
+                      {
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.primary,
+                      },
+                    ]}
+                    onPress={() => handleToggleColumnWidth(columnDataIndex)}
+                    // @ts-ignore
+                    ref={(el) => {
+                      headerPositionRefs.current[columnIndex] = el;
+                    }}
+                    onLongPress={() => {
+                      handleOpenHeaderMenu(columnIndex);
+                    }}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                       style={[
-                        styles.columnHeaderCell,
-                        computeColumnHeaderStyles(columnIndex, columnDataIndex),
-                        {
-                          borderColor: theme.colors.border,
-                          backgroundColor: theme.colors.primary,
-                        },
+                        styles.headerText,
+                        { color: theme.colors.textOnPrimary },
                       ]}
-                      onPress={() => handleToggleColumnWidth(columnDataIndex)}
-                      // @ts-ignore
-                      ref={(el) => {
-                        headerPositionRefs.current[columnIndex] = el;
-                      }}
-                      onLongPress={() => {
-                        handleOpenHeaderMenu(columnIndex);
-                      }}
                     >
+                      {header}
+                    </Text>
+                    {unit && (
                       <Text
                         numberOfLines={1}
-                        ellipsizeMode="middle"
+                        ellipsizeMode="tail"
                         style={[
-                          styles.headerText,
-                          { color: theme.colors.textOnPrimary },
+                          styles.headerUnitText,
+                          { color: theme.colors.textSecondaryOnPrimary },
                         ]}
                       >
-                        {formatColumnHeader(header)}
+                        {unit}
                       </Text>
-                    </TouchableOpacity>
-                  </View>
+                    )}
+                  </TouchableOpacity>
                 )
               );
             })}
@@ -1070,6 +1103,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 500,
   },
+  headerUnitText: {
+    fontSize: 14,
+    fontWeight: 300,
+  },
   cellText: {
     fontSize: 15,
     lineHeight: 19,
@@ -1095,8 +1132,9 @@ const styles = StyleSheet.create({
   },
   columnHeaderCell: {
     justifyContent: "center",
-    alignItems: "center",
-    padding: 8,
+    alignItems: "flex-start",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderWidth: 1,
   },
   rowHeaderCell: {

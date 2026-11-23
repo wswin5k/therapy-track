@@ -23,6 +23,7 @@ declare global {
         textSecondary: string;
         textTertiary: string;
         textOnPrimary: string;
+        textSecondaryOnPrimary: string;
         backgroundToast: string;
         success: string;
         error: string;
