@@ -664,7 +664,6 @@ export function HistoryTableScreen() {
       }
       const ccFirst = settings.columnConfigs.get(headerFirst);
       const ccSecond = settings.columnConfigs.get(headerSecond);
-      console.log(ccFirst, ccSecond);
       if (ccFirst && ccSecond) {
         const temp = ccFirst.ordinal;
         ccFirst.ordinal = ccSecond.ordinal;
