@@ -44,7 +44,7 @@ const CustomLightTheme: ReactNavigation.Theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: "#7dc4cb",
+    primary: "#1a807a",
     background: "#F9F8F6",
     surface: "#F2F0EB",
     card: "#EFE9E3",
@@ -53,6 +53,7 @@ const CustomLightTheme: ReactNavigation.Theme = {
     textSecondary: "#666666",
     textTertiary: "#999999",
     textOnPrimary: "#FFFFFF",
+    textSecondaryOnPrimary: "#D3DAD9",
     backgroundToast: "#999999",
     success: "#5BC864",
     error: "#FF544B",
@@ -63,7 +64,7 @@ const CustomDarkTheme: ReactNavigation.Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: "#7dc4cb",
+    primary: "#1a807a",
     background: "#423F3C",
     surface: "#3B3839",
     card: "#33302E",
@@ -72,6 +73,7 @@ const CustomDarkTheme: ReactNavigation.Theme = {
     textSecondary: "#A8A8A8",
     textTertiary: "#838383",
     textOnPrimary: "#FFFFFF",
+    textSecondaryOnPrimary: "#D3DAD9",
     backgroundToast: "#999999",
     success: "#5BC864",
     error: "#FF544B",
