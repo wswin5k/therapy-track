@@ -23,11 +23,7 @@ import {
 } from "../../models/MedicineSchedule";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import {
-  dbGetMedicines,
-  dbInsertMedicine,
-  dbUpdateMedicine,
-} from "../../models/dbAccess";
+import { dbInsertMedicine, dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import {
@@ -39,6 +35,7 @@ import { ERROR_BORDER_WIDTH } from "../../commonStyles";
 import { isEqualLowerCase } from "../utils";
 import { DEFAULT_BORDER_RADIUS, eStyles } from "../../commonStyles";
 import { DefaultKeyboardAvoidingView } from "../../components/DefaultKeyboardAvoidingView";
+import { getExistingMedicineAndAssessmentNames } from "../../models/dbRecordsService";
 
 class ActiveIngredientInfo {
   name: string | null;
@@ -207,13 +204,11 @@ export function EditMedicineScreen() {
     ActiveIngredientInfo[]
   >([]);
 
-  const [medicinesNames, setMedicinesNames] = React.useState<string[]>([]);
+  const [existingNames, setExistingNames] = React.useState<string[]>([]);
 
   const loadMedicineNames = React.useCallback(async () => {
-    const medicines = await dbGetMedicines(db);
-
-    const newMedicineNames = medicines.map((a) => a.name.toLowerCase());
-    setMedicinesNames(newMedicineNames);
+    const existingNames = await getExistingMedicineAndAssessmentNames(db);
+    setExistingNames(existingNames);
   }, [db]);
 
   const [mode, setMode] = React.useState<
@@ -262,7 +257,7 @@ export function EditMedicineScreen() {
     if (
       nameValidated &&
       ((nameValidated.length < NAME_MAX_LENGTH &&
-        !medicinesNames.includes(nameValidated.toLowerCase()) &&
+        !existingNames.includes(nameValidated.toLowerCase()) &&
         VALID_NAME.test(nameValidated)) ||
         (nameIsOkWhenNotChanged && nameSameAsInitial))
     ) {

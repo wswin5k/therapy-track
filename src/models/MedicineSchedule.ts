@@ -60,6 +60,14 @@ export function maxWeightUnit(
   )[0];
 }
 
+const ACTIVE_INGREDIENT_SUFFIX = " – active ingredient";
+
+export function removeActiveIngredientSuffix(label: string): string {
+  return label.endsWith(ACTIVE_INGREDIENT_SUFFIX)
+    ? label.slice(0, -ACTIVE_INGREDIENT_SUFFIX.length)
+    : label;
+}
+
 export class ActiveIngredient {
   constructor(
     public name: string,
@@ -68,10 +76,10 @@ export class ActiveIngredient {
   ) {}
 
   getLabel(baseUnitLabel: string): string {
-    return `${this.name} – ${baseUnitLabel}`;
+    return `${this.name} – ${baseUnitLabel}${ACTIVE_INGREDIENT_SUFFIX}`;
   }
   getLabelWithoutUnit(): string {
-    return `${this.name}`;
+    return `${this.name}${ACTIVE_INGREDIENT_SUFFIX}`;
   }
   getUnitLabel(): string {
     return ingredientAmountUnitEnumToDisplayForm(this.unit);

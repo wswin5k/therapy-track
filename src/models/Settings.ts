@@ -33,7 +33,7 @@ export class ColumnConfig {
     public isShown: boolean,
     public width: number | null,
     public ordinal: number,
-    public source_created_at: Date,
+    public sourceCreatedAt: Date,
     public header: string,
   ) {}
 }

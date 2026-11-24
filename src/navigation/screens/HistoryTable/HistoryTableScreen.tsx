@@ -139,7 +139,7 @@ export function HistoryTableScreen() {
               ),
               null,
               -1,
-              newCC.source_created_at,
+              newCC.sourceCreatedAt,
               header,
             ),
           );
@@ -149,7 +149,7 @@ export function HistoryTableScreen() {
         if (a.ordinal !== -1 && b.ordinal !== -1) {
           return a.ordinal - b.ordinal;
         } else {
-          return b.source_created_at.getTime() - a.source_created_at.getTime();
+          return b.sourceCreatedAt.getTime() - a.sourceCreatedAt.getTime();
         }
       });
 

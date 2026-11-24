@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ColumnMenuModal } from "./ColumnMenuModal";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { scheduleOnUI } from "react-native-worklets";
+import { removeActiveIngredientSuffix } from "../../../models/MedicineSchedule";
 
 const TABLE_RADIUS = DEFAULT_BORDER_RADIUS;
 const DELTA_WIDTH_BUFFER = 10;
@@ -837,7 +838,7 @@ export default function HistoryTable({
               handleHiddenColumnHeaderLayout(columnIndex, width);
             }}
           >
-            {columnHeader}
+            {removeActiveIngredientSuffix(columnHeader)}
           </Text>
           {td.headerToUnit.get(columnHeader) && (
             <Text
@@ -967,7 +968,7 @@ export default function HistoryTable({
                         { color: theme.colors.textOnPrimary },
                       ]}
                     >
-                      {header}
+                      {removeActiveIngredientSuffix(header)}
                     </Text>
                     {unit && (
                       <Text
