@@ -11,28 +11,39 @@ import { useTranslation } from "react-i18next";
 import { DEFAULT_BORDER_RADIUS } from "../../../commonStyles";
 import { ButtonConfiguration, Dialog } from "../../../components/Dialog";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
+import { removeActiveIngredientSuffix } from "../../../models/MedicineSchedule";
 
 interface ColumnVisibilityConfigurationDialogProps {
-  columnsAll: string[];
-  initialVisibleColumns: Set<string>;
+  headersAll: string[];
+  initialVisibleHeaders: Set<string>;
   onApply: (visibleColumns: Set<string>) => void;
   onCancel: () => void;
 }
 
 export function ColumnVisibilityConfigurationDialog({
-  columnsAll: allColumns,
-  initialVisibleColumns,
+  headersAll,
+  initialVisibleHeaders,
   onApply,
   onCancel,
 }: ColumnVisibilityConfigurationDialogProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const [visibleColumns, setVisibleColumns] = React.useState<Set<string>>(
-    initialVisibleColumns,
+  const [visibleHeaders, setVisibleHeaders] = React.useState<Set<string>>(
+    initialVisibleHeaders,
   );
 
+  const shortHeadersCount = React.useMemo(() => {
+    const counts = new Map();
+    [...headersAll].forEach((header) => {
+      const shortHeader = removeActiveIngredientSuffix(header);
+      const count = counts.get(shortHeader) ?? 0;
+      counts.set(shortHeader, count + 1);
+    });
+    return counts;
+  }, [headersAll]);
+
   const handleToggleVisibility = (column: string) => {
-    setVisibleColumns((prev) => {
+    setVisibleHeaders((prev) => {
       const next = new Set(prev);
       if (next.has(column)) {
         next.delete(column);
@@ -44,7 +55,12 @@ export function ColumnVisibilityConfigurationDialog({
   };
 
   const handleApply = () => {
-    onApply(visibleColumns);
+    onApply(visibleHeaders);
+  };
+
+  const formatHeader = (header: string) => {
+    const shortHeader = removeActiveIngredientSuffix(header);
+    return shortHeadersCount.get(shortHeader) > 1 ? header : shortHeader;
   };
 
   const buttons = [
@@ -74,8 +90,8 @@ export function ColumnVisibilityConfigurationDialog({
             },
           ]}
         >
-          {allColumns.map((v, idx) => {
-            const isSelected = visibleColumns.has(v);
+          {headersAll.map((header, idx) => {
+            const isSelected = visibleHeaders.has(header);
             return (
               <TouchableOpacity
                 key={idx}
@@ -93,7 +109,7 @@ export function ColumnVisibilityConfigurationDialog({
                       },
                 ]}
                 onPress={() => {
-                  handleToggleVisibility(v);
+                  handleToggleVisibility(header);
                 }}
               >
                 <Text
@@ -105,7 +121,7 @@ export function ColumnVisibilityConfigurationDialog({
                   ]}
                   numberOfLines={1}
                 >
-                  {v}
+                  {formatHeader(header)}
                 </Text>
                 {isSelected ? (
                   <MaterialDesignIcons
@@ -139,7 +155,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
   },
   entriesList: {
     width: "90%",
