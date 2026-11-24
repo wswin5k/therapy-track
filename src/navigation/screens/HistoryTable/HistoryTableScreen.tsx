@@ -57,6 +57,7 @@ import {
 import { MenuModal } from "./MenuModal";
 import { generateCSV } from "./exportUtils";
 import { ColumnVisibilityConfigurationDialog } from "./ColumnVisibilityConfigurationDialog";
+import { removeActiveIngredientSuffix } from "../../../models/MedicineSchedule";
 
 function formatAssessmentValue(
   value: AssessmentValue,
@@ -401,7 +402,16 @@ export function HistoryTableScreen() {
   }, [isMenuOpen]);
 
   const handleSaveToCSV = React.useCallback(async () => {
-    const csvContent = generateCSV(headersAll, rowHeadersAll, cellsAll);
+    if (tableDataAndVersion.tableData === null) {
+      return;
+    }
+    const headerToUnit = tableDataAndVersion.tableData.headerToUnit;
+    const headersWithUnits = headersAll.map((header) => {
+      const shortHeader = removeActiveIngredientSuffix(header);
+      const unit = headerToUnit.get(header);
+      return unit ? `${shortHeader} [${unit}]` : header;
+    });
+    const csvContent = generateCSV(headersWithUnits, rowHeadersAll, cellsAll);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const fileName = `therapy-track-records-${timestamp}.csv`;
@@ -458,7 +468,7 @@ export function HistoryTableScreen() {
       }
     }
     setIsMenuOpen(false);
-  }, [cellsAll, rowHeadersAll, headersAll, t]);
+  }, [cellsAll, rowHeadersAll, headersAll, t, tableDataAndVersion.tableData]);
 
   const handleDateRangeMenuItemPress = React.useCallback(() => {
     setIsMenuOpen(false);
@@ -728,8 +738,8 @@ export function HistoryTableScreen() {
 
       {columnVisibilitDialogOpen && (
         <ColumnVisibilityConfigurationDialog
-          columnsAll={sortHeaders(headersAll, settings?.columnConfigs)}
-          initialVisibleColumns={
+          headersAll={sortHeaders(headersAll, settings?.columnConfigs)}
+          initialVisibleHeaders={
             // not-null checked when the dialog toggle is set
             getVisibleHeaders(settings?.columnConfigs!)
           }
