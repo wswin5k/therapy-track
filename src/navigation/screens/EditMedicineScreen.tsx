@@ -23,11 +23,7 @@ import {
 } from "../../models/MedicineSchedule";
 import { NAME_MAX_LENGTH, VALID_NAME } from "../../validationConstants";
 import { DefaultMainContainer } from "../../components/DefaultMainContainer";
-import {
-  dbGetMedicines,
-  dbInsertMedicine,
-  dbUpdateMedicine,
-} from "../../models/dbAccess";
+import { dbInsertMedicine, dbUpdateMedicine } from "../../models/dbAccess";
 import { useSQLiteContext } from "expo-sqlite";
 import { DropdownPicker } from "../../components/DropdownPicker";
 import {

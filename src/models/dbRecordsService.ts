@@ -95,7 +95,7 @@ export async function dbColumnsGetAll(db: SQLiteDatabase): Promise<Metric[]> {
 export class NewColumnConfig {
   constructor(
     public type: ColumnType,
-    public source_created_at: Date,
+    public sourceCreatedAt: Date,
   ) {}
 }
 
@@ -290,7 +290,7 @@ export async function getMedicineRecords(
     string,
     Set<IngredientAmountUnit>
   >();
-  const newColumnConfigs = new Map();
+  const newColumnConfigs = new Map<string, NewColumnConfig>();
 
   const labelToUnit = new Map();
 
@@ -331,10 +331,7 @@ export async function getMedicineRecords(
       }
 
       const ccFullHeader = newColumnConfigs.get(fullLabel);
-      if (
-        !ccFullHeader ||
-        ccFullHeader._source_created_at > medicine.createdAt
-      ) {
+      if (!ccFullHeader || ccFullHeader.sourceCreatedAt > medicine.createdAt) {
         newColumnConfigs.set(
           fullLabel,
           new NewColumnConfig(ColumnType.ActiveIngredient, medicine.createdAt),
@@ -343,7 +340,7 @@ export async function getMedicineRecords(
       const ccShortHeader = newColumnConfigs.get(shortLabel);
       if (
         !ccShortHeader ||
-        ccShortHeader._source_created_at > medicine.createdAt
+        ccShortHeader.sourceCreatedAt > medicine.createdAt
       ) {
         newColumnConfigs.set(
           shortLabel,

@@ -31,11 +31,7 @@ import {
 } from "../../models/AssessmentSchedule";
 import { ModalPicker } from "../../components/ModalPicker";
 import { useSQLiteContext } from "expo-sqlite";
-import {
-  dbGetAssessments,
-  dbInsertAssessment,
-  dbUpdateAssessment,
-} from "../../models/dbAccess";
+import { dbInsertAssessment, dbUpdateAssessment } from "../../models/dbAccess";
 import { DISABLED_OPACITY, ERROR_BORDER_WIDTH } from "../../commonStyles";
 import { useTranslation } from "react-i18next";
 import SmallNumberStepper from "../../components/SmallNumberStepper";

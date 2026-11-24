@@ -278,7 +278,7 @@ function deserializeColumnConfigs(value: string): Map<string, ColumnConfig> {
       isShown: boolean;
       width: number;
       ordinal: number;
-      source_created_at: string;
+      sourceCreatedAt: string;
       header: string;
     }) => {
       result.set(
@@ -287,7 +287,7 @@ function deserializeColumnConfigs(value: string): Map<string, ColumnConfig> {
           cc.isShown,
           cc.width,
           cc.ordinal,
-          new Date(cc.source_created_at),
+          new Date(cc.sourceCreatedAt),
           cc.header,
         ),
       );

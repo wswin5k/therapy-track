@@ -139,7 +139,7 @@ export function HistoryTableScreen() {
               ),
               null,
               -1,
-              newCC.source_created_at,
+              newCC.sourceCreatedAt,
               header,
             ),
           );
