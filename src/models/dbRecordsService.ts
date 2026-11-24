@@ -432,3 +432,17 @@ export async function getMedicineRecords(
     labelToUnit,
   );
 }
+
+export async function getExistingMedicineAndAssessmentNames(
+  db: SQLiteDatabase,
+): Promise<string[]> {
+  const medicines = await dbGetMedicines(db);
+
+  const medicineNames = medicines.map((a) => a.name.toLowerCase());
+
+  const assessments = await dbGetAssessments(db);
+
+  const assessmentNames = assessments.map((a) => a.name.toLowerCase());
+
+  return medicineNames.concat(assessmentNames);
+}

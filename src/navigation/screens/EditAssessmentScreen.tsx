@@ -46,6 +46,7 @@ import {
   PRESSABLE_HEIGHT,
 } from "../../commonStyles";
 import { DefaultKeyboardAvoidingView } from "../../components/DefaultKeyboardAvoidingView";
+import { getExistingMedicineAndAssessmentNames } from "../../models/dbRecordsService";
 
 export const TEXT_MAX_LENGTH = 200;
 const DEFAULT_NUMERIC_MAX = 10;
@@ -102,13 +103,11 @@ export function EditAssessmentScreen() {
     "create-and-go-back" | "update-and-go-back" | "schedule" | "one-time"
   >("create-and-go-back");
 
-  const [assessmentsNames, setAssessmentsNames] = React.useState<string[]>([]);
+  const [existingNames, setExistingNames] = React.useState<string[]>([]);
 
   const loadAssessments = React.useCallback(async () => {
-    const assessments = await dbGetAssessments(db);
-
-    const newAssessmentsNames = assessments.map((a) => a.name.toLowerCase());
-    setAssessmentsNames(newAssessmentsNames);
+    const existingNames = await getExistingMedicineAndAssessmentNames(db);
+    setExistingNames(existingNames);
   }, [db]);
 
   useFocusEffect(
@@ -156,7 +155,7 @@ export function EditAssessmentScreen() {
     if (
       nameValidated &&
       ((nameValidated.length < NAME_MAX_LENGTH &&
-        !assessmentsNames.includes(nameValidated.toLowerCase()) &&
+        !existingNames.includes(nameValidated.toLowerCase()) &&
         VALID_NAME.test(nameValidated)) ||
         (nameIsOkWhenNotChanged && nameSameAsInitial))
     ) {
