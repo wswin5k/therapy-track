@@ -40,7 +40,7 @@ const MIN_CELL_LINES_LENGTH = 2;
 const MIN_CELL_WIDTH = 60; //should fit at least 4 characters in one line
 const MID_CELL_WIDTH = 150;
 
-const ROW_HEADER_WIDTH = 90;
+const INITIAL_CORNER_HEADER_WIDTH = 90;
 
 const COLUMN_MENU_TABLE_SCROLL_MARGIN_X = 150;
 const COLUMN_MENU_TABLE_SCROLL_MARGIN_Y = 80;
@@ -140,6 +140,10 @@ export default function HistoryTable({
     );
   const columnWidthsCycles = React.useRef(
     Array.from({ length: td.headers.length }, () => cycle([MID_CELL_WIDTH])),
+  );
+
+  const [cornerHeaderWidth, setCornerHeaderWidth] = React.useState<number>(
+    INITIAL_CORNER_HEADER_WIDTH,
   );
 
   const fillInitialColumnWidths = () => {
@@ -323,7 +327,6 @@ export default function HistoryTable({
       styles.borderBottomLeftRadius = TABLE_RADIUS;
     }
 
-    styles.width = ROW_HEADER_WIDTH;
     styles.height = rowHeights[rowIndex - 1];
 
     return { ...styles, ...dateGapStyle(rowIndex - 1) };
@@ -910,6 +913,7 @@ export default function HistoryTable({
         <View
           style={[
             styles.cornerCell,
+            { width: cornerHeaderWidth },
             {
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.primary,
@@ -992,7 +996,13 @@ export default function HistoryTable({
       {/* Main - vertical sticky header + scrollable body */}
       <View style={styles.table}>
         {/* Row Header */}
-        <View style={[styles.rowHeaderClip]}>
+        <View
+          style={[styles.rowHeaderClip]}
+          onLayout={(event) => {
+            const width = Math.ceil(event.nativeEvent.layout.width);
+            setCornerHeaderWidth(width);
+          }}
+        >
           <Animated.ScrollView
             ref={rowHeadersRef}
             showsVerticalScrollIndicator={false}
@@ -1139,7 +1149,6 @@ const styles = StyleSheet.create({
   },
   rowHeaderClip: {
     overflow: "hidden",
-    width: ROW_HEADER_WIDTH,
   },
   columnHeaderCell: {
     justifyContent: "center",
@@ -1153,7 +1162,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     borderWidth: 1,
-    padding: 6,
+    padding: 8,
   },
   hiddenContainer: {
     position: "absolute",
