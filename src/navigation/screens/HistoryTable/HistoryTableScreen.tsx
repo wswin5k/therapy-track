@@ -385,8 +385,12 @@ export function HistoryTableScreen() {
         await loadAndCombineDataForTable(initialSettings);
         await loadSettingsAndColumnWidths();
       };
-      setUp();
+      // todo: move the execution to a seperate JS runtime, since
+      // this doesn't suffice to unlock the UI after the the function
+      // has started
+      const idleId = requestIdleCallback(setUp);
       return () => {
+        cancelIdleCallback(idleId);
         setIsMenuOpen(false);
         //is this needed?
         setTableDataAndVersion((prev) => {
@@ -691,16 +695,27 @@ export function HistoryTableScreen() {
         <TouchableOpacity
           onPress={handleMenuToggle}
           style={styles.menuToggleButton}
+          disabled={tableDataAndVersion.version === 0}
         >
           <Ionicons
             name="ellipsis-vertical"
             style={styles.menuToggleIcon}
-            color={theme.colors.text}
+            color={
+              tableDataAndVersion.version === 0
+                ? theme.colors.textTertiary
+                : theme.colors.text
+            }
           />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, isMenuOpen, handleMenuToggle, theme.colors]);
+  }, [
+    navigation,
+    isMenuOpen,
+    handleMenuToggle,
+    theme.colors,
+    tableDataAndVersion.version,
+  ]);
 
   return (
     <DefaultMainContainer>
@@ -778,8 +793,11 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   menuToggleButton: {
-    marginLeft: 16,
-    marginRight: 20,
+    height: "100%",
+    width: 70,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 100,
   },
   menuToggleIcon: {
     fontSize: 24,
