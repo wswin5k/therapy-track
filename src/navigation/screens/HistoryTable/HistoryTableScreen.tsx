@@ -388,8 +388,9 @@ export function HistoryTableScreen() {
       // todo: move the execution to a seperate JS runtime, since
       // this doesn't suffice to unlock the UI after the the function
       // has started
-      requestIdleCallback(setUp);
+      const idleId = requestIdleCallback(setUp);
       return () => {
+        cancelIdleCallback(idleId);
         setIsMenuOpen(false);
         //is this needed?
         setTableDataAndVersion((prev) => {
